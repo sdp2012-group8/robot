@@ -21,7 +21,7 @@ public class Test implements MessageListener {
 		Communicator my = null;
 		try {
 			 my = new JComm(this); // initialize bluetooth communicator
-		} catch (NXTCommException e) {
+		} catch (Exception e) {
 			System.out.println("Error connecting with brick");
 			e.printStackTrace();
 		}

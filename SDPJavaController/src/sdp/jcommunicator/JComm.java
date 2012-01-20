@@ -3,6 +3,7 @@ package sdp.jcommunicator;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.logging.Logger;
 
 import lejos.pc.comm.NXTComm;
 import lejos.pc.comm.NXTCommException;
@@ -24,6 +25,8 @@ public class JComm implements sdp.Communicator {
 	// password and mac settings
 	private static final String friendly_name = "ELIMIN8";
 	private static final String mac_of_brick = "00:16:53:0A:5C:22";
+	
+	private final static Logger LOGGER = Logger.getLogger(JComm.class .getName());
 
 	// variables
 	private MessageListener mListener;
@@ -37,28 +40,42 @@ public class JComm implements sdp.Communicator {
 	 * @param listener the listener that will receive updates from the robot
 	 * @throws NXTCommException if a connection cannot be established
 	 */
-	public JComm(MessageListener listener) throws NXTCommException {
+	public JComm(MessageListener listener) {
 		this.mListener = listener;
+		try {
 		mComm = NXTCommFactory.createNXTComm(NXTCommFactory.BLUETOOTH);
+		} catch (Exception e) {
+			LOGGER.warning("Cannot open Bluetooth.");
+		}
 		NXTInfo info = new NXTInfo(NXTCommFactory.BLUETOOTH,friendly_name, mac_of_brick);
-		System.out.println("Openning connection...");
-		mComm.open(info);
-		System.out.println("Getting output stream...");
+		LOGGER.info("Openning connection...");
+		boolean repeat = true;
+		while (repeat) {
+			try {
+				mComm.open(info);
+				repeat = false;
+			} catch (Exception e) {
+				LOGGER.warning("Cannot establish connection. Is device on? Retry in 4 s.");
+				try {
+					Thread.sleep(4000);
+				} catch (InterruptedException e1) {}
+			}
+		}
+		LOGGER.info("Getting output stream...");
 		os = mComm.getOutputStream();
-		System.out.println("Getting input stream...");
+		LOGGER.info("Getting input stream...");
         is = mComm.getInputStream();
         connection_open = true;
         // handle incoming connections in a new thread
-        System.out.println("Spawning the listener trhead...");
+        LOGGER.info("Starting listener...");
         new Thread() {
         	public void run() {
         		while (connection_open) {
         			try {
-        				System.out.println("Waiting for instruction from device");
         				readNextMessage();
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
-						System.out.println("Connection with device lost. Waiting 2 s and trying again...");
+						LOGGER.warning("Connection with device lost. Waiting 2 s and trying again...");
 						e.printStackTrace();
 						try {
 							sleep(2000);
@@ -67,7 +84,7 @@ public class JComm implements sdp.Communicator {
         		}
         	};
         }.start();
-        System.out.println("Ready.");
+        LOGGER.info("Ready");
 	}
 	
 	/**
@@ -113,7 +130,7 @@ public class JComm implements sdp.Communicator {
 			os.close();
 			mComm.close();
 		} catch (IOException e) {
-			System.out.println("Error while closing connection with brick");
+			LOGGER.warning("Error while closing connection with brick");
 			e.printStackTrace();
 		}
 

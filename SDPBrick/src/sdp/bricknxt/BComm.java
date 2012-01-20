@@ -33,10 +33,13 @@ public class BComm implements Communicator {
 	 * @param listener
 	 */
 	public BComm(final MessageListener listener) {
+		LCD.clear();
 		LCD.drawString("Waiting for", 0, 0);
 		LCD.drawString("Bluetooth...", 0, 1);
 		// itnialize connection
 		connection = Bluetooth.waitForConnection();
+		LCD.clear(0);
+		LCD.clear(1);
 		LCD.drawString("Connection",0,0);
 		LCD.drawString("established!",0,1);
 		is = connection.openInputStream();
@@ -57,6 +60,9 @@ public class BComm implements Communicator {
 							}
 							// print message on the LCD
 							messages_so_far++;
+							LCD.clear(0);
+							LCD.clear(1);
+							LCD.clear(2);
 							LCD.drawString(messages_so_far+". messgs", 0, 0);
 							LCD.drawString(op+";"+length, 0, 1);
 							if (args.length > 1) {
@@ -71,6 +77,7 @@ public class BComm implements Communicator {
 							// call the method
 							listener.receiveMessage(op, args, BComm.this);
 						} catch (IOException e) {
+							LCD.clear();
 							LCD.drawString("Lost!",0,0);
 							e.printStackTrace();
 							try {
