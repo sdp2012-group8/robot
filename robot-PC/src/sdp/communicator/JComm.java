@@ -1,4 +1,4 @@
-package sdp.jcommunicator;
+package sdp.communicator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,7 +9,7 @@ import lejos.pc.comm.NXTComm;
 import lejos.pc.comm.NXTCommException;
 import lejos.pc.comm.NXTCommFactory;
 import lejos.pc.comm.NXTInfo;
-import sdp.MessageListener;
+import sdp.common.MessageListener;
 
 /**
  * 
@@ -20,7 +20,7 @@ import sdp.MessageListener;
  * @author martinmarinov
  *
  */
-public class JComm implements sdp.Communicator {
+public class JComm implements sdp.common.Communicator {
 	
 	// password and mac settings
 	private static final String friendly_name = "ELIMIN8";

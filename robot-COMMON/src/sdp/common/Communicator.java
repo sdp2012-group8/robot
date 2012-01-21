@@ -1,4 +1,4 @@
-package sdp;
+package sdp.common;
 
 import java.io.IOException;
 

@@ -1,11 +1,11 @@
-package sdp.jcommunicator;
+package sdp.communicator;
 
 import java.io.IOException;
 
 import lejos.pc.comm.NXTCommException;
-import sdp.Communicator;
-import sdp.Communicator.opcode;
-import sdp.MessageListener;
+import sdp.common.Communicator;
+import sdp.common.MessageListener;
+import sdp.common.Communicator.opcode;
 
 /**
  * Sends test signals to device using a {@link Communicator}

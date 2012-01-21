@@ -1,8 +1,8 @@
-package sdp.bricknxt;
+package sdp.brick;
 
-import sdp.Communicator;
-import sdp.MessageListener;
-import sdp.Communicator.opcode;
+import sdp.common.Communicator;
+import sdp.common.MessageListener;
+import sdp.common.Communicator.opcode;
 
 import lejos.nxt.Battery;
 import lejos.nxt.LCD;

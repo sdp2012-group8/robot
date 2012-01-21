@@ -1,4 +1,4 @@
-package sdp.bricknxt;
+package sdp.brick;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,8 +8,8 @@ import lejos.nxt.LCD;
 import lejos.nxt.comm.Bluetooth;
 import lejos.nxt.comm.NXTConnection;
 
-import sdp.Communicator;
-import sdp.MessageListener;
+import sdp.common.Communicator;
+import sdp.common.MessageListener;
 
 /**
  * This class is the handles sending/receiving messages from the PC.

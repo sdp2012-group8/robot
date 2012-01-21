@@ -1,6 +1,6 @@
-package sdp;
+package sdp.common;
 
-import sdp.Communicator.opcode;
+import sdp.common.Communicator.opcode;
 
 /**
  * Implement this interface if you want to receive messages from a {@link Communicator}
