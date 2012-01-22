@@ -52,10 +52,49 @@ public class Brick {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
+					receiveMessage(opcode.kick, new byte[]{}, null);
 					Motor.C.setSpeed(0);
-					LCD.drawString("C stopped", 0, 0);
 					Motor.A.setSpeed(0);
-					LCD.drawString("A stopped", 0, 1);
+					break;
+					
+				case moveback:
+					voltage = Battery.getVoltage();
+					Motor.A.setSpeed(voltage*200);
+					Motor.C.setSpeed(voltage*200);
+					Motor.A.backward();
+					Motor.C.backward();
+
+					try {
+						Thread.sleep(args[0]*1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					Motor.C.setSpeed(0);
+					Motor.A.setSpeed(0);
+					break;
+					
+				case kick:
+					voltage = Battery.getVoltage();
+					Motor.B.setSpeed(voltage*200);
+					Motor.B.setAcceleration(100000);
+					Motor.B.rotate(30);
+					try {
+						Thread.sleep(50);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					Motor.B.setSpeed(voltage*100);
+					Motor.B.setAcceleration(50);
+					Motor.B.rotate(-10);
+					Motor.B.stop();
+					break;
+					
+				case rotate_kicker:
+					voltage = Battery.getVoltage();
+					Motor.B.setSpeed(voltage*200);
+					Motor.B.setAcceleration(100000);
+					Motor.B.rotate(args[0]);
+					
 					break;
 				}
 				
