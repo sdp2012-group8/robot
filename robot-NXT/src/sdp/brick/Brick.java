@@ -5,8 +5,8 @@ import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 
 import lejos.nxt.Battery;
-import lejos.nxt.LCD;
 import lejos.nxt.Motor;
+import lejos.nxt.NXT;
 
 /**
  * This is the program that should be uploaded to the NXT Brick.
@@ -37,24 +37,22 @@ public class Brick {
 				
 				case exit:
 					mCont.close();
-					System.exit(0);
+					NXT.shutDown();
 					break;
 					
 				case move:
 					float voltage = Battery.getVoltage();
 					Motor.A.setSpeed(voltage*200);
-					Motor.C.setSpeed(voltage*200);
 					Motor.A.forward();
+					Motor.C.setSpeed(voltage*200);
 					Motor.C.forward();
-
 					try {
 						Thread.sleep(args[0]*1000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					receiveMessage(opcode.kick, new byte[]{}, null);
-					Motor.C.setSpeed(0);
 					Motor.A.setSpeed(0);
+					Motor.C.setSpeed(0);
 					break;
 					
 				case moveback:
@@ -77,15 +75,8 @@ public class Brick {
 					voltage = Battery.getVoltage();
 					Motor.B.setSpeed(voltage*200);
 					Motor.B.setAcceleration(100000);
-					Motor.B.rotate(30);
-					try {
-						Thread.sleep(50);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					Motor.B.setSpeed(voltage*100);
-					Motor.B.setAcceleration(50);
-					Motor.B.rotate(-10);
+					Motor.B.rotate(-70);
+					Motor.B.rotate(70);
 					Motor.B.stop();
 					break;
 					
