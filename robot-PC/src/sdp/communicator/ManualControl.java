@@ -13,6 +13,13 @@ import sdp.common.Communicator.opcode;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
+/**
+ * 
+ * This is the class that gives easy GUI way of sending raw commands to the brick.
+ * 
+ * @author s0932707
+ *
+ */
 public class ManualControl {
 
 	private JFrame frmManualNxtCommand;
@@ -53,17 +60,17 @@ public class ManualControl {
 		frmManualNxtCommand.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmManualNxtCommand.getContentPane().setLayout(null);
 		
-		textField = new JTextField();
-		textField.setBounds(104, 12, 332, 19);
-		frmManualNxtCommand.getContentPane().add(textField);
-		textField.setColumns(10);
-		
 		final JComboBox comboBox = new JComboBox();
 		final opcode[] ops = opcode.values();
 		for (int i = 0; i < ops.length; i++)
 			comboBox.addItem(ops[i]);
 		comboBox.setBounds(12, 9, 80, 24);
 		frmManualNxtCommand.getContentPane().add(comboBox);
+		
+		textField = new JTextField();
+		textField.setBounds(104, 12, 332, 19);
+		frmManualNxtCommand.getContentPane().add(textField);
+		textField.setColumns(10);
 		
 		final JButton btnNewButton = new JButton("Send");
 		btnNewButton.addActionListener(new ActionListener() {
