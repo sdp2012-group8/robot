@@ -91,5 +91,6 @@ public class Brick {
 				
 			}
 		});
+		mCont.close();
 	}
 }
