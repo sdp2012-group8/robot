@@ -25,12 +25,12 @@ public class Robot {
 	 * The main constructor.
 	 * 
 	 * @param coords The robot's coordinates.
-	 * @param d The angle the robot is facing, in radians.
+	 * @param angle The angle the robot is facing, in radians.
 	 */
-	public Robot(Point coords, double d) {
+	public Robot(Point coords, double angle) {
 		super();
 		this.coords = coords;
-		this.angle = d;
+		this.angle = angle;
 	}
 
 	

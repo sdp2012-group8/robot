@@ -35,28 +35,28 @@ public abstract class Vision extends Thread {
 	protected void initFrameGrabber(String dev, int w, int h,
 			int std, int channel, int qty) throws V4L4JException {
 			    videoDevice = new VideoDevice(dev);
-			    try {
+			    /*try {
 					List<Control> controls =  videoDevice.getControlList().getList();
 					for(Control c: controls) { 
 						if(c.getName().equals("Saturation"))
-							if(c.getName().equals("Contrast"))
-								c.setValue(CONTRAST);
-							if(c.getName().equals("Brightness"))
-								c.setValue(BRIGHTNESS);
-							if(c.getName().equals("full luma range"))
-								c.setValue(FULL_LUMA_RANGE);
-							if(c.getName().equals("Hue"))
-								c.setValue(HUE);
-							if(c.getName().equals("Saturation"))
-								c.setValue(SATURATION);
-							if(c.getName().equals("uv ratio"))
-								c.setValue(UV_RATIO);
-							}
+						if(c.getName().equals("Contrast"))
+							c.setValue(CONTRAST);
+						if(c.getName().equals("Brightness"))
+							c.setValue(BRIGHTNESS);
+						if(c.getName().equals("full luma range"))
+							c.setValue(FULL_LUMA_RANGE);
+						if(c.getName().equals("Hue"))
+							c.setValue(HUE);
+						if(c.getName().equals("Saturation"))
+							c.setValue(SATURATION);
+						if(c.getName().equals("uv ratio"))
+							c.setValue(UV_RATIO);
+					}
 					videoDevice.releaseControlList();
 			    }
 			    catch(V4L4JException e3) { 
 			    	System.out.println("Cannot set video device settings!"); 
-			    }
+			    }*/
 				videoDevice.releaseControlList();
 			    frameGrabber = videoDevice.getJPEGFrameGrabber(w, h, channel, std, qty);
 			    frameGrabber.startCapture();
