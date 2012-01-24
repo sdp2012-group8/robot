@@ -3,42 +3,6 @@ package sdp.common;
 import java.awt.Point;
 
 public class Tools {
-	
-	public static boolean doesLineIntersectRect(Line line, Rectangle rect, boolean ignoreEndPoints)
-	{
-		boolean cornersAboveLine[] = new boolean[] {	line.isPointAboveLine(rect.cTL),
-														line.isPointAboveLine(rect.cTR),
-														line.isPointAboveLine(rect.cBL),
-														line.isPointAboveLine(rect.cBR)
-													};
-		
-		if ((cornersAboveLine[0] == cornersAboveLine[1]) && (cornersAboveLine[1] == cornersAboveLine[2]) && (cornersAboveLine[2] == cornersAboveLine[3]))
-    	{
-//			System.out.println("all Points the same side of line");
-    		return false;
-    	}
-    	else
-    	{
-//    		System.out.println("Different sides of line");
-    		int leftMost = rect.cTL.x < rect.cBL.x ?rect.cTL.x : rect.cBL.x;
-    		int rightMost = rect.cTR.x > rect.cBR.x?rect.cTR.x:rect.cBR.x;
-    		int topMost = rect.cTL.y > rect.cTR.y?rect.cTL.y:rect.cTR.y;
-    		int bottomMost = rect.cBL.y < rect.cBR.y?rect.cBL.y:rect.cBR.y;
-//    		
-//    		System.out.println("LEft : " + leftMost);
-//    		System.out.println("Right : " + rightMost);
-//    		System.out.println("Top : " + topMost);
-//    		System.out.println("Bottom : " + bottomMost);
-    		
-    		return  ignoreEndPoints ||
-    			   !((line.p1.x < leftMost && line.p2.x < leftMost) ||
-    				(line.p1.x > rightMost && line.p2.x > rightMost) ||	/*line starts after right of rectangle */
-    				(line.p1.y > topMost && line.p2.y > topMost) ||			/*line stops before top of rectangle */
-    				(line.p1.y < bottomMost && line.p2.y < bottomMost));		/*line starts after bottom of rectangle */
-    	}
-    	
-	}
-
 
 	public static double getDistBetweenPoints(Point p1, Point p2)
     {

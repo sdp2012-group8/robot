@@ -24,7 +24,8 @@ import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.util.LinkedList;
 
-import sdp.common.ObjectInfo_Editable;
+import sdp.common.Robot;
+import sdp.common.WorldState;
 import sdp.common.Tools;
 
 public class ImageProcessor {
@@ -89,7 +90,7 @@ public class ImageProcessor {
 	// for last position checking.
 
 	// ~~~~~OUTPUT FOR OTHER TEAMS~~~~~~//
-	ObjectInfo_Editable objectInfos = new ObjectInfo_Editable();
+	WorldState worldState;
 
 	/**
 	 * @param image
@@ -186,20 +187,34 @@ public class ImageProcessor {
 				}
 			}
 		}
+		
+		// TODO: Fix this bandaid.
+		Point ballCoords;
+		Robot blueRobot, yellowRobot;
+		
+		if (worldState != null) {
+			ballCoords = worldState.getBallCoords();
+			blueRobot = worldState.getBlueRobot();
+			yellowRobot = worldState.getYellowRobot();
+		} else {
+			ballCoords = new Point(0, 0);
+			blueRobot = new Robot(new Point(0, 0), 0.0);
+			yellowRobot = new Robot(new Point(0, 0), 0.0);
+		}
 
 		// where 5 is just some minimal number of pixels found
 		if (btCentroidCount > 5) {
 			btPos = new Point(btCentroid.x / btCentroidCount, btCentroid.y
 					/ btCentroidCount);
 			int btAngle = findAngle(data, wraster, btPos, blue);
-			objectInfos.updateBlueBot(btPos, btAngle);
+			blueRobot = new Robot(btPos, btAngle);
 		}
 
 		if (ytCentroidCount > 5) {
 			ytPos = new Point(ytCentroid.x / ytCentroidCount, ytCentroid.y
 					/ ytCentroidCount);
 			int ytAngle = findAngle(data, wraster, ytPos, yell);
-			objectInfos.updateYellowBot(ytPos, ytAngle);
+			yellowRobot = new Robot(ytPos, ytAngle);
 		}
 		if (useMouse) {
 			Point mouse = MouseInfo.getPointerInfo().getLocation();
@@ -208,7 +223,8 @@ public class ImageProcessor {
 		} else {
 			findBall(wraster, ballPos);
 		}
-		objectInfos.updateBall(ballPos);
+		
+		worldState = new WorldState(ballCoords, blueRobot, yellowRobot);
 
 		int lineColors = 0;
 		if (DEBUG_LEVEL > 0)

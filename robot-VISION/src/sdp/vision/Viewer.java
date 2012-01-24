@@ -3,7 +3,7 @@ package sdp.vision;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 
-import sdp.common.ObjectInfo;
+import sdp.common.WorldState;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
@@ -159,8 +159,8 @@ public class Viewer extends Vision implements Runnable {
 		return new Viewer(dev, w, h, std, channel, qty);
 	}
 
-	public ObjectInfo getObjectInfos() {
-		return imageProcessor.objectInfos;
+	public WorldState getObjectInfos() {
+		return imageProcessor.worldState;
 	}
 
 }
