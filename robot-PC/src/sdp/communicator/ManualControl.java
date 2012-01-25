@@ -12,6 +12,10 @@ import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 /**
  * 
@@ -55,8 +59,112 @@ public class ManualControl {
 	 */
 	private void initialize() {
 		frmManualNxtCommand = new JFrame();
+		frmManualNxtCommand.getContentPane().setFocusable(true);
+		final JButton btn_W = new JButton("FORW. (W)");
+		btn_W.setEnabled(false);
+		btn_W.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				System.out.println("W command not set yet");
+			}
+		});
+		btn_W.setBounds(166, 84, 117, 25);
+		frmManualNxtCommand.getContentPane().add(btn_W);
+		
+		final JButton btn_Space = new JButton("STOP (SPACE)");
+		btn_Space.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				System.out.println("SPACE command not set yet");
+			}
+		});
+		btn_Space.setEnabled(false);
+		btn_Space.setBounds(295, 84, 141, 25);
+		frmManualNxtCommand.getContentPane().add(btn_Space);
+		
+		final JButton btn_S = new JButton("BACK (S)");
+		btn_S.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				System.out.println("S command not set yet");
+			}
+		});
+		btn_S.setEnabled(false);
+		btn_S.setBounds(166, 118, 117, 25);
+		frmManualNxtCommand.getContentPane().add(btn_S);
+		
+		final JButton btn_A = new JButton("LEFT (A)");
+		btn_A.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				System.out.println("A command not set yet");
+			}
+		});
+		btn_A.setEnabled(false);
+		btn_A.setBounds(33, 118, 117, 25);
+		frmManualNxtCommand.getContentPane().add(btn_A);
+		
+		final JButton btn_D = new JButton("RIGHT (D)");
+		btn_D.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				System.out.println("D command not set yet");
+			}
+		});
+		btn_D.setEnabled(false);
+		btn_D.setBounds(295, 118, 117, 25);
+		
+		final JButton btn_control_on = new JButton("Joypad ON");
+		btn_control_on.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				frmManualNxtCommand.getContentPane().requestFocus();
+			}
+		});
+		btn_control_on.setBounds(33, 84, 117, 25);
+		
+		frmManualNxtCommand.getContentPane().addFocusListener(new FocusListener() {
+			
+			@Override
+			public void focusLost(FocusEvent arg0) {
+				btn_W.setEnabled(false);
+				btn_A.setEnabled(false);
+				btn_S.setEnabled(false);
+				btn_D.setEnabled(false);
+				btn_Space.setEnabled(false);
+				btn_control_on.setEnabled(true);
+			}
+			
+			@Override
+			public void focusGained(FocusEvent arg0) {
+				btn_W.setEnabled(true);
+				btn_A.setEnabled(true);
+				btn_S.setEnabled(true);
+				btn_D.setEnabled(true);
+				btn_Space.setEnabled(true);
+				btn_control_on.setEnabled(false);
+			}
+		});
+		
+		frmManualNxtCommand.getContentPane().add(btn_D);
+		frmManualNxtCommand.getContentPane().addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent arg0) {
+				switch (arg0.getKeyCode()) {
+				case KeyEvent.VK_W: 
+					btn_W.doClick();
+					break;
+				case KeyEvent.VK_A: 
+					btn_A.doClick();
+					break;
+				case KeyEvent.VK_S: 
+					btn_S.doClick();
+					break;
+				case KeyEvent.VK_D: 
+					btn_D.doClick();
+					break;
+				case KeyEvent.VK_SPACE: 
+					btn_Space.doClick();
+					break;
+				}
+			}
+		});
 		frmManualNxtCommand.setTitle("Manual NXT Command Sender");
-		frmManualNxtCommand.setBounds(100, 100, 450, 103);
+		frmManualNxtCommand.setBounds(100, 100, 450, 188);
 		frmManualNxtCommand.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmManualNxtCommand.getContentPane().setLayout(null);
 		
@@ -71,6 +179,8 @@ public class ManualControl {
 		textField.setBounds(104, 12, 332, 19);
 		frmManualNxtCommand.getContentPane().add(textField);
 		textField.setColumns(10);
+		
+
 		
 		final JButton btnNewButton = new JButton("Send");
 		btnNewButton.addActionListener(new ActionListener() {
@@ -127,5 +237,9 @@ public class ManualControl {
 		});
 		btnConnect.setBounds(319, 38, 117, 25);
 		frmManualNxtCommand.getContentPane().add(btnConnect);
+		
+		frmManualNxtCommand.getContentPane().add(btn_control_on);
+		
+
 	}
 }
