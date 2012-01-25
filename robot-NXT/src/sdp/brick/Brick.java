@@ -89,11 +89,10 @@ public class Brick {
 					break;
 					
 				case kick:
-					voltage = Battery.getVoltage();
-					Motor.B.setSpeed(voltage*200);
+					Motor.B.setSpeed(Motor.B.getMaxSpeed());
 					Motor.B.setAcceleration(100000);
-					Motor.B.rotate(-70);
-					Motor.B.rotate(70);
+					Motor.B.rotate(-120);
+					Motor.B.rotate(120);
 					Motor.B.stop();
 					break;
 					
