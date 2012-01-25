@@ -30,8 +30,8 @@ public class Brick {
 	public static void main(String[] args) {
 		// connect with PC and start receiving messages
 		mCont = new BComm(new MessageListener() {
-			public static final float CIRC = 0.4712F;
-			public static final float WHEEL = 0.26F;
+			public static final float ROBOTR = 6.5F;
+			public static final float WHEELR = 4F;
 			int lastCountA = 0;
 			int lastCountC = 0;
 			float slowest = Motor.A.getMaxSpeed() > Motor.B.getMaxSpeed() ? Motor.B.getMaxSpeed()-10 : Motor.A.getMaxSpeed()-10;
@@ -103,11 +103,11 @@ public class Brick {
 
 				case turn:
 					if (args.length > 0) {
-						int a =(int) ((CIRC*(args[0]/360))/WHEEL);
+						int a =(int) ((args[0]*4*ROBOTR)/WHEELR);
 						Motor.A.setSpeed(360);
 						Motor.C.setSpeed(360);
-						Motor.A.rotate(a);
-						Motor.C.rotate(a);
+						Motor.A.rotate(a, true);
+						Motor.C.rotate(-a, true);
 					}
 
 					break;
