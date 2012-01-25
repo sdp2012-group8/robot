@@ -5,6 +5,7 @@ import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 
 import lejos.nxt.Battery;
+import lejos.nxt.LCD;
 import lejos.nxt.Motor;
 import lejos.nxt.NXT;
 
@@ -27,6 +28,10 @@ public class Brick {
 	public static void main(String[] args) {
 		// connect with PC and start receiving messages
 		mCont = new BComm(new MessageListener() {
+			int lastCountA = 0;
+			int lastCountC = 0;
+			float slowest = Motor.A.getMaxSpeed() > Motor.B.getMaxSpeed() ? Motor.B.getMaxSpeed()-10 : Motor.A.getMaxSpeed()-10;
+			
 			/**
 			 * Add your movement logic inside this method
 			 */
@@ -42,17 +47,27 @@ public class Brick {
 					
 				case move:
 					float voltage = Battery.getVoltage();
-					Motor.A.setSpeed(voltage*200);
+					
+					Motor.A.setSpeed(slowest);
+					Motor.C.setSpeed(slowest);
+					Motor.A.setAcceleration(args[1]*100);
+					Motor.C.setAcceleration(args[1]*100);
 					Motor.A.forward();
-					Motor.C.setSpeed(voltage*200);
 					Motor.C.forward();
 					try {
-						Thread.sleep(args[0]*1000);
+						Thread.sleep(args[0]*500);
+						LCD.drawString("M-A: " + (Motor.A.getTachoCount()-lastCountA), 2, 3);
+						LCD.drawString("M-C: " + (Motor.C.getTachoCount()-lastCountC), 2, 4);
+						lastCountA = Motor.A.getTachoCount();
+						lastCountC = Motor.C.getTachoCount();
+						Thread.sleep(args[0]*500);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
 					Motor.A.setSpeed(0);
 					Motor.C.setSpeed(0);
+					Motor.C.stop();
+					Motor.A.stop();
 					break;
 					
 				case moveback:
@@ -69,6 +84,8 @@ public class Brick {
 					}
 					Motor.C.setSpeed(0);
 					Motor.A.setSpeed(0);
+					Motor.C.stop();
+					Motor.A.stop();
 					break;
 					
 				case kick:
@@ -80,12 +97,15 @@ public class Brick {
 					Motor.B.stop();
 					break;
 					
+				case floatMotor:
+					Motor.A.flt();
+					Motor.C.flt();
+					break;
 				case rotate_kicker:
 					voltage = Battery.getVoltage();
 					Motor.B.setSpeed(voltage*200);
 					Motor.B.setAcceleration(100000);
 					Motor.B.rotate(args[0]);
-					
 					break;
 				}
 				
