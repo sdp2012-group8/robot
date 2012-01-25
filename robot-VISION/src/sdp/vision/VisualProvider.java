@@ -1,6 +1,6 @@
 package sdp.vision;
 
-import au.edu.jcu.v4l4j.CaptureCallback;
+import sdp.common.VisualCallback;
 
 
 /**
@@ -9,14 +9,14 @@ import au.edu.jcu.v4l4j.CaptureCallback;
  * 
  * @author Gediminas Liktaras
  */
-public interface VisualInputProvider {
+public interface VisualProvider {
 	
 	/**
 	 * Set the provider's callback object.
 	 * 
 	 * @param callback The callback object.
 	 */
-	public void setCallback(CaptureCallback callback);
+	public void setCallback(VisualCallback callback);
 
 	/**
 	 * Begin video capture, using the provided object as a callback.

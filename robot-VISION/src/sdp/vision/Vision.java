@@ -1,8 +1,10 @@
 package sdp.vision;
 
 import java.awt.Point;
+import java.awt.image.BufferedImage;
 
 import sdp.common.Robot;
+import sdp.common.VisualCallback;
 import sdp.common.WorldState;
 import sdp.common.WorldStateCallback;
 import sdp.common.WorldStateProvider;
@@ -16,7 +18,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * 
  * @author Gediminas Liktaras
  */
-public class Vision implements CaptureCallback, WorldStateProvider {
+public class Vision implements VisualCallback, WorldStateProvider {
 	
 	/** Image processor. */
 	OldImageProcessor imageProcessor;
@@ -45,32 +47,20 @@ public class Vision implements CaptureCallback, WorldStateProvider {
 	
 
 	/**
-	 * This method is called if there is an error during capture.
-	 * 
-	 * @param e The exception.
-	 */
-	@Override
-	public void exceptionReceived(V4L4JException e) {
-		System.err.println("Error occured during capture.");
-		e.printStackTrace();
-	}
-
-	/**
 	 * This method is called when the next frame is available from the visual
 	 * input source.
 	 * 
 	 * @param frame The next frame.
 	 */
 	@Override
-	public void nextFrame(VideoFrame frame) {
+	public void nextFrame(BufferedImage frame) {
 		if (callback == null) {
 			System.err.println("Vision callback has not been set.");
 		}
 		
 		WorldState ws = new WorldState(new Point(0, 0), new Robot(new Point(0, 0), 0.0), new Robot(new Point(0, 0), 0.0));
 		// WorldState ws = imageProcessor.getWorldState(frame.getBufferedImage());
-		callback.nextWorldState(ws, frame.getBufferedImage());
-		frame.recycle();
+		callback.nextWorldState(ws, frame);
 	}
 	
 }

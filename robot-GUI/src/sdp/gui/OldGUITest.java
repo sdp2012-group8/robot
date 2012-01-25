@@ -4,16 +4,22 @@
 package sdp.gui;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
+
+import javax.imageio.ImageIO;
 
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import sdp.common.WorldState;
 import sdp.common.WorldStateCallback;
-import sdp.vision.CameraInputProvider;
+import sdp.vision.CameraVisualProvider;
+import sdp.vision.ImageVisualProvider;
 import sdp.vision.Vision;
+import sdp.vision.VisualProvider;
 
 /**
- * @author s0905195
- *
+ * This is a temporary class for carrying out testing of the old GUI interface.
+ * 
+ * @author Gediminas Liktaras
  */
 public class OldGUITest implements Runnable, WorldStateCallback {
 	
@@ -23,7 +29,7 @@ public class OldGUITest implements Runnable, WorldStateCallback {
 	/** The vision subsystem object. */
 	private Vision vision;
 	/** Visual input source. */
-	CameraInputProvider input;
+	VisualProvider input;
 	
 	
 	/**
@@ -33,7 +39,11 @@ public class OldGUITest implements Runnable, WorldStateCallback {
 		vision = new Vision();
 		vision.setCallback(this);
 		
-		input = new CameraInputProvider("/dev/video0", V4L4JConstants.STANDARD_WEBCAM, 0);
+		//input = new CameraVisualProvider("/dev/video0", V4L4JConstants.STANDARD_WEBCAM, 0);
+		String filenames[] = { "../robot-VISION/data/testImages/pitch2-1.png",
+				               "../robot-VISION/data/testImages/pitch2-2.png",
+				               "../robot-VISION/data/testImages/pitch2-3.png" };
+		input = new ImageVisualProvider(filenames, 25);		
 		input.setCallback(vision);
 		
 		gui = new OldGUI();
