@@ -19,8 +19,10 @@ import lejos.nxt.NXT;
  */
 public class Brick {
 
+
+
 	private static Communicator mCont;
-	
+
 	/**
 	 * The entry point of the program
 	 * @param args
@@ -28,10 +30,12 @@ public class Brick {
 	public static void main(String[] args) {
 		// connect with PC and start receiving messages
 		mCont = new BComm(new MessageListener() {
+			public static final float CIRC = 0.4712F;
+			public static final float WHEEL = 0.26F;
 			int lastCountA = 0;
 			int lastCountC = 0;
 			float slowest = Motor.A.getMaxSpeed() > Motor.B.getMaxSpeed() ? Motor.B.getMaxSpeed()-10 : Motor.A.getMaxSpeed()-10;
-			
+
 			/**
 			 * Add your movement logic inside this method
 			 */
@@ -39,55 +43,56 @@ public class Brick {
 			public void receiveMessage(opcode op, byte[] args, Communicator controler) {
 				// to send messages back to PC, use mCont.sendMessage
 				switch (op) {
-				
+
 				case exit:
 					mCont.close();
 					NXT.shutDown();
 					break;
-					
-				case move:
-					float voltage = Battery.getVoltage();
-					
-					Motor.A.setSpeed(slowest);
-					Motor.C.setSpeed(slowest);
-					Motor.A.setAcceleration(args[1]*100);
-					Motor.C.setAcceleration(args[1]*100);
-					Motor.A.forward();
-					Motor.C.forward();
-					try {
-						Thread.sleep(args[0]*500);
-						LCD.drawString("M-A: " + (Motor.A.getTachoCount()-lastCountA), 2, 3);
-						LCD.drawString("M-C: " + (Motor.C.getTachoCount()-lastCountC), 2, 4);
-						lastCountA = Motor.A.getTachoCount();
-						lastCountC = Motor.C.getTachoCount();
-						Thread.sleep(args[0]*500);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					Motor.A.setSpeed(0);
-					Motor.C.setSpeed(0);
-					Motor.C.stop();
-					Motor.A.stop();
-					break;
-					
-				case moveback:
-					voltage = Battery.getVoltage();
-					Motor.A.setSpeed(voltage*200);
-					Motor.C.setSpeed(voltage*200);
-					Motor.A.backward();
-					Motor.C.backward();
 
-					try {
-						Thread.sleep(args[0]*1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+				case move:
+					if (args.length > 0) {					
+						Motor.A.setSpeed(slowest);
+						Motor.C.setSpeed(slowest);
+						Motor.A.setAcceleration(args[1]*100);
+						Motor.C.setAcceleration(args[1]*100);
+						Motor.A.forward();
+						Motor.C.forward();
+						try {
+							Thread.sleep(args[0]*500);
+							LCD.drawString("M-A: " + (Motor.A.getTachoCount()-lastCountA), 2, 3);
+							LCD.drawString("M-C: " + (Motor.C.getTachoCount()-lastCountC), 2, 4);
+							lastCountA = Motor.A.getTachoCount();
+							lastCountC = Motor.C.getTachoCount();
+							Thread.sleep(args[0]*500);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						Motor.A.setSpeed(0);
+						Motor.C.setSpeed(0);
+						Motor.C.stop();
+						Motor.A.stop();
 					}
-					Motor.C.setSpeed(0);
-					Motor.A.setSpeed(0);
-					Motor.C.stop();
-					Motor.A.stop();
 					break;
-					
+
+				case moveback:
+					if (args.length > 0) {
+						Motor.A.setSpeed(slowest);
+						Motor.C.setSpeed(slowest);
+						Motor.A.backward();
+						Motor.C.backward();
+
+						try {
+							Thread.sleep(args[0]*1000);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						Motor.C.setSpeed(0);
+						Motor.A.setSpeed(0);
+						Motor.C.stop();
+						Motor.A.stop();
+					}
+					break;
+
 				case kick:
 					Motor.B.setSpeed(Motor.B.getMaxSpeed());
 					Motor.B.setAcceleration(100000);
@@ -95,19 +100,27 @@ public class Brick {
 					Motor.B.rotate(120);
 					Motor.B.stop();
 					break;
-					
-				case floatMotor:
-					Motor.A.flt();
-					Motor.C.flt();
+
+				case turn:
+					if (args.length > 0) {
+						int a =(int) ((CIRC*(args[0]/360))/WHEEL);
+						Motor.A.setSpeed(360);
+						Motor.C.setSpeed(360);
+						Motor.A.rotate(a);
+						Motor.C.rotate(a);
+					}
+
 					break;
+
 				case rotate_kicker:
-					voltage = Battery.getVoltage();
-					Motor.B.setSpeed(voltage*200);
-					Motor.B.setAcceleration(100000);
-					Motor.B.rotate(args[0]);
+					if (args.length > 0) {
+						Motor.B.setSpeed(slowest);
+						Motor.B.setAcceleration(100000);
+						Motor.B.rotate(args[0]);
+					}
 					break;
 				}
-				
+
 			}
 		});
 	}

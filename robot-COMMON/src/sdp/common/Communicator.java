@@ -17,7 +17,7 @@ public interface Communicator {
 	 *
 	 */
 	public enum opcode {
-		move, exit, moveback, kick, rotate_kicker, floatMotor
+		move, exit, moveback, kick, rotate_kicker, turn
 	}
 	
 	/**
