@@ -5,9 +5,12 @@ import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 
 import lejos.nxt.Battery;
+import lejos.nxt.I2CPort;
 import lejos.nxt.LCD;
 import lejos.nxt.Motor;
 import lejos.nxt.NXT;
+import lejos.nxt.SensorPort;
+import lejos.nxt.UltrasonicSensor;
 
 /**
  * This is the program that should be uploaded to the NXT Brick.
@@ -119,9 +122,35 @@ public class Brick {
 						Motor.B.rotate(args[0]);
 					}
 					break;
+					
+				case move_to_wall:
+					UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
+					sens.continuous();
+					Motor.A.setSpeed(slowest);
+					Motor.C.setSpeed(slowest);
+					Motor.A.setAcceleration(1000);
+					Motor.C.setAcceleration(1000);
+					Motor.A.forward();
+					Motor.C.forward();
+					
+					while (true) { // if no other sensors interfere?
+						int dist = sens.getDistance();
+						LCD.clear(2);
+						LCD.clear(3);
+						LCD.drawString(String.valueOf(dist), 0, 2);
+						LCD.drawString(sens.getUnits(), 0, 3);
+						if (dist < 30)
+							break;
+					}
+					Motor.A.setSpeed(0);
+					Motor.C.setSpeed(0);
+					Motor.C.stop();
+					Motor.A.stop();
+					sens.off();
+					break;
 				}
-
 			}
 		});
+		// if the communicator is not listening inside a new thread, this code below this point will never be reached!
 	}
 }
