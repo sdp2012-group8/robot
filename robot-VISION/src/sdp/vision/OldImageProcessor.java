@@ -28,7 +28,7 @@ import sdp.common.Robot;
 import sdp.common.WorldState;
 import sdp.common.Tools;
 
-public class ImageProcessor {
+public class OldImageProcessor {
 
 	public static int DEBUG_LEVEL = 2;
 
@@ -64,10 +64,10 @@ public class ImageProcessor {
 	public static int ylowerlimit = 85;
 	public static int yupperlimit = 410;
 
-	protected static int blueThreshold = 350;
-	protected static int yellThreshold = 150;
+	public static int blueThreshold = 350;
+	public static int yellThreshold = 150;
 
-	protected static int searchdistance = 200;
+	public static int searchdistance = 200;
 	public static int rayOfLight = 35;
 
 	Point lastBallPos = new Point(-1, -1);
@@ -77,20 +77,20 @@ public class ImageProcessor {
 	Point ytPos = new Point(-1, -1);
 	Point ourPos = new Point(-1, -1);
 
-	LinkedList<Point> lines = new LinkedList<Point>();
-	LinkedList<Integer> lineColor = new LinkedList<Integer>();
+	public LinkedList<Point> lines = new LinkedList<Point>();
+	public LinkedList<Integer> lineColor = new LinkedList<Integer>();
 
 	BufferedImage image;
-	protected static int mode = 5;
+	public static int mode = 5;
 	private int[] blueAngles = new int[mode]; // method 1
 	private int[] yellAngles = new int[mode]; // method 1
 	private int lastYellPos = -1; // method 2
 	private int lastBluePos = -1; // method 2
-	static int method = 1; // method 1 for normalisation of 10 numbers, method 2
+	public static int method = 1; // method 1 for normalisation of 10 numbers, method 2
 	// for last position checking.
 
 	// ~~~~~OUTPUT FOR OTHER TEAMS~~~~~~//
-	WorldState worldState;
+	public WorldState worldState;
 
 	/**
 	 * @param image
@@ -406,17 +406,17 @@ public class ImageProcessor {
 				bestangle = lastYellPos;
 			}
 		}
-		if (DEBUG_LEVEL > 3) {
-			if (colour.equals(yell)) {
-				GUI.setDebugOutputYell("Yell robot at x:" + x + ", y:" + y
-						+ " Angle:" + bestangle);
-				// System.out.println("Yellow robot at "+x+":"+y+" Angle:"+bestangle);
-			} else {
-				GUI.setDebugOutputBlue("Blue robot at x:" + x + ", y:" + y
-						+ " Angle:" + bestangle);
-				// System.out.println("Blue robot at "+x+":"+y+" Angle:"+bestangle);
-			}
-		}
+//		if (DEBUG_LEVEL > 3) {
+//			if (colour.equals(yell)) {
+//				GUI.setDebugOutputYell("Yell robot at x:" + x + ", y:" + y
+//						+ " Angle:" + bestangle);
+//				// System.out.println("Yellow robot at "+x+":"+y+" Angle:"+bestangle);
+//			} else {
+//				GUI.setDebugOutputBlue("Blue robot at x:" + x + ", y:" + y
+//						+ " Angle:" + bestangle);
+//				// System.out.println("Blue robot at "+x+":"+y+" Angle:"+bestangle);
+//			}
+//		}
 
 		if (DEBUG_LEVEL > 2) {
 			// this will mark the checkpoints
@@ -678,6 +678,6 @@ public class ImageProcessor {
 		drawPixel(raster, new Point(p.x, p.y - 1), colour);
 	}
 
-	public ImageProcessor() {	}
+	public OldImageProcessor() {	}
 
 }

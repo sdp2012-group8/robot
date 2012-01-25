@@ -1,9 +1,12 @@
-package sdp.vision;
+package sdp.gui;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+
+import sdp.vision.OldImageProcessor;
+
 
 /*
  * Vision test class. Works without a cam feed or v4l4j (but needs test images).
@@ -26,8 +29,8 @@ public class ViewerTest implements Runnable {
         new ViewerTest();
     }
     public void run() {
-    	ImageProcessor ip = new ImageProcessor();
-    	GUI gui = new GUI();
+    	OldImageProcessor ip = new OldImageProcessor();
+    	OldGUI gui = new OldGUI();
         gui.setVisible(true);
 		BufferedImage image1 = null, image2 = null, image3 = null;
 		int count=0;

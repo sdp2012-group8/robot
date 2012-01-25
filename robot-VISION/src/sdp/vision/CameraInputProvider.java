@@ -20,6 +20,9 @@ public class CameraInputProvider implements VisualInputProvider {
 	/** The device's frame grabber. */
 	private FrameGrabber frameGrabber;
 	
+	/** Whether the callback object is set. */
+	private boolean callbackSet;
+	
 	
 	/**
 	 * The main constructor.
@@ -33,20 +36,30 @@ public class CameraInputProvider implements VisualInputProvider {
 		int height = V4L4JConstants.MAX_HEIGHT;
 		int quality = 80;
 		
+		callbackSet = false;
+		
         try {
             videoDevice = new VideoDevice(deviceFile);
             frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, standard, channel, quality);
-            System.out.println("Starting capture at " + frameGrabber.getWidth() +
-            		"x" + frameGrabber.getHeight());
         } catch (V4L4JException e) {
             System.err.println("Error setting up capture."); 	// TODO: Replace w/ logging.
-            e.printStackTrace();
-            
+            e.printStackTrace();            
             cleanup();
             return;
         }
 	}
 	
+	
+	/**
+	 * Set the provider's callback object.
+	 * 
+	 * @param callback The callback object.
+	 */
+	@Override
+	public void setCallback(CaptureCallback callback) {
+		frameGrabber.setCaptureCallback(callback);
+		callbackSet = (callback != null);
+	}
 
 	/**
 	 * Begin video capture, using the provided object as a callback.
@@ -54,11 +67,14 @@ public class CameraInputProvider implements VisualInputProvider {
 	 * @param callback The callback object.
 	 */
 	@Override
-	public void startCapture(CaptureCallback callback) {
-		frameGrabber.setCaptureCallback(callback);
+	public void startCapture() {
+		if (!callbackSet) {
+			System.err.println("Warning! The callback in the CameraInputProvider is unset.");
+		}
 		
 		try {
 	        frameGrabber.startCapture();
+	        System.out.println("Starting capture at " + frameGrabber.getWidth() + "x" + frameGrabber.getHeight());
 	    } catch (V4L4JException e) {
 	        System.err.println("Error starting the capture.");	// TODO: replace with logging.
 	        e.printStackTrace();

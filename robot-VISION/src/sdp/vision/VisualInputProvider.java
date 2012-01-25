@@ -10,11 +10,16 @@ import au.edu.jcu.v4l4j.CaptureCallback;
  * @author Gediminas Liktaras
  */
 public interface VisualInputProvider {
-
+	
 	/**
-	 * Begin video capture, using the provided object as a callback.
+	 * Set the provider's callback object.
 	 * 
 	 * @param callback The callback object.
 	 */
-	public void startCapture(CaptureCallback callback);
+	public void setCallback(CaptureCallback callback);
+
+	/**
+	 * Begin video capture, using the provided object as a callback.
+	 */
+	public void startCapture();
 }

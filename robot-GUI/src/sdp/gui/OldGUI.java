@@ -1,13 +1,14 @@
-package sdp.vision;
+package sdp.gui;
 
 import java.awt.image.BufferedImage;
 
 import sdp.common.Tools;
+import sdp.vision.OldImageProcessor;
 
 /**
  * The GUI of the system.
  */
-public class GUI extends javax.swing.JFrame {
+public class OldGUI extends javax.swing.JFrame {
 
 	/**
 	 *
@@ -16,7 +17,7 @@ public class GUI extends javax.swing.JFrame {
 	public static String className = null;
 
 	/** Creates new form GUI */
-	public GUI() {
+	public OldGUI() {
 		initComponents();
 	}
 
@@ -150,7 +151,7 @@ public class GUI extends javax.swing.JFrame {
 
 		modeSlider.setMaximum(24);
 		modeSlider.setMinimum(1);
-		modeSlider.setValue(ImageProcessor.mode);
+		modeSlider.setValue(OldImageProcessor.mode);
 		modeSlider.addChangeListener(new javax.swing.event.ChangeListener() {
 			public void stateChanged(javax.swing.event.ChangeEvent evt) {
 				modeSliderStateChanged(evt);
@@ -236,7 +237,7 @@ public class GUI extends javax.swing.JFrame {
 			}
 		});
 		toggleMouse.setText("Mouse Mode");
-		toggleMouse.setSelected(ImageProcessor.useMouse);
+		toggleMouse.setSelected(OldImageProcessor.useMouse);
 		toggleMouse.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				toggleMouseActionPerformed(evt);
@@ -578,7 +579,7 @@ public class GUI extends javax.swing.JFrame {
 
 	private void btnBarrelCorrectionActionPerformed(
 			java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnBarrelCorrectionActionPerformed
-		ImageProcessor.useBarrelDistortion = !(ImageProcessor.useBarrelDistortion);
+		OldImageProcessor.useBarrelDistortion = !(OldImageProcessor.useBarrelDistortion);
 
 	}// GEN-LAST:event_btnBarrelCorrectionActionPerformed
 
@@ -592,37 +593,37 @@ public class GUI extends javax.swing.JFrame {
 
 	private void btnPitch1ActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnPitch1ActionPerformed
 		blueThreshSlider.setValue(350);
-		ImageProcessor.blueThreshold = 350;
+		OldImageProcessor.blueThreshold = 350;
 		yellThreshSlider.setValue(150);
-		ImageProcessor.yellThreshold = 150;
+		OldImageProcessor.yellThreshold = 150;
 		ballSearchSlider.setValue(700);
-		ImageProcessor.searchdistance = 700;
+		OldImageProcessor.searchdistance = 700;
 		modeSlider.setValue(5);
-		ImageProcessor.mode = 5;
-		ImageProcessor.xlowerlimit = 0;
-		ImageProcessor.xupperlimit = 630;
-		ImageProcessor.ylowerlimit = 85;
-		ImageProcessor.yupperlimit = 410;
+		OldImageProcessor.mode = 5;
+		OldImageProcessor.xlowerlimit = 0;
+		OldImageProcessor.xupperlimit = 630;
+		OldImageProcessor.ylowerlimit = 85;
+		OldImageProcessor.yupperlimit = 410;
 
 	}// GEN-LAST:event_btnPitch1ActionPerformed
 
 	private void btnPitch2ActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnPitch2ActionPerformed
 		blueThreshSlider.setValue(350);
-		ImageProcessor.blueThreshold = 350;
+		OldImageProcessor.blueThreshold = 350;
 		yellThreshSlider.setValue(150);
-		ImageProcessor.yellThreshold = 150;
+		OldImageProcessor.yellThreshold = 150;
 		ballSearchSlider.setValue(700);
-		ImageProcessor.searchdistance = 700;
+		OldImageProcessor.searchdistance = 700;
 		modeSlider.setValue(5);
-		ImageProcessor.mode = 5;
-		ImageProcessor.xlowerlimit = 10;
-		ImageProcessor.xupperlimit = 640;
-		ImageProcessor.ylowerlimit = 70;
-		ImageProcessor.yupperlimit = 405;
+		OldImageProcessor.mode = 5;
+		OldImageProcessor.xlowerlimit = 10;
+		OldImageProcessor.xupperlimit = 640;
+		OldImageProcessor.ylowerlimit = 70;
+		OldImageProcessor.yupperlimit = 405;
 	}// GEN-LAST:event_btnPitch2ActionPerformed
 
 	private void debugSliderStateChanged(javax.swing.event.ChangeEvent evt) {// GEN-FIRST:event_debugSliderStateChanged
-		ImageProcessor.DEBUG_LEVEL = debugSlider.getValue();
+		OldImageProcessor.DEBUG_LEVEL = debugSlider.getValue();
 		if (debugSlider.getValue() < 4) {
 			// debugOutputBlue.setText("");
 			// debugOutputYell.setText("");
@@ -630,24 +631,24 @@ public class GUI extends javax.swing.JFrame {
 	}// GEN-LAST:event_debugSliderStateChanged
 
 	private void blueThreshSliderStateChanged(javax.swing.event.ChangeEvent evt) {// GEN-FIRST:event_blueThreshSliderStateChanged
-		ImageProcessor.blueThreshold = blueThreshSlider.getValue();
+		OldImageProcessor.blueThreshold = blueThreshSlider.getValue();
 	}// GEN-LAST:event_blueThreshSliderStateChanged
 
 	private void yellThreshSliderStateChanged(javax.swing.event.ChangeEvent evt) {// GEN-FIRST:event_yellThreshSliderStateChanged
-		ImageProcessor.yellThreshold = yellThreshSlider.getValue();
+		OldImageProcessor.yellThreshold = yellThreshSlider.getValue();
 	}// GEN-LAST:event_yellThreshSliderStateChanged
 
 	private void ballSearchSliderStateChanged(javax.swing.event.ChangeEvent evt) {// GEN-FIRST:event_ballSearchSliderStateChanged
-		ImageProcessor.searchdistance = ballSearchSlider.getValue();
+		OldImageProcessor.searchdistance = ballSearchSlider.getValue();
 	}// GEN-LAST:event_ballSearchSliderStateChanged
 
 	private void modeSliderStateChanged(javax.swing.event.ChangeEvent evt) {// GEN-FIRST:event_modeSliderStateChanged
 		int v = modeSlider.getValue();
 		if (v == 1) {
-			ImageProcessor.method = 2;
+			OldImageProcessor.method = 2;
 		} else {
-			ImageProcessor.method = 1;
-			ImageProcessor.mode = v;
+			OldImageProcessor.method = 1;
+			OldImageProcessor.mode = v;
 		}
 	}// GEN-LAST:event_modeSliderStateChanged
 
@@ -706,7 +707,7 @@ public class GUI extends javax.swing.JFrame {
 	}// GEN-LAST:event_toggleStopActionPerformed
 
 	private void toggleMouseActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_toggleStopActionPerformed
-		ImageProcessor.useMouse = !ImageProcessor.useMouse;
+		OldImageProcessor.useMouse = !OldImageProcessor.useMouse;
 	}// GEN-LAST:event_toggleMouseActionPerformed
 
 	private void toggleDefendActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_toggleStopActionPerformed

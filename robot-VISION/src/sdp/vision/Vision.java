@@ -1,65 +1,76 @@
 package sdp.vision;
-import java.util.List;
 
-import au.edu.jcu.v4l4j.Control;
-import au.edu.jcu.v4l4j.FrameGrabber;
-import au.edu.jcu.v4l4j.VideoDevice;
+import java.awt.Point;
+
+import sdp.common.Robot;
+import sdp.common.WorldState;
+import sdp.common.WorldStateCallback;
+import sdp.common.WorldStateProvider;
+import au.edu.jcu.v4l4j.CaptureCallback;
+import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
-public abstract class Vision extends Thread {
-	// Video capture variables
-	protected VideoDevice videoDevice;
-	protected FrameGrabber frameGrabber;
-	protected Thread captureThread;
-	private static final int SATURATION = 65535;
-	private static final int BRIGHTNESS = 32768;
-	private static final int CONTRAST = 32768;
-	private static final int HUE = 32768;
-	public static final int FULL_LUMA_RANGE = 1;
-	public static final int UV_RATIO = 49;
 
+/**
+ * The main vision subsystem class.
+ * 
+ * @author Gediminas Liktaras
+ */
+public class Vision implements CaptureCallback, WorldStateProvider {
+	
+	/** Image processor. */
+	OldImageProcessor imageProcessor;
+	
+	/** The callback object. */
+	WorldStateCallback callback;
+	
+	
+	/**
+	 * The main constructor.
+	 */
 	public Vision() {
-		super();
+		imageProcessor = new OldImageProcessor();
+	}
+	
+	
+	/**
+	 * Set the callback object that will receive world state updates.
+	 * 
+	 * @param callback The callback object.
+	 */
+	@Override
+	public void setCallback(WorldStateCallback callback) {
+		this.callback = callback;
+	}
+	
+
+	/**
+	 * This method is called if there is an error during capture.
+	 * 
+	 * @param e The exception.
+	 */
+	@Override
+	public void exceptionReceived(V4L4JException e) {
+		System.err.println("Error occured during capture.");
+		e.printStackTrace();
 	}
 
 	/**
-	 * Initialises the FrameGrabber object with the given parameters
-	     * @param dev the video device file to capture from
-	     * @param w the desired capture width
-	     * @param h the desired capture height
-	     * @param std the capture standard
-	     * @param channel the capture channel
-	     * @param qty the JPEG compression quality
-	     * @throws V4L4JException if any parameter if invalid
+	 * This method is called when the next frame is available from the visual
+	 * input source.
+	 * 
+	 * @param frame The next frame.
 	 */
-	protected void initFrameGrabber(String dev, int w, int h,
-			int std, int channel, int qty) throws V4L4JException {
-			    videoDevice = new VideoDevice(dev);
-			    /*try {
-					List<Control> controls =  videoDevice.getControlList().getList();
-					for(Control c: controls) { 
-						if(c.getName().equals("Saturation"))
-						if(c.getName().equals("Contrast"))
-							c.setValue(CONTRAST);
-						if(c.getName().equals("Brightness"))
-							c.setValue(BRIGHTNESS);
-						if(c.getName().equals("full luma range"))
-							c.setValue(FULL_LUMA_RANGE);
-						if(c.getName().equals("Hue"))
-							c.setValue(HUE);
-						if(c.getName().equals("Saturation"))
-							c.setValue(SATURATION);
-						if(c.getName().equals("uv ratio"))
-							c.setValue(UV_RATIO);
-					}
-					videoDevice.releaseControlList();
-			    }
-			    catch(V4L4JException e3) { 
-			    	System.out.println("Cannot set video device settings!"); 
-			    }*/
-				videoDevice.releaseControlList();
-			    frameGrabber = videoDevice.getJPEGFrameGrabber(w, h, channel, std, qty);
-			    frameGrabber.startCapture();
-			    System.out.println("Starting capture at "+frameGrabber.getWidth()+"x"+frameGrabber.getHeight());            
-			}
+	@Override
+	public void nextFrame(VideoFrame frame) {
+		if (callback == null) {
+			System.err.println("Vision callback has not been set.");
+		}
+		
+		WorldState ws = new WorldState(new Point(0, 0), new Robot(new Point(0, 0), 0.0), new Robot(new Point(0, 0), 0.0));
+		// WorldState ws = imageProcessor.getWorldState(frame.getBufferedImage());
+		callback.nextWorldState(ws, frame.getBufferedImage());
+		frame.recycle();
+	}
+	
 }
