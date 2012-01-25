@@ -26,7 +26,7 @@ public class OldGUITest implements Runnable, Observer {
 	private VisualInputObservable input;
 	
 	/** Whether to use camera or offline inputs. */
-	private static final boolean USE_CAMERA = false;
+	private static final boolean USE_CAMERA = true;
 	
 	
 	/**
@@ -37,7 +37,7 @@ public class OldGUITest implements Runnable, Observer {
 		vision.addObserver(this);
 		
 		if (USE_CAMERA) {		
-			input = new CameraVisualInputProvider("/dev/video0", V4L4JConstants.STANDARD_PAL, 0);
+			input = new CameraVisualInputProvider("/dev/video0", V4L4JConstants.STANDARD_WEBCAM, 0);
 		} else {
 			String filenames[] = { "../robot-VISION/data/testImages/pitch2-1.png",
 					               "../robot-VISION/data/testImages/pitch2-2.png",

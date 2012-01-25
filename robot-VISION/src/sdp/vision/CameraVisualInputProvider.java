@@ -1,5 +1,7 @@
 package sdp.vision;
 
+import java.awt.image.BufferedImage;
+
 import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.V4L4JConstants;
@@ -98,6 +100,7 @@ public class CameraVisualInputProvider extends VisualInputObservable implements 
 	public void nextFrame(VideoFrame frame) {
 		setChanged();
 		notifyObservers(frame.getBufferedImage());
+		frame.recycle();
 	}
 
 }
