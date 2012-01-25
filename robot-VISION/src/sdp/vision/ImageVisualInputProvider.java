@@ -6,7 +6,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import sdp.common.VisualCallback;
+
 
 
 /**
@@ -14,7 +14,7 @@ import sdp.common.VisualCallback;
  * 
  * @author Gediminas Liktaras
  */
-public class ImageVisualProvider implements VisualProvider, Runnable {
+public class ImageVisualInputProvider extends VisualInputObservable implements Runnable {
 	
 	/** A list of images to present to the application. */
 	private BufferedImage images[];
@@ -26,8 +26,6 @@ public class ImageVisualProvider implements VisualProvider, Runnable {
 	
 	/** The object's thread. */
 	private Thread thread;
-	/** The callback object. */
-	private VisualCallback callback;
 	
 	
 	/**
@@ -36,7 +34,7 @@ public class ImageVisualProvider implements VisualProvider, Runnable {
 	 * @param filenames A list of filenames to images that will be shown.
 	 * @param fps How many frames per second to show.
 	 */
-	public ImageVisualProvider(String filenames[], int fps) {
+	public ImageVisualInputProvider(String filenames[], int fps) {
 		images = new BufferedImage[filenames.length];		
 		try {
 			for (int i = 0; i < filenames.length; ++i) {
@@ -60,7 +58,8 @@ public class ImageVisualProvider implements VisualProvider, Runnable {
 	@Override
 	public void run() {
 		while (!Thread.interrupted()) {
-			callback.nextFrame(images[nextImageIndex]);
+			setChanged();
+			notifyObservers(images[nextImageIndex]);			
 			nextImageIndex = (nextImageIndex + 1) % images.length;
 			
 			try {
@@ -74,15 +73,7 @@ public class ImageVisualProvider implements VisualProvider, Runnable {
 	 */
 	@Override
 	public void startCapture() {
-		if (callback == null) {
-			System.err.println("The callback has not been set in ImageVisualProvider object.");
-		}
 		thread.start();
-	}
-
-	@Override
-	public void setCallback(VisualCallback callback) {
-		this.callback = callback;
 	}
 
 }

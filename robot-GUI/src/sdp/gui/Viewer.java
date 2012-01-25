@@ -2,10 +2,11 @@ package sdp.gui;
 
 import java.awt.Point;
 import java.awt.image.BufferedImage;
+import java.util.Observable;
+import java.util.Observer;
 
-import sdp.common.VisualCallback;
 import sdp.common.WorldState;
-import sdp.vision.CameraVisualProvider;
+import sdp.vision.CameraVisualInputProvider;
 import sdp.vision.OldImageProcessor;
 import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.FrameGrabber;
@@ -15,7 +16,7 @@ import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 
-public class Viewer implements Runnable, VisualCallback {
+public class Viewer implements Runnable, Observer {
 	
 	// Video capture variables
 	protected VideoDevice videoDevice;
@@ -82,7 +83,7 @@ public class Viewer implements Runnable, VisualCallback {
 	int imgheight;
 	public static OldImageProcessor imageProcessor;
 	
-	CameraVisualProvider input;
+	CameraVisualInputProvider input;
 
 	/**
 	 * Builds a WebcamViewer object
@@ -110,7 +111,7 @@ public class Viewer implements Runnable, VisualCallback {
 //			e.printStackTrace();
 //		}
 		
-		input = new CameraVisualProvider("/dev/video0", V4L4JConstants.STANDARD_WEBCAM, 0);
+		input = new CameraVisualInputProvider("/dev/video0", V4L4JConstants.STANDARD_WEBCAM, 0);
 		imageProcessor = new OldImageProcessor();
 		gui = new OldGUI();
 		gui.setVisible(true);
@@ -140,7 +141,7 @@ public class Viewer implements Runnable, VisualCallback {
 	 * display it
 	 */
 	public void run() {
-		input.setCallback(this);
+		input.addObserver(this);
 		input.startCapture();
 	}
 
@@ -193,7 +194,9 @@ public class Viewer implements Runnable, VisualCallback {
 	}
 
 	@Override
-	public void nextFrame(BufferedImage frame) {
+	public void update(Observable o, Object arg) {
+		BufferedImage frame = (BufferedImage) arg;
+		
 		prevsec = (int) System.currentTimeMillis() / 1000;
 
 		try {

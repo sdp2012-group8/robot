@@ -1,16 +1,11 @@
 package sdp.vision;
 
-import java.awt.Point;
 import java.awt.image.BufferedImage;
+import java.util.Observable;
+import java.util.Observer;
 
-import sdp.common.Robot;
-import sdp.common.VisualCallback;
 import sdp.common.WorldState;
-import sdp.common.WorldStateCallback;
-import sdp.common.WorldStateProvider;
-import au.edu.jcu.v4l4j.CaptureCallback;
-import au.edu.jcu.v4l4j.VideoFrame;
-import au.edu.jcu.v4l4j.exceptions.V4L4JException;
+import sdp.common.WorldStateObservable;
 
 
 /**
@@ -18,13 +13,10 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * 
  * @author Gediminas Liktaras
  */
-public class Vision implements VisualCallback, WorldStateProvider {
+public class Vision extends WorldStateObservable implements Observer {
 	
 	/** Image processor. */
 	OldImageProcessor imageProcessor;
-	
-	/** The callback object. */
-	WorldStateCallback callback;
 	
 	
 	/**
@@ -34,34 +26,21 @@ public class Vision implements VisualCallback, WorldStateProvider {
 		imageProcessor = new OldImageProcessor();
 	}
 	
-	
-	/**
-	 * Set the callback object that will receive world state updates.
-	 * 
-	 * @param callback The callback object.
-	 */
-	@Override
-	public void setCallback(WorldStateCallback callback) {
-		this.callback = callback;
-	}
-	
 
-	/**
-	 * This method is called when the next frame is available from the visual
-	 * input source.
-	 * 
-	 * @param frame The next frame.
+	/* (non-Javadoc)
+	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
 	 */
 	@Override
-	public void nextFrame(BufferedImage frame) {
-		if (callback == null) {
-			System.err.println("Vision callback has not been set.");
+	public void update(Observable o, Object arg) {
+		if (o instanceof VisualInputObservable) {
+			BufferedImage frame = (BufferedImage) arg;
+			
+			imageProcessor.process(frame);
+			WorldState state = imageProcessor.worldState;
+			
+			setChanged();
+			notifyObservers(state);
 		}
-		
-		imageProcessor.process(frame);
-		WorldState state = imageProcessor.worldState;
-		
-		callback.nextWorldState(state);
 	}
 	
 }

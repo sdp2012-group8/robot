@@ -1,6 +1,5 @@
 package sdp.vision;
 
-import sdp.common.VisualCallback;
 import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.V4L4JConstants;
@@ -15,15 +14,12 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * 
  * @author Gediminas Liktaras
  */
-public class CameraVisualProvider implements CaptureCallback, VisualProvider {
+public class CameraVisualInputProvider extends VisualInputObservable implements CaptureCallback {
 	
 	/** Video device, whose input will be captured. */
 	private VideoDevice videoDevice;
 	/** The device's frame grabber. */
 	private FrameGrabber frameGrabber;
-	
-	/** The callback object. */
-	private VisualCallback callback;
 	
 	
 	/**
@@ -33,7 +29,7 @@ public class CameraVisualProvider implements CaptureCallback, VisualProvider {
 	 * @param standard Capture standard to use.
 	 * @param channel Capture channel to use.
 	 */
-	public CameraVisualProvider(String deviceFile, int standard, int channel) {
+	public CameraVisualInputProvider(String deviceFile, int standard, int channel) {
 		int width = V4L4JConstants.MAX_WIDTH;
 		int height = V4L4JConstants.MAX_HEIGHT;
 		int quality = 80;
@@ -50,16 +46,6 @@ public class CameraVisualProvider implements CaptureCallback, VisualProvider {
         }
 	}
 	
-	
-	/**
-	 * Set the provider's callback object.
-	 * 
-	 * @param callback The callback object.
-	 */
-	@Override
-	public void setCallback(VisualCallback callback) {
-		this.callback = callback;
-	}
 
 	/**
 	 * Begin video capture, using the provided object as a callback.
@@ -68,10 +54,6 @@ public class CameraVisualProvider implements CaptureCallback, VisualProvider {
 	 */
 	@Override
 	public void startCapture() {
-		if (callback == null) {
-			System.err.println("Warning! The callback in the CameraInputProvider is unset.");
-		}
-		
 		try {
 	        frameGrabber.startCapture();
 	        System.out.println("Starting capture at " + frameGrabber.getWidth() + "x" + frameGrabber.getHeight());
@@ -114,7 +96,8 @@ public class CameraVisualProvider implements CaptureCallback, VisualProvider {
 	 */
 	@Override
 	public void nextFrame(VideoFrame frame) {
-		callback.nextFrame(frame.getBufferedImage());
+		setChanged();
+		notifyObservers(frame.getBufferedImage());
 	}
 
 }
