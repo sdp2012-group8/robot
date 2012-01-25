@@ -8,17 +8,27 @@ import java.awt.Point;
  * 
  * @author Gediminas Liktaras
  */
-public class Robot {
+public final class Robot {
 	
 	/** Length of the robot's top plate. */
 	public static final int LENGTH = 70;
 	/** Width of the robot's top plate. */
 	public static final int WIDTH = 50;
+	
 
-	/** Coordinate's of the robot's center on the field. */
-	protected Point coords;
+	/** Coordinates of the robot's center on the field. */
+	private Point coords;
 	/** The angle the robot is facing, in radians. */
-	protected double angle;
+	private double angle;
+	
+	/** Coordinates of the robot's front-left corner. */
+	private Point frontLeftPoint;
+	/** Coordinates of the robot's front-right corner. */
+	private Point frontRightPoint;
+	/** Coordinates of the robot's back-left corner. */
+	private Point backLeftPoint;
+	/** Coordinates of the robot's back-right corner. */
+	private Point backRightPoint;
 
 	
 	/**
@@ -28,9 +38,20 @@ public class Robot {
 	 * @param angle The angle the robot is facing, in radians.
 	 */
 	public Robot(Point coords, double angle) {
-		super();
 		this.coords = coords;
 		this.angle = angle;
+		
+		frontLeftPoint = Utilities.rotatePoint(new Point(0, 0), new Point(LENGTH / 2, WIDTH / 2), angle);
+		frontLeftPoint.translate(coords.x, coords.y);
+		
+		frontRightPoint = Utilities.rotatePoint(new Point(0, 0), new Point(LENGTH / 2, -WIDTH / 2), angle);
+		frontRightPoint.translate(coords.x, coords.y);
+		
+		backLeftPoint = Utilities.rotatePoint(new Point(0, 0), new Point(-LENGTH / 2, WIDTH / 2), angle);
+		backLeftPoint.translate(coords.x, coords.y);
+		
+		backRightPoint = Utilities.rotatePoint(new Point(0, 0), new Point(-LENGTH / 2, -WIDTH / 2), angle);
+		backRightPoint.translate(coords.x, coords.y);
 	}
 
 	
@@ -39,7 +60,7 @@ public class Robot {
 	 * 
 	 * @return Coordinates of the robot's center.
 	 */
-	public Point getCoords() {
+	public final Point getCoords() {
 		return coords;
 	}
 
@@ -48,7 +69,7 @@ public class Robot {
 	 * 
 	 * @return The angle the robot is facing, in radians.
 	 */
-	public double getAngle() {
+	public final double getAngle() {
 		return angle;
 	}
 
@@ -58,11 +79,8 @@ public class Robot {
 	 * 
 	 * @return Coordinates of the front-left corner of the robot's rectangle.
 	 */
-	public Point getFrontLeft() {
-		Point ret = Tools.rotatePoint(new Point(0, 0), new Point((int)LENGTH / 2, (int)WIDTH / 2), (int) Math.toDegrees(angle));
-		ret.x += coords.x;
-		ret.y += coords.y;
-		return ret;
+	public final Point getFrontLeft() {
+		return frontLeftPoint;
 	}
 
 	/**
@@ -70,11 +88,8 @@ public class Robot {
 	 * 
 	 * @return Coordinates of the front-right corner of the robot's rectangle.
 	 */
-	public Point getFrontRight() {
-		Point ret = Tools.rotatePoint(new Point(0, 0), new Point((int)LENGTH / 2, (int)-WIDTH / 2), (int) Math.toDegrees(angle));
-		ret.x += coords.x;
-		ret.y += coords.y;
-		return ret;
+	public final Point getFrontRight() {
+		return frontRightPoint;
 	}
 
 	/**
@@ -82,11 +97,8 @@ public class Robot {
 	 * 
 	 * @return Coordinates of the back-left corner of the robot's rectangle.
 	 */
-	public Point getBackLeft() {
-		Point ret = Tools.rotatePoint(new Point(0, 0), new Point((int)-LENGTH / 2, (int)WIDTH / 2), (int) Math.toDegrees(angle));
-		ret.x += coords.x;
-		ret.y += coords.y;
-		return ret;
+	public final Point getBackLeft() {
+		return backLeftPoint;
 	}
 
 	/**
@@ -94,11 +106,8 @@ public class Robot {
 	 * 
 	 * @return Coordinates of the back-right corner of the robot's rectangle.
 	 */
-	public Point getBackRight() {
-		Point ret = Tools.rotatePoint(new Point(0, 0), new Point((int)-LENGTH / 2, (int)-WIDTH / 2), (int) Math.toDegrees(angle));
-		ret.x += coords.x;
-		ret.y += coords.y;
-		return ret;
+	public final Point getBackRight() {
+		return backRightPoint;
 	}
 
 }

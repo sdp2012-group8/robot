@@ -3,11 +3,6 @@
  */
 package sdp.gui;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
-
-import javax.imageio.ImageIO;
-
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import sdp.common.WorldState;
 import sdp.common.WorldStateCallback;
@@ -29,7 +24,10 @@ public class OldGUITest implements Runnable, WorldStateCallback {
 	/** The vision subsystem object. */
 	private Vision vision;
 	/** Visual input source. */
-	VisualProvider input;
+	private VisualProvider input;
+	
+	/** Whether to use camera or offline inputs. */
+	private static final boolean USE_CAMERA = false;
 	
 	
 	/**
@@ -39,11 +37,14 @@ public class OldGUITest implements Runnable, WorldStateCallback {
 		vision = new Vision();
 		vision.setCallback(this);
 		
-		//input = new CameraVisualProvider("/dev/video0", V4L4JConstants.STANDARD_WEBCAM, 0);
-		String filenames[] = { "../robot-VISION/data/testImages/pitch2-1.png",
-				               "../robot-VISION/data/testImages/pitch2-2.png",
-				               "../robot-VISION/data/testImages/pitch2-3.png" };
-		input = new ImageVisualProvider(filenames, 25);		
+		if (USE_CAMERA) {		
+			input = new CameraVisualProvider("/dev/video0", V4L4JConstants.STANDARD_PAL, 0);
+		} else {
+			String filenames[] = { "../robot-VISION/data/testImages/pitch2-1.png",
+					               "../robot-VISION/data/testImages/pitch2-2.png",
+					               "../robot-VISION/data/testImages/pitch2-3.png" };
+			input = new ImageVisualProvider(filenames, 25);
+		}
 		input.setCallback(vision);
 		
 		gui = new OldGUI();
@@ -57,8 +58,17 @@ public class OldGUITest implements Runnable, WorldStateCallback {
 	 * @param state The next world state.
 	 */
 	@Override
-	public void nextWorldState(WorldState state, BufferedImage frame) {
-		gui.setImage(frame);
+	public void nextWorldState(WorldState state) {
+		gui.setImage(state.getWorldImage());
+		
+//		System.out.println("NEW STATE: " +
+//				"Ball at (" + state.getBallCoords().x + ", " + state.getBallCoords().y + "), " +
+//				"Blue at (" + state.getBlueRobot().getCoords().x +
+//					", " + state.getBlueRobot().getCoords().y +
+//					", " + state.getBlueRobot().getAngle() + ") " +
+//				"Yellow at (" + state.getYellowRobot().getCoords().x +
+//					", " + state.getYellowRobot().getCoords().y +
+//					", " + state.getYellowRobot().getAngle() + ").");
 	}
 	
 	

@@ -36,13 +36,13 @@ public class ViewerTest implements Runnable {
 		int count=0;
 		try {
 			if(pitch==2) {
-				image1 = ImageIO.read(new File("data/testImages/pitch2-1.png"));
-				image2 = ImageIO.read(new File("data/testImages/pitch2-2.png"));
-				image3 = ImageIO.read(new File("data/testImages/pitch2-3.png")); }
+				image1 = ImageIO.read(new File("../robot-VISION/data/testImages/pitch2-1.png"));
+				image2 = ImageIO.read(new File("../robot-VISION/data/testImages/pitch2-2.png"));
+				image3 = ImageIO.read(new File("../robot-VISION/data/testImages/pitch2-3.png")); }
 			else {
-				image1 = ImageIO.read(new File("data/testImages/pitch1-1.png"));
-				image2 = ImageIO.read(new File("data/testImages/pitch1-2.png"));
-				image3 = ImageIO.read(new File("data/testImages/pitch1-3.png"));
+				image1 = ImageIO.read(new File("../robot-VISION/data/testImages/pitch1-1.png"));
+				image2 = ImageIO.read(new File("../robot-VISION/data/testImages/pitch1-2.png"));
+				image3 = ImageIO.read(new File("../robot-VISION/data/testImages/pitch1-3.png"));
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

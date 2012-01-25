@@ -58,9 +58,10 @@ public class Vision implements VisualCallback, WorldStateProvider {
 			System.err.println("Vision callback has not been set.");
 		}
 		
-		WorldState ws = new WorldState(new Point(0, 0), new Robot(new Point(0, 0), 0.0), new Robot(new Point(0, 0), 0.0));
-		// WorldState ws = imageProcessor.getWorldState(frame.getBufferedImage());
-		callback.nextWorldState(ws, frame);
+		imageProcessor.process(frame);
+		WorldState state = imageProcessor.worldState;
+		
+		callback.nextWorldState(state);
 	}
 	
 }

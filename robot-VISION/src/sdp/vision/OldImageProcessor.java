@@ -224,8 +224,6 @@ public class OldImageProcessor {
 			findBall(wraster, ballPos);
 		}
 		
-		worldState = new WorldState(ballCoords, blueRobot, yellowRobot);
-
 		int lineColors = 0;
 		if (DEBUG_LEVEL > 0)
 			for (int i = 0; i < lines.size(); i += 2) {
@@ -246,6 +244,7 @@ public class OldImageProcessor {
 			}
 
 		BufferedImage img = new BufferedImage(cm, wraster, false, null);
+		worldState = new WorldState(ballPos, blueRobot, yellowRobot, img);
 		return img;
 	}
 
