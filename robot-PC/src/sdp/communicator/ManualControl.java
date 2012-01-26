@@ -21,6 +21,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.JLabel;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * 
@@ -68,9 +70,52 @@ public class ManualControl {
 	 */
 	private void initialize() {
 		frmManualNxtCommand = new JFrame();
+		frmManualNxtCommand.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent arg0) {
+				if (mComm == null)
+					return;
+				try {
+					mComm.sendMessage(opcode.exit);
+					Thread.sleep(100);
+					mComm.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
 		frmManualNxtCommand.getContentPane().setFocusable(true);
 		
+		final JButton btnKick = new JButton("KICK");
+		btnKick.setEnabled(false);
+		btnKick.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				try {
+					mComm.sendMessage(opcode.kick);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		btnKick.setBounds(12, 75, 117, 25);
+		frmManualNxtCommand.getContentPane().add(btnKick);
+		
+		final JButton btnMoveToWall = new JButton("Move to Wall");
+		btnMoveToWall.setEnabled(false);
+		btnMoveToWall.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					mComm.sendMessage(opcode.move_to_wall);
+				} catch (Exception ee) {
+					ee.printStackTrace();
+				}
+			}
+		});
+		btnMoveToWall.setBounds(147, 75, 153, 25);
+		frmManualNxtCommand.getContentPane().add(btnMoveToWall);
+		
 		final JButton btn_control_on = new JButton("Joypad ON");
+		btn_control_on.setEnabled(false);
 		btn_control_on.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				frmManualNxtCommand.getContentPane().requestFocus();
@@ -382,6 +427,10 @@ public class ManualControl {
 				});
 				btnConnect.setText("Ready!");
 				btnNewButton.setEnabled(true);
+				btnKick.setEnabled(true);
+				btnMoveToWall.setEnabled(true);
+				btn_control_on.setEnabled(!frmManualNxtCommand.getContentPane().hasFocus());
+				
 			}
 		});
 		btnConnect.setBounds(190, 38, 246, 25);
@@ -389,31 +438,7 @@ public class ManualControl {
 		
 		frmManualNxtCommand.getContentPane().add(btn_control_on);
 		
-		JButton btnKick = new JButton("KICK");
-		btnKick.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				try {
-					mComm.sendMessage(opcode.kick);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-		btnKick.setBounds(12, 75, 117, 25);
-		frmManualNxtCommand.getContentPane().add(btnKick);
-		
-		JButton btnMoveToWall = new JButton("Move to Wall");
-		btnMoveToWall.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					mComm.sendMessage(opcode.move_to_wall);
-				} catch (Exception ee) {
-					ee.printStackTrace();
-				}
-			}
-		});
-		btnMoveToWall.setBounds(147, 75, 153, 25);
-		frmManualNxtCommand.getContentPane().add(btnMoveToWall);
+
 		
 		
 
