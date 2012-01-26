@@ -17,7 +17,11 @@ public interface Communicator {
 	 *
 	 */
 	public enum opcode {
-		move, exit, moveback, kick, rotate_kicker, turn, move_to_wall
+		move, exit, moveback, kick, rotate_kicker, turn, move_to_wall,
+		joypad_forward, // one argument; speed in revolutions per second
+		joypad_turn, // one argument; turning speed in degrees per second * 2 (for example 90 means 128 degrees per second)
+		joypad_turn_end, // no arguments; when turning stops, return to straight
+		play_sound // no arguments
 	}
 	
 	/**
