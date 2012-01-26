@@ -53,9 +53,9 @@ public class VisionUsageExample implements Runnable {
 		if (USE_CAMERA) {		
 			input = new CameraVisualInputProvider("/dev/video0", V4L4JConstants.STANDARD_WEBCAM, 0);
 		} else {
-			String filenames[] = { "../robot-VISION/data/testImages/pitch2-1.png",
-					               "../robot-VISION/data/testImages/pitch2-2.png",
-					               "../robot-VISION/data/testImages/pitch2-3.png" };
+			String filenames[] = { "data/testImages/pitch2-1.png",
+					               "data/testImages/pitch2-2.png",
+					               "data/testImages/pitch2-3.png" };
 			input = new ImageVisualInputProvider(filenames, 25);
 		}
 		
