@@ -161,11 +161,15 @@ public class Brick {
 					break;
 				
 				case joypad_forward:
+					// get intended speed
 					turn = 0;
 					speed_a = Math.abs(args[0]*360);
 					speed_c = Math.abs(args[0]*360);
+					// apply it
 					Motor.A.setSpeed(speed_a);
 					Motor.C.setSpeed(speed_c);
+					Motor.A.setAcceleration(1000);
+					Motor.C.setAcceleration(1000);
 					if (args[0] > 0)
 						Motor.A.forward();
 					else
@@ -174,10 +178,12 @@ public class Brick {
 						Motor.C.forward();
 					else
 						Motor.C.backward();
+					// if stop is needed, stop
 					if (args[0] == 0) {
 						Motor.A.stop();
 						Motor.C.stop();
 					}
+					// show it
 					LCD.clear(3);
 					LCD.clear(4);
 					LCD.drawString("A="+speed_a, 0, 3);
@@ -185,13 +191,29 @@ public class Brick {
 					break;
 					
 				case joypad_turn:
-					turn += args[0]*2;
-					if (turn > 0)
-						speed_c -= Math.abs(turn);
-					else
-						speed_a -= Math.abs(turn);
+					// return original speed
+					if (turn > 0) {
+						speed_c -= Math.abs(turn)/2;
+						speed_a += Math.abs(turn)/2;
+					} else {
+						speed_a -= Math.abs(turn)/2;
+						speed_c += Math.abs(turn)/2;
+					}
+					// get new speed
+					turn = args[0]*2;
+					if (turn > 0) {
+						speed_c += Math.abs(turn)/2;
+						speed_a -= Math.abs(turn)/2;
+					} else {
+						speed_a += Math.abs(turn)/2;
+						speed_c -= Math.abs(turn)/2;
+					}
+					// apply it
+					Motor.A.setAcceleration(500);
+					Motor.C.setAcceleration(500);
 					Motor.A.setSpeed(speed_a);
 					Motor.C.setSpeed(speed_c);
+					// show it
 					LCD.clear(3);
 					LCD.clear(4);
 					LCD.drawString("A="+speed_a, 0, 3);
@@ -199,13 +221,22 @@ public class Brick {
 					break;
 					
 				case joypad_turn_end:
-					if (turn > 0)
-						speed_c += Math.abs(turn);
-					else
-						speed_a += Math.abs(turn);
+					// return original speed
+					if (turn > 0) {
+						speed_c -= Math.abs(turn)/2;
+						speed_a += Math.abs(turn)/2;
+					} else {
+						speed_a -= Math.abs(turn)/2;
+						speed_c += Math.abs(turn)/2;
+					}
+					// not turning anymore
 					turn = 0;
+					// apply it
+					Motor.A.setAcceleration(500);
+					Motor.C.setAcceleration(500);
 					Motor.A.setSpeed(speed_a);
 					Motor.C.setSpeed(speed_c);
+					// show it
 					LCD.clear(3);
 					LCD.clear(4);
 					LCD.drawString("A="+speed_a, 0, 3);

@@ -99,6 +99,7 @@ public class ManualControl {
 			@Override
 			public void keyPressed(KeyEvent arg0) {
 				switch (arg0.getKeyCode()) {
+				case KeyEvent.VK_UP:
 				case KeyEvent.VK_W: 
 					if (btn_W_pressed == null) {
 						// if pressing button for first time
@@ -115,13 +116,14 @@ public class ManualControl {
 					}
 
 					break;
+				case KeyEvent.VK_LEFT:
 				case KeyEvent.VK_A: 
 					if (btn_A_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("A");
 						System.out.println("Sending A");
 						try {
-							mComm.sendMessage(opcode.joypad_turn, (byte) -127);
+							mComm.sendMessage(opcode.joypad_turn, (byte) -100);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -131,6 +133,7 @@ public class ManualControl {
 					}
 
 					break;
+				case KeyEvent.VK_DOWN:
 				case KeyEvent.VK_S: 
 					if (btn_S_pressed == null) {
 						// if pressing button for first time
@@ -147,13 +150,14 @@ public class ManualControl {
 					}
 
 					break;
+				case KeyEvent.VK_RIGHT:
 				case KeyEvent.VK_D: 
 					if (btn_D_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("D");
 						System.out.println("Sending D");
 						try {
-							mComm.sendMessage(opcode.joypad_turn, (byte) 127);
+							mComm.sendMessage(opcode.joypad_turn, (byte) 100);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -201,6 +205,7 @@ public class ManualControl {
 			@Override
 			public void keyReleased(KeyEvent e) {
 				switch (e.getKeyCode()) {
+				case KeyEvent.VK_UP:
 				case KeyEvent.VK_W: 
 					btn_W_pressed = new Timer();
 					btn_W_pressed.schedule(new TimerTask() {
@@ -216,6 +221,7 @@ public class ManualControl {
 						
 					}, 60);
 					break;
+				case KeyEvent.VK_LEFT:
 				case KeyEvent.VK_A: 
 					btn_A_pressed = new Timer();
 					btn_A_pressed.schedule(new TimerTask() {
@@ -236,6 +242,7 @@ public class ManualControl {
 						
 					}, 60);
 					break;
+				case KeyEvent.VK_DOWN:
 				case KeyEvent.VK_S: 
 					btn_S_pressed = new Timer();
 					btn_S_pressed.schedule(new TimerTask() {
@@ -251,6 +258,7 @@ public class ManualControl {
 						
 					}, 60);
 					break;
+				case KeyEvent.VK_RIGHT:
 				case KeyEvent.VK_D: 
 					btn_D_pressed = new Timer();
 					btn_D_pressed.schedule(new TimerTask() {
