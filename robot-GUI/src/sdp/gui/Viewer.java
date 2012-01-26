@@ -8,6 +8,7 @@ import java.util.Observer;
 import sdp.common.WorldState;
 import sdp.vision.CameraVisualInputProvider;
 import sdp.vision.OldImageProcessor;
+import sdp.vision.VisualInputCallback;
 import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.FrameGrabber;
 import au.edu.jcu.v4l4j.V4L4JConstants;
@@ -16,7 +17,7 @@ import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.V4L4JException;
 
 
-public class Viewer implements Runnable, Observer {
+public class Viewer implements Runnable, VisualInputCallback {
 	
 	// Video capture variables
 	protected VideoDevice videoDevice;
@@ -141,7 +142,7 @@ public class Viewer implements Runnable, Observer {
 	 * display it
 	 */
 	public void run() {
-		input.addObserver(this);
+		input.setCallback(this);
 		input.startCapture();
 	}
 
@@ -194,9 +195,7 @@ public class Viewer implements Runnable, Observer {
 	}
 
 	@Override
-	public void update(Observable o, Object arg) {
-		BufferedImage frame = (BufferedImage) arg;
-		
+	public void nextFrame(BufferedImage frame) {		
 		prevsec = (int) System.currentTimeMillis() / 1000;
 
 		try {

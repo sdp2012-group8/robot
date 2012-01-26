@@ -14,7 +14,7 @@ import javax.imageio.ImageIO;
  * 
  * @author Gediminas Liktaras
  */
-public class ImageVisualInputProvider extends VisualInputObservable implements Runnable {
+public class ImageVisualInputProvider extends VisualInputProvider implements Runnable {
 	
 	/** A list of images to present to the application. */
 	private BufferedImage images[];
@@ -58,8 +58,7 @@ public class ImageVisualInputProvider extends VisualInputObservable implements R
 	@Override
 	public void run() {
 		while (!Thread.interrupted()) {
-			setChanged();
-			notifyObservers(images[nextImageIndex]);			
+			sendNextFrame(images[nextImageIndex]);			
 			nextImageIndex = (nextImageIndex + 1) % images.length;
 			
 			try {

@@ -1,10 +1,7 @@
 package sdp.vision;
 
-import java.awt.image.BufferedImage;
-
 import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.FrameGrabber;
-import au.edu.jcu.v4l4j.V4L4JConstants;
 import au.edu.jcu.v4l4j.VideoDevice;
 import au.edu.jcu.v4l4j.VideoFrame;
 import au.edu.jcu.v4l4j.exceptions.StateException;
@@ -16,7 +13,7 @@ import au.edu.jcu.v4l4j.exceptions.V4L4JException;
  * 
  * @author Gediminas Liktaras
  */
-public class CameraVisualInputProvider extends VisualInputObservable implements CaptureCallback {
+public class CameraVisualInputProvider extends VisualInputProvider implements CaptureCallback {
 	
 	/** Video device, whose input will be captured. */
 	private VideoDevice videoDevice;
@@ -32,8 +29,8 @@ public class CameraVisualInputProvider extends VisualInputObservable implements 
 	 * @param channel Capture channel to use.
 	 */
 	public CameraVisualInputProvider(String deviceFile, int standard, int channel) {
-		int width = V4L4JConstants.MAX_WIDTH;
-		int height = V4L4JConstants.MAX_HEIGHT;
+		int width = 640;
+		int height = 480;
 		int quality = 80;
 		
         try {
@@ -98,8 +95,7 @@ public class CameraVisualInputProvider extends VisualInputObservable implements 
 	 */
 	@Override
 	public void nextFrame(VideoFrame frame) {
-		setChanged();
-		notifyObservers(frame.getBufferedImage());
+		sendNextFrame(frame.getBufferedImage());
 		frame.recycle();
 	}
 

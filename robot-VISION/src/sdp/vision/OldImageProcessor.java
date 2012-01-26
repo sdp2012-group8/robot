@@ -79,7 +79,7 @@ public class OldImageProcessor {
 
 	public LinkedList<Point> lines = new LinkedList<Point>();
 	public LinkedList<Integer> lineColor = new LinkedList<Integer>();
-
+	
 	BufferedImage image;
 	public static int mode = 5;
 	private int[] blueAngles = new int[mode]; // method 1
