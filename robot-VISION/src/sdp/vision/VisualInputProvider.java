@@ -17,6 +17,8 @@ public abstract class VisualInputProvider {
 	
 	/**
 	 * Begin video capture, using the provided object as a callback.
+	 * 
+	 * This method also starts the vision system's capture thread.
 	 */
 	public abstract void startCapture();
 	
