@@ -1,6 +1,6 @@
 package sdp.common;
 
-import java.awt.Point;
+import java.awt.geom.Point2D;
 
 
 /**
@@ -18,15 +18,27 @@ public class Utilities {
      * @param angle Angle of rotation in radians.
      * @return Rotated point.
      */
-    public static Point rotatePoint(Point origin, Point point, double angle)
+    public static Point2D.Double rotatePoint(Point2D.Double origin,
+    		Point2D.Double point, double angle)
     {
-    	int xDiff = point.x - origin.x;
-    	int yDiff = point.y - origin.y;
+    	double xDiff = point.x - origin.x;
+    	double yDiff = point.y - origin.y;
     	
-    	int rotX = (int) Math.round((xDiff * Math.cos(angle)) - (yDiff * Math.sin(angle))) + origin.x;
-    	int rotY = (int) Math.round((xDiff * Math.sin(angle)) + (yDiff * Math.cos(angle))) + origin.y;
+    	double rotX = (xDiff * Math.cos(angle)) - (yDiff * Math.sin(angle)) + origin.x;
+    	double rotY = (xDiff * Math.sin(angle)) + (yDiff * Math.cos(angle)) + origin.y;
     	
-    	return new Point(rotX + origin.x, rotY + origin.y);
+    	return new Point2D.Double(rotX + origin.x, rotY + origin.y);
+    }
+    
+    /**
+     * Translate the given point by some offset.
+     * 
+     * @param point The point to translate.
+     * @param offset Translate offset.
+     */
+    public static void translatePoint(Point2D.Double point, Point2D.Double offset) {
+    	point.x += offset.x;
+    	point.y += offset.y;
     }
 
 }
