@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<Form version="1.3" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JFrameFormInfo">
+  <NonVisualComponents>
+    <Component class="javax.swing.ButtonGroup" name="radioOurTeam">
+    </Component>
+    <Component class="javax.swing.ButtonGroup" name="radioOurGoal">
+    </Component>
+  </NonVisualComponents>
+  <Properties>
+    <Property name="defaultCloseOperation" type="int" value="3"/>
+    <Property name="name" type="java.lang.String" value="Vision" noResource="true"/>
+    <Property name="resizable" type="boolean" value="false"/>
+  </Properties>
+  <SyntheticProperties>
+    <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+  </SyntheticProperties>
+  <AuxValues>
+    <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_generateFQN" type="java.lang.Boolean" value="true"/>
+    <AuxValue name="FormSettings_generateMnemonicsCode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_i18nAutoMode" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_layoutCodeTarget" type="java.lang.Integer" value="1"/>
+    <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
+    <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
+    <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
+  </AuxValues>
+
+  <Layout>
+    <DimensionLayout dim="0">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
+              <Component id="onScreenImage" min="-2" pref="640" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="toggleStop" alignment="0" pref="187" max="32767" attributes="0"/>
+                  <Component id="btnBarrelCorrection" pref="187" max="32767" attributes="0"/>
+                  <Component id="ballSearchSlider" alignment="0" min="0" pref="0" max="32767" attributes="1"/>
+                  <Component id="yellThreshSlider" alignment="0" min="0" pref="0" max="32767" attributes="1"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="radioLeftGoal" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace pref="17" max="32767" attributes="0"/>
+                      <Component id="radioRightGoal" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <Component id="debugSlider" alignment="0" pref="187" max="32767" attributes="1"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="btnPitch1" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="btnStep" pref="65" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="btnPitch2" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <Component id="blueThreshLabel" alignment="1" pref="187" max="32767" attributes="0"/>
+                  <Component id="blueThreshSlider" alignment="0" min="0" pref="0" max="32767" attributes="1"/>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Component id="radioBlue" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="radioYell" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
+                  </Group>
+                  <Component id="debugLabel" alignment="1" pref="187" max="32767" attributes="0"/>
+                  <Component id="labelDebug" alignment="1" pref="187" max="32767" attributes="0"/>
+                  <Component id="labelOurGoal" alignment="1" pref="187" max="32767" attributes="0"/>
+                  <Component id="yellThreshLabel" alignment="1" pref="187" max="32767" attributes="0"/>
+                  <Component id="ballSearchLabel" alignment="1" pref="187" max="32767" attributes="0"/>
+                  <Component id="modeLabel" alignment="1" pref="187" max="32767" attributes="0"/>
+                  <Component id="modeSlider" alignment="1" pref="187" max="32767" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+          </Group>
+      </Group>
+    </DimensionLayout>
+    <DimensionLayout dim="1">
+      <Group type="103" groupAlignment="0" attributes="0">
+          <Group type="102" attributes="0">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="debugLabel" min="-2" pref="17" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="radioBlue" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="radioYell" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="labelOurGoal" min="-2" pref="17" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="radioLeftGoal" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="radioRightGoal" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="labelDebug" min="-2" pref="17" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="debugSlider" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="blueThreshLabel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="blueThreshSlider" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="yellThreshLabel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
+                      <Component id="yellThreshSlider" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="ballSearchLabel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="ballSearchSlider" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="modeLabel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="modeSlider" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="btnBarrelCorrection" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="btnPitch1" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="btnStep" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="btnPitch2" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                  </Group>
+                  <Component id="onScreenImage" alignment="0" min="-2" pref="480" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="32767" attributes="0"/>
+              <Component id="toggleStop" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+          </Group>
+      </Group>
+    </DimensionLayout>
+  </Layout>
+  <SubComponents>
+    <Component class="javax.swing.JLabel" name="onScreenImage">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Image goes here"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnStep">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Step"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnStepActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnBarrelCorrection">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Toggle Barrel Correction"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnBarrelCorrectionActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JSlider" name="debugSlider">
+      <Properties>
+        <Property name="maximum" type="int" value="5"/>
+        <Property name="paintLabels" type="boolean" value="true"/>
+        <Property name="toolTipText" type="java.lang.String" value=""/>
+        <Property name="value" type="int" value="3"/>
+        <Property name="name" type="java.lang.String" value="Debug" noResource="true"/>
+      </Properties>
+      <Events>
+        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="debugSliderStateChanged"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JSlider" name="blueThreshSlider">
+      <Properties>
+        <Property name="maximum" type="int" value="765"/>
+        <Property name="value" type="int" value="350"/>
+      </Properties>
+      <Events>
+        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="blueThreshSliderStateChanged"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JSlider" name="yellThreshSlider">
+      <Properties>
+        <Property name="maximum" type="int" value="765"/>
+        <Property name="value" type="int" value="150"/>
+      </Properties>
+      <Events>
+        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="yellThreshSliderStateChanged"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JSlider" name="ballSearchSlider">
+      <Properties>
+        <Property name="maximum" type="int" value="1000"/>
+        <Property name="value" type="int" value="700"/>
+      </Properties>
+      <Events>
+        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="ballSearchSliderStateChanged"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="debugLabel">
+      <Properties>
+        <Property name="horizontalAlignment" type="int" value="0"/>
+        <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
+          <ComponentRef name="radioBlue"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Our team:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="blueThreshLabel">
+      <Properties>
+        <Property name="horizontalAlignment" type="int" value="0"/>
+        <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
+          <ComponentRef name="blueThreshSlider"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Blue threshold:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="yellThreshLabel">
+      <Properties>
+        <Property name="horizontalAlignment" type="int" value="0"/>
+        <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
+          <ComponentRef name="yellThreshSlider"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Yellow threshold:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="ballSearchLabel">
+      <Properties>
+        <Property name="horizontalAlignment" type="int" value="0"/>
+        <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
+          <ComponentRef name="ballSearchSlider"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Ball search distance:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnPitch1">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Pitch 1"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnPitch1ActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnPitch2">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Pitch 2"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnPitch2ActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="modeLabel">
+      <Properties>
+        <Property name="horizontalAlignment" type="int" value="0"/>
+        <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
+          <ComponentRef name="modeSlider"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Statistical mode for angle:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JSlider" name="modeSlider">
+      <Properties>
+        <Property name="maximum" type="int" value="24"/>
+        <Property name="minimum" type="int" value="1"/>
+        <Property name="value" type="int" value="10"/>
+      </Properties>
+      <Events>
+        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="modeSliderStateChanged"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JRadioButton" name="radioBlue">
+      <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="radioOurTeam"/>
+        </Property>
+        <Property name="selected" type="boolean" value="true"/>
+        <Property name="text" type="java.lang.String" value="Blue Team"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="radioBlueActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JRadioButton" name="radioYell">
+      <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="radioOurTeam"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Yell Team"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="radioYellActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JRadioButton" name="radioLeftGoal">
+      <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="radioOurGoal"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Left Goal"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="radioLeftGoalActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JRadioButton" name="radioRightGoal">
+      <Properties>
+        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+          <ComponentRef name="radioOurGoal"/>
+        </Property>
+        <Property name="selected" type="boolean" value="true"/>
+        <Property name="text" type="java.lang.String" value="Right Goal"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="radioRightGoalActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="labelDebug">
+      <Properties>
+        <Property name="horizontalAlignment" type="int" value="0"/>
+        <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
+          <ComponentRef name="debugSlider"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Debug level:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="labelOurGoal">
+      <Properties>
+        <Property name="horizontalAlignment" type="int" value="0"/>
+        <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
+          <ComponentRef name="radioLeftGoal"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Our goal:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JToggleButton" name="toggleStop">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Emergency Stop!"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="toggleStopActionPerformed"/>
+      </Events>
+    </Component>
+  </SubComponents>
+</Form>
