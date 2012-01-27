@@ -109,8 +109,8 @@ public class Brick {
 				case kick:
 					Motor.B.setSpeed(Motor.B.getMaxSpeed());
 					Motor.B.setAcceleration(100000);
-					Motor.B.rotate(-120);
-					Motor.B.rotate(120);
+					Motor.B.rotate(-80);
+					Motor.B.rotate(80);
 					Motor.B.stop();
 					break;
 
