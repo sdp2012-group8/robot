@@ -16,7 +16,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -65,6 +64,9 @@ public class ManualControl {
 	
 	private Timer btn_W_pressed = null, btn_A_pressed = null, btn_S_pressed = null, btn_D_pressed = null, btn_SPACE_pressed = null, btn_ENTER_pressed = null;
 
+	private int currentspeed = 0;
+	private static final int max_speed = 35;
+	private static final int turn_speed = 90;
 	/**
 	 * Initialize the contents of the frame.
 	 */
@@ -151,7 +153,8 @@ public class ManualControl {
 						lblWAS.setText("W");
 						System.out.println("Sending W");
 						try {
-							mComm.sendMessage(opcode.joypad_forward, (byte) 1);
+							mComm.sendMessage(opcode.operate, (byte) max_speed, (byte) 0);
+							currentspeed = max_speed;
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -168,7 +171,7 @@ public class ManualControl {
 						lblWAS.setText("A");
 						System.out.println("Sending A");
 						try {
-							mComm.sendMessage(opcode.joypad_turn, (byte) -100);
+							mComm.sendMessage(opcode.operate, (byte) currentspeed, (byte) turn_speed);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -185,7 +188,8 @@ public class ManualControl {
 						lblWAS.setText("S");
 						System.out.println("Sending S");
 						try {
-							mComm.sendMessage(opcode.joypad_forward, (byte) -1);
+							mComm.sendMessage(opcode.operate, (byte) -max_speed, (byte) 0);
+							currentspeed = -max_speed;
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -202,7 +206,7 @@ public class ManualControl {
 						lblWAS.setText("D");
 						System.out.println("Sending D");
 						try {
-							mComm.sendMessage(opcode.joypad_turn, (byte) 100);
+							mComm.sendMessage(opcode.operate, (byte) currentspeed, (byte) -turn_speed);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -218,7 +222,7 @@ public class ManualControl {
 						lblWAS.setText("SPACE");
 						System.out.println("Sending SPACE");
 						try {
-							mComm.sendMessage(opcode.joypad_forward, (byte) 0);
+							mComm.sendMessage(opcode.play_sound);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -260,6 +264,12 @@ public class ManualControl {
 							// TODO Auto-generated method stub
 							lblWAS.setText(" ");
 							System.out.println("Stopping W");
+							try {
+								mComm.sendMessage(opcode.operate, (byte) 0, (byte) 0);
+								currentspeed = 0;
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
 							btn_W_pressed.cancel();
 							btn_W_pressed = null;
 						}
@@ -279,7 +289,7 @@ public class ManualControl {
 							btn_A_pressed.cancel();
 							btn_A_pressed = null;
 							try {
-								mComm.sendMessage(opcode.joypad_turn_end);
+								mComm.sendMessage(opcode.operate, (byte) currentspeed, (byte) 0);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -297,6 +307,12 @@ public class ManualControl {
 							// TODO Auto-generated method stub
 							lblWAS.setText(" ");
 							System.out.println("Stopping S");
+							try {
+								mComm.sendMessage(opcode.operate, (byte) 0, (byte) 0);
+								currentspeed = 0;
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
 							btn_S_pressed.cancel();
 							btn_S_pressed = null;
 						}
@@ -316,7 +332,7 @@ public class ManualControl {
 							btn_D_pressed.cancel();
 							btn_D_pressed = null;
 							try {
-								mComm.sendMessage(opcode.joypad_turn_end);
+								mComm.sendMessage(opcode.operate, (byte) currentspeed, (byte) 0);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}

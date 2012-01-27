@@ -37,12 +37,11 @@ public class Brick {
 			
 			// for joypad
 			private float speed_a = 0;
-			private float turn = 0;
 			private float speed_c = 0;
 			
 			// for tacho
 			
-			public static final float ROBOTR = 6.5F;
+			public static final float ROBOTR = 7.1F;
 			public static final float WHEELR = 4F;
 			int lastCountA = 0;
 			int lastCountC = 0;
@@ -117,7 +116,7 @@ public class Brick {
 
 				case turn:
 					if (args.length > 0) {
-						int a =(int) ((args[0]*4*ROBOTR)/WHEELR);
+						int a =(int) ((args[0]*ROBOTR)/WHEELR);
 						Motor.A.setSpeed(360);
 						Motor.C.setSpeed(360);
 						Motor.A.rotate(a, true);
@@ -160,87 +159,42 @@ public class Brick {
 					sens.off();
 					break;
 				
-				case joypad_forward:
-					// get intended speed
-					turn = 0;
-					speed_a = Math.abs(args[0]*360);
-					speed_c = Math.abs(args[0]*360);
-					// apply it
-					Motor.A.setSpeed(speed_a);
-					Motor.C.setSpeed(speed_c);
-					Motor.A.setAcceleration(1000);
-					Motor.C.setAcceleration(1000);
-					if (args[0] > 0)
-						Motor.A.forward();
-					else
-						Motor.A.backward();
-					if (args[0] > 0)
-						Motor.C.forward();
-					else
-						Motor.C.backward();
-					// if stop is needed, stop
-					if (args[0] == 0) {
+				case operate:
+					// args[0] - speed in cm per second
+					// args[1] - turning speed in degrees per second around center of robot
+					float old_a = speed_a;
+					float old_c = speed_c;
+					// convert the degrees per second around robot
+					// to degrees per second for the motor
+					float conv_angle = args[1]*ROBOTR/WHEELR;
+					float speed_angle = args[0]/(0.017453292519943295f*WHEELR); // Radius*Pi*Angle/180
+					// set desired speed
+					speed_a = speed_angle+conv_angle;
+					speed_c = speed_angle-conv_angle;
+					// change speed according to turning
+					Motor.A.setSpeed(Math.abs(speed_a));
+					Motor.C.setSpeed(Math.abs(speed_c));
+					// check if we need to start motors or turn their direction
+					if (old_a == 0 || old_a*speed_a < 0) {
+						Motor.A.setAcceleration(1000);
+						if (speed_a > 0)
+							Motor.A.forward();
+						else
+							Motor.A.backward();
+					}
+					// check if we need to start motors or turn their direction
+					if (old_c == 0 || old_c*speed_c < 0) {
+						Motor.C.setAcceleration(1000);
+						if (speed_c > 0)
+							Motor.C.forward();
+						else
+							Motor.C.backward();
+					}
+					// check if we need to stop motors
+					if (speed_a == 0)
 						Motor.A.stop();
+					if (speed_c == 0)
 						Motor.C.stop();
-					}
-					// show it
-					LCD.clear(3);
-					LCD.clear(4);
-					LCD.drawString("A="+speed_a, 0, 3);
-					LCD.drawString("C="+speed_c, 0, 4);
-					break;
-					
-				case joypad_turn:
-					// return original speed
-					if (turn > 0) {
-						speed_c -= Math.abs(turn)/2;
-						speed_a += Math.abs(turn)/2;
-					} else {
-						speed_a -= Math.abs(turn)/2;
-						speed_c += Math.abs(turn)/2;
-					}
-					// get new speed
-					turn = args[0]*2;
-					if (turn > 0) {
-						speed_c += Math.abs(turn)/2;
-						speed_a -= Math.abs(turn)/2;
-					} else {
-						speed_a += Math.abs(turn)/2;
-						speed_c -= Math.abs(turn)/2;
-					}
-					// apply it
-					Motor.A.setAcceleration(500);
-					Motor.C.setAcceleration(500);
-					Motor.A.setSpeed(speed_a);
-					Motor.C.setSpeed(speed_c);
-					// show it
-					LCD.clear(3);
-					LCD.clear(4);
-					LCD.drawString("A="+speed_a, 0, 3);
-					LCD.drawString("C="+speed_c, 0, 4);
-					break;
-					
-				case joypad_turn_end:
-					// return original speed
-					if (turn > 0) {
-						speed_c -= Math.abs(turn)/2;
-						speed_a += Math.abs(turn)/2;
-					} else {
-						speed_a -= Math.abs(turn)/2;
-						speed_c += Math.abs(turn)/2;
-					}
-					// not turning anymore
-					turn = 0;
-					// apply it
-					Motor.A.setAcceleration(500);
-					Motor.C.setAcceleration(500);
-					Motor.A.setSpeed(speed_a);
-					Motor.C.setSpeed(speed_c);
-					// show it
-					LCD.clear(3);
-					LCD.clear(4);
-					LCD.drawString("A="+speed_a, 0, 3);
-					LCD.drawString("C="+speed_c, 0, 4);
 					break;
 					
 				case play_sound:

@@ -2,7 +2,6 @@ package sdp.communicator;
 
 import java.io.IOException;
 
-import lejos.pc.comm.NXTCommException;
 import sdp.common.Communicator;
 import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;

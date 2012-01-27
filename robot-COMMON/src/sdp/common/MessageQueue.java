@@ -88,5 +88,12 @@ public class MessageQueue {
 		cancelAllMessages();
 		mComm.close();
 	}
+	
+	/**
+	 * @return the number of remaining messages on queue
+	 */
+	public int tasks_pending() {
+		return tasks_pending;
+	}
 
 }

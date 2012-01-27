@@ -67,7 +67,7 @@ public class BComm implements Communicator {
 							LCD.drawString(op+";"+length, 0, 1);
 							if (args.length > 1) {
 								String all = "["+args[0];
-								for (int i = 0; i < args.length; i++)
+								for (int i = 1; i < args.length; i++)
 									all += ";"+String.valueOf(args[i]);
 								LCD.drawString(all+"]", 0, 2);
 							} else if (args.length == 1)
