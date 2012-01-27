@@ -1,6 +1,6 @@
 package sdp.common;
 
-import java.awt.Point;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
 
@@ -12,7 +12,7 @@ import java.awt.image.BufferedImage;
 public final class WorldState {
 
 	/** Location of the ball. */
-	private Point ballCoords;
+	private Point2D.Double ballCoords;
 	/** The blue robot. */
 	private Robot blueRobot;
 	/** The yellow robot. */
@@ -30,7 +30,7 @@ public final class WorldState {
 	 * @param yellowRobot The yellow robot.
 	 * @param worldImage The picture of the field.
 	 */
-	public WorldState(Point ballCoords, Robot blueRobot, Robot yellowRobot, BufferedImage worldImage) {
+	public WorldState(Point2D.Double ballCoords, Robot blueRobot, Robot yellowRobot, BufferedImage worldImage) {
 		this.ballCoords = ballCoords;
 		this.blueRobot = blueRobot;
 		this.yellowRobot = yellowRobot;
@@ -43,7 +43,7 @@ public final class WorldState {
 	 * 
 	 * @return The location of the ball.
 	 */
-	public final Point getBallCoords() {
+	public final Point2D.Double getBallCoords() {
 		return ballCoords;
 	}
 
