@@ -248,7 +248,14 @@ public class OldImageProcessor {
 			}
 
 		BufferedImage img = new BufferedImage(cm, wraster, false, null);
-		worldState = new WorldState(ballPos, blueRobot, yellowRobot, img);
+		
+		Point2D.Double ballPosNorm = new Point2D.Double(ballPos.x / width, ballPos.y / width);
+		Robot blueRobotNorm = new Robot(new Point2D.Double(blueRobot.getCoords().x / width,
+				blueRobot.getCoords().y / width), blueRobot.getAngle());
+		Robot yellowRobotNorm = new Robot(new Point2D.Double(yellowRobot.getCoords().x / width,
+				yellowRobot.getCoords().y / width), yellowRobot.getAngle());
+		
+		worldState = new WorldState(ballPosNorm, blueRobotNorm, yellowRobotNorm, img);
 		return img;
 	}
 
