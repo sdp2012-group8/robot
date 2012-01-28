@@ -175,13 +175,15 @@ public class Brick {
 					break;
 				
 				case operate:
+					if (args.length > 0) {
 					// args[0] - speed in cm per second
 					// args[1] - turning speed in degrees per second around center of robot
 					float old_a = speed_a;
 					float old_c = speed_c;
 					// convert the degrees per second around robot
 					// to degrees per second for the motor
-					float conv_angle = args[1]*ROBOTR/WHEELR;
+					float conv_angle = 0;
+					if (args.length > 1) conv_angle = args[1]*ROBOTR/WHEELR;
 					float speed_angle = args[0]/(0.017453292519943295f*WHEELR); // Radius*Pi*Angle/180
 					// set desired speed
 					speed_a = speed_angle+conv_angle;
@@ -210,6 +212,7 @@ public class Brick {
 						Motor.A.stop();
 					if (speed_c == 0)
 						Motor.C.stop();
+					}
 					break;
 					
 				case play_sound:
