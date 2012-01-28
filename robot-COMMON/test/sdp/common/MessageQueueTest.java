@@ -75,7 +75,7 @@ public class MessageQueueTest {
 			for (int i = 0; i < TEST_SIZE; i++) {
 				if (i < cutat)
 					total_delay+=delays[i];
-				mq.addMessageToQueue(delays[i], opcodes[i], create_args(args[i]));
+				mq.addMessageToQueue(delays[i]/1000f, opcodes[i], create_args(args[i]));
 			}
 			System.out.println("Expected cancel in "+total_delay+" ms");
 			try {
