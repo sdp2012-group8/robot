@@ -4,25 +4,29 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.BoxLayout;
 import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.BorderLayout;
-import java.awt.GridLayout;
-import javax.swing.SwingConstants;
+
 
 /**
  * The GUI class of the main window.
  */
-public class OldGUI extends javax.swing.JFrame{
+public class MainWindow extends javax.swing.JFrame{
 	
 	/** Required by Serializable. */
 	private static final long serialVersionUID = 8597348579639499324L;
 	public static String className = null;
 
-	public OldGUI(){
+	
+	/**
+	 * The main constructor.
+	 */
+	public MainWindow(){
 		setTitle("Battlestation");
 		initComponents();
 	}
 	
+	/**
+	 * Initialise GUI components.
+	 */
 	private void initComponents() {
 		imageLabel = new javax.swing.JLabel();
 		imageLabel.setAlignmentY(Component.TOP_ALIGNMENT);
@@ -34,12 +38,16 @@ public class OldGUI extends javax.swing.JFrame{
 		getContentPane().add(imageLabel);
 	}
 	
+	
+	/** The label that will contain the camera's image. */
 	private javax.swing.JLabel imageLabel;
 	
-	public javax.swing.JLabel getImage() {
-		return imageLabel;
-	}
 	
+	/**
+	 * Set the camera image to display.
+	 * 
+	 * @param image New image.
+	 */
 	public void setImage(BufferedImage image) {
 		if (image != null) {
 			imageLabel.setSize(image.getWidth(), image.getHeight());
