@@ -11,6 +11,7 @@ import lejos.nxt.Motor;
 import lejos.nxt.NXT;
 import lejos.nxt.SensorPort;
 import lejos.nxt.Sound;
+import lejos.nxt.TouchSensor;
 import lejos.nxt.UltrasonicSensor;
 
 /**
@@ -55,7 +56,21 @@ public class Brick {
 				final int def_vol = Sound.getVolume();
 				// to send messages back to PC, use mCont.sendMessage
 				switch (op) {
-
+					
+				case checkTouch:
+					TouchSensor tsens = new TouchSensor(SensorPort.S2);
+					TouchSensor tsens2 = new TouchSensor(SensorPort.S3);
+					while(true) {
+						int i = 0;
+						if (tsens.isPressed() || tsens2.isPressed()){
+							LCD.drawString("tSensor is true", 2, 4);
+							i++;
+						} else {
+							LCD.drawString("tSensor is false", 2, 4);
+						}
+						if (i>10) break;
+					}
+						
 				case exit:
 					mCont.close();
 					Sound.setVolume(def_vol);
@@ -134,7 +149,7 @@ public class Brick {
 					break;
 					
 				case move_to_wall:
-					UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S2);
+					UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
 					sens.continuous();
 					Motor.A.setSpeed(slowest);
 					Motor.C.setSpeed(slowest);
