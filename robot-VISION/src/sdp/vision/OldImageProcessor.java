@@ -249,11 +249,11 @@ public class OldImageProcessor {
 
 		BufferedImage img = new BufferedImage(cm, wraster, false, null);
 		
-		Point2D.Double ballPosNorm = new Point2D.Double(ballPos.x / width, ballPos.y / width);
+		Point2D.Double ballPosNorm = new Point2D.Double(ballPos.x / width, (ballPos.y - ylowerlimit) / width);
 		Robot blueRobotNorm = new Robot(new Point2D.Double(blueRobot.getCoords().x / width,
-				blueRobot.getCoords().y / width), blueRobot.getAngle());
+				(blueRobot.getCoords().y - ylowerlimit) / width), blueRobot.getAngle());
 		Robot yellowRobotNorm = new Robot(new Point2D.Double(yellowRobot.getCoords().x / width,
-				yellowRobot.getCoords().y / width), yellowRobot.getAngle());
+				(yellowRobot.getCoords().y - ylowerlimit) / width), yellowRobot.getAngle());
 		
 		worldState = new WorldState(ballPosNorm, blueRobotNorm, yellowRobotNorm, img);
 		return img;
