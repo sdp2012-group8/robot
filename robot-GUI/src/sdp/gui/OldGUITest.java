@@ -26,7 +26,7 @@ public class OldGUITest implements Runnable {
 	private WorldStateObserver visionObserver;
 	
 	/** Whether to use camera or offline inputs. */
-	private static final boolean USE_CAMERA = false;
+	private static final boolean USE_CAMERA = true; //false;
 	
 	
 	/**
