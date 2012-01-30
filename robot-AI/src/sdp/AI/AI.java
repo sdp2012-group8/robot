@@ -12,7 +12,7 @@ import sdp.common.Communicator.opcode;
 
 /**
  * 
- * This is the AI class that will take desicions.
+ * This is the AI class that will take decisions.
  * 
  * @author Martin Marinov
  *
@@ -23,6 +23,9 @@ public class AI {
 	private final static double pitch_width_cm = 244;
 	private final static double door_y_cm = 113.7/2;
 	// robot constants
+	private final static double robot_wheel_radius_cm = 5;
+	private final static double robot_radius_cm = 7;
+	
 	private final static double robot_acc_cm_s_s = 69.8; // 1000 rev/s/s
 	public final static int max_speed_cm_s = 50; // 50 cm per second
 	
@@ -36,7 +39,7 @@ public class AI {
 	/**
 	 * Initialise the AI
 	 * 
-	 * @param Comm a communiactor for making connection with real robot/simulated one
+	 * @param Comm a communicator for making connection with real robot/simulated one
 	 * @param Obs an observer for taking information about the table
 	 */
 	public AI(Communicator Comm, WorldStateObserver Obs) {
@@ -120,6 +123,15 @@ public class AI {
 		//System.out.println("Ball at (" + ball.x +", " + ball.y + "), " +"My at (" + my_robot.getCoords().x +", " + my_robot.getCoords().y +", " + my_robot.getAngle() + "), " +"Enemy at (" + enemy_robot.getCoords().x +", " + enemy_robot.getCoords().y +", " + enemy_robot.getAngle() + ").");
 	}
 	
+	
+	/**
+	 * Calculates and performs the movements required to go from current position
+	 * to the position final_position and facing the angle final_angle.
+	 * 
+	 * @param my_robot	Object representing our robot.
+	 * @param final_position	Position the robot has to move to.
+	 * @param final_angle	Angle the robot should end up facing.
+	 */
 	private void goTo(Robot my_robot, Point2D.Double final_position, double final_angle) {
 		Point2D.Double my_robot_coords = toCentimeters(my_robot.getCoords());
 		double distance = Tools.getDistanceBetweenPoint(my_robot_coords, final_position);
@@ -127,7 +139,7 @@ public class AI {
 		// we want to go there with speed maxspeed, how many seconds will it take
 		// distance/max_recommended_speed time needed for travelling with constant speed
 		// Math.sqrt(2*max_recommended_speed/robot_acc_cm_s_s) time needed for decelerating
-		double time = distance/max_speed_cm_s - Math.sqrt(2*max_speed_cm_s/robot_acc_cm_s_s);
+		double time = distance/max_speed_cm_s - Math.sqrt(max_speed_cm_s/robot_acc_cm_s_s);
 		double turning_speed = turning_angle / time;
 		mQueue.addMessageToQueue(0, opcode.operate, (byte) max_speed_cm_s, (byte) 0);//turning_speed);
 		mQueue.addMessageToQueue(time, opcode.operate, (byte) 0, (byte) 0);
