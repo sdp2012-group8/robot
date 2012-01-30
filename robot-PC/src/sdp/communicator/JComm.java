@@ -23,7 +23,8 @@ import sdp.common.MessageListener;
 public class JComm implements sdp.common.Communicator {
 	
 	// password and mac settings
-	private static final String friendly_name = "ELIMIN8";
+	private static final int max_retries = 6; // how many times to try connecting to brick before quitting
+	private static final String friendly_name = "Ball-E";
 	private static final String mac_of_brick = "00:16:53:0A:5C:22";
 	
 	private final static Logger LOGGER = Logger.getLogger(JComm.class .getName());
@@ -40,7 +41,7 @@ public class JComm implements sdp.common.Communicator {
 	 * @param listener the listener that will receive updates from the robot
 	 * @throws NXTCommException if a connection cannot be established
 	 */
-	public JComm(MessageListener listener) {
+	public JComm(MessageListener listener) throws IOException {
 		this.mListener = listener;
 		try {
 		mComm = NXTCommFactory.createNXTComm(NXTCommFactory.BLUETOOTH);
@@ -50,17 +51,21 @@ public class JComm implements sdp.common.Communicator {
 		NXTInfo info = new NXTInfo(NXTCommFactory.BLUETOOTH,friendly_name, mac_of_brick);
 		LOGGER.info("Openning connection...");
 		boolean repeat = true;
-		while (repeat) {
+		int tries = 0;
+		while (repeat && tries < max_retries) {
+			tries++;
 			try {
 				mComm.open(info);
 				repeat = false;
 			} catch (Exception e) {
-				LOGGER.warning("Cannot establish connection. Is device on? Retry in 4 s.");
+				LOGGER.warning("Cannot establish connection. Is device on? Retry in 4 s. ("+(max_retries-tries)+" attempts left)");
 				try {
 					Thread.sleep(4000);
 				} catch (InterruptedException e1) {}
 			}
 		}
+		if (!repeat)
+			throw new IOException("Cannot connect to brick!");
 		LOGGER.info("Getting output stream...");
 		os = mComm.getOutputStream();
 		LOGGER.info("Getting input stream...");
