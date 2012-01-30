@@ -5,6 +5,7 @@ import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 
 import lejos.nxt.Battery;
+import lejos.nxt.LCD;
 import lejos.nxt.Motor;
 import lejos.nxt.NXT;
 
@@ -33,6 +34,7 @@ public class Brick {
 			@Override
 			public void receiveMessage(opcode op, byte[] args, Communicator controler) {
 				// to send messages back to PC, use mCont.sendMessage
+				float max;
 				switch (op) {
 				
 				case exit:
@@ -41,11 +43,17 @@ public class Brick {
 					break;
 					
 				case move:
-					float voltage = Battery.getVoltage();
-					Motor.A.setSpeed(voltage*200);
-					Motor.A.forward();
-					Motor.C.setSpeed(voltage*200);
-					Motor.C.forward();
+					try {
+						max = Battery.getVoltage()*100;
+						Motor.A.setSpeed(max+args[2]);
+						Motor.C.setSpeed(max+args[3]);
+						Motor.A.setAcceleration(args[1]*100);
+						Motor.C.setAcceleration(args[1]*100);
+						Motor.A.forward();
+						Motor.C.forward();
+					} catch (Exception e){
+						LCD.drawString("Command Error: Check Args", 2, 2);
+					}
 					try {
 						Thread.sleep(args[0]*1000);
 					} catch (InterruptedException e) {
@@ -56,12 +64,17 @@ public class Brick {
 					break;
 					
 				case moveback:
-					voltage = Battery.getVoltage();
-					Motor.A.setSpeed(voltage*200);
-					Motor.C.setSpeed(voltage*200);
-					Motor.A.backward();
-					Motor.C.backward();
-
+					try {
+						max = Battery.getVoltage()*100;
+						Motor.A.setSpeed(max);
+						Motor.C.setSpeed(max);
+						Motor.A.setAcceleration(args[1]*100);
+						Motor.C.setAcceleration(args[1]*100);
+						Motor.A.backward();
+						Motor.C.backward();
+					} catch (Exception e){
+						LCD.drawString("Command Error: Check Args", 2, 2);
+					}
 					try {
 						Thread.sleep(args[0]*1000);
 					} catch (InterruptedException e) {
@@ -71,21 +84,33 @@ public class Brick {
 					Motor.A.setSpeed(0);
 					break;
 					
+				case moveangle:
+					
+						Motor.A.rotate(args[0], true);
+						Motor.C.rotate(args[0], true);
+					try {
+						Thread.sleep(args[0]*1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					break;	
 				case kick:
-					voltage = Battery.getVoltage();
-					Motor.B.setSpeed(voltage*200);
-					Motor.B.setAcceleration(100000);
-					Motor.B.rotate(-70);
-					Motor.B.rotate(70);
-					Motor.B.stop();
+						max = Battery.getVoltage()*100;
+						Motor.B.setSpeed(max);
+						Motor.B.setAcceleration(100000);
+						Motor.B.rotate(-70);
+						Motor.B.rotate(70);
+						Motor.B.stop();
 					break;
 					
 				case rotate_kicker:
-					voltage = Battery.getVoltage();
-					Motor.B.setSpeed(voltage*200);
-					Motor.B.setAcceleration(100000);
-					Motor.B.rotate(args[0]);
-					
+						max = Battery.getVoltage()*100;
+						Motor.B.setSpeed(max);
+						Motor.B.setAcceleration(100000);
+						Motor.B.rotate(args[0]);
+					break;
+				default:
+					LCD.drawString("Unknown Command", 2, 2);
 					break;
 				}
 				
