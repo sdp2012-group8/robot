@@ -138,8 +138,9 @@ public class AI {
 		double turning_angle = -(final_angle - my_robot.getAngle())*180/Math.PI;
 		// we want to go there with speed maxspeed, how many seconds will it take
 		// distance/max_recommended_speed time needed for travelling with constant speed
-		// Math.sqrt(2*max_recommended_speed/robot_acc_cm_s_s) time needed for decelerating
-		double time = distance/max_speed_cm_s - Math.sqrt(max_speed_cm_s/robot_acc_cm_s_s);
+		// Math.sqrt(2*max_recommended_speed/robot_acc_cm_s_s) time needed for accelerating and decelerating
+		double time = distance/max_speed_cm_s - Math.sqrt(2*max_speed_cm_s/robot_acc_cm_s_s);
+		// double time = distance/max_speed_cm_s - (max_speed_cm_s/robot_acc_cm_s_s);
 		double turning_speed = turning_angle / time;
 		mQueue.addMessageToQueue(0, opcode.operate, (byte) max_speed_cm_s, (byte) 0);//turning_speed);
 		mQueue.addMessageToQueue(time, opcode.operate, (byte) 0, (byte) 0);
