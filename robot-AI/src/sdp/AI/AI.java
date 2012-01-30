@@ -27,14 +27,22 @@ public class AI {
 	private final static double robot_radius_cm = 7;
 	
 	private final static double robot_acc_cm_s_s = 69.8; // 1000 rev/s/s
-	public final static int max_speed_cm_s = 50; // 50 cm per second
+	private final static int max_speed_cm_s = 50; // 50 cm per second
 	
 	private boolean my_team_blue = true;
 	private boolean my_door_left = true;
-	private Communicator mComm;
 	private WorldStateObserver mObs;
 	private Thread mVisionThread;
-	private MessageQueue mQueue;
+	private MessageQueue mQueue = null;
+	
+	// for low pass filtering
+	private WorldState filteredState = null;
+	// this is the amount of filtering to be done
+	// higher values mean that the new data will "weigh more"
+	// so the more uncertainty in result, the smaller value you should use
+	// don't use values less then 1!
+	private int filteredPositionAmount = 6;
+	private int filteredAngleAmount = 2;
 	
 	/**
 	 * Initialise the AI
@@ -43,9 +51,8 @@ public class AI {
 	 * @param Obs an observer for taking information about the table
 	 */
 	public AI(Communicator Comm, WorldStateObserver Obs) {
-		this.mComm = Comm;
 		this.mObs = Obs;
-		mQueue = new MessageQueue(mComm);
+		mQueue = new MessageQueue(Comm);
 	}
 	
 	/**
@@ -63,7 +70,17 @@ public class AI {
 			public void run() {
 				while (!isInterrupted()) {
 					WorldState state = mObs.getNextState();
-					worldChanged(state);
+					// do low pass filtering
+					if (filteredState == null)
+						filteredState = state;
+					else
+						filteredState = new WorldState(
+								lowPass(filteredState.getBallCoords(), state.getBallCoords(), filteredPositionAmount),
+								lowPass(filteredState.getBlueRobot(), state.getBlueRobot()),
+								lowPass(filteredState.getYellowRobot(), state.getYellowRobot()),
+								state.getWorldImage());
+					// pass coordinates to decision making logic
+					worldChanged(filteredState);
 				}
 			}
 		};
@@ -71,11 +88,34 @@ public class AI {
 	}
 	
 	/**
+	 * @return the most recent world state
+	 */
+	public WorldState getLatestWorldState() {
+		return filteredState;
+	}
+
+	
+	/**
 	 * Stops the AI
 	 */
 	public void stop() {
 		if (mVisionThread != null)
 			mVisionThread.interrupt();
+	}
+	
+	/**
+	 * Gracefully close AI
+	 */
+	public void close() {
+		// disconnect queue
+		mQueue.addMessageToQueue(0, opcode.exit);
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		// close queue
+		mQueue.close();
 	}
 	
 	// Helpers
@@ -94,6 +134,44 @@ public class AI {
 		return Math.atan2(B.getY()-A.getY(), B.getX()-A.getX());
 	}
 	
+	
+	/**
+	 * A simple low-pass filter
+	 * @param old_value
+	 * @param new_value
+	 * @param amount
+	 * @return a filtered value
+	 */
+	private double lowPass(double old_value, double new_value, int amount) {
+		return (old_value+new_value*amount)/((double) (amount+1));
+	}
+	
+	/**
+	 * Low pass on position
+	 * @param old_value
+	 * @param new_value
+	 * @param amount
+	 * @return the filtered position
+	 */
+	private Point2D.Double lowPass(Point2D.Double old_value, Point2D.Double new_value, int amount) {
+		return new Point2D.Double (
+				lowPass(old_value.getX(), new_value.getX(), amount),
+				lowPass(old_value.getY(), new_value.getY(), amount));
+	}
+	
+	/**
+	 * Low pass on a robot
+	 * @param old_value
+	 * @param new_value
+	 * @param amount
+	 * @return a new robot with low_pass
+	 */
+	private Robot lowPass(Robot old_value, Robot new_value) {
+		return new Robot(
+				lowPass(old_value.getCoords(), new_value.getCoords(), filteredPositionAmount),
+				lowPass(old_value.getAngle(), new_value.getAngle(), filteredAngleAmount));
+	}
+	
 	// Decision making:
 	// Table coordinates:
 	//        __________ y = 1.137 m
@@ -106,11 +184,12 @@ public class AI {
 	
 	/**
 	 * This method is fired when a new state is available. Decisions should be done here.
-	 * @param new_state the new world state
+	 * @param new_state the new world state (low-pass filtered)
 	 */
 	private void worldChanged(WorldState new_state) {
 		Point2D.Double ball = toCentimeters(new_state.getBallCoords());
 		Robot my_robot = my_team_blue ? new_state.getBlueRobot() : new_state.getYellowRobot();
+		@SuppressWarnings("unused")
 		Point2D.Double my_door = new Point2D.Double(my_door_left ? 0 : pitch_width_cm, door_y_cm);
 		Robot enemy_robot = my_team_blue ? new_state.getYellowRobot() : new_state.getBlueRobot();
 		Point2D.Double enemy_door = new Point2D.Double(my_door_left ? pitch_width_cm : 0, door_y_cm);

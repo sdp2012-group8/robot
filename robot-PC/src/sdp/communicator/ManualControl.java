@@ -441,8 +441,22 @@ public class ManualControl {
 					public void receiveMessage(opcode op, byte[] args, Communicator controler) {
 						System.out.println("New message "+op+" from BRICK");
 
+				boolean repeat = true;
+				while (repeat) {
+					try {
+						mComm = new JComm(new MessageListener() {
+
+							@Override
+							public void receiveMessage(opcode op, byte[] args, Communicator controler) {
+								System.out.println("New message "+op+" from BRICK");
+
+							}
+						});
+						repeat = false;
+					} catch (Exception e) {
+						System.out.println("Connection failed. Reattempting...");
 					}
-				});
+				}
 				btnConnect.setText("Ready!");
 				btnNewButton.setEnabled(true);
 				btnKick.setEnabled(true);

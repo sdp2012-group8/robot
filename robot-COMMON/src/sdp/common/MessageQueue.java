@@ -34,6 +34,8 @@ public class MessageQueue {
 	 */
 	public MessageQueue(Communicator com) {
 		mComm = com;
+		if (com == null)
+			LOGGER.info("TEST MODE: No Communicator supplied. Messages will be instead printed in LOGGER.");
 	}
 	
 	/**
@@ -55,7 +57,10 @@ public class MessageQueue {
 			@Override
 			public void run() {
 				try {
-					mComm.sendMessage(op, args);
+					if (mComm != null)
+						mComm.sendMessage(op, args);
+					else
+						LOGGER.info(op+" args"+getHumanReadableArgs(args));
 				} catch (IOException e) {
 					LOGGER.warning("Error sending message "+op+" from queue");
 					e.printStackTrace();
@@ -87,7 +92,9 @@ public class MessageQueue {
 	 */
 	public void close() {
 		cancelAllMessages();
-		mComm.close();
+		if (mComm != null) {
+			mComm.close();
+		}
 	}
 	
 	/**
@@ -95,6 +102,17 @@ public class MessageQueue {
 	 */
 	public int tasks_pending() {
 		return tasks_pending;
+	}
+	
+	private String getHumanReadableArgs(byte[] args) {
+		if (args.length == 0)
+			return "[∅]";
+		else if (args.length == 1)
+			return "["+args[0]+"]";
+		String ans = "["+args[0];
+		for (int i = 1; i < args.length; i++)
+			ans += ", "+args[i];
+		return ans+"]";
 	}
 
 }
