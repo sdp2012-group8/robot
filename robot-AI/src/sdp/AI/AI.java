@@ -19,6 +19,10 @@ import sdp.common.Communicator.opcode;
  */
 public class AI {
 	
+	public enum mode {
+		chase_once
+	}
+	
 	// pitch constants
 	private final static double pitch_width_cm = 244;
 	private final static double door_y_cm = 113.7/2;
@@ -53,6 +57,17 @@ public class AI {
 	}
 	
 	/**
+	 * Change mode. Can be used for penalty, freeplay, testing, etc
+	 */
+	public void setMode(mode new_mode) {
+		switch (new_mode) {
+		case chase_once:
+			firstrun = true;
+			break;
+		}
+	}
+	 
+	/**
 	 * Starts the AI in a new decision thread.
 	 * 
 	 * Don't start more than once!
@@ -72,7 +87,7 @@ public class AI {
 						filteredState = state;
 					else
 						filteredState = new WorldState(
-								lowPass(filteredState.getBallCoords(), state.getBallCoords(), filteredPositionAmount),
+								lowPass(filteredState.getBallCoords(), state.getBallCoords()),
 								lowPass(filteredState.getBlueRobot(), state.getBlueRobot()),
 								lowPass(filteredState.getYellowRobot(), state.getYellowRobot()),
 								state.getWorldImage());
@@ -140,7 +155,19 @@ public class AI {
 	 * @return a filtered value
 	 */
 	private double lowPass(double old_value, double new_value, int amount) {
+		if (new_value < 0)
+			return old_value;
 		return (old_value+new_value*amount)/((double) (amount+1));
+	}
+	
+	/**
+	 * Low pass for angles
+	 * @param old_value
+	 * @param new_value
+	 * @return the filtered angle
+	 */
+	private double lowPass(double old_value, double new_value) {
+		return lowPass(old_value, new_value, filteredAngleAmount);
 	}
 	
 	/**
@@ -150,10 +177,10 @@ public class AI {
 	 * @param amount
 	 * @return the filtered position
 	 */
-	private Point2D.Double lowPass(Point2D.Double old_value, Point2D.Double new_value, int amount) {
+	private Point2D.Double lowPass(Point2D.Double old_value, Point2D.Double new_value) {
 		return new Point2D.Double (
-				lowPass(old_value.getX(), new_value.getX(), amount),
-				lowPass(old_value.getY(), new_value.getY(), amount));
+				lowPass(old_value.getX(), new_value.getX(), filteredPositionAmount),
+				lowPass(old_value.getY(), new_value.getY(), filteredPositionAmount));
 	}
 	
 	/**
@@ -165,8 +192,8 @@ public class AI {
 	 */
 	private Robot lowPass(Robot old_value, Robot new_value) {
 		return new Robot(
-				lowPass(old_value.getCoords(), new_value.getCoords(), filteredPositionAmount),
-				lowPass(old_value.getAngle(), new_value.getAngle(), filteredAngleAmount));
+				lowPass(old_value.getCoords(), new_value.getCoords()),
+				lowPass(old_value.getAngle(), new_value.getAngle()));
 	}
 	
 	// Decision making:
@@ -177,7 +204,7 @@ public class AI {
 	// Right x=2.44 m   x=0, y = 0, Left door
 	//                       room 3.04
 	
-	private boolean firstrun = true;
+	private boolean firstrun = false;
 	
 	/**
 	 * This method is fired when a new state is available. Decisions should be done here.
@@ -206,11 +233,12 @@ public class AI {
 		// we want to go there with speed maxspeed, how many seconds will it take
 		// distance/max_recommended_speed time needed for travelling with constant speed
 		// Math.sqrt(2*max_recommended_speed/robot_acc_cm_s_s) time needed for decelerating
-		double time = distance/max_speed_cm_s - Math.sqrt(2*max_speed_cm_s/robot_acc_cm_s_s);
+		double time = distance/max_speed_cm_s;// - Math.sqrt(2*max_speed_cm_s/robot_acc_cm_s_s);
 		double turning_speed = turning_angle / time;
 		mQueue.addMessageToQueue(0, opcode.operate, (byte) max_speed_cm_s, (byte) 0);//turning_speed);
 		mQueue.addMessageToQueue(time, opcode.operate, (byte) 0, (byte) 0);
-		System.out.println("Expected runtime "+time+"s; turning speed "+turning_speed+"; turning angle "+turning_angle+"; final angle "+final_angle);
+		System.out.println("Expected runtime "+time+"s; distance is "+distance);
+		//System.out.println("Expected runtime "+time+"s; turning speed "+turning_speed+"; turning angle "+turning_angle+"; final angle "+final_angle);
 	}
 
 }

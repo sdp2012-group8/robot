@@ -13,6 +13,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
+import sdp.AI.AI.mode;
 import sdp.common.Communicator;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
@@ -96,7 +97,7 @@ public class AITesterGUI {
 								20, 20);
 						g.setColor(Color.white);
 						double dir_x = 0.03*Math.cos(lastWS.getBlueRobot().getAngle()*Math.PI/180d);
-						double dir_y = 0.03*Math.sin(lastWS.getBlueRobot().getAngle()*Math.PI/180d);
+						double dir_y = -0.03*Math.sin(lastWS.getBlueRobot().getAngle()*Math.PI/180d);
 						g.drawLine(
 								(int)(lastWS.getBlueRobot().getCoords().getX()*width),
 								(int)(lastWS.getBlueRobot().getCoords().getY()*width),
@@ -109,7 +110,7 @@ public class AITesterGUI {
 								20, 20);
 						g.setColor(Color.white);
 						dir_x = 0.03*Math.cos(lastWS.getYellowRobot().getAngle()*Math.PI/180d);
-						dir_y = 0.03*Math.sin(lastWS.getYellowRobot().getAngle()*Math.PI/180d);
+						dir_y = -0.03*Math.sin(lastWS.getYellowRobot().getAngle()*Math.PI/180d);
 						g.drawLine(
 								(int)(lastWS.getYellowRobot().getCoords().getX()*width),
 								(int)(lastWS.getYellowRobot().getCoords().getY()*width),
@@ -257,7 +258,18 @@ public class AITesterGUI {
 		btnConnect.setBounds(656, 10, 117, 25);
 		frmAlphaTeamAi.getContentPane().add(btnConnect);
 		
-		
+		final JButton btnSendComm = new JButton("DO");
+		btnSendComm.setBounds(656, 300, 117, 25);
+		btnSendComm.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				mAI.setMode(mode.chase_once);
+				
+			}
+			
+		});
+		frmAlphaTeamAi.getContentPane().add(btnSendComm);
 
 	}
 }
