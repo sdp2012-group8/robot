@@ -38,11 +38,12 @@ public class MessageQueue {
 	
 	/**
 	 * Adds current message to the message queue.
-	 * @param delay delay in ms to wait after sending previous message
+	 * @param delay delay in s to wait after sending previous message
 	 * @param op the opcode of the message
 	 * @param args the arguments of the message
 	 */
-	public void addMessageToQueue(final long delay, final opcode op, final byte... args) {
+	public void addMessageToQueue(double delay_s, final opcode op, final byte... args) {
+		final long delay = (long) (delay_s*1000);
 		if (mLastMsg == null)
 			mLastMsg = new Date(System.currentTimeMillis()+delay);
 		else
