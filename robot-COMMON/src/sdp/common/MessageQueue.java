@@ -59,8 +59,7 @@ public class MessageQueue {
 				try {
 					if (mComm != null)
 						mComm.sendMessage(op, args);
-					else
-						LOGGER.info(op+" args"+getHumanReadableArgs(args));
+					LOGGER.info(mComm == null ? "TEST:" : ""+ op+" args"+getHumanReadableArgs(args));
 				} catch (IOException e) {
 					LOGGER.warning("Error sending message "+op+" from queue");
 					e.printStackTrace();
