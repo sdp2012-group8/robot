@@ -35,13 +35,13 @@ public class Brick {
 	public static void main(String[] args) {
 		// connect with PC and start receiving messages
 		mCont = new BComm(new MessageListener() {
-			
+
 			// for joypad
 			private float speed_a = 0;
 			private float speed_c = 0;
-			
+
 			// for tacho
-			
+
 			public static final float ROBOTR = 7.1F;
 			public static final float WHEELR = 4F;
 			int lastCountA = 0;
@@ -56,7 +56,7 @@ public class Brick {
 				final int def_vol = Sound.getVolume();
 				// to send messages back to PC, use mCont.sendMessage
 				switch (op) {
-					
+
 				case checkTouch:
 					TouchSensor tsens = new TouchSensor(SensorPort.S2);
 					TouchSensor tsens2 = new TouchSensor(SensorPort.S3);
@@ -70,7 +70,7 @@ public class Brick {
 						}
 						if (i>10) break;
 					}
-						
+
 				case exit:
 					mCont.close();
 					Sound.setVolume(def_vol);
@@ -147,7 +147,7 @@ public class Brick {
 						Motor.B.rotate(args[0]);
 					}
 					break;
-					
+
 				case move_to_wall:
 					UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
 					sens.continuous();
@@ -157,7 +157,7 @@ public class Brick {
 					Motor.C.setAcceleration(1000);
 					Motor.A.forward();
 					Motor.C.forward();
-					
+
 					while (true) { // if no other sensors interfere?
 						int dist = sens.getDistance();
 						LCD.clear(2);
@@ -173,53 +173,53 @@ public class Brick {
 					Motor.A.stop();
 					sens.off();
 					break;
-				
+
 				case operate:
-					if (args.length > 0) {
 					// args[0] - speed in cm per second
 					// args[1] - turning speed in degrees per second around center of robot
-					float old_a = speed_a;
-					float old_c = speed_c;
-					// convert the degrees per second around robot
-					// to degrees per second for the motor
-					float conv_angle = 0;
-					if (args.length > 1) conv_angle = args[1]*ROBOTR/WHEELR;
-					float speed_angle = args[0]/(0.017453292519943295f*WHEELR); // Radius*Pi*Angle/180
-					// set desired speed
-					speed_a = speed_angle+conv_angle;
-					speed_c = speed_angle-conv_angle;
-					// change speed according to turning
-					Motor.A.setSpeed(Math.abs(speed_a));
-					Motor.C.setSpeed(Math.abs(speed_c));
-					// check if we need to start motors or turn their direction
-					if (old_a == 0 || old_a*speed_a < 0) {
-						Motor.A.setAcceleration(1000);
-						if (speed_a > 0)
-							Motor.A.forward();
-						else
-							Motor.A.backward();
-					}
-					// check if we need to start motors or turn their direction
-					if (old_c == 0 || old_c*speed_c < 0) {
-						Motor.C.setAcceleration(1000);
-						if (speed_c > 0)
-							Motor.C.forward();
-						else
-							Motor.C.backward();
-					}
-					// check if we need to stop motors
-					if (speed_a == 0)
-						Motor.A.stop();
-					if (speed_c == 0)
-						Motor.C.stop();
+					if (args.length > 0) {
+						float old_a = speed_a;
+						float old_c = speed_c;
+						// convert the degrees per second around robot
+						// to degrees per second for the motor
+						float conv_angle = 0;
+						if (args.length > 1) conv_angle = args[1]*ROBOTR/WHEELR;
+						float speed_angle = args[0]/(0.017453292519943295f*WHEELR); // Radius*Pi*Angle/180
+						// set desired speed
+						speed_a = speed_angle+conv_angle;
+						speed_c = speed_angle-conv_angle;
+						// change speed according to turning
+						Motor.A.setSpeed(Math.abs(speed_a));
+						Motor.C.setSpeed(Math.abs(speed_c));
+						// check if we need to start motors or turn their direction
+						if (old_a == 0 || old_a*speed_a < 0) {
+							Motor.A.setAcceleration(1000);
+							if (speed_a > 0)
+								Motor.A.forward();
+							else
+								Motor.A.backward();
+						}
+						// check if we need to start motors or turn their direction
+						if (old_c == 0 || old_c*speed_c < 0) {
+							Motor.C.setAcceleration(1000);
+							if (speed_c > 0)
+								Motor.C.forward();
+							else
+								Motor.C.backward();
+						}
+						// check if we need to stop motors
+						if (speed_a == 0)
+							Motor.A.stop();
+						if (speed_c == 0)
+							Motor.C.stop();
 					}
 					break;
-					
+
 				case play_sound:
 					Sound.setVolume(Sound.VOL_MAX);
 					Sound.playSample(new File("SMB.wav"));
 					break;
-					
+
 				}
 			}
 		});
