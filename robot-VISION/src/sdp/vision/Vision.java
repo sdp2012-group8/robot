@@ -20,7 +20,7 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	OldImageProcessor oldImageProcessor;
 	
 	/** Image processor. */
-	NewImageProcessor imageProcessor;
+	ImageProcessor imageProcessor;
 	
 	
 	/**
@@ -28,7 +28,7 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	 */
 	public Vision() {
 		oldImageProcessor = new OldImageProcessor();
-		imageProcessor = new NewImageProcessor();
+		imageProcessor = new ImageProcessor();
 	}
 	
 	
@@ -56,11 +56,13 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	 */
 	@Override
 	public void nextFrame(BufferedImage frame) {
-		oldImageProcessor.process(frame);
-		WorldState state = oldImageProcessor.worldState;
+//		oldImageProcessor.process(frame);
+//		WorldState state = oldImageProcessor.worldState;
+		
+		WorldState nextState = imageProcessor.extractWorldState(frame);
 		
 		setChanged();
-		notifyObservers(state);
+		notifyObservers(nextState);
 	}
 	
 }

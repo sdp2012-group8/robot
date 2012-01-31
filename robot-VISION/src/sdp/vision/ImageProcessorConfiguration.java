@@ -193,6 +193,25 @@ public class ImageProcessorConfiguration {
 	
 	
 	/**
+	 * Get the height of the field in pixels.
+	 * 
+	 * @return The height of the field.
+	 */
+	public int getFieldHeight() {
+		return (getFieldHighY() - getFieldLowY());
+	}
+	
+	/**
+	 * Get the width of the field in pixels.
+	 * 
+	 * @return The width of the field.
+	 */
+	public int getFieldWidth() {
+		return (getFieldHighX() - getFieldLowX());
+	}
+	
+	
+	/**
 	 * Get the height of incoming images.
 	 * 
 	 * @return The height of the frames.
