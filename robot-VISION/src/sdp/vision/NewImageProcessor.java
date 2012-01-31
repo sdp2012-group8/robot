@@ -13,7 +13,7 @@ import javax.swing.JOptionPane;
 public class NewImageProcessor {
 	
 	/** The processor's configuration. */
-	private ImageProcessorConfiguration cfg;
+	private ImageProcessorConfiguration config;
 
 	private static int RED = 0;
 	private static int GREEN = 1;
@@ -57,11 +57,11 @@ public class NewImageProcessor {
 	}
 	
 	public NewImageProcessor() {
-		cfg = new ImageProcessorConfiguration();
+		config = new ImageProcessorConfiguration();
 	}
 	
 	public NewImageProcessor(ImageProcessorConfiguration cfg) {
-		this.cfg = cfg;
+		this.config = cfg;
 	}
 	
 	/**
@@ -70,7 +70,7 @@ public class NewImageProcessor {
 	 * the function that does the actual processing, based on cfg.getBackground() subtraction and thresholding
 	 * for R, G, B and H
 	 * */
-	public BufferedImage processing(BufferedImage image) {
+	public synchronized BufferedImage processing(BufferedImage image) {
 		Raster bgData = null;
 		Raster data = null;
 		
@@ -83,15 +83,15 @@ public class NewImageProcessor {
 		}
 
 		try {
-			bgData = cfg.getBackground().getData();
+			bgData = config.getBackground().getData();
 		} catch (NullPointerException e) {
 			System.out.println(e.toString());
 			return null;
 		}
 		
 		
-		for (int i = cfg.getFieldLowX(); i < cfg.getFieldHighX(); i = i + 1) { // for every
-			for (int j = cfg.getFieldLowY(); j < cfg.getFieldHighY(); j = j + 1) {
+		for (int i = config.getFieldLowX(); i < config.getFieldHighX(); i = i + 1) { // for every
+			for (int j = config.getFieldLowY(); j < config.getFieldHighY(); j = j + 1) {
 			
 				int[] bgPixel = new int[3];
 				data.getPixel(i, j, bgPixel);
@@ -157,8 +157,8 @@ public class NewImageProcessor {
 	
 	public boolean isGrey(int red, int green, int blue, int x, int y){
 	
-		if (red < 100 && green < 100 && blue < 100 && (x > (cfg.getFieldLowX() + 30)) && (x < (cfg.getFieldHighX() - 30))
-				&& (y > (cfg.getFieldLowY() + 30)) && (y < (cfg.getFieldHighY() - 30)))
+		if (red < 100 && green < 100 && blue < 100 && (x > (config.getFieldLowX() + 30)) && (x < (config.getFieldHighX() - 30))
+				&& (y > (config.getFieldLowY() + 30)) && (y < (config.getFieldHighY() - 30)))
 			return true;
 		
 		return false;
@@ -178,4 +178,23 @@ public class NewImageProcessor {
 		return (btDifference < blueThreshold && colour[BLUE] > 130);
 	}
 
+	
+	/**
+	 * Get the image processor's configuration.
+	 * 
+	 * @return The configuration.
+	 */
+	public synchronized ImageProcessorConfiguration getConfiguration() {
+		return config;
+	}
+
+	/**
+	 * Set the image processor's configuration.
+	 * 
+	 * @param config The new configuration.
+	 */
+	public synchronized void setConfiguration(ImageProcessorConfiguration config) {
+		this.config = config;
+	}
+	
 }

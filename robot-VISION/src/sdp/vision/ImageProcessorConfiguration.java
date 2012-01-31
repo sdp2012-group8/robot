@@ -10,10 +10,10 @@ import java.awt.image.BufferedImage;
 public class ImageProcessorConfiguration {
 	
 	/** Height of the incoming images. */
-	private int frameHeight = 576;
+	private int frameHeight = 480;
 	
 	/** Width of the incoming images. */
-	private int frameWidth = 768;
+	private int frameWidth = 640;
 	
 	
 	/** The background image. */
@@ -27,10 +27,10 @@ public class ImageProcessorConfiguration {
 	private double fieldHighX = 0.95;
 	
 	/** The position of the top wall of the field (y low). */
-	private double fieldLowY = 0.1;
+	private double fieldLowY = 0.05;
 	
 	/** The position of the right wall of the field (y high). */
-	private double fieldHighY = 0.6;
+	private double fieldHighY = 0.95;
 		
 
 	/**
@@ -147,7 +147,7 @@ public class ImageProcessorConfiguration {
 	 * @return Position of the field's top wall.
 	 */
 	public int getFieldLowY() {
-		return (int) (fieldLowY * frameWidth);
+		return (int) (fieldLowY * frameHeight);
 	}
 	
 	/**
@@ -179,7 +179,7 @@ public class ImageProcessorConfiguration {
 	 * @return Position of the field's bottom wall.
 	 */
 	public int getFieldHighY() {
-		return (int) (fieldHighY * frameWidth);
+		return (int) (fieldHighY * frameHeight);
 	}
 	
 	/**

@@ -9,19 +9,16 @@ import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
-import javax.swing.JLabel;
-import javax.swing.JSlider;
-import javax.swing.JButton;
-import javax.swing.JTextField;
 import javax.swing.JSpinner;
 import javax.swing.border.TitledBorder;
-import javax.swing.SpinnerDateModel;
-import java.util.Date;
-import java.util.Calendar;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.JTabbedPane;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+
+import sdp.vision.ImageProcessorConfiguration;
+import sdp.vision.Vision;
+import javax.swing.JButton;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 
 /**
@@ -31,19 +28,40 @@ public class MainWindow extends javax.swing.JFrame{
 	
 	/** Required by Serializable. */
 	private static final long serialVersionUID = 8597348579639499324L;
+	
+	/** Class name. */
 	public static String className = null;
+	
+	
+	/** In what integer range will floats be represented in spinners. */
+	private static final int SPINNER_FLOAT_RANGE = 1000;
+	
+	
+	/** Active vision subsystem instance. */
+	private Vision vision = null;
 
 	
 	/**
-	 * The main constructor.
+	 * The default constructor.
 	 */
-	public MainWindow(){
+	public MainWindow() {
 		setSize(new Dimension(840, 480));
 		setPreferredSize(new Dimension(840, 480));
 		getContentPane().setMinimumSize(new Dimension(640, 480));
 		setTitle("Battlestation");
 		initComponents();
 	}
+	
+	/**
+	 * Constructs the window with the specified vision subsystem instance.
+	 */
+	public MainWindow(Vision vision) {
+		this();
+		
+		this.vision = vision;
+		updateVisionComponentValues();
+	}
+	
 	
 	/**
 	 * Initialise GUI components.
@@ -115,9 +133,9 @@ public class MainWindow extends javax.swing.JFrame{
 		gbl_fieldWallPanel.rowWeights = new double[]{0.0, 0.0, 0.0, Double.MIN_VALUE};
 		fieldWallPanel.setLayout(gbl_fieldWallPanel);
 		
-		JSpinner fieldLowYSpinner = new JSpinner();
+		fieldLowYSpinner = new JSpinner();
 		fieldLowYSpinner.setMinimumSize(new Dimension(55, 20));
-		fieldLowYSpinner.setModel(new SpinnerNumberModel(0, 0, 1000, 1));
+		fieldLowYSpinner.setModel(new SpinnerNumberModel(0, 0, SPINNER_FLOAT_RANGE, 1));
 		GridBagConstraints gbc_fieldLowYSpinner = new GridBagConstraints();
 		gbc_fieldLowYSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_fieldLowYSpinner.anchor = GridBagConstraints.NORTH;
@@ -126,8 +144,8 @@ public class MainWindow extends javax.swing.JFrame{
 		gbc_fieldLowYSpinner.gridy = 0;
 		fieldWallPanel.add(fieldLowYSpinner, gbc_fieldLowYSpinner);
 		
-		JSpinner fieldLowXSpinner = new JSpinner();
-		fieldLowXSpinner.setModel(new SpinnerNumberModel(0, 0, 1000, 1));
+		fieldLowXSpinner = new JSpinner();
+		fieldLowXSpinner.setModel(new SpinnerNumberModel(0, 0, SPINNER_FLOAT_RANGE, 1));
 		fieldLowXSpinner.setMinimumSize(new Dimension(55, 20));
 		GridBagConstraints gbc_fieldLowXSpinner = new GridBagConstraints();
 		gbc_fieldLowXSpinner.fill = GridBagConstraints.HORIZONTAL;
@@ -137,9 +155,9 @@ public class MainWindow extends javax.swing.JFrame{
 		gbc_fieldLowXSpinner.gridy = 1;
 		fieldWallPanel.add(fieldLowXSpinner, gbc_fieldLowXSpinner);
 		
-		JSpinner fieldHighXSpinner = new JSpinner();
+		fieldHighXSpinner = new JSpinner();
 		fieldHighXSpinner.setMinimumSize(new Dimension(55, 20));
-		fieldHighXSpinner.setModel(new SpinnerNumberModel(0, 0, 1000, 1));
+		fieldHighXSpinner.setModel(new SpinnerNumberModel(0, 0, SPINNER_FLOAT_RANGE, 1));
 		GridBagConstraints gbc_fieldHighXSpinner = new GridBagConstraints();
 		gbc_fieldHighXSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_fieldHighXSpinner.anchor = GridBagConstraints.NORTH;
@@ -148,8 +166,8 @@ public class MainWindow extends javax.swing.JFrame{
 		gbc_fieldHighXSpinner.gridy = 1;
 		fieldWallPanel.add(fieldHighXSpinner, gbc_fieldHighXSpinner);
 		
-		JSpinner fieldHighYSpinner = new JSpinner();
-		fieldHighYSpinner.setModel(new SpinnerNumberModel(0, 0, 1000, 1));
+		fieldHighYSpinner = new JSpinner();
+		fieldHighYSpinner.setModel(new SpinnerNumberModel(0, 0, SPINNER_FLOAT_RANGE, 1));
 		fieldHighYSpinner.setMinimumSize(new Dimension(55, 20));
 		GridBagConstraints gbc_fieldHighYSpinner = new GridBagConstraints();
 		gbc_fieldHighYSpinner.fill = GridBagConstraints.HORIZONTAL;
@@ -158,11 +176,38 @@ public class MainWindow extends javax.swing.JFrame{
 		gbc_fieldHighYSpinner.gridx = 2;
 		gbc_fieldHighYSpinner.gridy = 2;
 		fieldWallPanel.add(fieldHighYSpinner, gbc_fieldHighYSpinner);
+		
+		visionApplyButton = new JButton("Apply Settings");
+		visionApplyButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				setNewVisionConfiguration();
+			}
+		});
+		GridBagConstraints gbc_visionApplyButton = new GridBagConstraints();
+		gbc_visionApplyButton.gridx = 0;
+		gbc_visionApplyButton.gridy = 1;
+		robotControlPanel.add(visionApplyButton, gbc_visionApplyButton);
 	}
 	
 	
 	/** The label that will contain the camera's image. */
 	private javax.swing.JLabel imageLabel;
+	
+	/** Spinner that contains the field's low Y value. */
+	private JSpinner fieldLowYSpinner;
+	
+	/** Spinner that contains the field's low X value. */
+	private JSpinner fieldLowXSpinner;
+	
+	/** Spinner that contains the field's high X value. */
+	private JSpinner fieldHighXSpinner;
+	
+	/** Spinner that contains the field's high Y value. */
+	private JSpinner fieldHighYSpinner;
+	
+	/** A button that applies the configuration changes to the vision system. */
+	private JButton visionApplyButton;
 	
 	
 	/**
@@ -173,6 +218,41 @@ public class MainWindow extends javax.swing.JFrame{
 	public void setImage(BufferedImage image) {
 		if (image != null) {
 			imageLabel.getGraphics().drawImage(image, 0, 0, null);
+		}
+	}
+	
+	/** 
+	 * Update the vision tab components to match vision's configuration.
+	 */
+	private void updateVisionComponentValues() {
+		if (vision == null) {
+			System.err.println("Tried to read vision configuration when vision subsystem was inactive.");
+		} else {
+			ImageProcessorConfiguration config = vision.getConfiguration();		
+			
+			fieldLowXSpinner.setValue(new Integer((int) (config.getRawFieldLowX() * SPINNER_FLOAT_RANGE)));
+			fieldLowYSpinner.setValue(new Integer((int) (config.getRawFieldLowY() * SPINNER_FLOAT_RANGE)));
+			fieldHighXSpinner.setValue(new Integer((int) (config.getRawFieldHighX() * SPINNER_FLOAT_RANGE)));
+			fieldHighYSpinner.setValue(new Integer((int) (config.getRawFieldHighY() * SPINNER_FLOAT_RANGE)));
+		}
+	}
+	
+	/**
+	 * Set the configuration of the vision subsystem to match the values in
+	 * vision tab.
+	 */
+	private void setNewVisionConfiguration() {
+		if (vision == null) {
+			System.err.println("Tried to set vision configuration when vision subsystem was inactive.");
+		} else {
+			ImageProcessorConfiguration config = new ImageProcessorConfiguration();
+			
+			config.setRawFieldLowX(((Integer)fieldLowXSpinner.getValue()).intValue() / ((double) SPINNER_FLOAT_RANGE));
+			config.setRawFieldLowY(((Integer)fieldLowYSpinner.getValue()).intValue() / ((double) SPINNER_FLOAT_RANGE));
+			config.setRawFieldHighX(((Integer)fieldHighXSpinner.getValue()).intValue() / ((double) SPINNER_FLOAT_RANGE));
+			config.setRawFieldHighY(((Integer)fieldHighYSpinner.getValue()).intValue() / ((double) SPINNER_FLOAT_RANGE));
+			
+			vision.setConfiguration(config);
 		}
 	}
 	
