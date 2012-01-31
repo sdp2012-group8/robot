@@ -171,11 +171,11 @@ public class AITesterGUI {
 		group_team.add(rdbtnBlue);
 		group_team.add(rdbtnNewRadioButton);
 		
-		JLabel lblOurDoor = new JLabel("Our door:");
-		lblOurDoor.setBounds(656, 200, 70, 15);
-		frmAlphaTeamAi.getContentPane().add(lblOurDoor);
+		JLabel lblOurGoal = new JLabel("Our goal:");
+		lblOurGoal.setBounds(656, 200, 70, 15);
+		frmAlphaTeamAi.getContentPane().add(lblOurGoal);
 		
-		ButtonGroup group_door = new ButtonGroup();
+		ButtonGroup group_goal = new ButtonGroup();
 		
 		final JRadioButton rdbtnLeft = new JRadioButton("left");
 		rdbtnLeft.setBounds(656, 217, 149, 23);
@@ -186,8 +186,8 @@ public class AITesterGUI {
 		rdbtnRight.setBounds(656, 244, 149, 23);
 		frmAlphaTeamAi.getContentPane().add(rdbtnRight);
 		
-		group_door.add(rdbtnLeft);
-		group_door.add(rdbtnRight);
+		group_goal.add(rdbtnLeft);
+		group_goal.add(rdbtnRight);
 		
 		JLabel lblRefreshRate = new JLabel("refresh rate");
 		lblRefreshRate.setBounds(10, 496, 108, 15);
