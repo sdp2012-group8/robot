@@ -2,3 +2,4 @@
 *.class
 *.nxd
 *.nxj
+*.fuse_hidden*

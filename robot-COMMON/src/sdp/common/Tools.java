@@ -1,6 +1,7 @@
 package sdp.common;
 
 import java.awt.Point;
+import java.awt.geom.Point2D;
 
 public class Tools {
 
@@ -78,7 +79,7 @@ public class Tools {
 	 * @param p2 end point
 	 * @return sqrt((x1-x2)^2+(y1-y2)^2)
 	 */
-	public static double getDistanceBetweenPoint(Point p1, Point p2)
+	public static double getDistanceBetweenPoint(Point2D.Double p1, Point2D.Double p2)
 	{
 		return Math.sqrt((double)(Math.pow(p1.x-p2.x,2)+(Math.pow(p1.y-p2.y,2))));
 	}

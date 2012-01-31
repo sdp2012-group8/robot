@@ -16,6 +16,8 @@ import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
+import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
@@ -70,12 +72,12 @@ public class OldImageProcessor {
 	public static int searchdistance = 200;
 	public static int rayOfLight = 35;
 
-	Point lastBallPos = new Point(-1, -1);
+	Point2D.Double lastBallPos = new Point2D.Double(-1, -1);
 
 	// this will store ball coordinates
-	Point btPos = new Point(-1, -1);
-	Point ytPos = new Point(-1, -1);
-	Point ourPos = new Point(-1, -1);
+	Point2D.Double btPos = new Point2D.Double(-1, -1);
+	Point2D.Double ytPos = new Point2D.Double(-1, -1);
+	Point2D.Double ourPos = new Point2D.Double(-1, -1);
 
 	public LinkedList<Point> lines = new LinkedList<Point>();
 	public LinkedList<Integer> lineColor = new LinkedList<Integer>();
@@ -113,7 +115,7 @@ public class OldImageProcessor {
 			return null;
 		}
 
-		Point ballPos = new Point(-1, -1);
+		Point2D.Double ballPos = new Point2D.Double(-1, -1);
 
 		// create a new blank raster of the same size
 		ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
@@ -148,12 +150,13 @@ public class OldImageProcessor {
 				int ballDifference = getColourDifference(red, pixelColour);
 
 				// barrel distortion
-				Point out = convertToBarrelCorrected(new Point(i, j));
+				//Point out = convertToBarrelCorrected(new Point(i, j));
+				Point2D.Double out = new Point2D.Double(i, j);
 
 				// if converted pixel is still within pict then set it on the
 				// new raster
 				if (DEBUG_LEVEL < 4)
-					drawPixel(wraster, out, pixelColour);
+					drawPixel(wraster, new Point(i, j), pixelColour);
 
 				// this will try to find the "reddest" point. this works better
 				// for the ball than centroid
@@ -166,7 +169,7 @@ public class OldImageProcessor {
 				// Calculate Centroid of blue Co-ordinates
 				if (isBlue(pixelColour)) {
 					if (DEBUG_LEVEL > 1)
-						drawPixel(wraster, out, blue);
+						drawPixel(wraster, new Point(i, j), blue);
 					btCentroidCount++;
 					btCentroid.x += out.x;
 					btCentroid.y += out.y;
@@ -175,21 +178,22 @@ public class OldImageProcessor {
 				// Calculate Centroid of yellow Co-ordinates
 				if (isYellow(pixelColour)) {
 					if (DEBUG_LEVEL > 1)
-						drawPixel(wraster, out, yell);
+						drawPixel(wraster, new Point(i, j), yell);
 					ytCentroidCount++;
 					ytCentroid.x += out.x;
 					ytCentroid.y += out.y;
 				}
 				if (isBrightGreen(pixelColour)) {
-					if (DEBUG_LEVEL > 1)
-						drawPixel(wraster, convertToBarrelCorrected(new Point(
-								i, j)), new int[] { 0, 255, 0 });
+					if (DEBUG_LEVEL > 1) {
+						Point2D.Double p = convertToBarrelCorrected(new Point2D.Double(i, j));
+						drawPixel(wraster, new Point((int)p.x, (int)p.y), new int[] { 0, 255, 0 });
+					}
 				}
 			}
 		}
 		
 		// TODO: Fix this bandaid.
-		Point ballCoords;
+		Point2D.Double ballCoords;
 		Robot blueRobot, yellowRobot;
 		
 		if (worldState != null) {
@@ -197,29 +201,29 @@ public class OldImageProcessor {
 			blueRobot = worldState.getBlueRobot();
 			yellowRobot = worldState.getYellowRobot();
 		} else {
-			ballCoords = new Point(0, 0);
-			blueRobot = new Robot(new Point(0, 0), 0.0);
-			yellowRobot = new Robot(new Point(0, 0), 0.0);
+			ballCoords = new Point2D.Double(0, 0);
+			blueRobot = new Robot(new Point2D.Double(0, 0), 0.0);
+			yellowRobot = new Robot(new Point2D.Double(0, 0), 0.0);
 		}
 
 		// where 5 is just some minimal number of pixels found
 		if (btCentroidCount > 5) {
-			btPos = new Point(btCentroid.x / btCentroidCount, btCentroid.y
+			btPos = new Point2D.Double(btCentroid.x / btCentroidCount, btCentroid.y
 					/ btCentroidCount);
-			int btAngle = findAngle(data, wraster, btPos, blue);
+			int btAngle = findAngle(data, wraster, new Point((int)btPos.x, (int)btPos.y), blue);
 			blueRobot = new Robot(btPos, btAngle);
 		}
 
 		if (ytCentroidCount > 5) {
-			ytPos = new Point(ytCentroid.x / ytCentroidCount, ytCentroid.y
+			ytPos = new Point2D.Double(ytCentroid.x / ytCentroidCount, ytCentroid.y
 					/ ytCentroidCount);
-			int ytAngle = findAngle(data, wraster, ytPos, yell);
+			int ytAngle = findAngle(data, wraster, new Point((int)ytPos.x, (int)ytPos.y), yell);
 			yellowRobot = new Robot(ytPos, ytAngle);
 		}
 		if (useMouse) {
 			Point mouse = MouseInfo.getPointerInfo().getLocation();
-			ballPos = new Point(mouse.x - 5 - displX, mouse.y - 50 - displY);
-			drawCross(wraster, ballPos, red);
+			ballPos = new Point2D.Double(mouse.x - 5 - displX, mouse.y - 50 - displY);
+			drawCross(wraster, new Point((int)ballPos.x, (int)ballPos.y), red);
 		} else {
 			findBall(wraster, ballPos);
 		}
@@ -244,7 +248,14 @@ public class OldImageProcessor {
 			}
 
 		BufferedImage img = new BufferedImage(cm, wraster, false, null);
-		worldState = new WorldState(ballPos, blueRobot, yellowRobot, img);
+		
+		Point2D.Double ballPosNorm = new Point2D.Double(ballPos.x / width, ballPos.y / width);
+		Robot blueRobotNorm = new Robot(new Point2D.Double(blueRobot.getCoords().x / width,
+				blueRobot.getCoords().y / width), blueRobot.getAngle());
+		Robot yellowRobotNorm = new Robot(new Point2D.Double(yellowRobot.getCoords().x / width,
+				yellowRobot.getCoords().y / width), yellowRobot.getAngle());
+		
+		worldState = new WorldState(ballPosNorm, blueRobotNorm, yellowRobotNorm, img);
 		return img;
 	}
 
@@ -253,7 +264,7 @@ public class OldImageProcessor {
 	 * @param raster
 	 * @param ballPos
 	 */
-	private void findBall(WritableRaster raster, Point ballPos) {
+	private void findBall(WritableRaster raster, Point2D.Double ballPos) {
 		if (ballPos != null) { // if we can see the ball, initiate lastpos value
 			if (lastBallPos.x == -1) {
 				lastBallPos = ballPos;
@@ -269,14 +280,14 @@ public class OldImageProcessor {
 				ballPos = lastBallPos;
 			}
 			if (DEBUG_LEVEL > 0)
-				drawCross(raster, ballPos, red);
+				drawCross(raster, new Point((int)ballPos.x, (int)ballPos.y), red);
 		} else {
 			// if we can't see the ball
 			if (lastBallPos.x != -1) {
 				// try last values
 				ballPos = lastBallPos;
 				if (DEBUG_LEVEL > 0)
-					drawCross(raster, ballPos, red);
+					drawCross(raster, new Point((int)ballPos.x, (int)ballPos.y), red);
 			}
 			// and if we can't see the ball AND there are no previous values, do
 			// nothing.
@@ -422,7 +433,8 @@ public class OldImageProcessor {
 			for (int i = 0; i < len; i++) {
 				Point tmp = Tools.rotatePoint(new Point(x, y), new Point(Xs[i],
 						Ys[i]), bestangle);
-				drawLittleCross(raster, convertToBarrelCorrected(tmp), red);
+				Point2D.Double p = convertToBarrelCorrected(new Point2D.Double(tmp.x, tmp.y));
+				drawLittleCross(raster, new Point((int)p.x, (int)p.y), red);
 			}
 		}
 		if (DEBUG_LEVEL > 0) {
@@ -532,7 +544,7 @@ public class OldImageProcessor {
 	 * @return if useBarrelDistorion is false returns p1, otherwise, returns
 	 *         adjusted coordinates
 	 */
-	public Point convertToBarrelCorrected(Point p1) {
+	public Point2D.Double convertToBarrelCorrected(Point2D.Double p1) {
 		if (!useBarrelDistortion)
 			return p1;
 		// first normalise pixel
@@ -547,13 +559,13 @@ public class OldImageProcessor {
 		double py1 = py * (1 - barrelCorrectionY * rad);
 
 		// then convert back
-		int pixi = (int) ((px1 + 1) * width / 2);
-		int pixj = (int) ((py1 + 1) * height / 2);
+		double pixi = ((px1 + 1) * width / 2);
+		double pixj = ((py1 + 1) * height / 2);
 		// System.out.println("New Pixel: (" + pixi + ", " + pixj + ")");
-		return new Point(pixi, pixj);
+		return new Point2D.Double(pixi, pixj);
 	}
 
-	public static Point barrelCorrected(Point p1) {
+	public static Point2D.Double barrelCorrected(Point2D.Double p1) {
 		// System.out.println("Pixel: (" + x + ", " + y + ")");
 		// first normalise pixel
 		double px = (2 * p1.x - width) / (double) width;
@@ -568,10 +580,10 @@ public class OldImageProcessor {
 		double py1 = py * (1 - barrelCorrectionY * rad);
 
 		// then convert back
-		int pixi = (int) ((px1 + 1) * width / 2);
-		int pixj = (int) ((py1 + 1) * height / 2);
+		double pixi = (int) ((px1 + 1) * width / 2);
+		double pixj = (int) ((py1 + 1) * height / 2);
 		// System.out.println("New Pixel: (" + pixi + ", " + pixj + ")");
-		return new Point(pixi, pixj);
+		return new Point2D.Double(pixi, pixj);
 	}
 
 	/**

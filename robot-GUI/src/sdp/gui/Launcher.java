@@ -13,10 +13,10 @@ import sdp.vision.VisualInputProvider;
  * 
  * @author Gediminas Liktaras
  */
-public class OldGUITest implements Runnable {
+public class Launcher implements Runnable {
 	
 	/** The GUI object. */
-	private OldGUI gui;
+	private MainWindow gui;
 	
 	/** The vision subsystem object. */
 	private Vision vision;
@@ -32,7 +32,7 @@ public class OldGUITest implements Runnable {
 	/**
 	 * The main constructor.
 	 */
-	public OldGUITest() {
+	public Launcher() {
 		vision = new Vision();		
 		visionObserver = new WorldStateObserver(vision);
 		
@@ -46,7 +46,7 @@ public class OldGUITest implements Runnable {
 		}
 		input.setCallback(vision);
 		
-		gui = new OldGUI();
+		gui = new MainWindow();
 		gui.setVisible(true);
 	}
 	
@@ -80,8 +80,8 @@ public class OldGUITest implements Runnable {
 	 * @param args Command-line arguments.
 	 */
 	public static void main(String[] args) {
-		OldGUITest app = new OldGUITest();
-		(new Thread(app, "Old GUI Test")).start();
+		Launcher app = new Launcher();
+		(new Thread(app, "Launcher")).start();
 	}
 
 }
