@@ -59,8 +59,7 @@ public class MessageQueue {
 				try {
 					if (mComm != null)
 						mComm.sendMessage(op, args);
-					else
-						LOGGER.info(op+" args"+getHumanReadableArgs(args));
+					LOGGER.info((mComm == null ? "TEST:" : "")+ op+" args"+getHumanReadableArgs(args)+"; delay "+(mLastMsg.getTime()-System.currentTimeMillis())+" ms");
 				} catch (IOException e) {
 					LOGGER.warning("Error sending message "+op+" from queue");
 					e.printStackTrace();
@@ -70,6 +69,7 @@ public class MessageQueue {
 					// if no more tasks left, kill timer so we might be able to free some memory
 					mTimer.cancel();
 					mTimer = null;
+					mLastMsg = null;
 				}
 			}
 		}, mLastMsg);

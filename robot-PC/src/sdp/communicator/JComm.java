@@ -64,7 +64,7 @@ public class JComm implements sdp.common.Communicator {
 				} catch (InterruptedException e1) {}
 			}
 		}
-		if (!repeat)
+		if (repeat)
 			throw new IOException("Cannot connect to brick!");
 		LOGGER.info("Getting output stream...");
 		os = mComm.getOutputStream();
