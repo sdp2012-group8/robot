@@ -2,7 +2,6 @@ package sdp.gui;
 
 import java.awt.image.BufferedImage;
 
-import javax.swing.BoxLayout;
 import java.awt.Component;
 import javax.swing.JPanel;
 
@@ -13,9 +12,6 @@ import java.awt.Insets;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
 import javax.swing.JButton;
-import javax.swing.Box;
-import javax.swing.JSeparator;
-import javax.swing.SpringLayout;
 
 
 /**
@@ -32,6 +28,8 @@ public class MainWindow extends javax.swing.JFrame{
 	 * The main constructor.
 	 */
 	public MainWindow(){
+		setSize(new Dimension(840, 480));
+		setPreferredSize(new Dimension(840, 480));
 		getContentPane().setMinimumSize(new Dimension(640, 480));
 		setTitle("Battlestation");
 		initComponents();

@@ -1,15 +1,8 @@
 package sdp.vision;
 
 import java.awt.Color;
-import java.awt.Point;
-import java.awt.Transparency;
-import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.ComponentColorModel;
-import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 
@@ -18,17 +11,10 @@ import javax.swing.JOptionPane;
 
 
 public class NewImageProcessor {
-
-	/**
-	 * the limits define a rectangle that captures the pitch without the edges 
-	 */
-	private static int xlowerlimit = 10;
-	private static int xupperlimit = 720;
-	private static int ylowerlimit = 85;
-	private static int yupperlimit = 470;
-	private static int width = 480;
-	private static int height = 680;
 	
+	/** The processor's configuration. */
+	private ImageProcessorConfiguration cfg;
+
 	private static int RED = 0;
 	private static int GREEN = 1;
 	private static int BLUE = 2;
@@ -41,43 +27,51 @@ public class NewImageProcessor {
 	private static int yellThreshold = 150;
 	
 	public static void main(String[] args) {
-		//test images
-		String backgroundImage = "data/testImages/bg.jpg";
+		ImageProcessorConfiguration cfg = new ImageProcessorConfiguration();
+		
+		String bgImagePath = "data/testImages/bg.jpg";
 		String testImage = "data/testImages/start_positions.jpg"; 
 		
 		BufferedImage image = null;
-		BufferedImage background = null;
 		
-		NewImageProcessor br = new NewImageProcessor();
 		try {
-			image = javax.imageio.ImageIO.read(new File(backgroundImage));
+			image = javax.imageio.ImageIO.read(new File(bgImagePath));
 		} catch (IOException ex){
 			ex.printStackTrace();
 		}
 		try {
-			background = javax.imageio.ImageIO.read(new File(testImage)); 
+			cfg.setBackground(javax.imageio.ImageIO.read(new File(testImage))); 
 		} catch (IOException ex){
 			ex.printStackTrace();
 		}
 		
-		if (image != null && background != null){
+		NewImageProcessor br = new NewImageProcessor(cfg);
+		if (image != null) {
 	
 			//displays the resulting image
 			ImageIcon imageIcon = new ImageIcon();
-			imageIcon.setImage(br.processing(image, background));
+			imageIcon.setImage(br.processing(image));
 			JOptionPane.showMessageDialog(null, null, "Resulting image", JOptionPane.PLAIN_MESSAGE, imageIcon);
 		}
 		
 	}
 	
+	public NewImageProcessor() {
+		cfg = new ImageProcessorConfiguration();
+	}
+	
+	public NewImageProcessor(ImageProcessorConfiguration cfg) {
+		this.cfg = cfg;
+	}
+	
 	/**
 	 * @param image
-	 * @param background
-	 * the function that does the actual processing, based on background subtraction and thresholding
+	 * @param cfg.getBackground()
+	 * the function that does the actual processing, based on cfg.getBackground() subtraction and thresholding
 	 * for R, G, B and H
 	 * */
-	public BufferedImage processing(BufferedImage image, BufferedImage background) {
-		Raster backgroundData = null;
+	public BufferedImage processing(BufferedImage image) {
+		Raster bgData = null;
 		Raster data = null;
 		
 		
@@ -89,24 +83,24 @@ public class NewImageProcessor {
 		}
 
 		try {
-			backgroundData = background.getData();
+			bgData = cfg.getBackground().getData();
 		} catch (NullPointerException e) {
 			System.out.println(e.toString());
 			return null;
 		}
 		
 		
-		for (int i = xlowerlimit; i < xupperlimit; i = i + 1) { // for every
-			for (int j = ylowerlimit; j < yupperlimit; j = j + 1) {
+		for (int i = cfg.getFieldLowX(); i < cfg.getFieldHighX(); i = i + 1) { // for every
+			for (int j = cfg.getFieldLowY(); j < cfg.getFieldHighY(); j = j + 1) {
 			
-				int[] backgroundPixel = new int[3];
-				data.getPixel(i, j, backgroundPixel);
+				int[] bgPixel = new int[3];
+				data.getPixel(i, j, bgPixel);
 				
 				int[] imagePixel = new int[3];
-				backgroundData.getPixel(i, j, imagePixel);
+				bgData.getPixel(i, j, imagePixel);
 				
 				
-				int[] difference = getDifference(imagePixel, backgroundPixel);
+				int[] difference = getDifference(imagePixel, bgPixel);
 				
 				// create a new colour with the rgb of the difference
 				
@@ -163,8 +157,8 @@ public class NewImageProcessor {
 	
 	public boolean isGrey(int red, int green, int blue, int x, int y){
 	
-		if (red < 100 && green < 100 && blue < 100 && (x > (xlowerlimit + 30)) && (x < (xupperlimit - 30))
-				&& (y > (ylowerlimit + 30)) && (y < (yupperlimit - 30)))
+		if (red < 100 && green < 100 && blue < 100 && (x > (cfg.getFieldLowX() + 30)) && (x < (cfg.getFieldHighX() - 30))
+				&& (y > (cfg.getFieldLowY() + 30)) && (y < (cfg.getFieldHighY() - 30)))
 			return true;
 		
 		return false;
