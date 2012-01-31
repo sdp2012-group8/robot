@@ -38,7 +38,7 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	 * @return The image processor's configuration.
 	 */
 	public ImageProcessorConfiguration getConfiguration() {
-		return new ImageProcessorConfiguration(imageProcessor.getConfiguration());
+		return imageProcessor.getConfiguration();
 	}
 	
 	/**

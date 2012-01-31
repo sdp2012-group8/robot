@@ -40,19 +40,6 @@ public class ImageProcessorConfiguration {
 		background = new BufferedImage(frameWidth, frameHeight, BufferedImage.TYPE_INT_RGB);
 	}
 	
-	/**
-	 * The copy constructor.
-	 */
-	public ImageProcessorConfiguration(ImageProcessorConfiguration other) {
-		background = other.getBackground();
-		fieldLowX = other.getRawFieldLowX();
-		fieldHighX = other.getRawFieldHighX();
-		fieldLowY = other.getRawFieldLowY();
-		fieldHighY = other.getRawFieldHighY();
-		frameHeight = other.getFrameHeight();
-		frameWidth = other.getFrameWidth();
-	}
-	
 
 	/**
 	 * Get the background image.
