@@ -436,7 +436,8 @@ public class ManualControl {
 				boolean repeat = true;
 				while (repeat) {
 					try {
-						mComm = new JComm(new MessageListener() {
+						mComm = new JComm();
+						mComm.registerListener(new MessageListener() {
 
 							@Override
 							public void receiveMessage(opcode op, byte[] args, Communicator controler) {

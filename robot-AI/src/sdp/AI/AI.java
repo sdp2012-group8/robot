@@ -9,6 +9,7 @@ import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.common.Robot;
 import sdp.common.Communicator.opcode;
+import sdp.common.WorldStateProvider;
 
 /**
  * 
@@ -51,8 +52,8 @@ public class AI {
 	 * @param Comm a communiactor for making connection with real robot/simulated one
 	 * @param Obs an observer for taking information about the table
 	 */
-	public AI(Communicator Comm, WorldStateObserver Obs) {
-		this.mObs = Obs;
+	public AI(Communicator Comm, WorldStateProvider Obs) {
+		this.mObs = new WorldStateObserver(Obs);
 		mQueue = new MessageQueue(Comm);
 	}
 	

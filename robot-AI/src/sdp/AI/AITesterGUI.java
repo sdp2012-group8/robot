@@ -224,13 +224,13 @@ public class AITesterGUI {
 						mInput.setCallback(vision);
 						Communicator com;
 						try {
-							com = chckbxExecuteCommands.isSelected() ? new JComm(null) : null;
+							com = chckbxExecuteCommands.isSelected() ? new JComm() : null;
 						} catch (IOException e) {
 							System.out.println("Connection with brick failed! Going into testmode");
 							chckbxExecuteCommands.setSelected(false);
 							com = null;
 						}
-						mAI = new AI(com, new WorldStateObserver(vision));
+						mAI = new AI(com, vision);
 						mInput.startCapture();
 						mAI.start(rdbtnBlue.isSelected(), rdbtnLeft.isSelected());
 						new Thread() {
