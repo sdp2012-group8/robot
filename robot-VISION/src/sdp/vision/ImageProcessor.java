@@ -378,4 +378,23 @@ public class ImageProcessor {
 
 	}
 
+	
+	/**
+	 * Get current image processor configuration.
+	 * 
+	 * @return The current image processor configuration.
+	 */
+	public ImageProcessorConfiguration getConfiguration() {
+		return config;
+	}
+
+	/**
+	 * Set a new image processor configuration.
+	 * 
+	 * @param config The new configuration.
+	 */
+	public void setConfiguration(ImageProcessorConfiguration config) {
+		this.config = config;
+	}
+
 }
