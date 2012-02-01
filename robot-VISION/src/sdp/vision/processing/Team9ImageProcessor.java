@@ -1,4 +1,4 @@
-package sdp.vision;
+package sdp.vision.processing;
 
 import static com.googlecode.javacv.cpp.opencv_core.*;
 import static com.googlecode.javacv.cpp.opencv_imgproc.*;
@@ -9,19 +9,15 @@ import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
-import java.io.File;
-import java.io.IOException;
 import java.util.logging.*;
-import java.io.File;
-import java.io.IOException;
 
 import com.googlecode.javacpp.Loader;
-import javax.imageio.ImageIO;
 
 import sdp.common.Robot;
 import sdp.common.WorldState;
+import sdp.vision.ImageProcessorConfiguration;
 
-import com.googlecode.javacv.CanvasFrame;
+import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 
 /**
@@ -31,15 +27,10 @@ import com.googlecode.javacv.CanvasFrame;
  * @author Gediminas Liktaras
  * @author Laura Mihaela Ionescu
  */
-public class ImageProcessor {
-	
-	/** The processor's configuration. */
-	private ImageProcessorConfiguration config;
-
-
-	private static int RED = 0;
-	private static int GREEN = 1;
-	private static int BLUE = 2;
+public class Team9ImageProcessor extends ImageProcessor {
+	static int RED = 0;
+	static int GREEN = 1;
+	static int BLUE = 2;
 	private static int YELLOW = 2;
 
 	Point2D.Double btPos = new Point2D.Double(-1, -1);
@@ -47,40 +38,37 @@ public class ImageProcessor {
 	Point2D.Double ourPos = new Point2D.Double(-1, -1);
 	Point2D.Double lastBallPos = new Point2D.Double(-1, -1);
 
-	Logger logger = Logger.getLogger("sdp.vision");
+	Logger logger = Logger.getLogger("sdp.vision.Team9ImageProcessor");
 
 	
 	/**
 	 * Create a new image processor with the default configuration.
 	 */
-	public ImageProcessor() {
-		config = new ImageProcessorConfiguration();
+	public Team9ImageProcessor() {
+		super();
 	}
 	
 	/**
 	 * Create a new image processor with the specified configuration.
 	 * @param config Configuration to use.
 	 */
-	public ImageProcessor(ImageProcessorConfiguration config) {
+	public Team9ImageProcessor(ImageProcessorConfiguration config) {
 		this();
 		this.config = config;
 	}
 	
 	
-	/**
-	 * Extract the world state from the supplied image.
-	 * 
-	 * @param frame The image to process.
-	 * @return The world state, present in the image.
+	/* (non-Javadoc)
+	 * @see sdp.vision.processing.AbstractImageProcessor#extractWorldState(java.awt.image.BufferedImage)
 	 */
-	public WorldState extractWorldState(BufferedImage frame) {
-		
+	@Override
+	public WorldState extractWorldState(BufferedImage frame) {	
 		IplImage background = cvLoadImage("../robot-VISION/data/testImages/bg.jpg");		
 		IplImage image = IplImage.createFrom(frame);
 		
 		IplImage differenceImage = IplImage.createFrom(getDifferenceImage(
 				image.getBufferedImage(), background.getBufferedImage()));
-
+	
 		IplImage redChannel = getChannels(differenceImage, RED);
 		IplImage greenChannel = getChannels(differenceImage, GREEN);
 		IplImage blueChannel = getChannels(differenceImage, BLUE);
@@ -88,7 +76,7 @@ public class ImageProcessor {
 		IplImage blueThreshold = thresholdChannel(blueChannel, BLUE);
 		IplImage redThreshold = thresholdChannel(redChannel, RED);
 		IplImage greenThreshold = thresholdChannel(greenChannel, GREEN);
-
+	
 		IplImage grayImage = cvCreateImage(cvGetSize(image), 8, 1);
 		cvCvtColor(image, grayImage,CV_RGB2GRAY);
 	//	IplImage thresholdImage = ip.thresholdChannel(grayImage, RED);
@@ -109,8 +97,6 @@ public class ImageProcessor {
 	}
 	
 	
-
-
 	/**
 	 * @param image
 	 * @param background
@@ -376,25 +362,6 @@ public class ImageProcessor {
 
 		return image;
 
-	}
-
-	
-	/**
-	 * Get current image processor configuration.
-	 * 
-	 * @return The current image processor configuration.
-	 */
-	public ImageProcessorConfiguration getConfiguration() {
-		return config;
-	}
-
-	/**
-	 * Set a new image processor configuration.
-	 * 
-	 * @param config The new configuration.
-	 */
-	public void setConfiguration(ImageProcessorConfiguration config) {
-		this.config = config;
 	}
 
 }
