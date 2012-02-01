@@ -11,16 +11,17 @@ import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.*;
+import java.io.File;
+import java.io.IOException;
 
+import com.googlecode.javacpp.Loader;
 import javax.imageio.ImageIO;
 
 import sdp.common.Robot;
 import sdp.common.WorldState;
 
 import com.googlecode.javacv.CanvasFrame;
-import com.googlecode.javacv.cpp.opencv_core.CvScalar;
-import com.googlecode.javacv.cpp.opencv_core.IplImage;
-import com.googlecode.javacv.cpp.opencv_imgproc.CvMoments;
 
 
 /**
@@ -40,12 +41,14 @@ public class ImageProcessor {
 	private static int GREEN = 1;
 	private static int BLUE = 2;
 	private static int YELLOW = 2;
-	
-	Point2D btPos = new Point2D.Double(-1, -1);
-	Point2D ytPos = new Point2D.Double(-1, -1);
-	Point2D ourPos = new Point2D.Double(-1, -1);
-	Point2D lastBallPos = new Point2D.Double(-1, -1);
-	
+
+	Point2D.Double btPos = new Point2D.Double(-1, -1);
+	Point2D.Double ytPos = new Point2D.Double(-1, -1);
+	Point2D.Double ourPos = new Point2D.Double(-1, -1);
+	Point2D.Double lastBallPos = new Point2D.Double(-1, -1);
+
+	Logger logger = Logger.getLogger("sdp.vision");
+
 	
 	/**
 	 * Create a new image processor with the default configuration.
@@ -71,6 +74,7 @@ public class ImageProcessor {
 	 * @return The world state, present in the image.
 	 */
 	public WorldState extractWorldState(BufferedImage frame) {
+		
 		IplImage background = cvLoadImage("../robot-VISION/data/testImages/bg.jpg");		
 		IplImage image = IplImage.createFrom(frame);
 		
@@ -114,6 +118,7 @@ public class ImageProcessor {
 	 *         background subtraction The image returned is normalized, to
 	 *         compensate for shadows and the differences in lighting
 	 */
+
 	public BufferedImage getDifferenceImage(BufferedImage image,
 			BufferedImage background) {
 		Raster backgroundData = null;
@@ -149,55 +154,40 @@ public class ImageProcessor {
 					Color colour = new Color(0, 0, 0);
 					int rgb = colour.getRGB();
 					image.setRGB(i, j, rgb);
+					
 				} else {
-
+					
 					int[] difference = getDifference(imagePixel,
 							backgroundPixel);
 
 					// create a new colour with the rgb of the difference
-					int r = 0;
-					int b = 0;
-					int g = 0;
 
-					r = difference[0] > 10 ? difference[0] : 0;
-					g = difference[1] > 10 ? difference[1] : 0;
-					b = difference[2] > 10 ? difference[2] : 0;
+					int r = difference[0] > 30 ? imagePixel[0] : 0;
+
+					int g = difference[1] > 30 ? imagePixel[1] : 0;
+
+					int b = difference[2] > 30 ? imagePixel[2] : 0;
 
 					int sum = r + g + b;
 
-					Color colour;
-					if (sum < 40) {
-						colour = new Color(0, 0, 0);
-						r = 0;
-						g = 0;
-						b = 0;
-					} else {
-						//normalize
-						colour = new Color(r * 255 / sum, g * 255 / sum, b
-								* 255 / sum);
-						r = r * 255 / sum;
-						g = g * 255 / sum;
-						b = b * 255 / sum;
-						colour = new Color(r,g,b);
-					}
-					
+					Color colour = new Color(r, g, b);
 					int rgb = colour.getRGB();
 
 					image.setRGB(i, j, rgb);
-
 				}
 
 			}
 		}
 
 		return image;
+
 	}
 
 	/**
 	 * @param image
 	 * @param colour
-	 * @return IplImage
-	 * splits the image into red, green and blue channels, returning the channel specified by the colour argument
+	 * @return IplImage splits the image into red, green and blue channels,
+	 *         returning the channel specified by the colour argument
 	 */
 	public IplImage getChannels(IplImage image, int colour) {
 
@@ -227,8 +217,8 @@ public class ImageProcessor {
 		int min;
 		int max;
 		if (colour == RED) {
-			min = 100;
-			max = 200;
+			min = 0;
+			max = 400;
 		} else if (colour == GREEN) {
 			min = 100;
 			max = 200;
@@ -253,97 +243,139 @@ public class ImageProcessor {
 
 		return difference;
 	}
-    
+
 	/**
-	 * Finds the centroid of the yellow or the blue robot, depending on the colour argument
+	 * Finds the centroid of the yellow or the blue robot, depending on the
+	 * colour argument
+	 * 
 	 * @param thresholdImage
 	 * @param colour
 	 */
-    public void findCentroid(IplImage thresholdImage, int colour){
+	public Point2D findCentroid(IplImage thresholdImage, int colour) {
 
-    	double posX = 0;
-        double posY = 0;        
-        CvMoments moments = new CvMoments();
-        cvMoments(thresholdImage, moments, 1);
-      
-        double momX10 = cvGetSpatialMoment(moments, 1, 0); 
-        double momY01 = cvGetSpatialMoment(moments, 0, 1);
-        double area = cvGetCentralMoment(moments, 0, 0);
-        posX = momX10 / area;
-        posY = momY01 / area;
-       
-        if (colour == BLUE)
-        	btPos.setLocation(posX, posY);
-        else
-        	if (colour == YELLOW)
-        	ytPos.setLocation(posX,posY);
-        
-        System.out.print("Position " + posX + " " + posY);
-    
-    }
-	
-    /**
-     * Finds the centre of the ball
-     * @param image
-     */
-    public void findBall(IplImage image){
-    	
-    	CvScalar min = cvScalar(0, 0, 130, 0);
-        CvScalar max= cvScalar(140, 110, 255, 0);  
-        
-    	//create binary image of original size
-        IplImage imgThreshold = cvCreateImage(cvGetSize(image), 8, 1);
-        
-        //apply thresholding  
-        cvInRangeS(image, min, max, imgThreshold);
-        
-        //smooth filter- median
-        cvSmooth(imgThreshold, imgThreshold, CV_MEDIAN, 13);
-        
-        //set the position of the ball
-        findCentroid(imgThreshold, RED);
-    }
-    
-    
-	/**
-	 * Get the image processor's configuration.
-	 * 
-	 * @return The configuration.
-	 */
-	public synchronized ImageProcessorConfiguration getConfiguration() {
-		return config;
+		double posX = 0;
+		double posY = 0;
+		CvMoments moments = new CvMoments();
+		cvMoments(thresholdImage, moments, 1);
+
+		double momX10 = cvGetSpatialMoment(moments, 1, 0);
+		double momY01 = cvGetSpatialMoment(moments, 0, 1);
+		double area = cvGetCentralMoment(moments, 0, 0);
+		posX = momX10 / area;
+		posY = momY01 / area;
+
+		if (colour == BLUE)
+			btPos.setLocation(posX, posY);
+		else if (colour == YELLOW)
+			ytPos.setLocation(posX, posY);
+
+		Point2D point = new Point2D.Double((int) posX, (int) posY);
+
+		CvPoint pointX = new CvPoint((int) btPos.getX(), 0);
+		CvPoint pointY = new CvPoint(0, (int) posY);
+		// cvLine(thresholdImage, pointX, pointY, CvScalar.RED, 1, 8, 0);
+
+		System.out.print("Position " + posX + " " + posY);
+
+		return point;
+
 	}
 
 	/**
-	 * Set the image processor's configuration.
+	 * Finds the centre of the ball
 	 * 
-	 * @param config The new configuration.
+	 * @param image
 	 */
-	public synchronized void setConfiguration(ImageProcessorConfiguration config) {
-		this.config = config;
+	public void findBall(IplImage image) {
+
+		CvScalar min = cvScalar(0, 0, 130, 0);
+		CvScalar max = cvScalar(140, 110, 255, 0);
+
+		// create binary image of original size
+		IplImage imgThreshold = cvCreateImage(cvGetSize(image), 8, 1);
+
+		// apply thresholding
+		cvInRangeS(image, min, max, imgThreshold);
+
+		// smooth filter- median
+		cvSmooth(imgThreshold, imgThreshold, CV_MEDIAN, 13);
+
+		// set the position of the ball
+		findCentroid(imgThreshold, RED);
 	}
-	
-	
-	/**
-	 * The main method. Used primarily for testing.
-	 * 
-	 * @param args Command-line arguments.
-	 */
-	public static void main(String args[]) {
-		BufferedImage image = null;
-		try {
-			image = ImageIO.read(new File("data/testImages/start_positions.jpg"));
-		} catch (IOException e) {
-			System.err.println("Could not read image.");
-			System.exit(1);
+
+	public IplImage getContours(IplImage image) {
+
+		//these will be the opposite corners of the bounding box
+		CvPoint boundingCorner1 = new CvPoint(0, 0);
+		CvPoint boundingCorner2 = new CvPoint(0, 0);
+
+		int nonZero = cvCountNonZero(image);
+
+		//check the number of non zero pixels, to see if there are any blobs in the image
+		logger.info("nonzero pixels " + nonZero);
+		
+		Point2D.Double centerOfRobot = new Point2D.Double(-1, -1);
+		
+		
+		int maxArea = 0;
+		if (nonZero > 20 && nonZero < 10000) {
+			CvMemStorage storage = cvCreateMemStorage(0);
+			CvSeq contour = new CvSeq(null);
+			
+			int noOfContours = cvFindContours(image, storage, contour,
+					Loader.sizeof(CvContour.class), CV_RETR_LIST,
+					CV_CHAIN_APPROX_SIMPLE);
+
+			logger.info("number of contours " + noOfContours);
+			
+			while (contour != null && !contour.isNull()) {
+				if (contour.elem_size() > 0) {
+					
+					CvSeq points = cvApproxPoly(contour,
+							Loader.sizeof(CvContour.class), storage,
+							CV_POLY_APPROX_DP,
+							cvContourPerimeter(contour) * 0.02, 0);
+
+					cvDrawContours(image, points, CvScalar.BLUE, CvScalar.BLUE,
+							-1, 1, CV_AA);
+					
+					//get the bounding rectangle of the contour and its minimal box	
+					CvRect cvRect = cvBoundingRect(contour, 0);
+					CvBox2D minBox = cvMinAreaRect2(contour, storage);
+					
+					//get the center of the box
+					CvPoint2D32f point1 = minBox.center();
+					
+					//get the area of the rectangle and compare it to the maximum area
+					int area = cvRect.width() * cvRect.height();
+
+					if (area > maxArea) {
+						maxArea = area;
+						centerOfRobot.setLocation(point1.x(), point1.y());
+						//this is the top-left corner of the box
+						CvPoint p1 = new CvPoint((int) point1.x()
+								- cvRect.width() / 2, (int) point1.y()
+								+ cvRect.height() / 2);
+						boundingCorner1 = p1;
+						//this is the botom-right corner of the box
+						CvPoint p2 = new CvPoint(p1.x() + cvRect.width(),
+								p1.y() - cvRect.height());
+						boundingCorner2 = p2;
+					}
+
+				}
+				contour = contour.h_next();
+			}
 		}
-		
-		ImageProcessor ip = new ImageProcessor();
-		WorldState state = ip.extractWorldState(image);
-		
-		final CanvasFrame canvas = new CanvasFrame("My Image");
-		canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
-		canvas.showImage(state.getWorldImage());
+
+		logger.info("max area = " + maxArea);
+		logger.info("centre of robot " + centerOfRobot.x + " "
+				+ centerOfRobot.y);
+		cvRectangle(image, boundingCorner1, boundingCorner2, CvScalar.BLUE, 1, 8, 0);
+
+		return image;
+
 	}
-    
+
 }
