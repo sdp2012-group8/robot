@@ -4,23 +4,37 @@ import static com.googlecode.javacv.cpp.opencv_core.*;
 import static com.googlecode.javacv.cpp.opencv_imgproc.*;
 
 import java.awt.Color;
-import java.awt.Point;
+import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.*;
+import java.io.File;
+import java.io.IOException;
 
 import com.googlecode.javacpp.Loader;
+import javax.imageio.ImageIO;
+
+import sdp.common.Robot;
+import sdp.common.WorldState;
+
 import com.googlecode.javacv.CanvasFrame;
 
-public class ImageProcessor {
 
-	private static int xlowerlimit = 10;
-	private static int xupperlimit = 720;
-	private static int ylowerlimit = 85;
-	private static int yupperlimit = 470;
+/**
+ * The main object recognition class.
+ *  
+ * @author Andrei-ionut Manolache
+ * @author Gediminas Liktaras
+ * @author Laura Mihaela Ionescu
+ */
+public class ImageProcessor {
+	
+	/** The processor's configuration. */
+	private ImageProcessorConfiguration config;
+
 
 	private static int RED = 0;
 	private static int GREEN = 1;
@@ -34,57 +48,71 @@ public class ImageProcessor {
 
 	Logger logger = Logger.getLogger("sdp.vision");
 	
-	public static void main(String args[]) {
-		
-		/*
-		 * This is just test code, the main method will disappear in the final version
-		 */
-		
-		String backgroundImage = "data/testImages/bg.jpg";
-		String testImage = "data/testImages/start_positions.jpg";
-		// IplImage image = cvLoadImage(testImage);
-		// IplImage background = cvLoadImage(backgroundImage);
-		BufferedImage image = null;
-		BufferedImage background = null;
-
-		try {
-			image = javax.imageio.ImageIO.read(new File(backgroundImage));
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
-		try {
-			background = javax.imageio.ImageIO.read(new File(testImage));
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
-
-		ImageProcessor ip = new ImageProcessor();
-		IplImage differenceImage = IplImage.createFrom(ip.getDifferenceImage(
-				image, background));
-
-		IplImage redChannel = ip.getChannels(differenceImage, RED);
-		IplImage greenChannel = ip.getChannels(differenceImage, GREEN);
-		IplImage blueChannel = ip.getChannels(differenceImage, BLUE);
-
-		// IplImage redThreshold = ip.thresholdChannel(redChannel, RED);
-		// IplImage greenThreshold = ip.thresholdChannel(greenChannel, GREEN);
-		// IplImage blueThreshold = ip.thresholdChannel(blueChannel, BLUE);
-
-		// IplImage grayImage = cvCreateImage(cvGetSize(image), 8, 1);
-		// cvCvtColor(image, grayImage,CV_RGB2GRAY);
-		// IplImage thresholdImage = ip.thresholdChannel(image, RED);
-
-		final CanvasFrame canvas = new CanvasFrame("My Image");
-		canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
-
-		// ip.getContours(blueChannel);
-
-		// Point2D p = ip.findConnectedComponents(redChannel);
-		// System.out.println("x = "+p.getX() + " y = " + p.getY());
-
-		canvas.showImage(ip.getContours(blueChannel));
-
+	Point2D btPos = new Point2D.Double(-1, -1);
+	Point2D ytPos = new Point2D.Double(-1, -1);
+	Point2D ourPos = new Point2D.Double(-1, -1);
+	Point2D lastBallPos = new Point2D.Double(-1, -1);
+	
+	
+	/**
+	 * Create a new image processor with the default configuration.
+	 */
+	public ImageProcessor() {
+		config = new ImageProcessorConfiguration();
 	}
+	
+	/**
+	 * Create a new image processor with the specified configuration.
+	 * @param config Configuration to use.
+	 */
+	public ImageProcessor(ImageProcessorConfiguration config) {
+		this();
+		this.config = config;
+	}
+	
+	
+	/**
+	 * Extract the world state from the supplied image.
+	 * 
+	 * @param frame The image to process.
+	 * @return The world state, present in the image.
+	 */
+	public WorldState extractWorldState(BufferedImage frame) {
+		IplImage background = cvLoadImage("../robot-VISION/data/testImages/bg.jpg");		
+		IplImage image = IplImage.createFrom(frame);
+		
+		IplImage differenceImage = IplImage.createFrom(getDifferenceImage(
+				image.getBufferedImage(), background.getBufferedImage()));
+
+		IplImage redChannel = getChannels(differenceImage, RED);
+		IplImage greenChannel = getChannels(differenceImage, GREEN);
+		IplImage blueChannel = getChannels(differenceImage, BLUE);
+		
+		IplImage blueThreshold = thresholdChannel(blueChannel, BLUE);
+		IplImage redThreshold = thresholdChannel(redChannel, RED);
+		IplImage greenThreshold = thresholdChannel(greenChannel, GREEN);
+
+		IplImage grayImage = cvCreateImage(cvGetSize(image), 8, 1);
+		cvCvtColor(image, grayImage,CV_RGB2GRAY);
+	//	IplImage thresholdImage = ip.thresholdChannel(grayImage, RED);
+		
+		findBall(image);		
+		
+		Point2D.Double ballPos = new Point2D.Double(0.0, 0.0);
+		Robot blueRobot = new Robot(new Point2D.Double(0.0, 0.0), 0.0);
+		Robot yellowRobot = new Robot(new Point2D.Double(0.0, 0.0), 0.0);
+		
+		BufferedImage worldImage = image.getBufferedImage();
+		Graphics2D wiGraphics = worldImage.createGraphics();
+		wiGraphics.setColor(Color.white);
+		wiGraphics.drawRect(config.getFieldLowX(), config.getFieldLowY(),
+				config.getFieldWidth(), config.getFieldHeight());
+		
+		return new WorldState(ballPos, blueRobot, yellowRobot, worldImage);
+	}
+	
+	
+
 
 	/**
 	 * @param image
@@ -122,12 +150,10 @@ public class ImageProcessor {
 				int[] imagePixel = new int[3];
 				backgroundData.getPixel(i, j, imagePixel);
 
-				/*
-				 * if the pixel is not part of the pitch, consider it as background and set it to black
-				 */
-				if (i < xlowerlimit || i > xupperlimit || j < ylowerlimit
-						|| j > yupperlimit) {
-
+				if (i < config.getFieldLowX()
+						|| i > config.getFieldHighX()
+						|| j < config.getFieldLowY()
+						|| j > config.getFieldHighY()) {
 					Color colour = new Color(0, 0, 0);
 					int rgb = colour.getRGB();
 					image.setRGB(i, j, rgb);

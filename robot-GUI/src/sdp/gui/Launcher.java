@@ -46,7 +46,7 @@ public class Launcher implements Runnable {
 		}
 		input.setCallback(vision);
 		
-		gui = new MainWindow();
+		gui = new MainWindow(vision);
 		gui.setVisible(true);
 	}
 	
