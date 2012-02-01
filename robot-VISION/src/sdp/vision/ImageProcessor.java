@@ -2,6 +2,7 @@ package sdp.vision;
 
 import static com.googlecode.javacv.cpp.opencv_core.*;
 import static com.googlecode.javacv.cpp.opencv_imgproc.*;
+import static com.googlecode.javacv.cpp.opencv_highgui.*;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -47,12 +48,7 @@ public class ImageProcessor {
 	Point2D.Double lastBallPos = new Point2D.Double(-1, -1);
 
 	Logger logger = Logger.getLogger("sdp.vision");
-	
-	Point2D btPos = new Point2D.Double(-1, -1);
-	Point2D ytPos = new Point2D.Double(-1, -1);
-	Point2D ourPos = new Point2D.Double(-1, -1);
-	Point2D lastBallPos = new Point2D.Double(-1, -1);
-	
+
 	
 	/**
 	 * Create a new image processor with the default configuration.
@@ -78,6 +74,7 @@ public class ImageProcessor {
 	 * @return The world state, present in the image.
 	 */
 	public WorldState extractWorldState(BufferedImage frame) {
+		
 		IplImage background = cvLoadImage("../robot-VISION/data/testImages/bg.jpg");		
 		IplImage image = IplImage.createFrom(frame);
 		
@@ -254,7 +251,7 @@ public class ImageProcessor {
 	 * @param thresholdImage
 	 * @param colour
 	 */
-	public Point findCentroid(IplImage thresholdImage, int colour) {
+	public Point2D findCentroid(IplImage thresholdImage, int colour) {
 
 		double posX = 0;
 		double posY = 0;
@@ -272,7 +269,7 @@ public class ImageProcessor {
 		else if (colour == YELLOW)
 			ytPos.setLocation(posX, posY);
 
-		Point point = new Point((int) posX, (int) posY);
+		Point2D point = new Point2D.Double((int) posX, (int) posY);
 
 		CvPoint pointX = new CvPoint((int) btPos.getX(), 0);
 		CvPoint pointY = new CvPoint(0, (int) posY);
