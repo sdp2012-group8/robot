@@ -21,12 +21,17 @@ import sdp.vision.Vision;
 import javax.swing.JButton;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.logging.Logger;
 
 
 /**
  * The GUI class of the main window.
  */
 public class MainWindow extends javax.swing.JFrame implements Runnable {
+	
+	/** The class' logger. */
+	private static final Logger LOGGER = Logger.getLogger("sdp.gui.MainWindow");
+	
 	
 	/** Required by Serializable. */
 	private static final long serialVersionUID = 8597348579639499324L;
@@ -246,7 +251,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 */
 	private void updateVisionComponentValues() {
 		if (vision == null) {
-			System.err.println("Tried to read vision configuration when vision subsystem was inactive.");
+			LOGGER.info("Tried to read vision configuration when vision subsystem was inactive.");
 		} else {
 			ImageProcessorConfiguration config = vision.getConfiguration();		
 			
@@ -263,7 +268,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 */
 	private void setNewVisionConfiguration() {
 		if (vision == null) {
-			System.err.println("Tried to set vision configuration when vision subsystem was inactive.");
+			LOGGER.info("Tried to set vision configuration when vision subsystem was inactive.");
 		} else {
 			ImageProcessorConfiguration config = new ImageProcessorConfiguration();
 			
