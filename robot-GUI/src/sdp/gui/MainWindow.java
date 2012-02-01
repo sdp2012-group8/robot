@@ -14,6 +14,8 @@ import javax.swing.border.TitledBorder;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.JTabbedPane;
 
+import sdp.common.WorldState;
+import sdp.common.WorldStateObserver;
 import sdp.vision.ImageProcessorConfiguration;
 import sdp.vision.Vision;
 import javax.swing.JButton;
@@ -24,7 +26,7 @@ import java.awt.event.MouseEvent;
 /**
  * The GUI class of the main window.
  */
-public class MainWindow extends javax.swing.JFrame{
+public class MainWindow extends javax.swing.JFrame implements Runnable {
 	
 	/** Required by Serializable. */
 	private static final long serialVersionUID = 8597348579639499324L;
@@ -37,29 +39,44 @@ public class MainWindow extends javax.swing.JFrame{
 	private static final int SPINNER_FLOAT_RANGE = 1000;
 	
 	
+	/** GUI's world state provider. */
+	private WorldStateObserver worldStateObserver;
+	
 	/** Active vision subsystem instance. */
 	private Vision vision = null;
 
 	
 	/**
-	 * The default constructor.
+	 * Create the main GUI with the specified components.
+	 * 
+	 * @param worldStateProvider The object that provides world state to the 
+	 * 		GUI. Cannot be null.
+	 * @param vision The active instance of the vision subsystem. If null, the
+	 * 		vision subsystem will be assumed to be online and the GUI will not
+	 * 		let you adjust vision settings.
 	 */
-	public MainWindow() {
+	public MainWindow(WorldStateObserver worldStateObserver, Vision vision) {
+		if (worldStateObserver == null) {
+			throw new NullPointerException("Main window's state provider cannot be null.");
+		} else {
+			this.worldStateObserver = worldStateObserver;
+		}
+		
+		this.vision = vision;		
+		
 		setSize(new Dimension(840, 480));
 		setPreferredSize(new Dimension(840, 480));
 		getContentPane().setMinimumSize(new Dimension(640, 480));
 		setTitle("Battlestation");
 		initComponents();
-	}
-	
-	/**
-	 * Constructs the window with the specified vision subsystem instance.
-	 */
-	public MainWindow(Vision vision) {
-		this();
 		
-		this.vision = vision;
-		updateVisionComponentValues();
+		if (vision != null) {
+			updateVisionComponentValues();
+		} else {
+			int visionIdx = robotControlTabbedPanel.indexOfTab("Vision");
+			robotControlTabbedPanel.setEnabledAt(visionIdx, false);
+			visionApplyButton.setEnabled(false);
+		}
 	}
 	
 	
@@ -99,23 +116,23 @@ public class MainWindow extends javax.swing.JFrame{
 		
 		imageLabel.setText("Image goes here");
 		
-		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-		GridBagConstraints gbc_tabbedPane = new GridBagConstraints();
-		gbc_tabbedPane.fill = GridBagConstraints.BOTH;
-		gbc_tabbedPane.gridx = 1;
-		gbc_tabbedPane.gridy = 0;
-		getContentPane().add(tabbedPane, gbc_tabbedPane);
+		robotControlTabbedPanel = new JTabbedPane(JTabbedPane.TOP);
+		GridBagConstraints gbc_robotControlTabbedPanel = new GridBagConstraints();
+		gbc_robotControlTabbedPanel.fill = GridBagConstraints.BOTH;
+		gbc_robotControlTabbedPanel.gridx = 1;
+		gbc_robotControlTabbedPanel.gridy = 0;
+		getContentPane().add(robotControlTabbedPanel, gbc_robotControlTabbedPanel);
 		
-		JPanel robotControlPanel = new JPanel();
-		tabbedPane.addTab("Vision", null, robotControlPanel, null);
-		tabbedPane.setEnabledAt(0, true);
-		robotControlPanel.setAlignmentY(Component.TOP_ALIGNMENT);
-		GridBagLayout gbl_robotControlPanel = new GridBagLayout();
-		gbl_robotControlPanel.columnWidths = new int[]{200, 0};
-		gbl_robotControlPanel.rowHeights = new int[]{15, 0, 0};
-		gbl_robotControlPanel.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		gbl_robotControlPanel.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
-		robotControlPanel.setLayout(gbl_robotControlPanel);
+		JPanel visionSettingPanel = new JPanel();
+		robotControlTabbedPanel.addTab("Vision", null, visionSettingPanel, null);
+		robotControlTabbedPanel.setEnabledAt(0, true);
+		visionSettingPanel.setAlignmentY(Component.TOP_ALIGNMENT);
+		GridBagLayout gbl_visionSettingPanel = new GridBagLayout();
+		gbl_visionSettingPanel.columnWidths = new int[]{200, 0};
+		gbl_visionSettingPanel.rowHeights = new int[]{15, 0, 0};
+		gbl_visionSettingPanel.columnWeights = new double[]{1.0, Double.MIN_VALUE};
+		gbl_visionSettingPanel.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
+		visionSettingPanel.setLayout(gbl_visionSettingPanel);
 		
 		JPanel fieldWallPanel = new JPanel();
 		fieldWallPanel.setBorder(new TitledBorder(null, "Field borders", TitledBorder.CENTER, TitledBorder.TOP, null, null));
@@ -125,7 +142,7 @@ public class MainWindow extends javax.swing.JFrame{
 		gbc_fieldWallPanel.fill = GridBagConstraints.HORIZONTAL;
 		gbc_fieldWallPanel.gridx = 0;
 		gbc_fieldWallPanel.gridy = 0;
-		robotControlPanel.add(fieldWallPanel, gbc_fieldWallPanel);
+		visionSettingPanel.add(fieldWallPanel, gbc_fieldWallPanel);
 		GridBagLayout gbl_fieldWallPanel = new GridBagLayout();
 		gbl_fieldWallPanel.columnWidths = new int[]{0, 50, 60, 50, 0, 0};
 		gbl_fieldWallPanel.rowHeights = new int[]{20, 20, 0, 0};
@@ -187,7 +204,7 @@ public class MainWindow extends javax.swing.JFrame{
 		GridBagConstraints gbc_visionApplyButton = new GridBagConstraints();
 		gbc_visionApplyButton.gridx = 0;
 		gbc_visionApplyButton.gridy = 1;
-		robotControlPanel.add(visionApplyButton, gbc_visionApplyButton);
+		visionSettingPanel.add(visionApplyButton, gbc_visionApplyButton);
 	}
 	
 	
@@ -208,6 +225,9 @@ public class MainWindow extends javax.swing.JFrame{
 	
 	/** A button that applies the configuration changes to the vision system. */
 	private JButton visionApplyButton;
+	
+	/** Tabbed pane that contains robot's controls. */
+	private JTabbedPane robotControlTabbedPanel;
 	
 	
 	/**
@@ -253,6 +273,29 @@ public class MainWindow extends javax.swing.JFrame{
 			config.setRawFieldHighY(((Integer)fieldHighYSpinner.getValue()).intValue() / ((double) SPINNER_FLOAT_RANGE));
 			
 			vision.setConfiguration(config);
+		}
+	}
+
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Runnable#run()
+	 */
+	@Override
+	public void run() {
+		setVisible(true);
+				
+		while (!Thread.interrupted()) {
+			WorldState state = worldStateObserver.getNextState();
+			setImage(state.getWorldImage());
+			
+			System.out.println("NEW STATE: " +
+					"Ball at (" + state.getBallCoords().x + ", " + state.getBallCoords().y + "), " +
+					"Blue at (" + state.getBlueRobot().getCoords().x +
+						", " + state.getBlueRobot().getCoords().y +
+						", " + state.getBlueRobot().getAngle() + ") " +
+					"Yellow at (" + state.getYellowRobot().getCoords().x +
+						", " + state.getYellowRobot().getCoords().y +
+						", " + state.getYellowRobot().getAngle() + ").");
 		}
 	}
 	

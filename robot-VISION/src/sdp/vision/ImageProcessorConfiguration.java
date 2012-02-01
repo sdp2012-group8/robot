@@ -27,10 +27,10 @@ public class ImageProcessorConfiguration {
 	private double fieldHighX = 0.95;
 	
 	/** The position of the top wall of the field (y low). */
-	private double fieldLowY = 0.05;
+	private double fieldLowY = 0.2;
 	
 	/** The position of the right wall of the field (y high). */
-	private double fieldHighY = 0.95;
+	private double fieldHighY = 0.8;
 		
 
 	/**
