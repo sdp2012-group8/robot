@@ -16,15 +16,38 @@ import sdp.common.WorldStateProvider;
  */
 public class Vision extends WorldStateProvider implements VisualInputCallback {
 	
+	/** Old image processor. TO BE REMOVED. */
+	OldImageProcessor oldImageProcessor;
+	
 	/** Image processor. */
-	OldImageProcessor imageProcessor;
+	ImageProcessor imageProcessor;
 	
 	
 	/**
 	 * The main constructor.
 	 */
 	public Vision() {
-		imageProcessor = new OldImageProcessor();
+		oldImageProcessor = new OldImageProcessor();
+		imageProcessor = new ImageProcessor();
+	}
+	
+	
+	/**
+	 * Get a copy of the image processor's configuration.
+	 * 
+	 * @return The image processor's configuration.
+	 */
+	public ImageProcessorConfiguration getConfiguration() {
+		return imageProcessor.getConfiguration();
+	}
+	
+	/**
+	 * Set the image processor's configuration.
+	 * 
+	 * @param config The new image processor's configuration.
+	 */
+	public void setConfiguration(ImageProcessorConfiguration config) {
+		imageProcessor.setConfiguration(config);
 	}
 	
 
@@ -33,11 +56,13 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	 */
 	@Override
 	public void nextFrame(BufferedImage frame) {
-		imageProcessor.process(frame);
-		WorldState state = imageProcessor.worldState;
+//		oldImageProcessor.process(frame);
+//		WorldState state = oldImageProcessor.worldState;
+		
+		WorldState nextState = imageProcessor.extractWorldState(frame);
 		
 		setChanged();
-		notifyObservers(state);
+		notifyObservers(nextState);
 	}
 	
 }

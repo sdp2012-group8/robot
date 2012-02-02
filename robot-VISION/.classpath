@@ -3,6 +3,9 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/robot-COMMON"/>
-	<classpathentry kind="lib" path="/afs/inf.ed.ac.uk/user/s08/s0825874/inf3/SDP/Robot/robot/robot-COMMON/lib/v4l4j.jar"/>
+	<classpathentry kind="lib" path="/robot-COMMON/lib/v4l4j.jar"/>
+	<classpathentry kind="lib" path="/robot-COMMON/lib/javacpp.jar"/>
+	<classpathentry kind="lib" path="/robot-COMMON/lib/javacv-linux-x86.jar"/>
+	<classpathentry kind="lib" path="/robot-COMMON/lib/javacv.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
