@@ -21,7 +21,7 @@ import sdp.common.Communicator.opcode;
 public class AI {
 
 	public enum mode {
-		chase_once, chase_ball
+		chase_once, chase_ball, sit
 	}
 
 	// pitch constants
@@ -41,7 +41,7 @@ public class AI {
 	private MessageQueue mQueue = null;
 	private Communicator mComm = null;
 
-	private mode state;
+	private mode state = mode.sit;
 
 	// for low pass filtering
 	private WorldState worldState = null;
@@ -154,10 +154,10 @@ public class AI {
 	 * Gets the angle between two points
 	 * @param A
 	 * @param B
-	 * @return if you stand at A how many degrees (in rad) should you turn to face B
+	 * @return if you stand at A how many degrees should you turn to face B
 	 */
 	private double anglebetween(Point2D.Double A, Point2D.Double B) {
-		return Math.atan2(B.getY()-A.getY(), B.getX()-A.getX());
+		return (180*Math.atan2(B.getY()-A.getY(), B.getX()-A.getX()))/Math.PI;
 	}
 
 
@@ -252,14 +252,23 @@ public class AI {
 		System.out.println("Chasing ball");
 		double angle_between = anglebetween(robot.getCoords(), worldState.getBallCoords());
 		int distance = (int) Tools.getDistanceBetweenPoint(robot.getCoords(), worldState.getBallCoords());
-		int turning_angle = (int) (- robot.getAngle() - angle_between*180/Math.PI);
-
+		int turning_angle = (int) (- (180*Math.PI*robot.getAngle())/Math.PI - angle_between);
+		if (turning_angle > 180) turning_angle -= 360;
+		if (turning_angle < -180) turning_angle += 360;
 		try {
-			if (turning_angle !=0 && turning_angle < 128 && turning_angle > -127) {
+			if (turning_angle !=0) {
+				if (turning_angle < 127) turning_angle = 127;
+				if (turning_angle > -128) turning_angle = -128;
+				// mComm.sendMessage(opcode.operate, (byte)0, (byte)turning_angle);
 				mComm.sendMessage(opcode.turn, (byte)turning_angle);
+				System.out.println("Chasing ball - Turning: " + turning_angle);
 			} else if (turning_angle == 0 && distance > 3) {
-				mComm.sendMessage(opcode.move, (byte)1);
+				// mComm.sendMessage(opcode.operate, (byte)1, (byte)0);
+				System.out.println("Chasing ball - Moving Forward");
+			} else {
+				System.out.println("Chasing ball - At Ball");
 			}
+				
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
