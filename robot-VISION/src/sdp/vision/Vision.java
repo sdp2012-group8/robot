@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 
 import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
+import sdp.vision.processing.AlternativeImageProcessor;
 import sdp.vision.processing.ImageProcessor;
 import sdp.vision.processing.Team9ImageProcessor;
 
@@ -30,7 +31,7 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	 */
 	public Vision() {
 		oldImageProcessor = new OldImageProcessor();
-		imageProcessor = new Team9ImageProcessor();
+		imageProcessor = new AlternativeImageProcessor();
 	}
 	
 	
