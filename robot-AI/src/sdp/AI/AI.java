@@ -156,8 +156,6 @@ public class AI {
 	 * @return a filtered value
 	 */
 	private double lowPass(double old_value, double new_value, int amount) {
-		if (new_value < 0)
-			return old_value;
 		return (old_value+new_value*amount)/((double) (amount+1));
 	}
 	
