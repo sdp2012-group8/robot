@@ -9,5 +9,6 @@
 	<classpathentry kind="lib" path="/afs/inf.ed.ac.uk/user/s08/s0825874/inf3/SDP/Robot/robot/robot-COMMON/lib/v4l4j.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/robot-GUI"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/robot-NXT"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
