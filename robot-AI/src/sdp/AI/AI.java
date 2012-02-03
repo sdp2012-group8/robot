@@ -270,6 +270,7 @@ public class AI {
 				System.out.println("Chasing ball - Turning: " + turning_angle);	
 			}
 			else if (distance != 0) {
+
 				// mComm.sendMessage(opcode.operate, (byte)1, (byte)0);
 				System.out.println("Chasing ball - Moving Forward");
 			} else {
