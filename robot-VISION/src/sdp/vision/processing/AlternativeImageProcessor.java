@@ -42,7 +42,7 @@ public class AlternativeImageProcessor extends ImageProcessor {
 
 		IplImage frame_ipl = IplImage.createFrom(frame);		
 		cvSetImageROI(frame_ipl, frameROI);		
-		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, 9);
+		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, 5);
 		BufferedImage workingImage = frame_ipl.getBufferedImage();
 		
 		BufferedImage ballThreshold = new BufferedImage(config.getFieldWidth(), 
@@ -54,8 +54,10 @@ public class AlternativeImageProcessor extends ImageProcessor {
 		
 		for (int x = 0; x < config.getFieldWidth(); ++x) {
 			for (int y = 0; y < config.getFieldHeight(); ++y) {
-				Color px = new Color(workingImage.getRGB(x + config.getFieldLowX(), 
-						y + config.getFieldLowY()));
+				int ox = x + config.getFieldLowX();
+				int oy = y + config.getFieldLowY();
+				Color px = new Color(workingImage.getRGB(ox, oy));
+				
 				int r = px.getRed();
 				int g = px.getGreen();
 				int b = px.getBlue();
@@ -67,20 +69,18 @@ public class AlternativeImageProcessor extends ImageProcessor {
 				
 				if ((h >= 350 || h <= 20) && s >= 60 && s >= 60) {
 					ballThreshold.setRGB(x, y, Color.white.getRGB());
-					frame.setRGB(x, y, Color.red.getRGB());
+					frame.setRGB(ox, oy, Color.red.getRGB());
 				}
-				if ((h >= 170 && h <= 230 && s >= 20 && v >= 20)) {
+				if ((h >= 150 && h <= 250 && s >= 20 && v >= 20)) {
 					blueThreshold.setRGB(x, y, Color.white.getRGB());
-		    		frame.setRGB(x, y, Color.blue.getRGB());
+		    		frame.setRGB(ox, oy, Color.blue.getRGB());
 			    }
 			    if ((h >= 25 && h <= 75 && s <= 40 && v >= 30)) {
 			    	yellowThreshold.setRGB(x, y, Color.white.getRGB());
-		    		frame.setRGB(x, y, Color.yellow.getRGB());
+		    		frame.setRGB(ox, oy, Color.yellow.getRGB());
 			    }
 			}
 		}
-		
-		IplImage ball_ipl = IplImage.createFrom(ballThreshold);
 				
 		Point2D.Double ballPos = new Point2D.Double(0.0, 0.0);
 		Robot blueRobot = new Robot(new Point2D.Double(0.0, 0.0), 0.0);
