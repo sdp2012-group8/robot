@@ -29,7 +29,7 @@ public class AI {
 	private final static double PITCH_WIDTH_CM = 244;
 	private final static double goal_y_cm = 113.7/2;
 	// robot constants
-	private final static double TURNING_ACCURACY = 0;
+	private final static double TURNING_ACCURACY = 10;
 	private final static double ROBOT_RADIUS_CM = 7;
 
 	private final static double ROBOT_ACC_CM_S_S = 69.8; // 1000 degrees/s/s
@@ -158,7 +158,7 @@ public class AI {
 	 * @return if you stand at A how many degrees should you turn to face B
 	 */
 	private double anglebetween(Point2D.Double A, Point2D.Double B) {
-		return (180*Math.atan2(B.getY()-A.getY(), B.getX()-A.getX()))/Math.PI;
+		return (180*Math.atan2(-B.getY()+A.getY(), B.getX()-A.getX()))/Math.PI;
 	}
 
 
@@ -250,31 +250,35 @@ public class AI {
 	public void chaseBall() {
 		// System.out.println("Chasing ball");
 		double angle_between = anglebetween(robot.getCoords(), worldState.getBallCoords());
-		int distance = (int) Tools.getDistanceBetweenPoint(robot.getCoords(), worldState.getBallCoords());
-		int turning_angle = (int) (- (180*robot.getAngle())/Math.PI - angle_between);
+		double distance = Tools.getDistanceBetweenPoint(robot.getCoords(), worldState.getBallCoords());
+		double turning_angle = angle_between - robot.getAngle();
 		
+		System.out.println("Turning angle: " + turning_angle + " Angle between:" + angle_between + " Robot get angle: " + robot.getAngle());
+		System.out.println(robot.getCoords() + " " + worldState.getBallCoords());
 		// Keep the turning angle between -180 and 180
 		if (turning_angle > 180) turning_angle -= 360;
 		if (turning_angle < -180) turning_angle += 360;
+
+		if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
+		if (turning_angle < -128) turning_angle = -128;
 		try {
 			if (turning_angle > TURNING_ACCURACY){
-				if (turning_angle > 127) turning_angle = 127;
-				if (turning_angle < -128) turning_angle = -128;// Needs to reduce the angle as the command can only accept -128 to 127
-				mComm.sendMessage(opcode.operate, (byte)0, (byte)127);
+				mComm.sendMessage(opcode.operate, (byte)20, (byte)127);
 				//mComm.sendMessage(opcode.turn, (byte)turning_angle);
 				System.out.println("Chasing ball - Turning: " + turning_angle);
 			} 
 			else if( turning_angle < -TURNING_ACCURACY){
-				mComm.sendMessage(opcode.operate, (byte)0, (byte)-127);
+				mComm.sendMessage(opcode.operate, (byte)20, (byte)-127);
 				//mComm.sendMessage(opcode.turn, (byte)turning_angle);
 				System.out.println("Chasing ball - Turning: " + turning_angle);	
 			}
 			else if (distance != 0) {
-
+				
+				mComm.sendMessage(opcode.operate, (byte)20, (byte)0);
 				// mComm.sendMessage(opcode.operate, (byte)1, (byte)0);
 				System.out.println("Chasing ball - Moving Forward");
 			} else {
-				System.out.println("Chasing ball - At Ball");
+				System.out.println("Chasing ball - At Ball: " + distance + " " + robot.getCoords() + " " + worldState.getBallCoords());
 			}
 				
 		} catch (IOException e) {

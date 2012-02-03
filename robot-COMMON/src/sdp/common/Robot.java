@@ -91,9 +91,9 @@ public final class Robot {
 	}
 
 	/**
-	 * Get the angle the robot is facing, in radians.
+	 * Get the angle the robot is facing, in degrees.
 	 * 
-	 * @return The angle the robot is facing, in radians.
+	 * @return The angle the robot is facing, in degrees.
 	 */
 	public final double getAngle() {
 		return angle;
