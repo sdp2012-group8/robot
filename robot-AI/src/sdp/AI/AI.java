@@ -253,12 +253,13 @@ public class AI {
 		double distance = Tools.getDistanceBetweenPoint(robot.getCoords(), worldState.getBallCoords());
 		double turning_angle = angle_between - robot.getAngle();
 		
-		System.out.println("Turning angle: " + turning_angle + " Angle between:" + angle_between + " Robot get angle: " + robot.getAngle());
-		System.out.println(robot.getCoords() + " " + worldState.getBallCoords());
+		// System.out.println("Turning angle: " + turning_angle + " Angle between:" + angle_between + " Robot get angle: " + robot.getAngle());
+		// System.out.println(robot.getCoords() + " " + worldState.getBallCoords());
+		
 		// Keep the turning angle between -180 and 180
 		if (turning_angle > 180) turning_angle -= 360;
 		if (turning_angle < -180) turning_angle += 360;
-
+//
 		if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
 		if (turning_angle < -128) turning_angle = -128;
 		try {
