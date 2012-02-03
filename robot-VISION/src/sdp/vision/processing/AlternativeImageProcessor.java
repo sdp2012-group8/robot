@@ -8,8 +8,10 @@ import java.awt.image.BufferedImage;
 import sdp.common.Robot;
 import sdp.common.WorldState;
 
+
 /**
- * An image processor where I try to explore different alternative ideas.
+ * An image processor where I try to explore different alternative ideas. Or
+ * just trying to reimplement team 9's system.
  * 
  * @author Gediminas Liktaras
  */
@@ -28,25 +30,42 @@ public class AlternativeImageProcessor extends ImageProcessor {
 	 */
 	@Override
 	public WorldState extractWorldState(BufferedImage frame) {
-		BufferedImage normalised = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_RGB);
-		for (int i = 0; i < frame.getWidth(); ++i) {
-			for (int j = 0; j < frame.getHeight(); ++j) {
-				Color pixel = new Color(frame.getRGB(i, j));
-				int sum = pixel.getRed() + pixel.getBlue() + pixel.getGreen();
-				if (sum > 30) {
-					pixel = new Color(pixel.getRed() * 255 / sum, pixel.getGreen() * 255 / sum, pixel.getBlue() * 255 / sum);
-				} else {
-					pixel = Color.black;
+		BufferedImage ballThreshold = new BufferedImage(config.getFieldWidth(), 
+				config.getFieldHeight(), BufferedImage.TYPE_INT_RGB);
+		BufferedImage blueThreshold = new BufferedImage(config.getFieldWidth(), 
+				config.getFieldHeight(), BufferedImage.TYPE_INT_RGB);
+		BufferedImage yellowThreshold = new BufferedImage(config.getFieldWidth(), 
+				config.getFieldHeight(), BufferedImage.TYPE_INT_RGB);
+		
+		for (int x = config.getFieldLowX(); x <= config.getFieldHighX(); ++x) {
+			for (int y = config.getFieldLowY(); y <= config.getFieldHighY(); ++y) {
+				Color px = new Color(frame.getRGB(x, y));
+				int r = px.getRed();
+				int g = px.getGreen();
+				int b = px.getBlue();
+				
+				float hsv[] = Color.RGBtoHSB(r, g, b, null);
+				int h = (int) (hsv[0] * 360);
+				int s = (int) (hsv[1] * 100);
+				int v = (int) (hsv[2] * 100);
+				
+				if ((h >= 350 || h <= 20) && s >= 60 && s >= 60) {
+					frame.setRGB(x, y, Color.red.getRGB());
 				}
-				normalised.setRGB(i, j, pixel.getRGB());
+				if ((h >= 170 && h <= 230 && s >= 20 && v >= 20)) {
+		    		frame.setRGB(x, y, Color.blue.getRGB());
+			    }
+			    if ((h >= 25 && h <= 75 && s >= 10 && s <= 30 && v >= 30)) {
+		    		frame.setRGB(x, y, Color.yellow.getRGB());
+			    }
 			}
 		}
-		
+				
 		Point2D.Double ballPos = new Point2D.Double(0.0, 0.0);
 		Robot blueRobot = new Robot(new Point2D.Double(0.0, 0.0), 0.0);
 		Robot yellowRobot = new Robot(new Point2D.Double(0.0, 0.0), 0.0);
 		
-		BufferedImage worldImage = normalised;
+		BufferedImage worldImage = frame;
 		Graphics2D wiGraphics = worldImage.createGraphics();
 		wiGraphics.setColor(Color.white);
 		wiGraphics.drawRect(config.getFieldLowX(), config.getFieldLowY(),
