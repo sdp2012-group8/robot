@@ -22,12 +22,12 @@ import sdp.common.WorldStateProvider;
 public class AI {
 
 	public enum mode {
-		chase_once, chase_ball, sit
+		chase_once, chase_ball, sit, got_ball
 	}
 
 	// pitch constants
 	private final static double PITCH_WIDTH_CM = 244;
-	private final static double goal_y_cm = 113.7/2;
+	private final static double GOAL_Y_CM = 113.7/2;
 	// robot constants
 	private final static double TURNING_ACCURACY = 10;
 	private final static double ROBOT_RADIUS_CM = 7;
@@ -41,6 +41,12 @@ public class AI {
 	private Thread mVisionThread;
 	private MessageQueue mQueue = null;
 	private Communicator mComm = null;
+	
+	// Ball and goal position
+	private double distance_to_ball = 0;
+	private double distance_to_goal = 0;
+	Point2D.Double enemy_goal = new Point2D.Double(my_goal_left ? PITCH_WIDTH_CM : 0, GOAL_Y_CM);
+
 
 	private mode state = mode.sit;
 
@@ -72,11 +78,13 @@ public class AI {
 	 */
 	public void setMode(mode new_mode) {
 		switch (new_mode) {
-		case chase_once:
-			firstrun = true;
-			break;
+		
 		case chase_ball:
 			this.state = mode.chase_ball;
+			break;
+		
+		case got_ball:
+			this.state = mode.got_ball;
 			break;
 		}
 	}
@@ -91,6 +99,7 @@ public class AI {
 	public void start(final boolean my_team_blue, final boolean my_goal_left) {
 		this.my_team_blue = my_team_blue;
 		this.my_goal_left = my_goal_left;
+		enemy_goal = new Point2D.Double(my_goal_left ? PITCH_WIDTH_CM : 0, GOAL_Y_CM);
 		mVisionThread = new Thread() {
 			@Override
 			public void run() {
@@ -217,7 +226,6 @@ public class AI {
 	// Right x=2.44 m   x=0, y = 0, Left goal
 	//                       room 3.04
 
-	private boolean firstrun = false;
 
 	/**
 	 * This method is fired when a new state is available. Decisions should be done here.
@@ -225,9 +233,17 @@ public class AI {
 	 */
 	private synchronized void worldChanged() {
 
+		distance_to_ball = Tools.getDistanceBetweenPoint(robot.getCoords(), worldState.getBallCoords());
+		distance_to_goal = Tools.getDistanceBetweenPoint(toCentimeters(robot.getCoords()), enemy_goal);
+
+		
 		switch (state) {
 		case chase_ball:
 			chaseBall();
+			break;
+			
+		case got_ball:
+			alignToGoal();
 			break;
 		}
 
@@ -250,36 +266,37 @@ public class AI {
 	public void chaseBall() {
 		// System.out.println("Chasing ball");
 		double angle_between = anglebetween(robot.getCoords(), worldState.getBallCoords());
-		double distance = Tools.getDistanceBetweenPoint(robot.getCoords(), worldState.getBallCoords());
 		double turning_angle = angle_between - robot.getAngle();
+		byte forward_speed = 40;
 		
-		// System.out.println("Turning angle: " + turning_angle + " Angle between:" + angle_between + " Robot get angle: " + robot.getAngle());
-		// System.out.println(robot.getCoords() + " " + worldState.getBallCoords());
-		
+		System.out.println("I'm in chase ball :)");
+		//System.out.println("Turning angle: " + turning_angle + " Angle between:" + angle_between + " Robot get angle: " + robot.getAngle());
+		//System.out.println(robot.getCoords() + " " + worldState.getBallCoords());
 		// Keep the turning angle between -180 and 180
 		if (turning_angle > 180) turning_angle -= 360;
 		if (turning_angle < -180) turning_angle += 360;
-//
+		
+		if (distance_to_ball < robot.getSize()) forward_speed = 0;
+		
 		if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
 		if (turning_angle < -128) turning_angle = -128;
 		try {
 			if (turning_angle > TURNING_ACCURACY){
-				mComm.sendMessage(opcode.operate, (byte)20, (byte)127);
-				//mComm.sendMessage(opcode.turn, (byte)turning_angle);
-				System.out.println("Chasing ball - Turning: " + turning_angle);
+				
+				mComm.sendMessage(opcode.operate, forward_speed, (byte)127);
+				//System.out.println("Chasing ball - Turning: " + turning_angle);
 			} 
 			else if( turning_angle < -TURNING_ACCURACY){
-				mComm.sendMessage(opcode.operate, (byte)20, (byte)-127);
-				//mComm.sendMessage(opcode.turn, (byte)turning_angle);
-				System.out.println("Chasing ball - Turning: " + turning_angle);	
+				mComm.sendMessage(opcode.operate, forward_speed, (byte)-127);
+				//System.out.println("Chasing ball - Turning: " + turning_angle);	
 			}
-			else if (distance != 0) {
+			else if (distance_to_ball > robot.getSize()/2) {
 				
 				mComm.sendMessage(opcode.operate, (byte)20, (byte)0);
-				// mComm.sendMessage(opcode.operate, (byte)1, (byte)0);
-				System.out.println("Chasing ball - Moving Forward");
+				//System.out.println("Chasing ball - Moving Forward");
 			} else {
-				System.out.println("Chasing ball - At Ball: " + distance + " " + robot.getCoords() + " " + worldState.getBallCoords());
+				//System.out.println("Chasing ball - At Ball: " + distance + " " + robot.getCoords() + " " + worldState.getBallCoords());
+				setMode(mode.got_ball);
 			}
 				
 		} catch (IOException e) {
@@ -288,6 +305,53 @@ public class AI {
 		}
 	}
 
+	public void alignToGoal(){
+		
+		System.out.println("I'm in ALIGN TO GOAL :O");
+	
+		double angle_between = anglebetween(toCentimeters(robot.getCoords()), enemy_goal);
+		double turning_angle = angle_between - robot.getAngle();
+		byte forward_speed = 20;
+		
+		//System.out.println("Turning angle: " + turning_angle + " Angle between:" + angle_between + " Robot get angle: " + robot.getAngle());
+		//System.out.println(robot.getCoords() + " " + worldState.getBallCoords());
+		// Keep the turning angle between -180 and 180
+		if (turning_angle > 180) turning_angle -= 360;
+		if (turning_angle < -180) turning_angle += 360;
+		
+		
+		if (distance_to_goal < robot.getSize()) forward_speed = 0;
+		
+		System.out.println(distance_to_goal);
+		
+		
+		if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
+		if (turning_angle < -128) turning_angle = -128;
+		try {
+			if (distance_to_ball > robot.getSize()) {
+				setMode(mode.chase_ball);
+			} else if (turning_angle > TURNING_ACCURACY && (distance_to_goal > 1)){
+				mComm.sendMessage(opcode.operate, forward_speed, (byte)127);
+				System.out.println("Goaing to goal - Turning: " + turning_angle);
+			} 
+			else if( turning_angle < -TURNING_ACCURACY && (distance_to_goal > 1)){
+				mComm.sendMessage(opcode.operate, forward_speed, (byte)-128);
+				System.out.println("Going to goal - Turning: " + turning_angle);	
+			}
+			else if (distance_to_goal > 1) {
+				mComm.sendMessage(opcode.operate, (byte)60, (byte)0);
+				System.out.println("GOING FORAWRD TO GOAL");
+				
+			} else {
+				System.out.println("The old man the boat");
+				setMode(mode.chase_ball);
+			}
+				
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 	/**
 	 * Calculates and performs the movements required to go from current position

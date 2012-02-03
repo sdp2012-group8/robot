@@ -7,6 +7,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
 import sdp.common.Robot;
+import sdp.common.Tools;
 import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
 
@@ -279,6 +280,7 @@ public class Simulator extends WorldStateProvider {
 				6, 6);
 		// draw fps
 		g.drawString((int)(1/dt)+" fps", width-50, 20);
+		
 		return im;
 	}
 
