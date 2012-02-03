@@ -34,14 +34,9 @@ public class VBrick implements Communicator {
 	
 	private static final double acceleration = ACC*0.017453292519943295*WHEELR;//69.8;
 	private static final double turn_acceleration = ACC*WHEELR/ROBOTR;
-	
-	private double speed = 0,
-			turning_speed = 0,
-			direction = 0;
+
 	private byte desired_speed = 0,
 			desired_turning_speed = 0;
-	
-	private Vector2D velocity = Vector2D.ZERO();
 	
 	
 	private ArrayList<MessageListener> mListener = new ArrayList<MessageListener>();
@@ -63,15 +58,6 @@ public class VBrick implements Communicator {
 	public void close() {
 
 	}
-	
-	/**
-	 * Torque calculations might need that.
-	 * Does direction+=angle_in_deg
-	 * @param angle_in_deg
-	 */
-	public void addToDirection(double angle_in_deg) {
-		direction+=angle_in_deg;
-	}
 
 	@Override
 	public void registerListener(MessageListener listener) {
@@ -80,13 +66,17 @@ public class VBrick implements Communicator {
 	}
 	
 	/**
-	 * Calculate and the velocity and direction of the robot taking
-	 * care of acceleration, etc
+	 * Calculate speed given old_speed and a time difference
 	 * 
+	 * This takes into account acceleration settings.
+	 * 
+	 * @param old_speed the old speed that got calculated dt ago
 	 * @param dt time passed since last call of this method
+	 * @return the new speed
 	 */
-	public void calculateVelocity(double dt) {
+	public double calculateSpeed(double old_speed, double dt) {
 		// V = Vo + acc*dt
+		double speed = old_speed;
 		if (!(Math.abs(desired_speed-speed) < acceleration*dt)) {
 			if (desired_speed > speed)
 				speed+=acceleration*dt;
@@ -95,6 +85,21 @@ public class VBrick implements Communicator {
 		}
 		else
 			speed = desired_speed;
+		return speed;
+
+	}
+	
+	/**
+	 * Calculate turning speed given old_speed and a time difference.
+	 * 
+	 * This takes into account acceleration settings.
+	 * 
+	 * @param old_turning_speed the old turning speed that got calculated dt ago
+	 * @param dt time passed since calculation of old_turning_speed
+	 * @return the new turning speed
+	 */
+	public double calculateTurningSpeed(double old_turning_speed, double dt) {
+		double turning_speed = old_turning_speed;
 		if (!(Math.abs(desired_turning_speed-turning_speed) < turn_acceleration*dt)) {
 			if (desired_turning_speed > turning_speed)
 				turning_speed+=turn_acceleration*dt;
@@ -103,27 +108,8 @@ public class VBrick implements Communicator {
 		}
 		else
 			turning_speed = desired_turning_speed;
-		direction+=turning_speed*dt;
-		// there is a problem in the vision system which returns a "reversed y" coordinates
-		// remove the - in front of direction in case this is fixed
-		velocity.setLocation(speed*Math.cos(direction*Math.PI/180), speed*Math.sin(-direction*Math.PI/180));
+		return turning_speed;
 	}
 	
-	
-	/**
-	 * Call this after {@link #calculateVelocity(double)}
-	 * @return velocity in cm per second
-	 */
-	public Vector2D getVelocity() {
-		return velocity;
-	}
-	
-	/** 
-	 * Call this after {@link #calculateVelocity(double)}
-	 * return the direction in degrees
-	 */
-	public double getDirection() {
-		return direction;
-	}
 
 }

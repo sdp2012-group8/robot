@@ -27,7 +27,6 @@ import java.util.TimerTask;
 import javax.swing.JLabel;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
 
 import javax.swing.JPanel;
 import java.awt.Graphics;

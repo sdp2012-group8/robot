@@ -3,7 +3,6 @@ package sdp.simulator;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
 import sdp.common.Robot;
@@ -29,14 +28,31 @@ public class Simulator extends WorldStateProvider {
 	
 	private static final int MAX_NUM_ROBOTS = 2;
 	
+	// define robots
 	private static VBrick[] robot = new VBrick[MAX_NUM_ROBOTS]; // blue has id 0, yellow has id 1
-	private static Vector2D[] positions = new Vector2D[MAX_NUM_ROBOTS];
+	private static Vector2D[]
+			positions = new Vector2D[MAX_NUM_ROBOTS],
+			velocities = new Vector2D[MAX_NUM_ROBOTS];
+	private static double[]
+			directions = new double[MAX_NUM_ROBOTS],
+			speeds = new double[MAX_NUM_ROBOTS],
+			turning_speeds = new double[MAX_NUM_ROBOTS];
+	// for use for collision prediction
+	private static Vector2D[]
+			future_positions = new Vector2D[MAX_NUM_ROBOTS],
+			future_velocities = new Vector2D[MAX_NUM_ROBOTS];
+	private static double[]
+			future_directions = new double[MAX_NUM_ROBOTS],
+			future_speeds = new double[MAX_NUM_ROBOTS],
+			future_turning_speeds = new double[MAX_NUM_ROBOTS];
+	// define ball
 	private static Vector2D 
 			ball = Vector2D.multiply(new Vector2D(pitch_middle), pitch_width_cm),
-			ball_velocity = Vector2D.ZERO();
-	private static double[] directions = new double[MAX_NUM_ROBOTS];
-	private static Vector2D[] velocities = new Vector2D[MAX_NUM_ROBOTS];
-	private Robot blue = new Robot(new Vector2D(0.2, 0.2), 0), yellow = new Robot(new Vector2D(0.8, 0.2), 0);
+			ball_velocity = Vector2D.ZERO(),
+	// for use for collision prediction
+			future_ball = Vector2D.multiply(new Vector2D(pitch_middle), pitch_width_cm),
+			future_ball_velocity = Vector2D.ZERO();
+	// define graphics
 	private BufferedImage im = null;
 	private Graphics2D g = null;
 	
@@ -44,10 +60,8 @@ public class Simulator extends WorldStateProvider {
 	private boolean running = true;
 	
 	public Simulator() {
-		robot[0] = new VBrick();
-		robot[1] = new VBrick();
-		positions[0] = Vector2D.multiply(new Vector2D(0.2, 0.2), pitch_width_cm);
-		positions[1] = Vector2D.multiply(new Vector2D(0.8, 0.2), pitch_width_cm);
+		registerBlue(new VBrick(), 40, pitch_height_cm/2);
+		registerYellow(new VBrick(), pitch_width_cm-40, pitch_height_cm/2);
 		new Thread() {
 			
 			public void run() {
@@ -108,6 +122,10 @@ public class Simulator extends WorldStateProvider {
 	private void registerRobot(VBrick virtual, double x, double y, int id) {
 		robot[id] = virtual;
 		positions[id] = new Vector2D(x, y);
+		velocities[id] = Vector2D.ZERO();
+		directions[id] = 0;
+		speeds[id] = 0;
+		turning_speeds[id] = 0;
 	}
 	
 	/**
@@ -119,22 +137,44 @@ public class Simulator extends WorldStateProvider {
 	}
 	
 	/**
-	 * Do the simulation of the physics
+	 * Do the simulation of the physics.
+	 * 
+	 * Collision detection is implemented through prediction.
+	 * 
 	 * @param dt time elapsed since last call in s
 	 */
 	public void simulate(double dt) {
-		// ball robot positions
+		// for prediction
+		
+		// calculate for a future
 		for (int i = 0; i < robot.length; i++)
 			if (robot[i] != null) {
-				robot[i].calculateVelocity(dt);
-				velocities[i] = robot[i].getVelocity();
-				positions[i].addmul_to(velocities[i], dt);
-				directions[i] = robot[i].getDirection();
+				future_speeds[i] = robot[i].calculateSpeed(speeds[i], 2*dt);
+				future_turning_speeds[i] = robot[i].calculateTurningSpeed(turning_speeds[i], 2*dt);
+				future_directions[i] = directions[i]+turning_speeds[i]*2*dt;
+				// there is a problem in the vision system which returns a "reversed y" coordinates
+				// remove the - in front of direction in case this is fixed
+				if (future_velocities[i] == null)
+					future_velocities[i] = Vector2D.ZERO();
+				future_velocities[i].setLocation(
+						speeds[i]*Math.cos(directions[i]*Math.PI/180),
+						speeds[i]*Math.sin(-directions[i]*Math.PI/180));
+				future_positions[i] = new Vector2D(positions[i]);
+				future_positions[i].addmul_to(velocities[i], 2*dt);
 			}
-		if (positions[0] != null)
-			blue.setCoords(Vector2D.divide(positions[0], pitch_width_cm), directions[0]);
-		if (positions[1] != null)
-			yellow.setCoords(Vector2D.divide(positions[1], pitch_width_cm), directions[1]);
+		// future ball friction
+		double ball_speed = ball_velocity.getLength();
+		if (ball_speed != 0) {
+			if (ball_speed >= ball_friction_acc*2*dt) {
+				Vector2D friction = Vector2D.change_length(ball_velocity, -ball_friction_acc);
+				future_ball_velocity = new Vector2D(ball_velocity);
+				future_ball_velocity.addmul_to(friction, 2*dt);
+			} else
+				future_ball_velocity = Vector2D.ZERO();
+		}
+		// future calculate final ball position
+		future_ball = new Vector2D(ball);
+		future_ball.addmul_to(ball_velocity, 2*dt);
 		// ball collision with robots
 		for (int i = 0; i < robot.length; i++)
 			if (robot[i] != null) {
@@ -181,27 +221,37 @@ public class Simulator extends WorldStateProvider {
 		// ball collision with walls
 		if (ball.getX() < 0) {
 			// collision with left wall
-			double pen = 0 - ball.getX();
 			ball.setX(0);
 			ball_velocity.setX(-ball_velocity.getX());
 		} else if (ball.getX() > pitch_width_cm) {
 			// collision with right wall
-			double pen = ball.getX() - pitch_width_cm;
 			ball.setX(pitch_width_cm);
 			ball_velocity.setX(-ball_velocity.getX());
 		} else if (ball.getY() < 0) {
 			// collision with bottom wall
-			double pen = 0 - ball.getY();
 			ball.setY(0);
 			ball_velocity.setY(-ball_velocity.getY());
 		} else if (ball.getY() > pitch_height_cm) {
 			// collision with top wall
-			double pen = ball.getY() - pitch_height_cm;
 			ball.setY(pitch_height_cm);
 			ball_velocity.setY(-ball_velocity.getY());
 		}
+
+		// calculate final positions
+		for (int i = 0; i < robot.length; i++)
+			if (robot[i] != null) {
+				speeds[i] = robot[i].calculateSpeed(speeds[i], dt);
+				turning_speeds[i] = robot[i].calculateTurningSpeed(turning_speeds[i], dt);
+				directions[i]+=turning_speeds[i]*dt;
+				// there is a problem in the vision system which returns a "reversed y" coordinates
+				// remove the - in front of direction in case this is fixed
+				velocities[i].setLocation(
+						speeds[i]*Math.cos(directions[i]*Math.PI/180),
+						speeds[i]*Math.sin(-directions[i]*Math.PI/180));
+				positions[i].addmul_to(velocities[i], dt);
+			}
 		// ball friction
-		double ball_speed = ball_velocity.getLength();
+		ball_speed = ball_velocity.getLength();
 		if (ball_speed != 0) {
 			if (ball_speed >= ball_friction_acc*dt) {
 				Vector2D friction = Vector2D.change_length(ball_velocity, -ball_friction_acc);
@@ -209,9 +259,13 @@ public class Simulator extends WorldStateProvider {
 			} else
 				ball_velocity = Vector2D.ZERO();
 		}
-		// ball position
+		// calculate final ball position
 		ball.addmul_to(ball_velocity, dt);
-		WorldState state = new WorldState(Vector2D.divide(ball, pitch_width_cm), blue, yellow, image(dt));
+		// notify that we have change
+		WorldState state = new WorldState(
+				Vector2D.divide(ball, pitch_width_cm),
+				new Robot(Vector2D.divide(positions[0], pitch_width_cm), directions[0]),
+				new Robot(Vector2D.divide(positions[1], pitch_width_cm), directions[1]), image(dt));
 		setChanged();
 		notifyObservers(state);
 	}
@@ -236,17 +290,15 @@ public class Simulator extends WorldStateProvider {
 			switch (i) {
 			case 0:
 				g.setColor(Color.blue);
-				robot = blue;
 				break;
 			case 1:
 				g.setColor(new Color(220, 220, 0));
-				robot = yellow;
 				break;
 			default:
 				g.setColor(Color.gray);
-				robot = new Robot(Vector2D.divide(positions[i], pitch_width_cm), directions[i]);
 				break;
 			}
+			robot = new Robot(Vector2D.divide(positions[i], pitch_width_cm), directions[i]);
 			// draw body of robot
 			g.fillPolygon(new int[] {
 					(int)(robot.getFrontLeft().getX()*width),
