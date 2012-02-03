@@ -22,7 +22,18 @@ public class Simulator extends WorldStateProvider {
 	private final static double pitch_width_cm = 244;
 	private final static double pitch_height_cm = 113.7;
 	private final static Vector2D pitch_middle = new Vector2D(0.5, pitch_height_cm/(2*pitch_width_cm));
-	private final static double ball_friction_acc = 10; // in cm/s
+	private final static double ball_friction_acc = 15; // in cm/s
+	private final static double mass_robot_kg = 1; // in kg
+	private final static double mass_ball_kg = 0.045; // in kg
+	
+	private final static double wall_bounciness = 0.5; // 0 - inelastic, 1 - elastic
+	private final static double robot_bounciness = 0.9; // 0 - 1
+	
+	private final static double kicker_range = 10; // cm
+	private final static double kicker_max_speed = 300; // cm/s
+	private final static double kicker_min_speed = 50; // cm/s
+	
+	private final static double flipper_size = 2; //cm
 	
 	private final static int IMAGE_WIDTH = 640;
 	
@@ -175,68 +186,6 @@ public class Simulator extends WorldStateProvider {
 		// future calculate final ball position
 		future_ball = new Vector2D(ball);
 		future_ball.addmul_to(ball_velocity, 2*dt);
-		// ball collision with robots
-		for (int i = 0; i < robot.length; i++)
-			if (robot[i] != null) {
-				// transform ball into "brick" relative coordinates
-				Vector2D ball_pos = Vector2D.rotateVector(Vector2D.subtract(ball, positions[i]), -directions[i]);
-				// check whether the ball is "inside" brick
-				if (
-						ball_pos.getX() > VBrick.back_left.getX() && 
-						ball_pos.getX() < VBrick.front_right.getX() &&
-						ball_pos.getY() > VBrick.front_right.getY() &&
-						ball_pos.getY() < VBrick.back_left.getY()
-				) {
-					// if we have collision:
-					// get relative speed
-					Vector2D rel_spd = Vector2D.rotateVector(Vector2D.subtract(ball_velocity, velocities[i]), -directions[i]);
-					// get penetrations
-					double left_pen = ball_pos.getX() - VBrick.back_left.getX();
-					double right_pen = VBrick.front_right.getX() - ball_pos.getX();
-					double top_pen = ball_pos.getY() - VBrick.front_right.getY();
-					double bottom_pen = VBrick.back_left.getY() - ball_pos.getY();
-					double min = left_pen;
-					// use the smallest penetration to correct position
-					if (right_pen < min) min = right_pen;
-					if (top_pen < min) min = top_pen;
-					if (bottom_pen < min) min = bottom_pen;
-					if (left_pen == min) {
-						ball_pos.setX(VBrick.back_left.getX());
-						rel_spd.setX(-rel_spd.getX()+min/dt);
-					} else if (right_pen == min) {
-						ball_pos.setX(VBrick.front_right.getX());
-						rel_spd.setX(-rel_spd.getX()-min/dt);
-					} else if (bottom_pen == min) {
-						ball_pos.setY(VBrick.back_left.getY());
-						rel_spd.setY(-rel_spd.getY()-min/dt);
-					} else {
-						ball_pos.setY(VBrick.front_right.getY());
-						rel_spd.setY(-rel_spd.getY()+min/dt);
-					}
-					// correct position and use it to give the ball some momentum
-					ball = Vector2D.add(Vector2D.rotateVector(ball_pos, directions[i]), positions[i]);
-					ball_velocity = Vector2D.add(Vector2D.rotateVector(rel_spd, directions[i]), velocities[i]);
-				}
-			}
-		// ball collision with walls
-		if (ball.getX() < 0) {
-			// collision with left wall
-			ball.setX(0);
-			ball_velocity.setX(-ball_velocity.getX());
-		} else if (ball.getX() > pitch_width_cm) {
-			// collision with right wall
-			ball.setX(pitch_width_cm);
-			ball_velocity.setX(-ball_velocity.getX());
-		} else if (ball.getY() < 0) {
-			// collision with bottom wall
-			ball.setY(0);
-			ball_velocity.setY(-ball_velocity.getY());
-		} else if (ball.getY() > pitch_height_cm) {
-			// collision with top wall
-			ball.setY(pitch_height_cm);
-			ball_velocity.setY(-ball_velocity.getY());
-		}
-
 		// calculate final positions
 		for (int i = 0; i < robot.length; i++)
 			if (robot[i] != null) {
@@ -261,6 +210,76 @@ public class Simulator extends WorldStateProvider {
 		}
 		// calculate final ball position
 		ball.addmul_to(ball_velocity, dt);
+		
+		// ball collision with robots
+		for (int i = 0; i < robot.length; i++)
+			if (robot[i] != null) {
+				// transform ball into "brick" relative coordinates
+				Vector2D ball_pos = Vector2D.rotateVector(Vector2D.subtract(future_ball, future_positions[i]), -future_directions[i]);
+				Vector2D curr_rel_spd = Vector2D.rotateVector(Vector2D.subtract(ball_velocity, velocities[i]), -directions[i]);
+				// check whether the ball is "inside" brick
+				if (
+						ball_pos.getX() > VBrick.back_left.getX() && 
+						ball_pos.getX() < VBrick.front_right.getX() &&
+						ball_pos.getY() > VBrick.front_right.getY() &&
+						ball_pos.getY() < VBrick.back_left.getY()
+				) {
+					// collisions with walls
+					double left_pen = ball_pos.getX() - VBrick.back_left.getX();
+					double right_pen = VBrick.front_right.getX() - ball_pos.getX();
+					double top_pen = ball_pos.getY() - VBrick.front_right.getY();
+					double bottom_pen = VBrick.back_left.getY() - ball_pos.getY();
+					double min = left_pen;
+					// use the smallest penetration to correct position
+					if (right_pen < min) min = right_pen;
+					if (top_pen < min) min = top_pen;
+					if (bottom_pen < min) min = bottom_pen;
+					if (left_pen == min) {
+						curr_rel_spd.setX(-curr_rel_spd.getX());
+					} else if (right_pen == min) {
+						curr_rel_spd.setX(-curr_rel_spd.getX());
+					} else if (bottom_pen == min) {
+						curr_rel_spd.setY(-curr_rel_spd.getY());
+					} else {
+						curr_rel_spd.setY(-curr_rel_spd.getY());
+					}
+					curr_rel_spd = Vector2D.multiply(curr_rel_spd, robot_bounciness);
+					//double mom_inertia = mass_robot_kg*(VBrick.ROBOT_LENGTH*VBrick.ROBOT_LENGTH+VBrick.ROBOT_WIDTH*VBrick.ROBOT_WIDTH)/12;
+					Vector2D current_dot_pos = Vector2D.rotateVector(ball_pos, -turning_speeds[i]*dt);
+					Vector2D add_vel = Vector2D.divide(Vector2D.subtract(ball_pos, current_dot_pos), dt);
+					curr_rel_spd = Vector2D.add(curr_rel_spd, add_vel);
+				}
+				// kicker
+				double ball_distance = ball_pos.x-VBrick.front_left.getX();
+				if (robot[i].is_kicking) {
+					if (ball_distance < kicker_range && ball_distance > 0) {
+						double power = kicker_max_speed-kicker_min_speed-(kicker_max_speed-kicker_min_speed)*ball_distance/kicker_range;
+						System.out.print("power "+power);
+						curr_rel_spd.setX(curr_rel_spd.getX()+power);
+					}
+					robot[i].is_kicking = false;
+				}
+				// apply velocity change
+				ball_velocity = Vector2D.add(Vector2D.rotateVector(curr_rel_spd, directions[i]), velocities[i]);
+			}
+		// ball collision with walls
+		if (future_ball.getX() < 0) {
+			// collision with left wall
+			ball_velocity.setX(-ball_velocity.getX());
+			ball_velocity = Vector2D.multiply(ball_velocity, wall_bounciness);
+		} else if (future_ball.getX() > pitch_width_cm) {
+			// collision with right wall
+			ball_velocity.setX(-ball_velocity.getX());
+			ball_velocity = Vector2D.multiply(ball_velocity, wall_bounciness);
+		} else if (future_ball.getY() < 0) {
+			// collision with bottom wall
+			ball_velocity.setY(-ball_velocity.getY());
+			ball_velocity = Vector2D.multiply(ball_velocity, wall_bounciness);
+		} else if (future_ball.getY() > pitch_height_cm) {
+			// collision with top wall
+			ball_velocity.setY(-ball_velocity.getY());
+			ball_velocity = Vector2D.multiply(ball_velocity, wall_bounciness);
+		}
 		// notify that we have change
 		WorldState state = new WorldState(
 				Vector2D.divide(ball, pitch_width_cm),

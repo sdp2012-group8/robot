@@ -34,6 +34,8 @@ public class VBrick implements Communicator {
 	
 	private static final double acceleration = ACC*0.017453292519943295*WHEELR;//69.8;
 	private static final double turn_acceleration = ACC*WHEELR/ROBOTR;
+	
+	public boolean is_kicking = false;
 
 	private byte desired_speed = 0,
 			desired_turning_speed = 0;
@@ -47,6 +49,9 @@ public class VBrick implements Communicator {
 		case operate:
 			desired_speed = args[0];
 			desired_turning_speed = args[1];
+			break;
+		case kick:
+			is_kicking = true;
 			break;
 		default:
 			System.out.print(op+" not recognized by simulator");
