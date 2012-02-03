@@ -257,12 +257,16 @@ public class AI {
 		if (turning_angle > 180) turning_angle -= 360;
 		if (turning_angle < -180) turning_angle += 360;
 		try {
-			if (turning_angle > TURNING_ACCURACY || turning_angle < -TURNING_ACCURACY) {
+			if (turning_angle > TURNING_ACCURACY) {
 				if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
 				if (turning_angle < -128) turning_angle = -128;
-				mComm.sendMessage(opcode.operate, (byte)20, (byte)turning_angle);
+				//mComm.sendMessage(opcode.operate, (byte)0, (byte)turning_angle);
+				mComm.sendMessage(opcode.operate, (byte)0, (byte)127);
 				//mComm.sendMessage(opcode.turn, (byte)turning_angle);
 				System.out.println("Chasing ball - Turning: " + turning_angle);
+			} else if (turning_angle < -TURNING_ACCURACY) {
+				
+				mComm.sendMessage(opcode.operate, (byte)0, (byte)-127);
 			} else if (distance != 0) {
 				// mComm.sendMessage(opcode.operate, (byte)1, (byte)0);
 				System.out.println("Chasing ball - Moving Forward");

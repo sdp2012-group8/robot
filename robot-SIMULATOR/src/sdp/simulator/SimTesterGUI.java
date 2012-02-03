@@ -75,7 +75,7 @@ public class SimTesterGUI {
 		frmAlphaTeamAi.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmAlphaTeamAi.getContentPane().setLayout(null);
 		
-		final JPanel 		panel = new JPanel() {
+		final JPanel panel = new JPanel() {
 			@Override
 			protected void paintComponent(Graphics g) {
 				Dimension d = this.getSize();
@@ -158,7 +158,12 @@ public class SimTesterGUI {
 				if (!running) {
 					Simulator sim = new Simulator();
 					VBrick brick = new VBrick();
-					sim.registerYellow(brick, 20, 20);
+					if (rdbtnBlue.isSelected()) {
+						sim.registerBlue(brick, 20, 20);
+					} else {
+						sim.registerYellow(brick, 20, 20);
+					}
+					
 					mAI = new AI(brick, sim);
 					mAI.start(rdbtnBlue.isSelected(), rdbtnLeft.isSelected());
 						new Thread() {
