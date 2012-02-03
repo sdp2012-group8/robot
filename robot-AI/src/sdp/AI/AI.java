@@ -82,7 +82,7 @@ public class AI {
 	}
 
 	/**
-	 * Starts the AI in a new decision thread.
+	 * Starts the AI in a new decision thread. (Not true, starts a new thread that updates the world state every time it changes)
 	 * 
 	 * Don't start more than once!
 	 * @param my_team_blue true if my team is blue, false if my team is yellow
@@ -257,13 +257,19 @@ public class AI {
 		if (turning_angle > 180) turning_angle -= 360;
 		if (turning_angle < -180) turning_angle += 360;
 		try {
-			if (turning_angle > TURNING_ACCURACY || turning_angle < -TURNING_ACCURACY) {
-				if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
-				if (turning_angle < -128) turning_angle = -128;
-				mComm.sendMessage(opcode.operate, (byte)20, (byte)turning_angle);
+			if (turning_angle > TURNING_ACCURACY){
+				if (turning_angle > 127) turning_angle = 127;
+				if (turning_angle < -128) turning_angle = -128;// Needs to reduce the angle as the command can only accept -128 to 127
+				mComm.sendMessage(opcode.operate, (byte)0, (byte)127);
 				//mComm.sendMessage(opcode.turn, (byte)turning_angle);
 				System.out.println("Chasing ball - Turning: " + turning_angle);
-			} else if (distance != 0) {
+			} 
+			else if( turning_angle < -TURNING_ACCURACY){
+				mComm.sendMessage(opcode.operate, (byte)0, (byte)-127);
+				//mComm.sendMessage(opcode.turn, (byte)turning_angle);
+				System.out.println("Chasing ball - Turning: " + turning_angle);	
+			}
+			else if (distance != 0) {
 				// mComm.sendMessage(opcode.operate, (byte)1, (byte)0);
 				System.out.println("Chasing ball - Moving Forward");
 			} else {

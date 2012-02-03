@@ -158,7 +158,12 @@ public class SimTesterGUI {
 				if (!running) {
 					Simulator sim = new Simulator();
 					VBrick brick = new VBrick();
+					if(rdbtnBlue.isSelected()){
+						sim.registerBlue(brick, 20, 20);
+					}
+					else{
 					sim.registerYellow(brick, 20, 20);
+					}
 					mAI = new AI(brick, sim);
 					mAI.start(rdbtnBlue.isSelected(), rdbtnLeft.isSelected());
 						new Thread() {
