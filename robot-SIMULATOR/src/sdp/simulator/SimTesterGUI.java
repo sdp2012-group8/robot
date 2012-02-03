@@ -75,48 +75,13 @@ public class SimTesterGUI {
 		frmAlphaTeamAi.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmAlphaTeamAi.getContentPane().setLayout(null);
 		
-		final JPanel panel = new JPanel() {
+		final JPanel 		panel = new JPanel() {
 			@Override
 			protected void paintComponent(Graphics g) {
 				Dimension d = this.getSize();
 				if (lastWS != null) {
 					synchronized (lastWS) {
-						int width = d.width;
-						g.setColor(new Color(10, 80, 0));
-						g.fillRect(0, 0, width, d.height);
-						g.setColor(Color.blue);
-						g.fillOval(
-								(int)(lastWS.getBlueRobot().getCoords().getX()*width) - 10,
-								(int)(lastWS.getBlueRobot().getCoords().getY()*width) - 10,
-								20, 20);
-						g.setColor(Color.white);
-						double dir_x = 0.03*Math.cos(lastWS.getBlueRobot().getAngle()*Math.PI/180d);
-						double dir_y = -0.03*Math.sin(lastWS.getBlueRobot().getAngle()*Math.PI/180d);
-						g.drawLine(
-								(int)(lastWS.getBlueRobot().getCoords().getX()*width),
-								(int)(lastWS.getBlueRobot().getCoords().getY()*width),
-								(int)((lastWS.getBlueRobot().getCoords().getX()+dir_x)*width),
-								(int)((lastWS.getBlueRobot().getCoords().getY()+dir_y)*width));
-						g.setColor(new Color(220, 220, 0));
-						g.fillOval(
-								(int)(lastWS.getYellowRobot().getCoords().getX()*width) - 10,
-								(int)(lastWS.getYellowRobot().getCoords().getY()*width) - 10,
-								20, 20);
-						g.setColor(Color.white);
-						dir_x = 0.03*Math.cos(lastWS.getYellowRobot().getAngle()*Math.PI/180d);
-						dir_y = -0.03*Math.sin(lastWS.getYellowRobot().getAngle()*Math.PI/180d);
-						g.drawLine(
-								(int)(lastWS.getYellowRobot().getCoords().getX()*width),
-								(int)(lastWS.getYellowRobot().getCoords().getY()*width),
-								(int)((lastWS.getYellowRobot().getCoords().getX()+dir_x)*width),
-								(int)((lastWS.getYellowRobot().getCoords().getY()+dir_y)*width));
-						g.setColor(Color.red);
-						g.fillOval(
-								(int)(lastWS.getBallCoords().getX()*width) - 3,
-								(int)(lastWS.getBallCoords().getY()*width) - 3,
-								6, 6);
-						g.setColor(Color.black);
-						g.fillRect(0, (int) (0.465*width), width, d.height);
+						g.drawImage(lastWS.getWorldImage(), 0, 0, null);
 					}
 
 				} else {
@@ -125,6 +90,7 @@ public class SimTesterGUI {
 				}
 			}
 		};
+		panel.setBackground(Color.BLACK);
 		panel.setBounds(10, 10, 640, 480);
 		frmAlphaTeamAi.getContentPane().add(panel);
 		

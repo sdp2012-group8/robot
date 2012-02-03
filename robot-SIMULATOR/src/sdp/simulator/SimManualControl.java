@@ -27,8 +27,11 @@ import java.util.TimerTask;
 import javax.swing.JLabel;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
+
 import javax.swing.JPanel;
 import java.awt.Graphics;
+import javax.swing.JRadioButton;
 
 /**
  * 
@@ -259,8 +262,8 @@ public class SimManualControl {
 					break;
 				}
 			}
-			
-			
+
+
 			@Override
 			public void keyReleased(KeyEvent e) {
 				switch (e.getKeyCode()) {
@@ -283,7 +286,7 @@ public class SimManualControl {
 							btn_W_pressed.cancel();
 							btn_W_pressed = null;
 						}
-						
+
 					}, 60);
 					break;
 				case KeyEvent.VK_LEFT:
@@ -304,7 +307,7 @@ public class SimManualControl {
 								e.printStackTrace();
 							}
 						}
-						
+
 					}, 60);
 					break;
 				case KeyEvent.VK_DOWN:
@@ -326,7 +329,7 @@ public class SimManualControl {
 							btn_S_pressed.cancel();
 							btn_S_pressed = null;
 						}
-						
+
 					}, 60);
 					break;
 				case KeyEvent.VK_RIGHT:
@@ -347,7 +350,7 @@ public class SimManualControl {
 								e.printStackTrace();
 							}
 						}
-						
+
 					}, 60);
 					break;
 				case KeyEvent.VK_SPACE: 
@@ -362,7 +365,7 @@ public class SimManualControl {
 							btn_SPACE_pressed.cancel();
 							btn_SPACE_pressed = null;
 						}
-						
+
 					}, 60);
 					break;
 				case KeyEvent.VK_ENTER:
@@ -377,7 +380,7 @@ public class SimManualControl {
 							btn_ENTER_pressed.cancel();
 							btn_ENTER_pressed = null;
 						}
-						
+
 					}, 60);
 					break;
 				}
@@ -387,28 +390,28 @@ public class SimManualControl {
 		frmManualNxtCommand.setBounds(100, 100, 674, 685);
 		frmManualNxtCommand.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmManualNxtCommand.getContentPane().setLayout(null);
-		
+
 		final JComboBox comboBox = new JComboBox();
 		final opcode[] ops = opcode.values();
 		for (int i = 0; i < ops.length; i++)
 			comboBox.addItem(ops[i]);
 		comboBox.setBounds(12, 9, 166, 24);
 		frmManualNxtCommand.getContentPane().add(comboBox);
-		
+
 		textField = new JTextField();
 		textField.setBounds(190, 12, 246, 19);
 		frmManualNxtCommand.getContentPane().add(textField);
 		textField.setColumns(10);
-		
 
-		
+
+
 		final JButton btnNewButton = new JButton("Send");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				opcode op = ops[comboBox.getSelectedIndex()];
 				if (textField.getText().trim().length() == 0) {
 					try {
-					mComm.sendMessage(op);
+						mComm.sendMessage(op);
 					} catch (Exception e) {
 						System.out.println("Can't send message");
 					} finally {
@@ -426,7 +429,7 @@ public class SimManualControl {
 					}
 				}
 				try {
-				mComm.sendMessage(op, args);
+					mComm.sendMessage(op, args);
 				} catch (Exception e) {
 					System.out.println("Can't send message");
 				} finally {
@@ -438,6 +441,18 @@ public class SimManualControl {
 		btnNewButton.setBounds(12, 38, 166, 25);
 		frmManualNxtCommand.getContentPane().add(btnNewButton);
 		
+
+
+		final JRadioButton rdbtnBlueRobot = new JRadioButton("blue robot");
+		rdbtnBlueRobot.setBounds(444, 8, 149, 23);
+		frmManualNxtCommand.getContentPane().add(rdbtnBlueRobot);
+
+		final JRadioButton rdbtnYellowRobot = new JRadioButton("yellow robot");
+		rdbtnYellowRobot.setSelected(true);
+		rdbtnYellowRobot.setBounds(444, 39, 149, 23);
+		frmManualNxtCommand.getContentPane().add(rdbtnYellowRobot);
+
+
 		btnConnect = new JButton("Connect");
 		btnConnect.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -466,7 +481,10 @@ public class SimManualControl {
 				btnMoveToWall.setEnabled(true);
 				btn_control_on.setEnabled(!frmManualNxtCommand.getContentPane().hasFocus());
 				Simulator sim = new Simulator();
-				sim.registerYellow(mComm, 20, 20);
+				if (rdbtnBlueRobot.isSelected())
+					sim.registerBlue(mComm, 20, 20);
+				else
+					sim.registerYellow(mComm, 20, 20);
 				final WorldStateObserver obs = new WorldStateObserver(sim);
 				new Thread() {
 					public void run() {
@@ -476,56 +494,21 @@ public class SimManualControl {
 						}
 					};
 				}.start();
-				
+
 			}
 		});
 		btnConnect.setBounds(190, 38, 246, 25);
 		frmManualNxtCommand.getContentPane().add(btnConnect);
-		
+
 		frmManualNxtCommand.getContentPane().add(btn_control_on);
-		
+
 		panel = new JPanel() {
 			@Override
 			protected void paintComponent(Graphics g) {
 				Dimension d = this.getSize();
 				if (lastWS != null) {
 					synchronized (lastWS) {
-						int width = d.width;
-						g.setColor(new Color(10, 80, 0));
-						g.fillRect(0, 0, width, d.height);
-						g.setColor(Color.blue);
-						g.fillOval(
-								(int)(lastWS.getBlueRobot().getCoords().getX()*width) - 10,
-								(int)(lastWS.getBlueRobot().getCoords().getY()*width) - 10,
-								20, 20);
-						g.setColor(Color.white);
-						double dir_x = 0.03*Math.cos(lastWS.getBlueRobot().getAngle()*Math.PI/180d);
-						double dir_y = -0.03*Math.sin(lastWS.getBlueRobot().getAngle()*Math.PI/180d);
-						g.drawLine(
-								(int)(lastWS.getBlueRobot().getCoords().getX()*width),
-								(int)(lastWS.getBlueRobot().getCoords().getY()*width),
-								(int)((lastWS.getBlueRobot().getCoords().getX()+dir_x)*width),
-								(int)((lastWS.getBlueRobot().getCoords().getY()+dir_y)*width));
-						g.setColor(new Color(220, 220, 0));
-						g.fillOval(
-								(int)(lastWS.getYellowRobot().getCoords().getX()*width) - 10,
-								(int)(lastWS.getYellowRobot().getCoords().getY()*width) - 10,
-								20, 20);
-						g.setColor(Color.white);
-						dir_x = 0.03*Math.cos(lastWS.getYellowRobot().getAngle()*Math.PI/180d);
-						dir_y = -0.03*Math.sin(lastWS.getYellowRobot().getAngle()*Math.PI/180d);
-						g.drawLine(
-								(int)(lastWS.getYellowRobot().getCoords().getX()*width),
-								(int)(lastWS.getYellowRobot().getCoords().getY()*width),
-								(int)((lastWS.getYellowRobot().getCoords().getX()+dir_x)*width),
-								(int)((lastWS.getYellowRobot().getCoords().getY()+dir_y)*width));
-						g.setColor(Color.red);
-						g.fillOval(
-								(int)(lastWS.getBallCoords().getX()*width) - 3,
-								(int)(lastWS.getBallCoords().getY()*width) - 3,
-								6, 6);
-						g.setColor(Color.black);
-						g.fillRect(0, (int) (0.465*width), width, d.height);
+						g.drawImage(lastWS.getWorldImage(), 0, 0, null);
 					}
 
 				} else {
@@ -534,12 +517,10 @@ public class SimManualControl {
 				}
 			}
 		};
+		panel.setBackground(Color.BLACK);
 		panel.setBounds(12, 151, 640, 480);
 		frmManualNxtCommand.getContentPane().add(panel);
-		
 
-		
-		
 
 	}
 }

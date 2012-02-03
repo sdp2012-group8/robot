@@ -9,20 +9,17 @@ import java.awt.geom.Point2D;
  * @author MartinMarinov
  *
  */
-public class Vector2D {
+public class Vector2D extends Point2D.Double {
 	
 	
-	/*    * local variables * */
-	
-	private double x,y;
+	private static final long serialVersionUID = -6978991646878714685L;
 	
 	
 	/*    * useful constants * */
 	
-	public final static Vector2D VEC_X_AXIS = new Vector2D(1,0);
-	public final static Vector2D VEC_Y_AXIS = new Vector2D(0,1);
-	public final static Vector2D ZERO = new Vector2D(0, 0);
-	
+	public static final Vector2D ZERO() {
+		return new Vector2D(0, 0);
+	}
 	
 	/*    * constructors * */
 	
@@ -31,7 +28,15 @@ public class Vector2D {
 	 * @param vector_to_clone the vector to be cloned
 	 */
 	public Vector2D(Vector2D vector_to_clone) {
-		this(vector_to_clone.getX(),vector_to_clone.getY());
+		super(vector_to_clone.getX(),vector_to_clone.getY());
+	}
+	
+	/**
+	 * Clones a point
+	 * @param clone
+	 */
+	public Vector2D(Point2D.Double clone) {
+		super(clone.getX(), clone.getY());
 	}
 	
 	/**
@@ -41,8 +46,7 @@ public class Vector2D {
 	 * @param y
 	 */
 	public Vector2D(double x, double y) {
-		this.x = x;
-		this.y = y;
+		super(x, y);
 	}
 	
 
@@ -51,29 +55,17 @@ public class Vector2D {
 	 * @param tuple an array which first three items contain the x, y and z of the vector
 	 */
 	public Vector2D(double[] tuple) {
-		x = tuple[0];
-		y = tuple[1];
+		super(tuple[0], tuple[1]);
 	}
 	
-	
-	/*    * getters and setters * */
-
-	public double getX() {
-		return x;
-	}
-
-	public double getY() {
-		return y;
-	}
-
-
-	public void setX(double x) {
-		this.x = x;
+	public void setX(double value) {
+		setLocation(value, getY());
 	}
 	
-	public void setY(double y) {
-		this.y = y;
+	public void setY(double value) {
+		setLocation(getX(), value);
 	}
+	
 	
 	/**
 	 * Adds the scaled source to the current vector
@@ -81,14 +73,37 @@ public class Vector2D {
 	 * @param coefficient
 	 */
 	public void addmul_to(Vector2D source, double coefficient) {
-		this.x+=source.getX()*coefficient;
-		this.y+=source.getY()*coefficient;
+		setLocation(getX()+source.getX()*coefficient, getY()+source.getY()*coefficient);
 	}
 	
-	public Point2D.Double getPoint(double scale) {
-		return new Point2D.Double(x*scale, y*scale);
-	}
-	
+	/**
+     * Rotate vector p2 around origin by the given angle in degrees.
+     * 
+     * @param point Vector to rotate.
+     * @param angle_rad Angle of rotation in degrees.
+     * @return Rotated point.
+     */
+    public static Vector2D rotateVector(final Vector2D point, double angle)
+    {
+    	double angle_rad = angle*Math.PI/180d;
+    	
+    	double xDiff = point.getX();// - origin.getX();
+    	double yDiff = point.getY();// - origin.getY();
+    	
+    	double rotX = (xDiff * Math.cos(angle_rad)) - (yDiff * Math.sin(-angle_rad));// + origin.getX();
+    	double rotY = (xDiff * Math.sin(-angle_rad)) + (yDiff * Math.cos(angle_rad));// + origin.getY();
+    	
+    	return new Vector2D(rotX, rotY);// + origin.getX(), rotY + origin.getY());
+    }
+    
+    /**
+     * Translate current vector by some offset.
+     * 
+     * @param offset Translate offset.
+     */
+    public void translateVector(Vector2D offset) {
+    	setLocation(getX()+offset.getX(), getY()+offset.getY());
+    }
 	
 	
 	/*    * overrides * */
@@ -97,16 +112,7 @@ public class Vector2D {
 	 * Turns into human readable form (x, y, z)
 	 */
 	public String toString() {
-		return "("+String.format("%.2f", x).replace(',', '.')+", "+String.format("%.2f", y).replace(',', '.')+")";
-	}
-	
-	/**
-	 * For helping GC
-	 */
-	protected void finalize() throws Throwable {
-		super.finalize();
-		x = 0;
-		y = 0;
+		return "("+String.format("%.2f", getX()).replace(',', '.')+", "+String.format("%.2f", getY()).replace(',', '.')+")";
 	}
 	
 
@@ -119,7 +125,7 @@ public class Vector2D {
 	public double getLength() {
 		return (double) Math.sqrt(sqr(getX())+sqr(getY()));
 	}
-	
+
 	
 	/*    * helpers * */
 	
@@ -192,5 +198,17 @@ public class Vector2D {
 		return new Vector2D(a.getX()-b.getX(), a.getY()-b.getY());
 	}
 	
-	
+	/**
+	 * Get vector in same direction with different length
+	 * @param a
+	 * @param new_length
+	 * @return
+	 */
+	public static Vector2D change_length(Vector2D a, double new_length) {
+		double old_length = a.getLength();
+		if (old_length == 0)
+			return ZERO();
+		double nlool = new_length/old_length;
+		return new Vector2D(nlool*a.getX(), nlool*a.getY());
+	}
 }
