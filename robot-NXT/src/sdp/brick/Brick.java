@@ -34,7 +34,8 @@ public class Brick {
 	 */
 	public static void main(String[] args) {
 		// connect with PC and start receiving messages
-		mCont = new BComm(new MessageListener() {
+		mCont = new BComm();
+		mCont.registerListener(new MessageListener() {
 
 			// for joypad
 			private float speed_a = 0;

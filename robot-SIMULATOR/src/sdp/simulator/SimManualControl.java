@@ -1,5 +1,7 @@
-package sdp.communicator;
+package sdp.simulator;
 
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 
 import javax.swing.JFrame;
@@ -10,6 +12,9 @@ import javax.swing.JButton;
 import sdp.common.Communicator;
 import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
+import sdp.common.WorldState;
+import sdp.common.WorldStateObserver;
+
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
@@ -22,6 +27,11 @@ import java.util.TimerTask;
 import javax.swing.JLabel;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
+
+import javax.swing.JPanel;
+import java.awt.Graphics;
+import javax.swing.JRadioButton;
 
 /**
  * 
@@ -32,12 +42,15 @@ import java.awt.event.WindowEvent;
  * @author s0932707
  *
  */
-public class ManualControl {
+public class SimManualControl {
 
 	private JFrame frmManualNxtCommand;
 	private JTextField textField;
 	private JButton btnConnect;
-	private Communicator mComm;
+	private VBrick mComm;
+	private JPanel panel;
+	
+	private WorldState lastWS = null;
 
 	/**
 	 * Launch the application.
@@ -46,7 +59,7 @@ public class ManualControl {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					ManualControl window = new ManualControl();
+					SimManualControl window = new SimManualControl();
 					window.frmManualNxtCommand.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -58,7 +71,7 @@ public class ManualControl {
 	/**
 	 * Create the application.
 	 */
-	public ManualControl() {
+	public SimManualControl() {
 		initialize();
 	}
 	
@@ -249,8 +262,8 @@ public class ManualControl {
 					break;
 				}
 			}
-			
-			
+
+
 			@Override
 			public void keyReleased(KeyEvent e) {
 				switch (e.getKeyCode()) {
@@ -273,7 +286,7 @@ public class ManualControl {
 							btn_W_pressed.cancel();
 							btn_W_pressed = null;
 						}
-						
+
 					}, 60);
 					break;
 				case KeyEvent.VK_LEFT:
@@ -294,7 +307,7 @@ public class ManualControl {
 								e.printStackTrace();
 							}
 						}
-						
+
 					}, 60);
 					break;
 				case KeyEvent.VK_DOWN:
@@ -316,7 +329,7 @@ public class ManualControl {
 							btn_S_pressed.cancel();
 							btn_S_pressed = null;
 						}
-						
+
 					}, 60);
 					break;
 				case KeyEvent.VK_RIGHT:
@@ -337,7 +350,7 @@ public class ManualControl {
 								e.printStackTrace();
 							}
 						}
-						
+
 					}, 60);
 					break;
 				case KeyEvent.VK_SPACE: 
@@ -352,7 +365,7 @@ public class ManualControl {
 							btn_SPACE_pressed.cancel();
 							btn_SPACE_pressed = null;
 						}
-						
+
 					}, 60);
 					break;
 				case KeyEvent.VK_ENTER:
@@ -367,38 +380,38 @@ public class ManualControl {
 							btn_ENTER_pressed.cancel();
 							btn_ENTER_pressed = null;
 						}
-						
+
 					}, 60);
 					break;
 				}
 			}
 		});
 		frmManualNxtCommand.setTitle("Manual NXT Command Sender");
-		frmManualNxtCommand.setBounds(100, 100, 450, 188);
+		frmManualNxtCommand.setBounds(100, 100, 674, 685);
 		frmManualNxtCommand.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmManualNxtCommand.getContentPane().setLayout(null);
-		
+
 		final JComboBox comboBox = new JComboBox();
 		final opcode[] ops = opcode.values();
 		for (int i = 0; i < ops.length; i++)
 			comboBox.addItem(ops[i]);
 		comboBox.setBounds(12, 9, 166, 24);
 		frmManualNxtCommand.getContentPane().add(comboBox);
-		
+
 		textField = new JTextField();
 		textField.setBounds(190, 12, 246, 19);
 		frmManualNxtCommand.getContentPane().add(textField);
 		textField.setColumns(10);
-		
 
-		
+
+
 		final JButton btnNewButton = new JButton("Send");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				opcode op = ops[comboBox.getSelectedIndex()];
 				if (textField.getText().trim().length() == 0) {
 					try {
-					mComm.sendMessage(op);
+						mComm.sendMessage(op);
 					} catch (Exception e) {
 						System.out.println("Can't send message");
 					} finally {
@@ -416,7 +429,7 @@ public class ManualControl {
 					}
 				}
 				try {
-				mComm.sendMessage(op, args);
+					mComm.sendMessage(op, args);
 				} catch (Exception e) {
 					System.out.println("Can't send message");
 				} finally {
@@ -428,16 +441,27 @@ public class ManualControl {
 		btnNewButton.setBounds(12, 38, 166, 25);
 		frmManualNxtCommand.getContentPane().add(btnNewButton);
 		
+
+
+		final JRadioButton rdbtnBlueRobot = new JRadioButton("blue robot");
+		rdbtnBlueRobot.setBounds(444, 8, 149, 23);
+		frmManualNxtCommand.getContentPane().add(rdbtnBlueRobot);
+
+		final JRadioButton rdbtnYellowRobot = new JRadioButton("yellow robot");
+		rdbtnYellowRobot.setSelected(true);
+		rdbtnYellowRobot.setBounds(444, 39, 149, 23);
+		frmManualNxtCommand.getContentPane().add(rdbtnYellowRobot);
+
+
 		btnConnect = new JButton("Connect");
 		btnConnect.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				btnConnect.setText("Wait...");
 				btnConnect.setEnabled(false);
-
 				boolean repeat = true;
 				while (repeat) {
 					try {
-						mComm = new JComm();
+						mComm = new VBrick();
 						mComm.registerListener(new MessageListener() {
 
 							@Override
@@ -456,17 +480,47 @@ public class ManualControl {
 				btnKick.setEnabled(true);
 				btnMoveToWall.setEnabled(true);
 				btn_control_on.setEnabled(!frmManualNxtCommand.getContentPane().hasFocus());
-				
+				Simulator sim = new Simulator();
+				if (rdbtnBlueRobot.isSelected())
+					sim.registerBlue(mComm, 20, 20);
+				else
+					sim.registerYellow(mComm, 20, 20);
+				final WorldStateObserver obs = new WorldStateObserver(sim);
+				new Thread() {
+					public void run() {
+						while (true) {
+							lastWS = obs.getNextState();
+							panel.repaint();
+						}
+					};
+				}.start();
+
 			}
 		});
 		btnConnect.setBounds(190, 38, 246, 25);
 		frmManualNxtCommand.getContentPane().add(btnConnect);
-		
-		frmManualNxtCommand.getContentPane().add(btn_control_on);
-		
 
-		
-		
+		frmManualNxtCommand.getContentPane().add(btn_control_on);
+
+		panel = new JPanel() {
+			@Override
+			protected void paintComponent(Graphics g) {
+				Dimension d = this.getSize();
+				if (lastWS != null) {
+					synchronized (lastWS) {
+						g.drawImage(lastWS.getWorldImage(), 0, 0, null);
+					}
+
+				} else {
+					g.setColor(Color.gray);
+					g.fillRect(0, 0, d.width, d.height);
+				}
+			}
+		};
+		panel.setBackground(Color.BLACK);
+		panel.setBounds(12, 151, 640, 480);
+		frmManualNxtCommand.getContentPane().add(panel);
+
 
 	}
 }

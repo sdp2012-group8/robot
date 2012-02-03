@@ -10,6 +10,7 @@ import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.common.Robot;
 import sdp.common.Communicator.opcode;
+import sdp.common.WorldStateProvider;
 
 /**
  * 
@@ -60,8 +61,8 @@ public class AI {
 	 * @param Comm a communicator for making connection with real robot/simulated one
 	 * @param Obs an observer for taking information about the table
 	 */
-	public AI(Communicator Comm, WorldStateObserver Obs) {
-		this.mObs = Obs;
+	public AI(Communicator Comm, WorldStateProvider Obs) {
+		this.mObs = new WorldStateObserver(Obs);
 		mQueue = new MessageQueue(Comm);
 		this.mComm = Comm;
 	}
@@ -169,8 +170,6 @@ public class AI {
 	 * @return a filtered value
 	 */
 	private double lowPass(double old_value, double new_value, int amount) {
-		if (new_value < 0)
-			return old_value;
 		return (old_value+new_value*amount)/((double) (amount+1));
 	}
 

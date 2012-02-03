@@ -3,6 +3,8 @@ package sdp.communicator;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.logging.Logger;
 
 import lejos.pc.comm.NXTComm;
@@ -30,7 +32,7 @@ public class JComm implements sdp.common.Communicator {
 	private final static Logger LOGGER = Logger.getLogger(JComm.class .getName());
 
 	// variables
-	private MessageListener mListener;
+	private ArrayList<MessageListener> mListener = new ArrayList<MessageListener>();
 	private NXTComm mComm;
 	private OutputStream os;
     private InputStream is;
@@ -41,8 +43,7 @@ public class JComm implements sdp.common.Communicator {
 	 * @param listener the listener that will receive updates from the robot
 	 * @throws NXTCommException if a connection cannot be established
 	 */
-	public JComm(MessageListener listener) throws IOException {
-		this.mListener = listener;
+	public JComm() throws IOException {
 		try {
 		mComm = NXTCommFactory.createNXTComm(NXTCommFactory.BLUETOOTH);
 		} catch (Exception e) {
@@ -107,7 +108,10 @@ public class JComm implements sdp.common.Communicator {
 		for (int i = 0; i < length; i++) {
 			args[i] = (byte) is.read();
 		}
-		mListener.receiveMessage(op, args, JComm.this);
+		// notify all listeners
+		Iterator<MessageListener> ml = mListener.iterator();
+		while (ml.hasNext())
+			ml.next().receiveMessage(op, args, JComm.this);
 	}
 
 	/**
@@ -139,6 +143,16 @@ public class JComm implements sdp.common.Communicator {
 			e.printStackTrace();
 		}
 
+	}
+ 
+	/**
+	 * Registers listeners
+	 */
+	@Override
+	public void registerListener(MessageListener listener) {
+		if (!mListener.contains(listener))
+			mListener.add(listener);
+		
 	}
 
 }

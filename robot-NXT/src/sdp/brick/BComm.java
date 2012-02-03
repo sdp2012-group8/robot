@@ -32,7 +32,7 @@ public class BComm implements Communicator {
 	 * Initializes the contorller with a listener
 	 * @param listener
 	 */
-	public BComm(final MessageListener listener) {
+	public BComm() {
 		LCD.clear();
 		LCD.drawString("Waiting for", 0, 0);
 		LCD.drawString("Bluetooth...", 0, 1);
@@ -46,6 +46,43 @@ public class BComm implements Communicator {
 		os = connection.openOutputStream();
 		running = true;
 		// start the listener thread
+		
+		
+	}
+
+	/**
+	 * Send a message to the PC
+	 * @param op the opcode
+	 * @param args the arguments
+	 */
+	@Override
+	public void sendMessage(opcode op, byte... args) throws IOException {
+		os.write(op.ordinal()); // write opcode
+		os.write(args.length); // write number of args
+		os.write(args); // write args
+		os.flush(); // send message
+	}
+
+	/**
+	 * Close the stream and connection gracefully
+	 */
+	@Override
+	public void close() {
+		try {
+			running = false;
+			is.close();
+			os.close();
+			connection.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}		
+	}
+
+	/**
+	 * Only one listener could be registered on brick!
+	 */
+	@Override
+	public void registerListener(final MessageListener listener) {
 		new Thread() {
 
 			public void run() {
@@ -89,34 +126,6 @@ public class BComm implements Communicator {
 			};
 		}.start();
 		
-	}
-
-	/**
-	 * Send a message to the PC
-	 * @param op the opcode
-	 * @param args the arguments
-	 */
-	@Override
-	public void sendMessage(opcode op, byte... args) throws IOException {
-		os.write(op.ordinal()); // write opcode
-		os.write(args.length); // write number of args
-		os.write(args); // write args
-		os.flush(); // send message
-	}
-
-	/**
-	 * Close the stream and connection gracefully
-	 */
-	@Override
-	public void close() {
-		try {
-			running = false;
-			is.close();
-			os.close();
-			connection.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}		
 	}
 
 }
