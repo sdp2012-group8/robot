@@ -29,7 +29,7 @@ public class AI {
 	private final static double PITCH_WIDTH_CM = 244;
 	private final static double goal_y_cm = 113.7/2;
 	// robot constants
-	private final static double TURNING_ACCURACY = 2;
+	private final static double TURNING_ACCURACY = 0;
 	private final static double ROBOT_RADIUS_CM = 7;
 
 	private final static double ROBOT_ACC_CM_S_S = 69.8; // 1000 degrees/s/s
@@ -248,20 +248,22 @@ public class AI {
 	}
 
 	public void chaseBall() {
-		System.out.println("Chasing ball");
+		// System.out.println("Chasing ball");
 		double angle_between = anglebetween(robot.getCoords(), worldState.getBallCoords());
 		int distance = (int) Tools.getDistanceBetweenPoint(robot.getCoords(), worldState.getBallCoords());
 		int turning_angle = (int) (- (180*robot.getAngle())/Math.PI - angle_between);
+		
+		// Keep the turning angle between -180 and 180
 		if (turning_angle > 180) turning_angle -= 360;
 		if (turning_angle < -180) turning_angle += 360;
 		try {
 			if (turning_angle > TURNING_ACCURACY || turning_angle < -TURNING_ACCURACY) {
-				if (turning_angle > 127) turning_angle = 127;
+				if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
 				if (turning_angle < -128) turning_angle = -128;
-				// mComm.sendMessage(opcode.operate, (byte)0, (byte)turning_angle);
-				mComm.sendMessage(opcode.turn, (byte)turning_angle);
+				mComm.sendMessage(opcode.operate, (byte)20, (byte)turning_angle);
+				//mComm.sendMessage(opcode.turn, (byte)turning_angle);
 				System.out.println("Chasing ball - Turning: " + turning_angle);
-			} else if (distance > 20) {
+			} else if (distance != 0) {
 				// mComm.sendMessage(opcode.operate, (byte)1, (byte)0);
 				System.out.println("Chasing ball - Moving Forward");
 			} else {

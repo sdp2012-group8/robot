@@ -167,7 +167,7 @@ public class SimTesterGUI {
 									if (mAI != null) {
 										lastWS = mAI.getLatestWorldState();
 										if (lastWS != null)
-											System.out.println("dir "+lastWS.getYellowRobot().getAngle());
+											// System.out.println("dir "+lastWS.getYellowRobot().getAngle());
 										panel.repaint();
 										try {
 											Thread.sleep(1000/slider.getValue());
@@ -188,14 +188,13 @@ public class SimTesterGUI {
 		btnConnect.setBounds(656, 10, 117, 25);
 		frmAlphaTeamAi.getContentPane().add(btnConnect);
 		
-		final JButton btnSendComm = new JButton("DO");
+		final JButton btnSendComm = new JButton("Chase Ball");
 		btnSendComm.setBounds(656, 212, 117, 25);
 		btnSendComm.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				mAI.setMode(mode.chase_once);
-				
+				mAI.setMode(mode.chase_ball);
 			}
 			
 		});
