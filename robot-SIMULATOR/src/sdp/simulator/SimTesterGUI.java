@@ -10,22 +10,21 @@ import java.awt.Graphics;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JRadioButton;
-import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
 import sdp.AI.AI;
 import sdp.AI.AI.mode;
-import sdp.common.Communicator;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
-import javax.swing.JSlider;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+
 import javax.swing.JPanel;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * This class is intended to display the world as the UI "sees" it.
@@ -40,6 +39,9 @@ public class SimTesterGUI {
 	private JFrame frmAlphaTeamAi;
 	private boolean running = false;
 	private AI mAI;
+	private Simulator mSim;
+	private boolean drag_ball = false;
+	private int drag_robot = -1;
 	private WorldState lastWS = null;
 
 	/**
@@ -71,11 +73,14 @@ public class SimTesterGUI {
 	private void initialize() {
 		frmAlphaTeamAi = new JFrame();
 		frmAlphaTeamAi.setTitle("Alpha Team AI tester");
-		frmAlphaTeamAi.setBounds(100, 100, 805, 547);
+		frmAlphaTeamAi.setBounds(100, 100, 805, 530);
 		frmAlphaTeamAi.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmAlphaTeamAi.getContentPane().setLayout(null);
 		
 		final JPanel panel = new JPanel() {
+
+			private static final long serialVersionUID = 4129875804950156591L;
+
 			@Override
 			protected void paintComponent(Graphics g) {
 				Dimension d = this.getSize();
@@ -90,11 +95,66 @@ public class SimTesterGUI {
 				}
 			}
 		};
+		panel.addMouseListener(new MouseListener() {
+			
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if (mSim == null)
+					return;
+				drag_ball = false;
+				mSim.highlightBall(drag_ball);
+				drag_robot = -1;
+				mSim.highlightRobot(drag_robot);
+			}
+			
+			@Override
+			public void mousePressed(MouseEvent e) {
+				if (mSim == null)
+					return;
+				double sx = e.getX()/(double)panel.getWidth();
+				double sy = e.getY()/(double) panel.getWidth();
+				drag_ball = mSim.isInsideBall(sx, sy);
+				drag_robot = mSim.isInsideRobot(sx, sy);
+				mSim.highlightRobot(drag_robot);
+			}
+
+			@Override
+			public void mouseClicked(MouseEvent e) {}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {}
+
+			@Override
+			public void mouseExited(MouseEvent e) {}
+		});
+		panel.addMouseMotionListener(new MouseMotionListener() {
+			
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				if (mSim == null)
+					return;
+				double sx = e.getX()/(double)panel.getWidth();
+				double sy = e.getY()/(double) panel.getWidth();
+				mSim.highlightBall(drag_ball || mSim.isInsideBall(sx, sy));
+				mSim.highlightRobot(drag_robot >= 0 ? drag_robot : mSim.isInsideRobot(sx, sy));
+			}
+			
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				if (mSim == null)
+					return;
+				double sx = e.getX()/(double)panel.getWidth();
+				double sy = e.getY()/(double) panel.getWidth();
+				if (drag_ball)
+					mSim.putBallAt(sx, sy);
+				if (drag_robot != -1)
+					mSim.putAt(sx, sy, drag_robot);
+			}
+		});
 		panel.setBackground(Color.BLACK);
 		panel.setBounds(10, 10, 640, 480);
 		frmAlphaTeamAi.getContentPane().add(panel);
-		
-		ButtonGroup group_input = new ButtonGroup();
+	
 		
 		JLabel lblOurTeam = new JLabel("Our team:");
 		lblOurTeam.setBounds(656, 50, 137, 15);
@@ -132,55 +192,30 @@ public class SimTesterGUI {
 		group_goal.add(rdbtnLeft);
 		group_goal.add(rdbtnRight);
 		
-		JLabel lblRefreshRate = new JLabel("refresh rate");
-		lblRefreshRate.setBounds(10, 496, 108, 15);
-		frmAlphaTeamAi.getContentPane().add(lblRefreshRate);
-		
-		final JLabel lblFps = new JLabel("15 fps");
-		lblFps.setBounds(304, 496, 70, 15);
-		frmAlphaTeamAi.getContentPane().add(lblFps);
-		
-		final JSlider slider = new JSlider();
-		slider.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent arg0) {
-				lblFps.setText(slider.getValue()+" fps");
-			}
-		});
-		slider.setValue(15);
-		slider.setMaximum(30);
-		slider.setMinimum(2);
-		slider.setBounds(104, 495, 200, 16);
-		frmAlphaTeamAi.getContentPane().add(slider);
-		
 		final JButton btnConnect = new JButton("Connect");
 		btnConnect.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (!running) {
-					Simulator sim = new Simulator();
+					mSim = new Simulator();
 					VBrick brick = new VBrick();
-
-					if (rdbtnBlue.isSelected()) {
-						sim.registerBlue(brick, 20, 20);
-					} else {
-						sim.registerYellow(brick, 20, 20);
+					if (rdbtnBlue.isSelected()){
+						mSim.registerBlue(brick, 20, 20);
 					}
-					
-					mAI = new AI(brick, sim);
+					else{
+					mSim.registerYellow(brick, 20, 20);
+					}
+					mAI = new AI(brick, mSim);
 					mAI.start(rdbtnBlue.isSelected(), rdbtnLeft.isSelected());
-						new Thread() {
-							public void run() {
-								while (running)
-									if (mAI != null) {
-										lastWS = mAI.getLatestWorldState();
-										if (lastWS != null)
-											// System.out.println("dir "+lastWS.getYellowRobot().getAngle());
-										panel.repaint();
-										try {
-											Thread.sleep(1000/slider.getValue());
-										} catch (InterruptedException e) {}
-									}
-							};
-						}.start();
+					final WorldStateObserver obs = new WorldStateObserver(mAI);
+					new Thread() {
+						public void run() {
+							while (true) {
+								lastWS = obs.getNextState();
+								panel.repaint();
+							}
+						};
+					}.start();
+
 						running =true;
 						btnConnect.setText("Disconnect");
 				} else {
@@ -205,6 +240,15 @@ public class SimTesterGUI {
 			
 		});
 		frmAlphaTeamAi.getContentPane().add(btnSendComm);
+		
+		JButton btnResetBall = new JButton("Reset ball");
+		btnResetBall.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				mSim.putBallAt();
+			}
+		});
+		btnResetBall.setBounds(662, 391, 117, 25);
+		frmAlphaTeamAi.getContentPane().add(btnResetBall);
 
 	}
 }
