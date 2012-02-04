@@ -27,7 +27,6 @@ import java.util.TimerTask;
 import javax.swing.JLabel;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
 
 import javax.swing.JPanel;
 import java.awt.Graphics;
@@ -164,7 +163,7 @@ public class SimManualControl {
 					if (btn_W_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("W");
-						System.out.println("Sending W");
+						//System.out.println("Sending W");
 						try {
 							mComm.sendMessage(opcode.operate, (byte) max_speed, (byte) 0);
 							currentspeed = max_speed;
@@ -182,7 +181,7 @@ public class SimManualControl {
 					if (btn_A_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("A");
-						System.out.println("Sending A");
+						//System.out.println("Sending A");
 						try {
 							mComm.sendMessage(opcode.operate, (byte) currentspeed, (byte) turn_speed);
 						} catch (Exception e) {
@@ -199,7 +198,7 @@ public class SimManualControl {
 					if (btn_S_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("S");
-						System.out.println("Sending S");
+						//System.out.println("Sending S");
 						try {
 							mComm.sendMessage(opcode.operate, (byte) -max_speed, (byte) 0);
 							currentspeed = -max_speed;
@@ -217,7 +216,7 @@ public class SimManualControl {
 					if (btn_D_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("D");
-						System.out.println("Sending D");
+						//System.out.println("Sending D");
 						try {
 							mComm.sendMessage(opcode.operate, (byte) currentspeed, (byte) -turn_speed);
 						} catch (Exception e) {
@@ -233,7 +232,7 @@ public class SimManualControl {
 					if (btn_SPACE_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("SPACE");
-						System.out.println("Sending SPACE");
+						//System.out.println("Sending SPACE");
 						try {
 							mComm.sendMessage(opcode.play_sound);
 						} catch (Exception e) {
@@ -249,7 +248,7 @@ public class SimManualControl {
 					if (btn_ENTER_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("ENTER");
-						System.out.println("Sending ENTER");
+						//System.out.println("Sending ENTER");
 						try {
 							mComm.sendMessage(opcode.kick);
 						} catch (Exception e) {
@@ -276,7 +275,7 @@ public class SimManualControl {
 						public void run() {
 							// TODO Auto-generated method stub
 							lblWAS.setText(" ");
-							System.out.println("Stopping W");
+							//System.out.println("Stopping W");
 							try {
 								mComm.sendMessage(opcode.operate, (byte) 0, (byte) 0);
 								currentspeed = 0;
@@ -298,7 +297,7 @@ public class SimManualControl {
 						public void run() {
 							// TODO Auto-generated method stub
 							lblWAS.setText(" ");
-							System.out.println("Stopping A");
+							//System.out.println("Stopping A");
 							btn_A_pressed.cancel();
 							btn_A_pressed = null;
 							try {
@@ -319,7 +318,7 @@ public class SimManualControl {
 						public void run() {
 							// TODO Auto-generated method stub
 							lblWAS.setText(" ");
-							System.out.println("Stopping S");
+							//System.out.println("Stopping S");
 							try {
 								mComm.sendMessage(opcode.operate, (byte) 0, (byte) 0);
 								currentspeed = 0;
@@ -341,7 +340,7 @@ public class SimManualControl {
 						public void run() {
 							// TODO Auto-generated method stub
 							lblWAS.setText(" ");
-							System.out.println("Stopping D");
+							//System.out.println("Stopping D");
 							btn_D_pressed.cancel();
 							btn_D_pressed = null;
 							try {
@@ -361,7 +360,7 @@ public class SimManualControl {
 						public void run() {
 							// TODO Auto-generated method stub
 							lblWAS.setText(" ");
-							System.out.println("Stopping SPACE");
+							//System.out.println("Stopping SPACE");
 							btn_SPACE_pressed.cancel();
 							btn_SPACE_pressed = null;
 						}
@@ -376,7 +375,7 @@ public class SimManualControl {
 						public void run() {
 							// TODO Auto-generated method stub
 							lblWAS.setText(" ");
-							System.out.println("Stopping ENTER");
+							//System.out.println("Stopping ENTER");
 							btn_ENTER_pressed.cancel();
 							btn_ENTER_pressed = null;
 						}
