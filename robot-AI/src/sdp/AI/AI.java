@@ -30,7 +30,6 @@ public class AI {
 	private final static double GOAL_Y_CM = 113.7/2;
 	// robot constants
 	private final static double TURNING_ACCURACY = 10;
-	private final static double ROBOT_RADIUS_CM = 7;
 
 	private final static double ROBOT_ACC_CM_S_S = 69.8; // 1000 degrees/s/s
 	private final static int MAX_SPEED_CM_S = 50; // 50 cm per second
@@ -277,7 +276,7 @@ public class AI {
 		if (turning_angle < -180) turning_angle += 360;
 		
 		if (distance_to_ball < robot.getSize()) forward_speed = 0;
-		
+			
 		if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
 		if (turning_angle < -128) turning_angle = -128;
 		try {
@@ -292,7 +291,7 @@ public class AI {
 			}
 			else if (distance_to_ball > robot.getSize()/2) {
 				
-				mComm.sendMessage(opcode.operate, (byte)20, (byte)0);
+				mComm.sendMessage(opcode.operate, (byte)(20 + 50*distance_to_ball), (byte)0);
 				//System.out.println("Chasing ball - Moving Forward");
 			} else {
 				//System.out.println("Chasing ball - At Ball: " + distance + " " + robot.getCoords() + " " + worldState.getBallCoords());
@@ -332,7 +331,7 @@ public class AI {
 				setMode(mode.chase_ball);
 			} else if (turning_angle > TURNING_ACCURACY && (distance_to_goal > 1)){
 				mComm.sendMessage(opcode.operate, forward_speed, (byte)127);
-				System.out.println("Goaing to goal - Turning: " + turning_angle);
+				System.out.println("Going to goal - Turning: " + turning_angle);
 			} 
 			else if( turning_angle < -TURNING_ACCURACY && (distance_to_goal > 1)){
 				mComm.sendMessage(opcode.operate, forward_speed, (byte)-128);
@@ -340,7 +339,7 @@ public class AI {
 			}
 			else if (distance_to_goal > 1) {
 				mComm.sendMessage(opcode.operate, (byte)60, (byte)0);
-				System.out.println("GOING FORAWRD TO GOAL");
+				System.out.println("GOING FORWARD TO GOAL");
 				
 			} else {
 				System.out.println("The old man the boat");
