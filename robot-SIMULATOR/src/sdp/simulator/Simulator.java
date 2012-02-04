@@ -12,33 +12,33 @@ import sdp.common.WorldStateProvider;
 /**
  * This is a simulator. It simulates a table
  * 
- * @author s0932707
+ * @author Martin Marinov
  *
  */
 public class Simulator extends WorldStateProvider {
-	
+
 	private static final float max_fps = 25; // simulation speed
 	private static final double iteration_time = 1000/max_fps; // in ms
 	private final static double pitch_width_cm = 244;
 	private final static double pitch_height_cm = 113.7;
 	private final static Vector2D pitch_middle = new Vector2D(0.5, pitch_height_cm/(2*pitch_width_cm));
-	private final static double ball_friction_acc = 15; // in cm/s
+	private final static double ball_friction_acc = 25; // in cm/s
 	private final static double mass_robot_kg = 1; // in kg
 	private final static double mass_ball_kg = 0.045; // in kg
-	
+
 	private final static double wall_bounciness = 0.4; // 0 - inelastic, 1 - elastic
 	private final static double robot_bounciness = 0.3; // 0 - 1
-	
+
 	private final static double kicker_range = 10; // cm
 	private final static double kicker_max_speed = 300; // cm/s
 	private final static double kicker_min_speed = 50; // cm/s
-	
+
 	private final static double flipper_size = 2; //cm
-	
+
 	private final static int IMAGE_WIDTH = 640;
-	
+
 	private static final int MAX_NUM_ROBOTS = 2;
-	
+
 	// define robots
 	private static VBrick[] robot = new VBrick[MAX_NUM_ROBOTS]; // blue has id 0, yellow has id 1
 	private static Vector2D[]
@@ -60,23 +60,23 @@ public class Simulator extends WorldStateProvider {
 			future_turning_speeds = new double[MAX_NUM_ROBOTS];
 	// define ball
 	private static Vector2D 
-			ball = Vector2D.multiply(new Vector2D(pitch_middle), pitch_width_cm),
-			ball_velocity = Vector2D.ZERO(),
+	ball = Vector2D.multiply(new Vector2D(pitch_middle), pitch_width_cm),
+	ball_velocity = Vector2D.ZERO(),
 	// for use for collision prediction
-			future_ball = Vector2D.multiply(new Vector2D(pitch_middle), pitch_width_cm),
-			future_ball_velocity = Vector2D.ZERO();
+	future_ball = Vector2D.multiply(new Vector2D(pitch_middle), pitch_width_cm),
+	future_ball_velocity = Vector2D.ZERO();
 	// define graphics
 	private BufferedImage im = null;
 	private Graphics2D g = null;
-	
+
 
 	private boolean running = true;
-	
+
 	public Simulator() {
 		registerBlue(new VBrick(), 40, pitch_height_cm/2);
 		registerYellow(new VBrick(), pitch_width_cm-40, pitch_height_cm/2);
 		new Thread() {
-			
+
 			public void run() {
 				long delta_time = 0;
 				long old_time = System.currentTimeMillis();
@@ -96,14 +96,14 @@ public class Simulator extends WorldStateProvider {
 					curr_time = System.currentTimeMillis();
 					delta_time = curr_time-old_time;
 					old_time = curr_time;
-					
+
 				}
-				
+
 			};
-			
+
 		}.start();
 	}
-	
+
 	/**
 	 * Register blue robot at given position in cm
 	 * @param virtual
@@ -113,7 +113,7 @@ public class Simulator extends WorldStateProvider {
 	public void registerBlue(VBrick virtual, double x, double y) {
 		registerRobot(virtual, x, y, 0);
 	}
-	
+
 	/**
 	 * Register yellow robot at given position in cm
 	 * @param virtual
@@ -123,7 +123,7 @@ public class Simulator extends WorldStateProvider {
 	public void registerYellow(VBrick virtual, double x, double y) {
 		registerRobot(virtual, x, y, 1);
 	}
-	
+
 	/**
 	 * Register a robot at a given place. Current world providers can provide a state only for two robots
 	 * 
@@ -141,7 +141,7 @@ public class Simulator extends WorldStateProvider {
 		turning_speeds[id] = 0;
 		will_be_in_collision[id] = false;
 	}
-	
+
 	/**
 	 * Gracefully close
 	 */
@@ -149,7 +149,7 @@ public class Simulator extends WorldStateProvider {
 		running = false;
 		g.dispose();
 	}
-	
+
 	/**
 	 * Do the simulation of the physics.
 	 * 
@@ -159,7 +159,7 @@ public class Simulator extends WorldStateProvider {
 	 */
 	public void simulate(double dt) {
 		// for prediction
-		
+
 		// calculate for a future
 		for (int i = 0; i < robot.length; i++)
 			if (robot[i] != null) {
@@ -205,7 +205,7 @@ public class Simulator extends WorldStateProvider {
 					positions[i].addmul_to(velocities[i], dt);
 				else
 					will_be_in_collision[i] = false;
-				
+
 			}
 		// ball friction
 		ball_speed = ball_velocity.getLength();
@@ -218,47 +218,102 @@ public class Simulator extends WorldStateProvider {
 		}
 		// calculate final ball position
 		ball.addmul_to(ball_velocity, dt);
-		
+
 		// ball collision with robots
 		for (int i = 0; i < robot.length; i++)
 			if (robot[i] != null) {
 				// transform ball into "brick" relative coordinates
-				Vector2D ball_pos = Vector2D.rotateVector(Vector2D.subtract(future_ball, future_positions[i]), -future_directions[i]);
+				Vector2D new_ball_pos = Vector2D.rotateVector(Vector2D.subtract(future_ball, future_positions[i]), -future_directions[i]);
 				Vector2D curr_rel_spd = Vector2D.rotateVector(Vector2D.subtract(ball_velocity, velocities[i]), -directions[i]);
 				// check whether the ball is "inside" brick
 				if (
-						ball_pos.getX() > VBrick.back_left.getX() && 
-						ball_pos.getX() < VBrick.front_right.getX() &&
-						ball_pos.getY() > VBrick.front_right.getY() &&
-						ball_pos.getY() < VBrick.back_left.getY()
-				) {
-					// collisions with walls
-					double left_pen = ball_pos.getX() - VBrick.back_left.getX();
-					double right_pen = VBrick.front_right.getX() - ball_pos.getX();
-					double top_pen = ball_pos.getY() - VBrick.front_right.getY();
-					double bottom_pen = VBrick.back_left.getY() - ball_pos.getY();
+						new_ball_pos.getX() > VBrick.back_left.getX() && 
+						new_ball_pos.getX() < VBrick.front_right.getX() &&
+						new_ball_pos.getY() > VBrick.front_right.getY() &&
+						new_ball_pos.getY() < VBrick.back_left.getY()
+						) {
+					// start collision detection to make speed reflection
+					// and to prevent ball penetrating the virtual robot
+					
+					// collisions with walls penetration depth calculation
+					double left_pen = new_ball_pos.getX() - VBrick.back_left.getX();
+					double right_pen = VBrick.front_right.getX() - new_ball_pos.getX();
+					double top_pen = new_ball_pos.getY() - VBrick.front_right.getY();
+					double bottom_pen = VBrick.back_left.getY() - new_ball_pos.getY();
+					// use the smallest penetration to determine collision side
+					int collision_id = 0; // 0 - left, 1 - right, 2 - top, 3 - bottom
 					double min = left_pen;
-					// use the smallest penetration to correct position
-					if (right_pen < min) min = right_pen;
-					if (top_pen < min) min = top_pen;
-					if (bottom_pen < min) min = bottom_pen;
-					if (left_pen == min) {
-						curr_rel_spd.setX(-curr_rel_spd.getX()*robot_bounciness);
-					} else if (right_pen == min) {
-						curr_rel_spd.setX(-curr_rel_spd.getX()*robot_bounciness);
-					} else if (bottom_pen == min) {
-						curr_rel_spd.setY(-curr_rel_spd.getY()*robot_bounciness);
-					} else {
-						curr_rel_spd.setY(-curr_rel_spd.getY()*robot_bounciness);
+					if (right_pen < min) {
+						min = right_pen;
+						collision_id = 1;
 					}
-					Vector2D current_dot_pos = Vector2D.rotateVector(ball_pos, -turning_speeds[i]*dt);
-					Vector2D add_vel = Vector2D.divide(Vector2D.subtract(ball_pos, current_dot_pos), dt);
-					curr_rel_spd = Vector2D.add(curr_rel_spd, add_vel);
+					if (top_pen < min) {
+						min = top_pen;
+						collision_id = 2;
+					}
+					if (bottom_pen < min) {
+						min = bottom_pen;
+						collision_id = 3;
+					}
+					// once we have collision side, react
+					Vector2D curr_ball_pos = Vector2D.rotateVector(Vector2D.subtract(ball, positions[i]), -directions[i]);
+					boolean is_currently_colliding =
+							curr_ball_pos.getX() > VBrick.back_left.getX() && 
+							curr_ball_pos.getX() < VBrick.front_right.getX() &&
+							curr_ball_pos.getY() > VBrick.front_right.getY() &&
+							curr_ball_pos.getY() < VBrick.back_left.getY();
+					switch (collision_id) {
+					case 0:
+						// left
+						if (is_currently_colliding) {
+							double dy = new_ball_pos.getY()-curr_ball_pos.getY();
+							double dx = new_ball_pos.getX()-curr_ball_pos.getX();
+							double mx = VBrick.back_left.getX()-curr_ball_pos.getX();
+							curr_ball_pos.setLocation(VBrick.back_left.getX()-0.5, curr_ball_pos.getY()+dy*mx/dx);
+						} else
+							curr_rel_spd.setX(-curr_rel_spd.getX()*robot_bounciness);
+						break;
+					case 1:
+						// right
+						if (is_currently_colliding) {
+							double dy = curr_ball_pos.getY()-new_ball_pos.getY();
+							double dx = curr_ball_pos.getX()-new_ball_pos.getX();
+							double mx = curr_ball_pos.getX()-VBrick.front_right.getX();
+							curr_ball_pos.setLocation(VBrick.front_right.getX()+0.5, curr_ball_pos.getY()-dy*mx/dx);
+						} else
+							curr_rel_spd.setX(-curr_rel_spd.getX()*robot_bounciness);
+						break;
+					case 2:
+						// top
+						if (is_currently_colliding) {
+							double dy = new_ball_pos.getY()-curr_ball_pos.getY();
+							double dx = new_ball_pos.getX()-curr_ball_pos.getX();
+							double my = -VBrick.back_left.getY()-curr_ball_pos.getY();
+							curr_ball_pos.setLocation(curr_ball_pos.getX()+dx*my/dy, -VBrick.back_left.getY()-0.5);
+						} else
+							curr_rel_spd.setY(-curr_rel_spd.getY()*robot_bounciness);
+						break;
+					case 3:
+						// bottom
+						if (is_currently_colliding) {
+							double dy = curr_ball_pos.getY()-new_ball_pos.getY();
+							double dx = curr_ball_pos.getX()-new_ball_pos.getX();
+							double my = curr_ball_pos.getY()+VBrick.front_right.getY();
+							curr_ball_pos.setLocation(curr_ball_pos.getX()-dx*my/dy, -VBrick.back_right.getY()+0.5);
+						} else 
+							curr_rel_spd.setY(-curr_rel_spd.getY()*robot_bounciness);
+						break;
+					}
+					// fix position if needed
+					ball = Vector2D.add(Vector2D.rotateVector(curr_ball_pos, directions[i]), positions[i]);
+					// calculate the velocity of the current point of "contact" and add it to ball's velocity
+					// this is the magic function that adds the ability that the ball is pushed around by the robot
+					curr_rel_spd.addmul_to(getPointOfContactVel(curr_ball_pos, new_ball_pos, turning_speeds[i], dt), robot_bounciness);
 				}
 				// kicker
-				double ball_distance = ball_pos.x-VBrick.front_left.getX();
+				double ball_distance = new_ball_pos.x-VBrick.front_left.getX();
 				if (robot[i].is_kicking) {
-					if (ball_distance < kicker_range && ball_distance > 0 && ball_pos.y < VBrick.front_left.getY() && ball_pos.y > VBrick.front_right.getY()) {
+					if (ball_distance < kicker_range && ball_distance > 0 && new_ball_pos.y < VBrick.front_left.getY() && new_ball_pos.y > VBrick.front_right.getY()) {
 						double power = kicker_max_speed-kicker_min_speed-(kicker_max_speed-kicker_min_speed)*ball_distance/kicker_range;
 						System.out.print("power "+power);
 						curr_rel_spd.setX(curr_rel_spd.getX()+power);
@@ -332,7 +387,7 @@ public class Simulator extends WorldStateProvider {
 		setChanged();
 		notifyObservers(state);
 	}
-	
+
 	/**
 	 * Creates visualization
 	 * @return
@@ -395,6 +450,23 @@ public class Simulator extends WorldStateProvider {
 		// draw fps
 		g.drawString((int)(1/dt)+" fps", width-50, 20);
 		return im;
+	}
+	
+	// helpers
+	
+	/**
+	 * Returns the velocity that should be added to current position due to 
+	 * rotation of a rigid body. All coordinates supplied must be in the coordinate
+	 * system of the rigit body, i.e. (0,0) is the centre of mass of the rigid body.
+	 * 
+	 * @param curr_position current position of the point that is about to collide
+	 * @param new_position the position of the point that is going to be next. We have a collision at this position
+	 * @param rot_speed the speed in deg/sec at which the body is rotating
+	 * @param time passed until now (usually just dt, not 2*dt)
+	 * @return the velocity in the same reference frame that should be added to the point at the current position
+	 */
+	private Vector2D getPointOfContactVel(Vector2D curr_position, Vector2D new_position, double rot_speed, double dt) {
+		return Vector2D.divide(Vector2D.subtract(curr_position, Vector2D.rotateVector(new_position, -rot_speed*dt)), dt);
 	}
 
 
