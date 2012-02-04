@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import sdp.common.Communicator;
 import sdp.common.Tools;
-import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
 import sdp.common.Communicator.opcode;
 
@@ -22,7 +21,7 @@ public class AIVisualServoing extends AI {
 	 * This method is fired when a new state is available. Decisions should be done here.
 	 * @param new_state the new world state (low-pass filtered)
 	 */
-	protected synchronized void worldChanged(WorldState worldState) {
+	protected synchronized void worldChanged() {
 
 		distance_to_ball = Tools.getDistanceBetweenPoint(robot.getCoords(), worldState.getBallCoords());
 		distance_to_goal = Tools.getDistanceBetweenPoint(toCentimeters(robot.getCoords()), enemy_goal);

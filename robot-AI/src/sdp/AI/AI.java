@@ -105,7 +105,7 @@ public abstract class AI extends WorldStateProvider {
 
 					setChanged();
 					notifyObservers(worldState);
-					worldChanged(worldState);
+					worldChanged();
 
 				}
 			}
@@ -203,7 +203,7 @@ public abstract class AI extends WorldStateProvider {
 	}
 
 
-	protected abstract void worldChanged(WorldState world_state);
+	protected abstract void worldChanged();
 
 
 }
