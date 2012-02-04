@@ -13,6 +13,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JLabel;
 
 import sdp.AI.AI;
+import sdp.AI.AIVisualServoing;
 import sdp.AI.AI.mode;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
@@ -204,7 +205,7 @@ public class SimTesterGUI {
 					else{
 					mSim.registerYellow(brick, 20, 20);
 					}
-					mAI = new AI(brick, mSim);
+					mAI = new AIVisualServoing(brick, mSim);
 					mAI.start(rdbtnBlue.isSelected(), rdbtnLeft.isSelected());
 					final WorldStateObserver obs = new WorldStateObserver(mAI);
 					new Thread() {
