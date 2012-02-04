@@ -31,6 +31,7 @@ public class VBrick implements Communicator {
 	public static final Vector2D front_right = new Vector2D(ROBOT_LENGTH / 2, -ROBOT_WIDTH / 2);
 	public static final Vector2D back_left = new Vector2D(-ROBOT_LENGTH / 2, ROBOT_WIDTH / 2);
 	public static final Vector2D back_right = new Vector2D(-ROBOT_LENGTH / 2, -ROBOT_WIDTH / 2);
+	public static final Vector2D[] rect = new Vector2D[] {front_left, front_right, back_right, back_left};
 	
 	private static final double acceleration = ACC*0.017453292519943295*WHEELR;//69.8;
 	private static final double turn_acceleration = ACC*WHEELR/ROBOTR;
@@ -114,6 +115,21 @@ public class VBrick implements Communicator {
 		else
 			turning_speed = desired_turning_speed;
 		return turning_speed;
+	}
+	
+	/**
+	 * Gets the four robot corners from a given position
+	 * 
+	 * @param position current position
+	 * @param direction direction in degrees
+	 * @return array of size 4
+	 */
+	public static Vector2D[] getRobotCoords(Vector2D position, double direction) {
+		Vector2D[] ans = new Vector2D[4];
+		for (int i = 0; i < 4; i++) {
+			ans[i] = Vector2D.add(position, Vector2D.rotateVector(rect[i], direction));
+		}
+		return ans;
 	}
 	
 

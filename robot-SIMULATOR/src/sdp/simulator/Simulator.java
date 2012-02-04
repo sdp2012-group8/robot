@@ -26,8 +26,8 @@ public class Simulator extends WorldStateProvider {
 	private final static double mass_robot_kg = 1; // in kg
 	private final static double mass_ball_kg = 0.045; // in kg
 	
-	private final static double wall_bounciness = 0.5; // 0 - inelastic, 1 - elastic
-	private final static double robot_bounciness = 0.9; // 0 - 1
+	private final static double wall_bounciness = 0.4; // 0 - inelastic, 1 - elastic
+	private final static double robot_bounciness = 0.3; // 0 - 1
 	
 	private final static double kicker_range = 10; // cm
 	private final static double kicker_max_speed = 300; // cm/s
@@ -48,6 +48,8 @@ public class Simulator extends WorldStateProvider {
 			directions = new double[MAX_NUM_ROBOTS],
 			speeds = new double[MAX_NUM_ROBOTS],
 			turning_speeds = new double[MAX_NUM_ROBOTS];
+	private static boolean[]
+			will_be_in_collision = new boolean[MAX_NUM_ROBOTS];
 	// for use for collision prediction
 	private static Vector2D[]
 			future_positions = new Vector2D[MAX_NUM_ROBOTS],
@@ -137,6 +139,7 @@ public class Simulator extends WorldStateProvider {
 		directions[id] = 0;
 		speeds[id] = 0;
 		turning_speeds[id] = 0;
+		will_be_in_collision[id] = false;
 	}
 	
 	/**
@@ -191,13 +194,18 @@ public class Simulator extends WorldStateProvider {
 			if (robot[i] != null) {
 				speeds[i] = robot[i].calculateSpeed(speeds[i], dt);
 				turning_speeds[i] = robot[i].calculateTurningSpeed(turning_speeds[i], dt);
-				directions[i]+=turning_speeds[i]*dt;
+				if (!will_be_in_collision[i])
+					directions[i]+=turning_speeds[i]*dt;
 				// there is a problem in the vision system which returns a "reversed y" coordinates
 				// remove the - in front of direction in case this is fixed
 				velocities[i].setLocation(
 						speeds[i]*Math.cos(directions[i]*Math.PI/180),
 						speeds[i]*Math.sin(-directions[i]*Math.PI/180));
-				positions[i].addmul_to(velocities[i], dt);
+				if (!will_be_in_collision[i])
+					positions[i].addmul_to(velocities[i], dt);
+				else
+					will_be_in_collision[i] = false;
+				
 			}
 		// ball friction
 		ball_speed = ball_velocity.getLength();
@@ -235,16 +243,14 @@ public class Simulator extends WorldStateProvider {
 					if (top_pen < min) min = top_pen;
 					if (bottom_pen < min) min = bottom_pen;
 					if (left_pen == min) {
-						curr_rel_spd.setX(-curr_rel_spd.getX());
+						curr_rel_spd.setX(-curr_rel_spd.getX()*robot_bounciness);
 					} else if (right_pen == min) {
-						curr_rel_spd.setX(-curr_rel_spd.getX());
+						curr_rel_spd.setX(-curr_rel_spd.getX()*robot_bounciness);
 					} else if (bottom_pen == min) {
-						curr_rel_spd.setY(-curr_rel_spd.getY());
+						curr_rel_spd.setY(-curr_rel_spd.getY()*robot_bounciness);
 					} else {
-						curr_rel_spd.setY(-curr_rel_spd.getY());
+						curr_rel_spd.setY(-curr_rel_spd.getY()*robot_bounciness);
 					}
-					curr_rel_spd = Vector2D.multiply(curr_rel_spd, robot_bounciness);
-					//double mom_inertia = mass_robot_kg*(VBrick.ROBOT_LENGTH*VBrick.ROBOT_LENGTH+VBrick.ROBOT_WIDTH*VBrick.ROBOT_WIDTH)/12;
 					Vector2D current_dot_pos = Vector2D.rotateVector(ball_pos, -turning_speeds[i]*dt);
 					Vector2D add_vel = Vector2D.divide(Vector2D.subtract(ball_pos, current_dot_pos), dt);
 					curr_rel_spd = Vector2D.add(curr_rel_spd, add_vel);
@@ -252,7 +258,7 @@ public class Simulator extends WorldStateProvider {
 				// kicker
 				double ball_distance = ball_pos.x-VBrick.front_left.getX();
 				if (robot[i].is_kicking) {
-					if (ball_distance < kicker_range && ball_distance > 0) {
+					if (ball_distance < kicker_range && ball_distance > 0 && ball_pos.y < VBrick.front_left.getY() && ball_pos.y > VBrick.front_right.getY()) {
 						double power = kicker_max_speed-kicker_min_speed-(kicker_max_speed-kicker_min_speed)*ball_distance/kicker_range;
 						System.out.print("power "+power);
 						curr_rel_spd.setX(curr_rel_spd.getX()+power);
@@ -280,6 +286,44 @@ public class Simulator extends WorldStateProvider {
 			ball_velocity.setY(-ball_velocity.getY());
 			ball_velocity = Vector2D.multiply(ball_velocity, wall_bounciness);
 		}
+		// robot - robot collision
+		for (int i = 0; i < robot.length; i++)
+			will_be_in_collision[i] = false;
+		for (int i = 0; i < robot.length; i++)
+			if (robot[i] != null && !will_be_in_collision[i]) {
+				Vector2D[] ri_ps = VBrick.getRobotCoords(future_positions[i], future_directions[i]);
+				// check for collisions with walls
+				for (int k = 0; k < ri_ps.length; k++) {
+					if (
+							ri_ps[k].getX() < 0 ||
+							ri_ps[k].getX() > pitch_width_cm ||
+							ri_ps[k].getY() < 0 ||
+							ri_ps[k].getY() > pitch_height_cm
+							) {
+						will_be_in_collision[i] = true;
+						break;
+					}
+				}
+				// check for collisions with other robots
+				if (!will_be_in_collision[i])
+					for (int j = 0; j < robot.length; j++)
+						if (j!=i && robot[j] != null && !will_be_in_collision[j])
+							for (int k = 0; k < ri_ps.length; k++) {
+								// for every point k (front_left, front_right, etc.) from robot i
+								// try to see whether is inside robot j
+								Vector2D rel_pos = Vector2D.rotateVector(Vector2D.subtract(ri_ps[k], future_positions[j]), -future_directions[j]);
+								if (
+										rel_pos.getX() > VBrick.back_left.getX() && 
+										rel_pos.getX() < VBrick.front_right.getX() &&
+										rel_pos.getY() > VBrick.front_right.getY() &&
+										rel_pos.getY() < VBrick.back_left.getY()
+										) {
+									// we have collision, freeze both robots
+									will_be_in_collision[i] = true;
+									will_be_in_collision[j] = true;
+								}
+							}
+			}
 		// notify that we have change
 		WorldState state = new WorldState(
 				Vector2D.divide(ball, pitch_width_cm),
