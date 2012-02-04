@@ -220,6 +220,7 @@ public class SimTesterGUI {
 						btnConnect.setText("Disconnect");
 				} else {
 					mAI.close();
+					mSim.stop();
 					running = false;
 					btnConnect.setText("Connect");
 				}
