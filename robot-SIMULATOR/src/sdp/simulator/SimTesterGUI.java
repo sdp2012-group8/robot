@@ -198,8 +198,12 @@ public class SimTesterGUI {
 				if (!running) {
 					mSim = new Simulator();
 					VBrick brick = new VBrick();
-
+					if (rdbtnBlue.isSelected()){
+						mSim.registerBlue(brick, 20, 20);
+					}
+					else{
 					mSim.registerYellow(brick, 20, 20);
+					}
 					mAI = new AI(brick, mSim);
 					mAI.start(rdbtnBlue.isSelected(), rdbtnLeft.isSelected());
 					final WorldStateObserver obs = new WorldStateObserver(mAI);
