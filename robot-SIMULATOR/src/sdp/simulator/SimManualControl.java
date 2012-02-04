@@ -21,13 +21,15 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.JLabel;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
 
 import javax.swing.JPanel;
 import java.awt.Graphics;
@@ -49,7 +51,11 @@ public class SimManualControl {
 	private JButton btnConnect;
 	private VBrick mComm;
 	private JPanel panel;
-	
+
+	private Simulator mSim;
+	private boolean drag_ball = false;
+	private int drag_robot = -1;
+
 	private WorldState lastWS = null;
 
 	/**
@@ -74,7 +80,7 @@ public class SimManualControl {
 	public SimManualControl() {
 		initialize();
 	}
-	
+
 	private Timer btn_W_pressed = null, btn_A_pressed = null, btn_S_pressed = null, btn_D_pressed = null, btn_SPACE_pressed = null, btn_ENTER_pressed = null;
 
 	private int currentspeed = 0;
@@ -100,7 +106,7 @@ public class SimManualControl {
 			}
 		});
 		frmManualNxtCommand.getContentPane().setFocusable(true);
-		
+
 		final JButton btnKick = new JButton("KICK");
 		btnKick.setEnabled(false);
 		btnKick.addActionListener(new ActionListener() {
@@ -114,7 +120,7 @@ public class SimManualControl {
 		});
 		btnKick.setBounds(12, 75, 117, 25);
 		frmManualNxtCommand.getContentPane().add(btnKick);
-		
+
 		final JButton btnMoveToWall = new JButton("Move to Wall");
 		btnMoveToWall.setEnabled(false);
 		btnMoveToWall.addActionListener(new ActionListener() {
@@ -128,7 +134,7 @@ public class SimManualControl {
 		});
 		btnMoveToWall.setBounds(147, 75, 153, 25);
 		frmManualNxtCommand.getContentPane().add(btnMoveToWall);
-		
+
 		final JButton btn_control_on = new JButton("Joypad ON");
 		btn_control_on.setEnabled(false);
 		btn_control_on.addActionListener(new ActionListener() {
@@ -137,24 +143,24 @@ public class SimManualControl {
 			}
 		});
 		btn_control_on.setBounds(12, 119, 117, 25);
-		
+
 		final JLabel lblWAS = new JLabel("W A S D Space Enter");
 		lblWAS.setBounds(147, 124, 268, 15);
 		frmManualNxtCommand.getContentPane().add(lblWAS);
-		
+
 		frmManualNxtCommand.getContentPane().addFocusListener(new FocusListener() {
-			
+
 			@Override
 			public void focusLost(FocusEvent arg0) {
 				btn_control_on.setEnabled(true);
 			}
-			
+
 			@Override
 			public void focusGained(FocusEvent arg0) {
 				btn_control_on.setEnabled(false);
 			}
 		});
-		
+
 		frmManualNxtCommand.getContentPane().addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent arg0) {
@@ -164,7 +170,7 @@ public class SimManualControl {
 					if (btn_W_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("W");
-						System.out.println("Sending W");
+						//System.out.println("Sending W");
 						try {
 							mComm.sendMessage(opcode.operate, (byte) max_speed, (byte) 0);
 							currentspeed = max_speed;
@@ -182,7 +188,7 @@ public class SimManualControl {
 					if (btn_A_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("A");
-						System.out.println("Sending A");
+						//System.out.println("Sending A");
 						try {
 							mComm.sendMessage(opcode.operate, (byte) currentspeed, (byte) turn_speed);
 						} catch (Exception e) {
@@ -199,7 +205,7 @@ public class SimManualControl {
 					if (btn_S_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("S");
-						System.out.println("Sending S");
+						//System.out.println("Sending S");
 						try {
 							mComm.sendMessage(opcode.operate, (byte) -max_speed, (byte) 0);
 							currentspeed = -max_speed;
@@ -217,7 +223,7 @@ public class SimManualControl {
 					if (btn_D_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("D");
-						System.out.println("Sending D");
+						//System.out.println("Sending D");
 						try {
 							mComm.sendMessage(opcode.operate, (byte) currentspeed, (byte) -turn_speed);
 						} catch (Exception e) {
@@ -233,7 +239,7 @@ public class SimManualControl {
 					if (btn_SPACE_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("SPACE");
-						System.out.println("Sending SPACE");
+						//System.out.println("Sending SPACE");
 						try {
 							mComm.sendMessage(opcode.play_sound);
 						} catch (Exception e) {
@@ -249,7 +255,7 @@ public class SimManualControl {
 					if (btn_ENTER_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("ENTER");
-						System.out.println("Sending ENTER");
+						//System.out.println("Sending ENTER");
 						try {
 							mComm.sendMessage(opcode.kick);
 						} catch (Exception e) {
@@ -276,7 +282,7 @@ public class SimManualControl {
 						public void run() {
 							// TODO Auto-generated method stub
 							lblWAS.setText(" ");
-							System.out.println("Stopping W");
+							//System.out.println("Stopping W");
 							try {
 								mComm.sendMessage(opcode.operate, (byte) 0, (byte) 0);
 								currentspeed = 0;
@@ -298,7 +304,7 @@ public class SimManualControl {
 						public void run() {
 							// TODO Auto-generated method stub
 							lblWAS.setText(" ");
-							System.out.println("Stopping A");
+							//System.out.println("Stopping A");
 							btn_A_pressed.cancel();
 							btn_A_pressed = null;
 							try {
@@ -319,7 +325,7 @@ public class SimManualControl {
 						public void run() {
 							// TODO Auto-generated method stub
 							lblWAS.setText(" ");
-							System.out.println("Stopping S");
+							//System.out.println("Stopping S");
 							try {
 								mComm.sendMessage(opcode.operate, (byte) 0, (byte) 0);
 								currentspeed = 0;
@@ -341,7 +347,7 @@ public class SimManualControl {
 						public void run() {
 							// TODO Auto-generated method stub
 							lblWAS.setText(" ");
-							System.out.println("Stopping D");
+							//System.out.println("Stopping D");
 							btn_D_pressed.cancel();
 							btn_D_pressed = null;
 							try {
@@ -361,7 +367,7 @@ public class SimManualControl {
 						public void run() {
 							// TODO Auto-generated method stub
 							lblWAS.setText(" ");
-							System.out.println("Stopping SPACE");
+							//System.out.println("Stopping SPACE");
 							btn_SPACE_pressed.cancel();
 							btn_SPACE_pressed = null;
 						}
@@ -376,7 +382,7 @@ public class SimManualControl {
 						public void run() {
 							// TODO Auto-generated method stub
 							lblWAS.setText(" ");
-							System.out.println("Stopping ENTER");
+							//System.out.println("Stopping ENTER");
 							btn_ENTER_pressed.cancel();
 							btn_ENTER_pressed = null;
 						}
@@ -440,7 +446,7 @@ public class SimManualControl {
 		btnNewButton.setEnabled(false);
 		btnNewButton.setBounds(12, 38, 166, 25);
 		frmManualNxtCommand.getContentPane().add(btnNewButton);
-		
+
 
 
 		final JRadioButton rdbtnBlueRobot = new JRadioButton("blue robot");
@@ -480,12 +486,12 @@ public class SimManualControl {
 				btnKick.setEnabled(true);
 				btnMoveToWall.setEnabled(true);
 				btn_control_on.setEnabled(!frmManualNxtCommand.getContentPane().hasFocus());
-				Simulator sim = new Simulator();
+				mSim = new Simulator();
 				if (rdbtnBlueRobot.isSelected())
-					sim.registerBlue(mComm, 20, 20);
+					mSim.registerBlue(mComm, 20, 20);
 				else
-					sim.registerYellow(mComm, 20, 20);
-				final WorldStateObserver obs = new WorldStateObserver(sim);
+					mSim.registerYellow(mComm, 20, 20);
+				final WorldStateObserver obs = new WorldStateObserver(mSim);
 				new Thread() {
 					public void run() {
 						while (true) {
@@ -517,9 +523,74 @@ public class SimManualControl {
 				}
 			}
 		};
+		panel.addMouseListener(new MouseListener() {
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if (mSim == null)
+					return;
+				drag_ball = false;
+				mSim.highlightBall(drag_ball);
+				drag_robot = -1;
+				mSim.highlightRobot(drag_robot);
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				if (mSim == null)
+					return;
+				double sx = e.getX()/(double)panel.getWidth();
+				double sy = e.getY()/(double) panel.getWidth();
+				drag_ball = mSim.isInsideBall(sx, sy);
+				drag_robot = mSim.isInsideRobot(sx, sy);
+				mSim.highlightRobot(drag_robot);
+			}
+
+			@Override
+			public void mouseClicked(MouseEvent e) {}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {}
+
+			@Override
+			public void mouseExited(MouseEvent e) {}
+		});
+		panel.addMouseMotionListener(new MouseMotionListener() {
+
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				if (mSim == null)
+					return;
+				double sx = e.getX()/(double)panel.getWidth();
+				double sy = e.getY()/(double) panel.getWidth();
+				mSim.highlightBall(drag_ball || mSim.isInsideBall(sx, sy));
+				mSim.highlightRobot(drag_robot >= 0 ? drag_robot : mSim.isInsideRobot(sx, sy));
+			}
+
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				if (mSim == null)
+					return;
+				double sx = e.getX()/(double)panel.getWidth();
+				double sy = e.getY()/(double) panel.getWidth();
+				if (drag_ball)
+					mSim.putBallAt(sx, sy);
+				if (drag_robot != -1)
+					mSim.putAt(sx, sy, drag_robot);
+			}
+		});
 		panel.setBackground(Color.BLACK);
 		panel.setBounds(12, 151, 640, 480);
 		frmManualNxtCommand.getContentPane().add(panel);
+		
+		JButton btnResetBall = new JButton("Reset ball");
+		btnResetBall.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				mSim.putBallAt();
+			}
+		});
+		btnResetBall.setBounds(535, 119, 117, 25);
+		frmManualNxtCommand.getContentPane().add(btnResetBall);
 
 
 	}

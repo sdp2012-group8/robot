@@ -19,8 +19,9 @@ import sdp.common.WorldStateProvider;
  * @author Martin Marinov
  *
  */
-public class AI {
 
+public class AI extends WorldStateProvider {
+	
 	public enum mode {
 		chase_once, chase_ball, sit, got_ball
 	}
@@ -115,19 +116,17 @@ public class AI {
 								state.getWorldImage());
 					robot = my_team_blue ? worldState.getBlueRobot() : worldState.getYellowRobot();
 					// pass coordinates to decision making logic
+
+					setChanged();
+					notifyObservers(worldState);
 					worldChanged();
+
 				}
 			}
 		};
 		mVisionThread.start();
 	}
 
-	/**
-	 * @return the most recent world state
-	 */
-	public WorldState getLatestWorldState() {
-		return worldState;
-	}
 
 
 	/**
@@ -351,6 +350,7 @@ public class AI {
 			e.printStackTrace();
 		}
 	}
+	
 
 	/**
 	 * Calculates and performs the movements required to go from current position
