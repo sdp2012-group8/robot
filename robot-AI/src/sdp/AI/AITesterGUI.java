@@ -87,42 +87,7 @@ public class AITesterGUI {
 				Dimension d = this.getSize();
 				if (lastWS != null) {
 					synchronized (lastWS) {
-						int width = d.width;
-						g.setColor(new Color(10, 80, 0));
-						g.fillRect(0, 0, width, d.height);
-						g.setColor(Color.blue);
-						g.fillOval(
-								(int)(lastWS.getBlueRobot().getCoords().getX()*width) - 10,
-								(int)(lastWS.getBlueRobot().getCoords().getY()*width) - 10,
-								20, 20);
-						g.setColor(Color.white);
-						double dir_x = 0.03*Math.cos(lastWS.getBlueRobot().getAngle()*Math.PI/180d);
-						double dir_y = -0.03*Math.sin(lastWS.getBlueRobot().getAngle()*Math.PI/180d);
-						g.drawLine(
-								(int)(lastWS.getBlueRobot().getCoords().getX()*width),
-								(int)(lastWS.getBlueRobot().getCoords().getY()*width),
-								(int)((lastWS.getBlueRobot().getCoords().getX()+dir_x)*width),
-								(int)((lastWS.getBlueRobot().getCoords().getY()+dir_y)*width));
-						g.setColor(new Color(220, 220, 0));
-						g.fillOval(
-								(int)(lastWS.getYellowRobot().getCoords().getX()*width) - 10,
-								(int)(lastWS.getYellowRobot().getCoords().getY()*width) - 10,
-								20, 20);
-						g.setColor(Color.white);
-						dir_x = 0.03*Math.cos(lastWS.getYellowRobot().getAngle()*Math.PI/180d);
-						dir_y = -0.03*Math.sin(lastWS.getYellowRobot().getAngle()*Math.PI/180d);
-						g.drawLine(
-								(int)(lastWS.getYellowRobot().getCoords().getX()*width),
-								(int)(lastWS.getYellowRobot().getCoords().getY()*width),
-								(int)((lastWS.getYellowRobot().getCoords().getX()+dir_x)*width),
-								(int)((lastWS.getYellowRobot().getCoords().getY()+dir_y)*width));
-						g.setColor(Color.red);
-						g.fillOval(
-								(int)(lastWS.getBallCoords().getX()*width) - 3,
-								(int)(lastWS.getBallCoords().getY()*width) - 3,
-								6, 6);
-						g.setColor(Color.black);
-						g.fillRect(0, (int) (0.465*width), width, d.height);
+						g.drawImage(lastWS.getWorldImage(), 0, 0, null);
 					}
 
 				} else {
@@ -233,16 +198,13 @@ public class AITesterGUI {
 						mAI = new AI(com, vision);
 						mInput.startCapture();
 						mAI.start(rdbtnBlue.isSelected(), rdbtnLeft.isSelected());
+						final WorldStateObserver obs = new WorldStateObserver(mAI);
 						new Thread() {
 							public void run() {
-								while (running)
-									if (mAI != null) {
-										lastWS = mAI.getLatestWorldState();
-										panel.repaint();
-										try {
-											Thread.sleep(1000/slider.getValue());
-										} catch (InterruptedException e) {}
-									}
+								while (true) {
+									lastWS = obs.getNextState();
+									panel.repaint();
+								}
 							};
 						}.start();
 						running =true;

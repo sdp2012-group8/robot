@@ -18,7 +18,7 @@ import sdp.common.WorldStateProvider;
  * @author Martin Marinov
  *
  */
-public class AI {
+public class AI extends WorldStateProvider {
 	
 	public enum mode {
 		chase_once
@@ -93,18 +93,13 @@ public class AI {
 								lowPass(filteredState.getYellowRobot(), state.getYellowRobot()),
 								state.getWorldImage());
 					// pass coordinates to decision making logic
+					setChanged();
+					notifyObservers(filteredState);
 					worldChanged(filteredState);
 				}
 			}
 		};
 		mVisionThread.start();
-	}
-	
-	/**
-	 * @return the most recent world state
-	 */
-	public WorldState getLatestWorldState() {
-		return filteredState;
 	}
 
 	
