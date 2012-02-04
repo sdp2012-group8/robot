@@ -7,6 +7,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 import sdp.common.Robot;
+import sdp.common.Tools;
 import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
 
@@ -626,6 +627,7 @@ public class Simulator extends WorldStateProvider {
 			g.setColor(brighter(g.getColor()));
 		g.setStroke(new BasicStroke(1.0f));
 		g.fillOval(
+
 				(int)((ball.getX()-ball_radius)*IMAGE_WIDTH/pitch_width_cm),
 				(int)((ball.getY()-ball_radius)*IMAGE_WIDTH/pitch_width_cm),
 				(int) (2*ball_radius*IMAGE_WIDTH/pitch_width_cm), 
@@ -639,6 +641,7 @@ public class Simulator extends WorldStateProvider {
 		g.drawString("yellow - ball: "+String.format("%.1f", (Vector2D.subtract(ball, positions[1]).getLength()))+" cm; "+String.format("%.1f", Vector2D.getAngle(ball, positions[1]))+"°", 20, IMAGE_HEIGHT+60);
 		g.drawString("yellow : "+positions[1]+"; "+String.format("%.1f", directions[1])+"°", 20, IMAGE_HEIGHT+80);
 		g.drawString("ball : "+ball, IMAGE_WIDTH-150, IMAGE_HEIGHT+20);
+
 		return im;
 	}
 	

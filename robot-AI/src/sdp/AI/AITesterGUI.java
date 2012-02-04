@@ -226,8 +226,7 @@ public class AITesterGUI {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				mAI.setMode(mode.chase_once);
-				
+				mAI.setMode(mode.chase_ball);
 			}
 			
 		});

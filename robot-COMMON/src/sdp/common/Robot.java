@@ -29,6 +29,10 @@ public final class Robot {
 	private Point2D.Double backLeftPoint;
 	/** Coordinates of the robot's back-right corner. */
 	private Point2D.Double backRightPoint;
+	
+	/** Size of the Robot **/
+	private double robotSize;
+	
 
 	
 	/**
@@ -91,9 +95,9 @@ public final class Robot {
 	}
 
 	/**
-	 * Get the angle the robot is facing, in radians.
+	 * Get the angle the robot is facing, in degrees.
 	 * 
-	 * @return The angle the robot is facing, in radians.
+	 * @return The angle the robot is facing, in degrees.
 	 */
 	public final double getAngle() {
 		return angle;
@@ -136,4 +140,12 @@ public final class Robot {
 		return backRightPoint;
 	}
 
+	/**
+	 * Return the size of the robot using the getDistanceBetweenPoint function
+	 * and the robot's Front Left and Back Left Coordinates
+	 * @return Size of the robot in double.
+	 */
+	public final double getSize(){
+		return  Tools.getDistanceBetweenPoint(getBackLeft(),getFrontRight());
+	}
 }

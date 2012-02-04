@@ -433,6 +433,7 @@ public class ManualControl {
 			public void actionPerformed(ActionEvent arg0) {
 				btnConnect.setText("Wait...");
 				btnConnect.setEnabled(false);
+
 				boolean repeat = true;
 				while (repeat) {
 					try {

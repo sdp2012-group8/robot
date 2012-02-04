@@ -78,6 +78,7 @@ public class SimTesterGUI {
 		frmAlphaTeamAi.getContentPane().setLayout(null);
 		
 		final JPanel panel = new JPanel() {
+
 			private static final long serialVersionUID = 4129875804950156591L;
 
 			@Override
@@ -197,6 +198,7 @@ public class SimTesterGUI {
 				if (!running) {
 					mSim = new Simulator();
 					VBrick brick = new VBrick();
+
 					mSim.registerYellow(brick, 20, 20);
 					mAI = new AI(brick, mSim);
 					mAI.start(rdbtnBlue.isSelected(), rdbtnLeft.isSelected());
@@ -209,6 +211,7 @@ public class SimTesterGUI {
 							}
 						};
 					}.start();
+
 						running =true;
 						btnConnect.setText("Disconnect");
 				} else {
@@ -222,14 +225,13 @@ public class SimTesterGUI {
 		btnConnect.setBounds(656, 10, 117, 25);
 		frmAlphaTeamAi.getContentPane().add(btnConnect);
 		
-		final JButton btnSendComm = new JButton("DO");
+		final JButton btnSendComm = new JButton("Chase Ball");
 		btnSendComm.setBounds(656, 212, 117, 25);
 		btnSendComm.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				mAI.setMode(mode.chase_once);
-				
+				mAI.setMode(mode.chase_ball);
 			}
 			
 		});
