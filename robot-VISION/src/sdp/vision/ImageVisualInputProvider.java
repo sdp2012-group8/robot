@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 
-
+import sdp.common.Utilities;
 
 
 /**
@@ -62,7 +62,7 @@ public class ImageVisualInputProvider extends VisualInputProvider implements Run
 	@Override
 	public void run() {
 		while (!Thread.interrupted()) {
-			sendNextFrame(images[nextImageIndex]);
+			sendNextFrame(Utilities.deepBufferedImageCopy(images[nextImageIndex]));
 			nextImageIndex = (nextImageIndex + 1) % images.length;
 			
 			try {

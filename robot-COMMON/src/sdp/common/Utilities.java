@@ -1,6 +1,9 @@
 package sdp.common;
 
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.WritableRaster;
 
 
 /**
@@ -9,6 +12,23 @@ import java.awt.geom.Point2D;
  * @author Gediminas Liktaras
  */
 public class Utilities {
+
+	/**
+	 * Return a deep copy of the given BufferedImage.
+	 * 
+	 * Taken from
+	 * http://stackoverflow.com/questions/3514158/how-do-you-clone-a-bufferedimage.
+	 * 
+	 * @param image BufferedImage to copy.
+	 * @return A deep copy of image.
+	 */
+	public static BufferedImage deepBufferedImageCopy(BufferedImage image) {
+		ColorModel cm = image.getColorModel();
+		boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
+		WritableRaster raster = image.copyData(null);
+		return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
+	}
+
 	
 	/**
      * Rotate point p2 around point p1 by the given angle in radians.
