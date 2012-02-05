@@ -72,6 +72,19 @@ public class Tools {
 
 	}
 	
+    /**
+     * Normalizes the given angle
+     * @param initial given angle in degrees
+     * @return normalized angle between -Pi and Pi
+     */
+    public static double normalizeAngle(double initial) {
+    	initial = initial % 360;
+    	if (initial > 180)
+    		initial -= 360;
+    	if (initial < -180)
+    		initial += 360;
+    	return initial;
+    }
 
 	/**
 	 * Calculates distance between two points.

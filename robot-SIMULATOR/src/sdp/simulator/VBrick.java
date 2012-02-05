@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import sdp.common.Communicator;
 import sdp.common.MessageListener;
 import sdp.common.Robot;
+import sdp.common.Vector2D;
 
 /**
  * 
@@ -39,7 +40,7 @@ public class VBrick implements Communicator {
 	
 	public boolean is_kicking = false;
 
-	private byte desired_speed = 0,
+	protected byte desired_speed = 0,
 			desired_turning_speed = 0;
 	
 	
