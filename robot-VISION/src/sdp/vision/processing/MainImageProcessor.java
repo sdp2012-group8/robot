@@ -207,7 +207,20 @@ public class MainImageProcessor extends ImageProcessor {
                     CvPoint pt2 = new CvPoint(x + w, y + h);
                     cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
                     
-                    return new Robot(frameToNormalCoordinates(x + w/2, y + h/2, true), 0.0);
+                    cvSetImageROI(robotThresh, boundingRect);
+                    CvMoments moments = new CvMoments();
+                    cvMoments(robotThresh, moments, 1);
+                    
+                    double rx = x + w / 2;
+                    double ry = y + h / 2;
+                    
+                    double mx = moments.m10() / moments.m00() + x;
+                    double my = moments.m01() / moments.m00() + y;
+                    
+                    double angle = Math.atan2(ry - my, rx - mx);
+                    
+//                    return new Robot(frameToNormalCoordinates(rx, ry, true), 0.0);
+                    return new Robot(frameToNormalCoordinates(mx, my, true), angle);
                 }
             }
             contour = contour.h_next();
@@ -247,7 +260,7 @@ public class MainImageProcessor extends ImageProcessor {
 		pt1 = normalToFrameCoordinates(yellowRobot.getCoords().x,
 				yellowRobot.getCoords().y, false);
 		pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
-				blueRobot.getAngle());
+				yellowRobot.getAngle());
 		graphics.drawArc(pt1.x - 2, pt1.y - 2, 4, 4, 0, 360);
 		graphics.drawLine(pt1.x, pt1.y, pt2.x, pt2.y);
 

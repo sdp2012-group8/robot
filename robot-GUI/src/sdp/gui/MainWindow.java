@@ -30,17 +30,14 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	/** The class' logger. */
 	private static final Logger LOGGER = Logger.getLogger("sdp.gui.MainWindow");
 	
-	
 	/** Required by Serializable. */
-	private static final long serialVersionUID = 8597348579639499324L;
-	
+	private static final long serialVersionUID = 8597348579639499324L;	
 	/** Class name. */
 	public static String className = null;
 	
 	
 	/** In what integer range will floats be represented in spinners. */
-	private static final int SPINNER_FLOAT_RANGE = 1000;
-	
+	private static final int SPINNER_FLOAT_RANGE = 1000;	
 	/** The window title. */
 	private static final String WINDOW_TITLE = "Battlestation";
 	
@@ -49,8 +46,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private FPSCounter fpsCounter;
 	
 	/** Active vision subsystem instance. */
-	private Vision vision = null;
-	
+	private Vision vision = null;	
 	/** A flag that controls whether vision system calibration is enabled. */
 	private boolean visionChangesEnabled;
 	
@@ -291,14 +287,12 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 				}
 			}
 			
-			System.out.println("NEW STATE: " +
-					"Ball at (" + state.getBallCoords().x + ", " + state.getBallCoords().y + "), " +
-					"Blue at (" + state.getBlueRobot().getCoords().x +
-						", " + state.getBlueRobot().getCoords().y +
-						", " + state.getBlueRobot().getAngle() + ") " +
-					"Yellow at (" + state.getYellowRobot().getCoords().x +
-						", " + state.getYellowRobot().getCoords().y +
-						", " + state.getYellowRobot().getAngle() + ").");
+			System.out.println(String.format(
+					"NEXT STATE: Ball at (%.4f, %.4f), Blue at (%.4f, %.4f, %.4f), Yellow at (%.4f, %.4f, %.4f).",
+					state.getBallCoords().x, state.getBallCoords().y,
+					state.getBlueRobot().getCoords().x, state.getBlueRobot().getCoords().y, 
+					state.getBlueRobot().getAngle(), state.getYellowRobot().getCoords().x, 
+					state.getYellowRobot().getCoords().y, state.getYellowRobot().getAngle()));
 		}
 	}
 	
