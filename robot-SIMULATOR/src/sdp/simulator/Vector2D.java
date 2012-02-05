@@ -211,4 +211,24 @@ public class Vector2D extends Point2D.Double {
 		double nlool = new_length/old_length;
 		return new Vector2D(nlool*a.getX(), nlool*a.getY());
 	}
+	
+	/**
+	 * Get angle between a and b
+	 * @param a
+	 * @param b
+	 * @return in degrees
+	 */
+	public static double getAngle(Vector2D a, Vector2D b) {
+		return Math.atan2(-a.getY()+b.getY(), a.getX()-b.getX())*180/Math.PI;
+	}
+	
+	/**
+	 * Get direction of a vector
+	 * @param a
+	 * @param b
+	 * @return in degrees
+	 */
+	public static double getDirection(Vector2D a) {
+		return Math.atan2(-a.getY(), a.getX())*180/Math.PI;
+	}
 }

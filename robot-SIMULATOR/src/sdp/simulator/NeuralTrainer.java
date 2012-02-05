@@ -33,18 +33,12 @@ import java.util.TimerTask;
 import javax.swing.JComboBox;
 import javax.swing.DefaultComboBoxModel;
 
-/**
- * Manual simulator control and in the same time AI tester
- * 
- * @author martinmarinov
- *
- */
-public class SimTesterGUI {
+public class NeuralTrainer {
 
 	private static final double placement_right = 20; // in cm
 	private static final double placement_left = Simulator.pitch_width_cm - placement_right; // in cm
 	
-	private JFrame frmAlphaTeamSimulator;
+	JFrame frame;
 	
 	private WorldState lastWS = null;
 	
@@ -71,8 +65,8 @@ public class SimTesterGUI {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					SimTesterGUI window = new SimTesterGUI();
-					window.frmAlphaTeamSimulator.setVisible(true);
+					NeuralTrainer window = new NeuralTrainer();
+					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -82,9 +76,8 @@ public class SimTesterGUI {
 
 	/**
 	 * Create the application.
-	 * @wbp.parser.entryPoint
 	 */
-	public SimTesterGUI() {
+	public NeuralTrainer() {
 		initialize();
 	}
 
@@ -92,21 +85,20 @@ public class SimTesterGUI {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		frmAlphaTeamSimulator = new JFrame();
-		frmAlphaTeamSimulator.setTitle("Alpha Team Simulator and AI tester");
-		frmAlphaTeamSimulator.setBounds(100, 100, 817, 447);
-		frmAlphaTeamSimulator.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frmAlphaTeamSimulator.getContentPane().setLayout(null);
+		frame = new JFrame();
+		frame.setBounds(100, 100, 817, 447);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.getContentPane().setLayout(null);
 		
 		final JComboBox combo_team = new JComboBox();
 		combo_team.setModel(new DefaultComboBoxModel(new String[] {"Blue", "Yellow"}));
 		combo_team.setBounds(662, 47, 117, 24);
-		frmAlphaTeamSimulator.getContentPane().add(combo_team);
+		frame.getContentPane().add(combo_team);
 		
 		final JComboBox combo_goal = new JComboBox();
-		combo_goal.setModel(new DefaultComboBoxModel(new String[] {"ME : AI", "AI : ME"}));
+		combo_goal.setModel(new DefaultComboBoxModel(new String[] {"Mine left", "Mine right"}));
 		combo_goal.setBounds(662, 83, 117, 24);
-		frmAlphaTeamSimulator.getContentPane().add(combo_goal);
+		frame.getContentPane().add(combo_goal);
 		
 		panel = new JPanel() {
 			private static final long serialVersionUID = 8430961287318430359L;
@@ -183,7 +175,7 @@ public class SimTesterGUI {
 		});
 		panel.setBackground(Color.BLACK);
 		panel.setBounds(10, 10, 640, 393);
-		frmAlphaTeamSimulator.getContentPane().add(panel);
+		frame.getContentPane().add(panel);
 		
 		final JButton btnConnect = new JButton("Connect");
 		btnConnect.addActionListener(new ActionListener() {
@@ -195,7 +187,7 @@ public class SimTesterGUI {
 			}
 		});
 		btnConnect.setBounds(662, 10, 117, 25);
-		frmAlphaTeamSimulator.getContentPane().add(btnConnect);
+		frame.getContentPane().add(btnConnect);
 		
 		JButton btnChaseBall = new JButton("AI: Chase");
 		btnChaseBall.addActionListener(new ActionListener() {
@@ -203,8 +195,8 @@ public class SimTesterGUI {
 				mAI.setMode(mode.chase_ball);
 			}
 		});
-		btnChaseBall.setBounds(662, 378, 117, 25);
-		frmAlphaTeamSimulator.getContentPane().add(btnChaseBall);
+		btnChaseBall.setBounds(662, 153, 117, 25);
+		frame.getContentPane().add(btnChaseBall);
 		
 		JButton btnResetField = new JButton("Reset field");
 		btnResetField.addActionListener(new ActionListener() {
@@ -213,16 +205,7 @@ public class SimTesterGUI {
 			}
 		});
 		btnResetField.setBounds(662, 119, 117, 25);
-		frmAlphaTeamSimulator.getContentPane().add(btnResetField);
-		
-		JButton btnResetBall = new JButton("Reset ball");
-		btnResetBall.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				mSim.putBallAt();
-			}
-		});
-		btnResetBall.setBounds(662, 156, 117, 25);
-		frmAlphaTeamSimulator.getContentPane().add(btnResetBall);
+		frame.getContentPane().add(btnResetField);
 		
 		// key listener
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
@@ -336,4 +319,3 @@ public class SimTesterGUI {
 		}
 	}
 }
-
