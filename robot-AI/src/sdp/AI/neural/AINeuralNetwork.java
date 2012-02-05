@@ -6,7 +6,7 @@ import org.neuroph.core.NeuralNetwork;
 
 import sdp.AI.AI;
 import sdp.common.Communicator;
-import sdp.common.Robot;
+import sdp.common.Tools;
 import sdp.common.WorldStateProvider;
 import sdp.common.Communicator.opcode;
 
@@ -32,20 +32,26 @@ public class AINeuralNetwork extends AI {
 	}
 	
 	private void chaseBall() {
-		Robot me = blue_selected ? worldState.getBlueRobot() : worldState.getYellowRobot();
-		Robot enemy = blue_selected ? worldState.getYellowRobot() : worldState.getBlueRobot();
-		neuralNetwork.setInput(									
-				me.getCoords().getX(),
-				me.getCoords().getY(),
-				enemy.getCoords().getX(),
-				enemy.getCoords().getY(),
-				worldState.getBallCoords().getX(),
-				worldState.getBallCoords().getY());
+		
+		neuralNetwork.setInput(Tools.generateAIinput(worldState, blue_selected, my_goal_left));
 		neuralNetwork.calculate();
 		double[] output = neuralNetwork.getOutput();
-		System.out.println("0 : "+output[0]+"; 1 : "+output[1]+"; 2 : "+output[2]);
+		boolean is_going_forwards	= output[0] > 0.5,
+				is_standing_still 	= output[1] > 0.5,
+				is_turning_right 	= output[2] > 0.5,
+				is_not_turning 		= output[3] > 0.5,
+				is_it_kicking 		= output[4] > 0.5;
+		System.out.println("forwards "+is_going_forwards+"("+output[0]+"); " +
+				"still "+is_standing_still+"("+output[1]+"); " +
+						"right "+is_turning_right+"("+output[2]+"); " +
+								"not_turn "+is_not_turning+"("+output[3]+"); " +
+										"kick "+is_it_kicking+"("+output[4]+"); ");
 		try {
-			mComm.sendMessage(opcode.operate, (byte) output[0], (byte) output[1]);
+			int speed = is_standing_still ? 0 : (is_going_forwards ? MAX_SPEED_CM_S : - MAX_SPEED_CM_S);
+			int turn_speed =  is_not_turning ? 0 : (is_turning_right ? 127 : -127); 
+			mComm.sendMessage(opcode.operate, (byte) speed, (byte) turn_speed);
+			if (is_it_kicking)
+				mComm.sendMessage(opcode.kick);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -46,8 +46,7 @@ import javax.swing.JEditorPane;
 public class NeuralTrainer {
 
 	private static final double placement_right = 20; // in cm
-	private static final double placement_left = Simulator.pitch_width_cm - placement_right; // in cm
-	private static final double mouse_control_delay = 3; // how many seconds should pass before the robot reaches the mouse
+	private static final double placement_left = Simulator.pitch_width_cm - placement_right; // in cme
 	
 	JFrame frame;
 	
@@ -70,7 +69,7 @@ public class NeuralTrainer {
 	
 	private double mouse_scaled_x, mouse_scaled_y;
 	
-	private boolean blue_selected = false;
+	private boolean blue_selected = false, my_door_right = false;
 	
 	private double blue_placement, yellow_placement;
 	
@@ -232,7 +231,8 @@ public class NeuralTrainer {
 				btnConnect.setText("Wait...");
 				btnConnect.setEnabled(false);
 				blue_selected = combo_team.getSelectedIndex() == 0;
-				Connect(combo_goal.getSelectedIndex() != 0);
+				my_door_right = combo_goal.getSelectedIndex() != 0;
+				Connect();
 				btnConnect.setText("Ready!");
 			}
 		});
@@ -258,7 +258,7 @@ public class NeuralTrainer {
 		frame.getContentPane().add(btnResetField);
 		
 		dtrpnhomemartinmarinov = new JEditorPane();
-		dtrpnhomemartinmarinov.setText("/home/martinmarinov/netowrk.tset");
+		dtrpnhomemartinmarinov.setText("/home/martinmarinov/robotbrain");
 		dtrpnhomemartinmarinov.setBounds(662, 266, 117, 63);
 		frame.getContentPane().add(dtrpnhomemartinmarinov);
 		
@@ -270,7 +270,7 @@ public class NeuralTrainer {
 						trainer.Stop();
 						btnNewButton.setText("Record");
 					} else {
-						trainer.Record(blue_selected);
+						trainer.Record(blue_selected, !my_door_right);
 						btnNewButton.setText("Stop");
 					}
 				}
@@ -330,7 +330,7 @@ public class NeuralTrainer {
 		});
 	}
 	
-	private void Connect(boolean my_door_right) {
+	private void Connect() {
 		
 		mSim = new Simulator();
 		trainer = new NeuralNetworkTrainingGenerator(mSim, dtrpnhomemartinmarinov.getText());
@@ -402,6 +402,7 @@ public class NeuralTrainer {
 		mSim.putAt(yellow_placement/Simulator.pitch_width_cm, Simulator.pitch_height_cm/(2*Simulator.pitch_width_cm), 1, yellow_placement == placement_left ? 180: 0);
 	}
 	
+	
 	/**
 	 * Performs a key action
 	 * @param key_id key id
@@ -433,6 +434,14 @@ public class NeuralTrainer {
 			case KeyEvent.VK_ENTER:
 				if (pressed)
 					mComm.sendMessage(opcode.kick);
+				return;
+			case KeyEvent.VK_SPACE:
+				if (pressed)
+					resetField();
+				return;
+			case KeyEvent.VK_BACK_SPACE:
+				if (pressed)
+					mSim.putBallAt();
 				return;
 			}
 			if (speed > 128 || speed < -127)

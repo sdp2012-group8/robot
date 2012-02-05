@@ -3,7 +3,7 @@ package sdp.simulator.neural;
 import org.neuroph.core.learning.SupervisedTrainingElement;
 import org.neuroph.core.learning.TrainingSet;
 
-import sdp.common.Robot;
+import sdp.common.Tools;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.common.WorldStateProvider;
@@ -19,35 +19,45 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 
 	private String fname;
 
-	private TrainingSet<SupervisedTrainingElement> trainingSet = null;
+	@SuppressWarnings("unchecked")
+	private TrainingSet<SupervisedTrainingElement>[] tsets = new TrainingSet[5];
 	private WorldStateObserver mObs;
 	private boolean recording = false;
-	
+	private WorldState oldWorldState = null;
+
 	private int frames;
 
-	private final static int n_inputs = 6, n_outputs = 3;
+	private final static int n_inputs = 10;
 
 	/**
 	 * Initialize neural network
 	 * @param provider the provider of world states
-	 * @param fname the name of the neural network, if it exists it will be appended, otherwise will be created
+	 * @param dir the name of dir to store trainings
 	 */
-	public NeuralNetworkTrainingGenerator(WorldStateProvider provider, String fname) {
-		this.fname = fname;
-		// input:
-		//		my_x, my_y, enemy_x, enemy_y, ball_x, ball_y
-		// output:
-		//		speed, turning_speed, kick
-		
+	@SuppressWarnings("unchecked")
+	public NeuralNetworkTrainingGenerator(WorldStateProvider provider, String dir) {
+		this.fname = dir;
+		boolean allfine = true;
 		try {
-			trainingSet = TrainingSet.load(fname);
+			for (int i = 0; i < tsets.length; i++) {
+				tsets[i] = TrainingSet.load(fname+"/ts"+i+".tset");
+				if (tsets[i] == null) {
+					allfine = false;
+					break;
+				}
+			}
 		} catch (Exception e) {}
-		if (trainingSet == null)
-			trainingSet = new TrainingSet<SupervisedTrainingElement>(n_inputs, n_outputs);
+		if (!allfine)
+			for (int i = 0; i < tsets.length; i++)
+				tsets[i] = new TrainingSet<SupervisedTrainingElement>(n_inputs, 2);
 		mObs = new WorldStateObserver(provider);
+		for (int i = 0; i < tsets.length; i++)
+			if (tsets[i] == null) {
+				System.out.println("TRAINING INIT ERROR for "+i+"!");
+			}
 		System.out.println("Training set ready");
 	}
-	
+
 	/**
 	 * Is recording?
 	 * @return
@@ -60,32 +70,35 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	 * Start recording from provider. Make sure you save first or all data will be lost.
 	 * @param am_i_blue
 	 */
-	public void Record(final boolean am_i_blue) {
+	public void Record(final boolean am_i_blue, final boolean my_goal_left) {
 		frames = 0;
 		recording = true;
 		System.out.println("Starting record");
 		new Thread() {
 			public void run() {
 				while (recording) {
-					WorldState ws = mObs.getNextState();
-					Robot me = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
-					Robot enemy = am_i_blue ? ws.getYellowRobot() : ws.getBlueRobot();
-					trainingSet.addElement(new SupervisedTrainingElement(
-							new double[]{
-									me.getCoords().getX(),
-									me.getCoords().getY(),
-									enemy.getCoords().getX(),
-									enemy.getCoords().getY(),
-									ws.getBallCoords().getX(),
-									ws.getBallCoords().getY()},
-							new double[]{
-									desired_speed,
-									desired_turning_speed,
-									is_kicking ? 1 : 0}));
-					frames++;
-					if (frames % 100 == 0)
-						System.out.println(frames+" frames recorded last - "+me.getCoords().getX()+" and "+desired_speed);
-				}
+					WorldState worldState = Tools.toCentimeters(mObs.getNextState());
+					if (oldWorldState != null && Tools.delta(oldWorldState, worldState) > 0.1) {
+						// outputs normalized to 1
+						boolean
+							is_going_forwards = desired_speed > 0,
+							is_standing_still = desired_speed == 0 ,
+							is_turning_right = desired_turning_speed > 0,
+							is_not_turning = desired_turning_speed == 0,
+							is_it_kicking = is_kicking;
+						// create training set
+						double[] input = Tools.generateAIinput(oldWorldState, am_i_blue, my_goal_left);
+						tsets[0].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(is_going_forwards)));
+						tsets[1].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(is_standing_still)));
+						tsets[2].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(is_turning_right)));
+						tsets[3].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(is_not_turning)));
+						tsets[4].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(is_it_kicking)));
+						frames++;
+						if (frames % 100 == 0)
+							System.out.println(frames+" frames recorded last - "+frames+" and "+desired_speed);
+					}
+					oldWorldState = worldState;
+				}	
 			};
 		}.start();
 	}
@@ -102,9 +115,10 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	 * Save the network
 	 */
 	public void Save() {
-		if (trainingSet != null) {
-			trainingSet.saveAsTxt(fname, " ");
-		}
+		for (int i = 0; i < tsets.length; i++)
+			if (tsets[i] != null)
+				tsets[i].saveAsTxt(fname+"/ts"+i+".tset", " ");
+		// TODO self train and change in AI
 	}
 
 }

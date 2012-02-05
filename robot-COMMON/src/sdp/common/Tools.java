@@ -4,6 +4,11 @@ import java.awt.Point;
 import java.awt.geom.Point2D;
 
 public class Tools {
+	
+	// pitch constants
+	public final static double PITCH_WIDTH_CM = 244;
+	public final static double PITCH_HEIGHT_CM = 113.7;
+	public final static double GOAL_Y_CM = PITCH_HEIGHT_CM/2;
 
 	public static double getDistBetweenPoints(Point p1, Point p2)
     {
@@ -171,5 +176,183 @@ public class Tools {
 		in[0] = n;
 		return in;
     }
+    
+	private static Point2D.Double toCentimeters(Point2D.Double original) {
+		return new Point2D.Double(original.getX()*PITCH_WIDTH_CM, original.getY()*PITCH_WIDTH_CM);
+	}
+	
+	private static Robot toCentimeters(Robot orig) {
+		return new Robot(toCentimeters(orig.getCoords()), orig.getAngle());
+	}
+	
+	public static WorldState toCentimeters(WorldState orig) {
+		return new WorldState(
+				toCentimeters(orig.getBallCoords()),
+				toCentimeters(orig.getBlueRobot()),
+				toCentimeters(orig.getYellowRobot()),
+				orig.getWorldImage());
+	}
+	
+	/**
+	 * Returns the vector to the closest collision point in the world (wall or enemy)
+	 * 
+	 * @param ls current world in centimeters
+	 * @param am_i_blue true if my robot is blue, false otherwise; prevents testing with itself
+	 * @param point the point to be tested, usually a point inside the robot (more usually edges of my robot)
+	 * @return the vector to the closest point when collision may occur
+	 */
+	public static Vector2D getNearestCollisionPoint(WorldState ls, boolean am_i_blue, Point2D.Double point) {
+		Robot enemy = am_i_blue ? ls.getYellowRobot() : ls.getBlueRobot();
+		Vector2D[] enemy_pts = new Vector2D[] {
+				new Vector2D(enemy.getFrontLeft()),
+				new Vector2D(enemy.getFrontRight()),
+				new Vector2D(enemy.getBackLeft()),
+				new Vector2D(enemy.getBackRight())
+		};
+		// top wall test
+		Vector2D temp = Vector2D.subtract(new Vector2D(0, PITCH_HEIGHT_CM), new Vector2D(0, point.getY()));
+		Vector2D min = temp;
+		// bottom wall test
+		temp = Vector2D.subtract(new Vector2D(0, 0), new Vector2D(0, point.getY()));
+		if (temp.getLength() < min.getLength())
+			min = temp;
+		// left wall test
+		temp = Vector2D.subtract(new Vector2D(0, 0), new Vector2D(point.getX(), 0));
+		if (temp.getLength() < min.getLength())
+			min = temp;
+		// right wall test
+		temp = Vector2D.subtract(new Vector2D(PITCH_WIDTH_CM, 0), new Vector2D(point.getX(), 0));
+		if (temp.getLength() < min.getLength())
+			min = temp;
+		// closest distance to enemy
+		temp = closestDistance(enemy_pts, new Vector2D(point));
+		if (temp.getLength() < min.getLength())
+			min = temp;
+		// we have our point
+		return min;
+	}
+	
+	/**
+	 * Return the distance to the closest point in the set
+	 * @param pts set of points
+	 * @param pt the point we are standing at
+	 * @return the distance from my point to the closest one in the set
+	 */
+	private static Vector2D closestDistance(Vector2D[] pts, Vector2D pt) {
+		Vector2D min = null;
+		for (int i = 0; i < pts.length; i++) {
+			Vector2D temp = Vector2D.subtract(pts[i], pt);
+			if (min == null || temp.getLength() < min.getLength())
+				min = temp;
+		}
+		return min;
+	}
+	
+	/**
+	 * Generates input array for the AI
+	 * 
+	 * @param worldState in centimeters
+	 * @param am_i_blue
+	 * @param my_goal_left
+	 * @return the input array
+	 */
+	public static double[] generateAIinput(WorldState worldState, boolean am_i_blue, boolean my_goal_left) {
+		Robot me = am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot();
+		Robot enemy = am_i_blue ? worldState.getYellowRobot() : worldState.getBlueRobot();
+		Vector2D goal = new Vector2D(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM);
+		// get coordinates relative to table
+		Vector2D my_coords = new Vector2D(me.getCoords());
+		Vector2D en_coords = new Vector2D(enemy.getCoords());
+		Vector2D ball = new Vector2D(worldState.getBallCoords());
+		// transform coordinates relative to robot
+		Vector2D rel_ball = Vector2D.rotateVector(Vector2D.subtract(ball, my_coords), -me.getAngle());
+		Vector2D rel_en = Vector2D.rotateVector(Vector2D.subtract(en_coords, my_coords), -me.getAngle());
+		Vector2D rel_goal = Vector2D.rotateVector(Vector2D.subtract(goal, my_coords), -me.getAngle());
+		// get nearest collision points
+		double 	cp_f_l = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getFrontLeft()).getLength(),
+				cp_f_r = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getFrontRight()).getLength(),
+				cp_b_l = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getBackLeft()).getLength(),
+				cp_b_r = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getBackRight()).getLength();
+		// if you change something here, don't forget to change number of inputs in trainer
+		return normalizeCoordinateTo1(new double[] {
+			cp_f_l,
+			cp_f_r,
+			cp_b_l,
+			cp_b_r,
+			rel_ball.getX(),
+			rel_ball.getY(),
+			rel_en.getX(),
+			rel_en.getY(),
+			rel_goal.getX(),
+			rel_goal.getY()
+		});
+	}
+	
+	
+	/**
+	 * FOR AI ONLY, DON'T USE FOR ANYTHING ELSE!
+	 * Maps distance between 0 and 1
+	 * @param length the length in centimeters
+	 * @return mapped between 0 and 1 wrt width of pitch
+	 */
+	private static double normalizeCoordinateTo1(double length) {
+		length = (1+length/Tools.PITCH_WIDTH_CM)/2;
+		if (length < 0)
+			length = 0;
+		if (length > 1)
+			length = 1;
+		return length;
+	}
+	
+	/** FOR AI ONLY, DON'T USE FOR ANYTHING ELSE!
+	 * Maps distance between 0 and 1
+	 * @param length the length in centimeters
+	 * @return mapped between 0 and 1 wrt width of pitch
+	 */
+	private static double[] normalizeCoordinateTo1(double[] coords) {
+		double[] ans = new double[coords.length];
+		for (int i = 0; i < ans.length; i++)
+			ans[i] = normalizeCoordinateTo1(coords[i]);
+		return ans;
+	}
+	
+	/**
+	 * Change in state of a robot
+	 */
+	private static double delta(Robot old_r, Robot new_r) {
+		return old_r.getCoords().distance(new_r.getCoords())+Math.abs(new_r.getAngle()-old_r.getAngle());
+	}
+	
+	/**
+	 * Returns differences in two world states. If nothing changed a lot, the number would be very small
+	 * 
+	 * @param old_w
+	 * @param new_w
+	 * @return
+	 */
+	public static double delta(WorldState old_w, WorldState new_w) {
+		return delta(old_w.getBlueRobot(), new_w.getBlueRobot())+
+				delta(old_w.getYellowRobot(), new_w.getYellowRobot())+
+				new_w.getBallCoords().distance(old_w.getBallCoords());
+	}
+	
+	/**
+	 * Generate training output
+	 * @param condition condition to be encoded
+	 * @return output
+	 */
+	public static double[] generateOutput(boolean condition) {
+		return new double[] {condition ? 1 : 0, condition ? 0 : 1};
+	}
+	
+	/**
+	 * What was the original condition
+	 * 
+	 * @param output array with two outputs from neural network
+	 * @return the state of the original condition
+	 */
+	public static boolean recoverOutput(double[] output) {
+		return output[0] > output[1];
+	}
 
 }

@@ -7,6 +7,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 import sdp.common.Robot;
+import sdp.common.Tools;
 import sdp.common.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
@@ -21,8 +22,8 @@ public class Simulator extends WorldStateProvider {
 
 	private static final float max_fps = 25; // simulation speed
 	private static final double iteration_time = 1000/max_fps; // in ms
-	public final static double pitch_width_cm = 244;
-	public final static double pitch_height_cm = 113.7;
+	public final static double pitch_width_cm = Tools.PITCH_WIDTH_CM;
+	public final static double pitch_height_cm = Tools.PITCH_HEIGHT_CM;
 	private final static Vector2D pitch_middle = new Vector2D(0.5, pitch_height_cm/(2*pitch_width_cm));
 	private final static double ball_max_speed = 350; // cm/s
 	private final static double ball_friction_acc = 25; // in cm/s

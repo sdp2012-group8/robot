@@ -4,6 +4,7 @@ import java.awt.geom.Point2D;
 
 import sdp.common.Communicator;
 import sdp.common.MessageQueue;
+import sdp.common.Tools;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.common.Robot;
@@ -24,16 +25,14 @@ public abstract class AI extends WorldStateProvider {
 		chase_once, chase_ball, sit, got_ball
 	}
 
-	// pitch constants
-	private final static double PITCH_WIDTH_CM = 244;
-	private final static double GOAL_Y_CM = 113.7/2;
+
 	// robot constants
 	protected final static double TURNING_ACCURACY = 10;
 
 	protected final static double ROBOT_ACC_CM_S_S = 69.8; // 1000 degrees/s/s
 	protected final static int MAX_SPEED_CM_S = 50; // 50 cm per second
 
-	private boolean my_goal_left = true;
+	protected boolean my_goal_left = true;
 	private WorldStateObserver mObs;
 	private Thread mVisionThread;
 	private MessageQueue mQueue = null;
@@ -41,7 +40,7 @@ public abstract class AI extends WorldStateProvider {
 	
 
 
-	Point2D.Double enemy_goal = new Point2D.Double(my_goal_left ? PITCH_WIDTH_CM : 0, GOAL_Y_CM);
+	Point2D.Double enemy_goal = new Point2D.Double(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM);
 
 
 	protected mode state = mode.sit;
@@ -85,12 +84,12 @@ public abstract class AI extends WorldStateProvider {
 	 */
 	public void start(final boolean my_team_blue, final boolean my_goal_left) {
 		this.my_goal_left = my_goal_left;
-		enemy_goal = new Point2D.Double(my_goal_left ? PITCH_WIDTH_CM : 0, GOAL_Y_CM);
+		enemy_goal = new Point2D.Double(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM);
 		mVisionThread = new Thread() {
 			@Override
 			public void run() {
 				while (!isInterrupted()) {
-					WorldState state = toCentimeters(mObs.getNextState());
+					WorldState state = Tools.toCentimeters(mObs.getNextState());
 					// do low pass filtering
 					if (worldState == null)
 						worldState = state;
@@ -136,24 +135,6 @@ public abstract class AI extends WorldStateProvider {
 		}
 		// close queue
 		mQueue.close();
-	}
-
-	// Helpers
-
-	private Point2D.Double toCentimeters(Point2D.Double original) {
-		return new Point2D.Double(original.getX()*PITCH_WIDTH_CM, original.getY()*PITCH_WIDTH_CM);
-	}
-	
-	private Robot toCentimeters(Robot orig) {
-		return new Robot(toCentimeters(orig.getCoords()), orig.getAngle());
-	}
-	
-	private WorldState toCentimeters(WorldState orig) {
-		return new WorldState(
-				toCentimeters(orig.getBallCoords()),
-				toCentimeters(orig.getBlueRobot()),
-				toCentimeters(orig.getYellowRobot()),
-				orig.getWorldImage());
 	}
 
 	/**
