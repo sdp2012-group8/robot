@@ -6,11 +6,9 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
 import com.googlecode.javacpp.Loader;
-import com.googlecode.javacv.cpp.opencv_core.CvBox2D;
 
 import static com.googlecode.javacv.cpp.opencv_core.*;
 import static com.googlecode.javacv.cpp.opencv_imgproc.*;
-import static com.googlecode.javacv.cpp.opencv_highgui.*;
 
 import sdp.common.Robot;
 import sdp.common.WorldState;
@@ -22,12 +20,12 @@ import sdp.common.WorldState;
  * 
  * @author Gediminas Liktaras
  */
-public class AlternativeImageProcessor extends ImageProcessor {
+public class MainImageProcessor extends ImageProcessor {
 	
 	/**
 	 * The main constructor.
 	 */
-	public AlternativeImageProcessor() {
+	public MainImageProcessor() {
 		super();
 	}
 	
@@ -71,7 +69,7 @@ public class AlternativeImageProcessor extends ImageProcessor {
 					ballThreshold.setRGB(x, y, Color.white.getRGB());
 					workingImage.setRGB(ox, oy, Color.red.getRGB());
 				}
-				if ((h >= 90 && h <= 210 && s >= 0 && v >= 40 && g < (int)(b * 1.5))) {
+				if ((h >= 70 && h <= 210 && s >= 10 && v >= 30 && g < (int)(b * 1.5))) {
 					blueThreshold.setRGB(x, y, Color.white.getRGB());
 					workingImage.setRGB(ox, oy, Color.blue.getRGB());
 			    }
@@ -92,8 +90,6 @@ public class AlternativeImageProcessor extends ImageProcessor {
         IplImage blue = IplImage.createFrom(blueThreshold);
 		IplImage yellow = IplImage.createFrom(yellowThreshold);
 		
-		CvBox2D blueBox;
-		
 		cvFindContours(ball, storage, contour, Loader.sizeof(CvContour.class),
                 CV_RETR_LIST, CV_CHAIN_APPROX_NONE);        
         while (contour != null && !contour.isNull()) {
@@ -101,7 +97,6 @@ public class AlternativeImageProcessor extends ImageProcessor {
                 CvSeq points = cvApproxPoly(contour, Loader.sizeof(CvContour.class),
                         storage, CV_POLY_APPROX_DP, cvContourPerimeter(contour)*0.02, 0);
                 cvDrawContours(frame_ipl, points, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
-                blueBox = cvMinAreaRect2(points, storage);
                 
                 CvRect r = cvBoundingRect(contour, 0);
                 CvPoint pt1 = new CvPoint(r.x(), r.y());

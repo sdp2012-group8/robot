@@ -27,7 +27,7 @@ import com.googlecode.javacv.cpp.opencv_core.IplImage;
  * @author Gediminas Liktaras
  * @author Laura Mihaela Ionescu
  */
-public class Team9ImageProcessor extends ImageProcessor {
+public class AltTeam9ImageProcessor extends ImageProcessor {
 	static int RED = 0;
 	static int GREEN = 1;
 	static int BLUE = 2;
@@ -44,7 +44,7 @@ public class Team9ImageProcessor extends ImageProcessor {
 	/**
 	 * Create a new image processor with the default configuration.
 	 */
-	public Team9ImageProcessor() {
+	public AltTeam9ImageProcessor() {
 		super();
 	}
 	
@@ -52,7 +52,7 @@ public class Team9ImageProcessor extends ImageProcessor {
 	 * Create a new image processor with the specified configuration.
 	 * @param config Configuration to use.
 	 */
-	public Team9ImageProcessor(ImageProcessorConfiguration config) {
+	public AltTeam9ImageProcessor(ImageProcessorConfiguration config) {
 		this();
 		this.config = config;
 	}

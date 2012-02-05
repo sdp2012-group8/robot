@@ -4,7 +4,7 @@ import java.awt.image.BufferedImage;
 
 import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
-import sdp.vision.processing.AlternativeImageProcessor;
+import sdp.vision.processing.MainImageProcessor;
 import sdp.vision.processing.ImageProcessor;
 
 
@@ -18,9 +18,6 @@ import sdp.vision.processing.ImageProcessor;
  */
 public class Vision extends WorldStateProvider implements VisualInputCallback {
 	
-	/** Old image processor. TO BE REMOVED. */
-	OldImageProcessor oldImageProcessor;
-	
 	/** Image processor. */
 	ImageProcessor imageProcessor;
 	
@@ -29,8 +26,7 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	 * The main constructor.
 	 */
 	public Vision() {
-		oldImageProcessor = new OldImageProcessor();
-		imageProcessor = new AlternativeImageProcessor();
+		imageProcessor = new MainImageProcessor();
 	}
 	
 	
@@ -58,9 +54,6 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	 */
 	@Override
 	public void nextFrame(BufferedImage frame) {
-//		oldImageProcessor.process(frame);
-//		WorldState nextState = oldImageProcessor.worldState;
-		
 		WorldState nextState = imageProcessor.extractWorldState(frame);
 		
 		setChanged();
