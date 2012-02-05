@@ -1,5 +1,6 @@
 package sdp.common;
 
+import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
@@ -47,8 +48,24 @@ public class Utilities {
     	double rotX = (xDiff * Math.cos(angle)) - (yDiff * Math.sin(angle)) + origin.x;
     	double rotY = (xDiff * Math.sin(angle)) + (yDiff * Math.cos(angle)) + origin.y;
     	
-    	return new Point2D.Double(rotX + origin.x, rotY + origin.y);
+    	return new Point2D.Double(rotX, rotY);
     }
+    
+    /**
+     * Rotate point p2 around point p1 by the given angle in radians.
+     * 
+     * @param origin Rotation point.
+     * @param point Point to rotate.
+     * @param angle Angle of rotation in radians.
+     * @return Rotated point.
+     */
+    public static Point rotatePoint(Point origin, Point point, double angle) {
+    	Point2D.Double origin_f = new Point2D.Double(origin.x, origin.y);
+    	Point2D.Double point_f = new Point2D.Double(point.x, point.y);
+    	Point2D.Double retValue_f = rotatePoint(origin_f, point_f, angle);
+    	return new Point((int)retValue_f.x, (int)retValue_f.y);
+    }
+    
     
     /**
      * Translate the given point by some offset.

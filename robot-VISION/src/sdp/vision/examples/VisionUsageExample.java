@@ -13,7 +13,7 @@ import sdp.vision.VisualInputProvider;
  * This class is an example of how to connect to the vision system and
  * receive world state updates from it in asynchronous fashion.
  * 
- * As you can see, the whole setup takes X steps:
+ * As you can see, the whole setup takes 6 steps:
  * 
  * 1) Create a Vision instance.
  * 2) Create a VisualInputProvider instance.

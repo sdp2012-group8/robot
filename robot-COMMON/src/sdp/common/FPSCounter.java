@@ -17,19 +17,14 @@ public class FPSCounter {
 	/** How many frames to sample for FPS computations. */
 	private static final int SAMPLE_SIZE = 50;
 	
-	
 	/** The buffer that contains the last SAMPLE_SIZE tick lengths. */
-	private int tickLength[];
-	
+	private int tickLength[];	
 	/** Index to the next tick sample. */
-	private int tickIndex;
-	
+	private int tickIndex;	
 	/** Current sum of the last SAMPLE_SIZE tick lengths. */
-	private int tickSum;
-	
+	private int tickSum;	
 	/** The number of ticks so far. */
-	private int tickCount;
-	
+	private int tickCount;	
 	/** Timestamp of the last tick. */
 	private long lastTick;
 	
