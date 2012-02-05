@@ -27,6 +27,9 @@ public class FPSCounter {
 	/** Current sum of the last SAMPLE_SIZE tick lengths. */
 	private int tickSum;
 	
+	/** The number of ticks so far. */
+	private int tickCount;
+	
 	/** Timestamp of the last tick. */
 	private long lastTick;
 	
@@ -38,6 +41,7 @@ public class FPSCounter {
 		tickLength = new int[SAMPLE_SIZE];
 		tickIndex = 0;
 		tickSum = 0;
+		tickCount = 0;
 		lastTick = -1;
 	}
 	
@@ -50,6 +54,16 @@ public class FPSCounter {
 	public double getFPS() {
 		return ((SAMPLE_SIZE * 1000) / (double)(tickSum));
 	}
+	
+	/**
+	 * Get the number of ticks registered.
+	 * 
+	 * @return The number of ticks so far.
+	 */
+	public int getTickCount() {
+		return tickCount;
+	}
+	
 	
 	/**
 	 * Register a tick.
@@ -66,6 +80,7 @@ public class FPSCounter {
 			
 			tickIndex = (tickIndex + 1) % SAMPLE_SIZE;
 			lastTick = curTick;
+			++tickCount;
 		}
 	}
 

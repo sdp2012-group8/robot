@@ -19,9 +19,6 @@ import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.vision.ImageProcessorConfiguration;
 import sdp.vision.Vision;
-import javax.swing.JButton;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.logging.Logger;
 
 
@@ -54,6 +51,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	/** Active vision subsystem instance. */
 	private Vision vision = null;
 	
+	/** A flag that controls whether vision system calibration is enabled. */
+	private boolean visionChangesEnabled;
+	
 	/** GUI's world state provider. */
 	private WorldStateObserver worldStateObserver;
 	
@@ -76,6 +76,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		
 		this.vision = vision;
 		fpsCounter = new FPSCounter();
+		visionChangesEnabled = true;
 		
 		setSize(new Dimension(840, 500));
 		setTitle(WINDOW_TITLE);
@@ -86,7 +87,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		} else {
 			int visionIdx = robotControlTabbedPanel.indexOfTab("Vision");
 			robotControlTabbedPanel.setEnabledAt(visionIdx, false);
-			visionApplyButton.setEnabled(false);
 		}
 	}
 	
@@ -140,15 +140,14 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		visionSettingPanel.setAlignmentY(Component.TOP_ALIGNMENT);
 		GridBagLayout gbl_visionSettingPanel = new GridBagLayout();
 		gbl_visionSettingPanel.columnWidths = new int[]{200, 0};
-		gbl_visionSettingPanel.rowHeights = new int[]{15, 0, 0};
+		gbl_visionSettingPanel.rowHeights = new int[]{15, 0};
 		gbl_visionSettingPanel.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		gbl_visionSettingPanel.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
+		gbl_visionSettingPanel.rowWeights = new double[]{0.0, Double.MIN_VALUE};
 		visionSettingPanel.setLayout(gbl_visionSettingPanel);
 		
 		JPanel fieldWallPanel = new JPanel();
 		fieldWallPanel.setBorder(new TitledBorder(null, "Field borders", TitledBorder.CENTER, TitledBorder.TOP, null, null));
 		GridBagConstraints gbc_fieldWallPanel = new GridBagConstraints();
-		gbc_fieldWallPanel.insets = new Insets(0, 0, 5, 0);
 		gbc_fieldWallPanel.anchor = GridBagConstraints.NORTH;
 		gbc_fieldWallPanel.fill = GridBagConstraints.HORIZONTAL;
 		gbc_fieldWallPanel.gridx = 0;
@@ -204,18 +203,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_fieldHighYSpinner.gridx = 2;
 		gbc_fieldHighYSpinner.gridy = 2;
 		fieldWallPanel.add(fieldHighYSpinner, gbc_fieldHighYSpinner);
-		
-		visionApplyButton = new JButton("Apply Settings");
-		visionApplyButton.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				setNewVisionConfiguration();
-			}
-		});
-		GridBagConstraints gbc_visionApplyButton = new GridBagConstraints();
-		gbc_visionApplyButton.gridx = 0;
-		gbc_visionApplyButton.gridy = 1;
-		visionSettingPanel.add(visionApplyButton, gbc_visionApplyButton);
 	}
 	
 	
@@ -233,9 +220,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	
 	/** Spinner that contains the field's high Y value. */
 	private JSpinner fieldHighYSpinner;
-	
-	/** A button that applies the configuration changes to the vision system. */
-	private JButton visionApplyButton;
 	
 	/** Tabbed pane that contains robot's controls. */
 	private JTabbedPane robotControlTabbedPanel;
@@ -300,7 +284,12 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			setImage(state.getWorldImage());
 			
 			fpsCounter.tick();
-			setTitle(String.format("%s - %.1f FPS", WINDOW_TITLE, fpsCounter.getFPS()));
+			if (fpsCounter.getTickCount() % 5 == 0) {
+				setTitle(String.format("%s - %.1f FPS", WINDOW_TITLE, fpsCounter.getFPS()));
+				if (visionChangesEnabled) {
+					setNewVisionConfiguration();
+				}
+			}
 			
 			System.out.println("NEW STATE: " +
 					"Ball at (" + state.getBallCoords().x + ", " + state.getBallCoords().y + "), " +
