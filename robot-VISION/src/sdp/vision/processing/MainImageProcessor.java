@@ -35,53 +35,16 @@ public class MainImageProcessor extends ImageProcessor {
 	 */
 	@Override
 	public synchronized WorldState extractWorldState(BufferedImage frame) {
-		CvRect frameROI = cvRect(config.getFieldLowX(), config.getFieldLowY(),
-				config.getFieldWidth(), config.getFieldHeight());
+		frame = preprocessFrame(frame);
+		
+		BufferedImage thresholds[] = thresholdFrame(frame);
+		frame = thresholds[0];
+		BufferedImage ballThreshold = thresholds[1];		
+		BufferedImage blueThreshold = thresholds[2];
+		BufferedImage yellowThreshold = thresholds[3];
 
-		IplImage frame_ipl = IplImage.createFrom(frame);		
-		cvSetImageROI(frame_ipl, frameROI);		
-		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, 5);
-		BufferedImage workingImage = frame_ipl.getBufferedImage();
-		
-		BufferedImage ballThreshold = new BufferedImage(config.getFieldWidth(), 
-				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
-		BufferedImage blueThreshold = new BufferedImage(config.getFieldWidth(), 
-				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
-		BufferedImage yellowThreshold = new BufferedImage(config.getFieldWidth(), 
-				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
-		
-		for (int x = 0; x < config.getFieldWidth(); ++x) {
-			for (int y = 0; y < config.getFieldHeight(); ++y) {
-				int ox = x + config.getFieldLowX();
-				int oy = y + config.getFieldLowY();
-				Color px = new Color(workingImage.getRGB(ox, oy));
-				
-				int r = px.getRed();
-				int g = px.getGreen();
-				int b = px.getBlue();
-				
-				float hsv[] = Color.RGBtoHSB(r, g, b, null);
-				int h = (int) (hsv[0] * 360);
-				int s = (int) (hsv[1] * 100);
-				int v = (int) (hsv[2] * 100);
-				
-				if ((h >= 350 || h <= 20) && s >= 60 && s >= 60) {
-					ballThreshold.setRGB(x, y, Color.white.getRGB());
-					workingImage.setRGB(ox, oy, Color.red.getRGB());
-				}
-				if ((h >= 70 && h <= 210 && s >= 10 && v >= 30 && g < (int)(b * 1.5))) {
-					blueThreshold.setRGB(x, y, Color.white.getRGB());
-					workingImage.setRGB(ox, oy, Color.blue.getRGB());
-			    }
-			    if ((h >= 25 && h <= 75 && s >= 60 && v >= 60)) {
-			    	yellowThreshold.setRGB(x, y, Color.white.getRGB());
-			    	workingImage.setRGB(ox, oy, Color.orange.getRGB());
-			    }
-			}
-		}
-		
-		frame_ipl = IplImage.createFrom(workingImage);
-		cvSetImageROI(frame_ipl, frameROI);
+		IplImage frame_ipl = IplImage.createFrom(frame);
+		cvSetImageROI(frame_ipl, getCurrentROI());
 		
 		CvMemStorage storage = CvMemStorage.create();
         CvSeq contour = new CvSeq(null);
@@ -151,6 +114,87 @@ public class MainImageProcessor extends ImageProcessor {
 				config.getFieldWidth(), config.getFieldHeight());
 		
 		return new WorldState(ballPos, blueRobot, yellowRobot, worldImage);
+	}
+	
+	
+	/**
+	 * Preprocess the frame for world state extraction.
+	 * 
+	 * @param frame Frame to preprocess.
+	 */
+	private BufferedImage preprocessFrame(BufferedImage frame) {
+		IplImage frame_ipl = IplImage.createFrom(frame);		
+		cvSetImageROI(frame_ipl, getCurrentROI());		
+		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, 5);
+		return frame_ipl.getBufferedImage();
+	}
+	
+	/**
+	 * Threshold the image for the different features.
+	 * 
+	 * The thresholded components are returned as an array, which contains
+	 * the original frame, ball, blue T and yellow T components, in that 
+	 * order.
+	 * 
+	 * The reason I have used BufferedImage here instead of opencv's IplImage
+	 * is because opencv's thresholding functions are somewhat limited. I do 
+	 * know of a way to threshold by both RGB and HSV values, for instance. 
+	 * 
+	 * @param frame Frame to threshold.
+	 * @return Thresholded components.
+	 */
+	private BufferedImage[] thresholdFrame(BufferedImage frame) {		
+		BufferedImage ball = new BufferedImage(config.getFieldWidth(),
+				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
+		BufferedImage blue = new BufferedImage(config.getFieldWidth(),
+				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
+		BufferedImage yellow = new BufferedImage(config.getFieldWidth(),
+				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
+		
+		for (int x = 0; x < config.getFieldWidth(); ++x) {
+			for (int y = 0; y < config.getFieldHeight(); ++y) {
+				int ox = x + config.getFieldLowX();
+				int oy = y + config.getFieldLowY();
+				
+				Color px = new Color(frame.getRGB(ox, oy));				
+				int r = px.getRed();
+				int g = px.getGreen();
+				int b = px.getBlue();
+				
+				float hsv[] = Color.RGBtoHSB(r, g, b, null);
+				int h = (int) (hsv[0] * 360);
+				int s = (int) (hsv[1] * 100);
+				int v = (int) (hsv[2] * 100);
+				
+				if ((h >= 350 || h <= 20) && (s >= 60) && (s >= 60)) {
+					ball.setRGB(x, y, Color.white.getRGB());
+					frame.setRGB(ox, oy, Color.red.getRGB());
+				}
+				if ((h >= 70) && (h <= 210) && (s >= 10) && (v >= 30) 
+						&& (g < (int)(b * 1.5))) {
+					blue.setRGB(x, y, Color.white.getRGB());
+					frame.setRGB(ox, oy, Color.blue.getRGB());
+			    }
+			    if ((h >= 25) && (h <= 75) && (s >= 60) && (v >= 60)) {
+			    	yellow.setRGB(x, y, Color.white.getRGB());
+			    	frame.setRGB(ox, oy, Color.orange.getRGB());
+			    }
+			}
+		}
+		
+		BufferedImage retValue[] = { frame, ball, blue, yellow };
+		return retValue;
+	}
+	
+	
+	/**
+	 * Get the current frame's region of interest.
+	 * 
+	 * @return CvRect with the current ROI.
+	 */
+	private CvRect getCurrentROI() {
+		return cvRect(config.getFieldLowX(), config.getFieldLowY(),
+				config.getFieldWidth(), config.getFieldHeight());
 	}
 
 }
