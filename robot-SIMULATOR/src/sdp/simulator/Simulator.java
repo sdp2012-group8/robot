@@ -23,6 +23,7 @@ public class Simulator extends WorldStateProvider {
 	public final static double pitch_width_cm = 244;
 	public final static double pitch_height_cm = 113.7;
 	private final static Vector2D pitch_middle = new Vector2D(0.5, pitch_height_cm/(2*pitch_width_cm));
+	private final static double ball_max_speed = 350; // cm/s
 	private final static double ball_friction_acc = 25; // in cm/s
 	private final static double ball_radius = 4.27/2; // in cm
 
@@ -135,6 +136,22 @@ public class Simulator extends WorldStateProvider {
 	 * @param x from 0 to 1
 	 * @param y same as sx
 	 * @param id robot_id
+	 * @param direction direction in degrees
+	 */
+	public void putAt(double x, double y, int id, double direction) {
+		if (id < 0 || id >= MAX_NUM_ROBOTS)
+			return;
+		positions[id] = new Vector2D(x*pitch_width_cm, y*pitch_width_cm);
+		velocities[id] = Vector2D.ZERO();
+		directions[id] = direction;
+		will_be_in_collision[id] = true;
+	}
+	
+	/**
+	 * Put robot at given location
+	 * @param x from 0 to 1
+	 * @param y same as sx
+	 * @param id robot_id
 	 */
 	public void putAt(double x, double y, int id) {
 		if (id < 0 || id >= MAX_NUM_ROBOTS)
@@ -199,9 +216,20 @@ public class Simulator extends WorldStateProvider {
 	 * @param virtual
 	 * @param xy
 	 * @param y
+	 * @param dir direction in degrees
+	 */
+	public void registerBlue(VBrick virtual, double x, double y, double dir) {
+		registerRobot(virtual, x, y, 0, dir);
+	}
+	
+	/**
+	 * Register blue robot at given position in cm
+	 * @param virtual
+	 * @param xy
+	 * @param y
 	 */
 	public void registerBlue(VBrick virtual, double x, double y) {
-		registerRobot(virtual, x, y, 0);
+		registerBlue(virtual, x, y, 0);
 	}
 
 	/**
@@ -209,9 +237,20 @@ public class Simulator extends WorldStateProvider {
 	 * @param virtual
 	 * @param x
 	 * @param y
+	 * @param dir direction in degrees
+	 */
+	public void registerYellow(VBrick virtual, double x, double y, double dir) {
+		registerRobot(virtual, x, y, 1, dir);
+	}
+	
+	/**
+	 * Register yellow robot at given position in cm
+	 * @param virtual
+	 * @param x
+	 * @param y
 	 */
 	public void registerYellow(VBrick virtual, double x, double y) {
-		registerRobot(virtual, x, y, 1);
+		registerYellow(virtual, x, y, 0);
 	}
 
 	/**
@@ -220,13 +259,14 @@ public class Simulator extends WorldStateProvider {
 	 * @param virtual the robot to register
 	 * @param x initial position in cm
 	 * @param y initial position in cm
+	 * @param dir direction in degrees
 	 * @param id
 	 */
-	private void registerRobot(VBrick virtual, double x, double y, int id) {
+	private void registerRobot(VBrick virtual, double x, double y, int id, double dir) {
 		robot[id] = virtual;
 		positions[id] = new Vector2D(x, y);
 		velocities[id] = Vector2D.ZERO();
-		directions[id] = 0;
+		directions[id] = dir;
 		speeds[id] = 0;
 		turning_speeds[id] = 0;
 		will_be_in_collision[id] = false;
@@ -248,8 +288,6 @@ public class Simulator extends WorldStateProvider {
 	 * @param dt time elapsed since last call in s
 	 */
 	public void simulate(double dt) {
-		// for prediction
-
 		// calculate for a future
 		for (int i = 0; i < robot.length; i++)
 			if (robot[i] != null) {
@@ -307,6 +345,8 @@ public class Simulator extends WorldStateProvider {
 				ball_velocity = Vector2D.ZERO();
 		}
 		// calculate final ball position
+		if (ball_velocity.getLength() > ball_max_speed)
+			ball_velocity = Vector2D.ZERO();//Vector2D.change_length(ball_velocity, ball_max_speed);
 		ball.addmul_to(ball_velocity, dt);
 
 		// ball collision with robots
@@ -456,9 +496,10 @@ public class Simulator extends WorldStateProvider {
 		if (future_ball.getX() - ball_radius < 0) {
 			// collision with left wall
 			if (Math.abs(future_ball.getY()-pitch_height_cm/2) <= goal_size) {
+				if (ball.getX() > -5)
+					score_left++;
 				ball = new Vector2D(-20, pitch_height_cm/2);
 				ball_velocity = Vector2D.ZERO();
-				score_left++;
 			} else {
 				ball_velocity.setX(-ball_velocity.getX());
 				ball_velocity = Vector2D.multiply(ball_velocity, wall_bounciness);
@@ -466,9 +507,10 @@ public class Simulator extends WorldStateProvider {
 		} else if (future_ball.getX() + ball_radius > pitch_width_cm) {
 			// collision with right wall
 			if (Math.abs(future_ball.getY()-pitch_height_cm/2) <= goal_size) {
+				if (ball.getX() < pitch_width_cm+5)
+					score_right++;
 				ball = new Vector2D(pitch_width_cm+20, pitch_height_cm/2);
 				ball_velocity = Vector2D.ZERO();
-				score_right++;
 			} else {
 				ball_velocity.setX(-ball_velocity.getX());
 				ball_velocity = Vector2D.multiply(ball_velocity, wall_bounciness);
