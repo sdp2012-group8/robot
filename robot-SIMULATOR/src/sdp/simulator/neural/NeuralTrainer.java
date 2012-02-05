@@ -33,6 +33,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -175,6 +176,7 @@ public class NeuralTrainer {
 
 			@Override
 			public void mouseClicked(MouseEvent e) {
+				panel.requestFocus();
 				switch (e.getButton()) {
 				case MouseEvent.BUTTON1:
 					if (chckbxMouseControl.isSelected()) {
@@ -259,7 +261,7 @@ public class NeuralTrainer {
 		
 		dtrpnhomemartinmarinov = new JEditorPane();
 		dtrpnhomemartinmarinov.setText("/home/martinmarinov/robotbrain");
-		dtrpnhomemartinmarinov.setBounds(662, 266, 117, 63);
+		dtrpnhomemartinmarinov.setBounds(662, 293, 117, 36);
 		frame.getContentPane().add(dtrpnhomemartinmarinov);
 		
 		final JButton btnNewButton = new JButton("Record");
@@ -437,7 +439,7 @@ public class NeuralTrainer {
 				return;
 			case KeyEvent.VK_SPACE:
 				if (pressed)
-					resetField();
+					RandomizeField();
 				return;
 			case KeyEvent.VK_BACK_SPACE:
 				if (pressed)
@@ -452,5 +454,44 @@ public class NeuralTrainer {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private void RandomizeField() {
+		new Thread() {
+			@Override
+			public void run() {
+				if (trainer.isRecording())
+					trainer.Pause();
+				Random r = new Random();
+				Vector2D ballpos, robot2;
+				Vector2D robot1 = new Vector2D(
+						(25 + r.nextDouble()*(Tools.PITCH_WIDTH_CM-50))/Tools.PITCH_WIDTH_CM,
+						(25 + r.nextDouble()*(Tools.PITCH_HEIGHT_CM-50))/Tools.PITCH_WIDTH_CM);
+				while (true) {
+					robot2 = new Vector2D(
+							(25 + r.nextDouble()*(Tools.PITCH_WIDTH_CM-50))/Tools.PITCH_WIDTH_CM,
+							(25 + r.nextDouble()*(Tools.PITCH_HEIGHT_CM-50))/Tools.PITCH_WIDTH_CM);
+					if (Vector2D.subtract(robot1, robot2).getLength() > 35/Tools.PITCH_WIDTH_CM)
+						break;
+				}
+				while (true) {
+					ballpos = new Vector2D(
+							(7.5 + r.nextDouble()*(Tools.PITCH_WIDTH_CM-30))/Tools.PITCH_WIDTH_CM,
+							(7.5 + r.nextDouble()*(Tools.PITCH_HEIGHT_CM-30))/Tools.PITCH_WIDTH_CM);
+					if (Vector2D.subtract(robot1, ballpos).getLength() > 35/Tools.PITCH_WIDTH_CM &&
+							Vector2D.subtract(robot1, ballpos).getLength() > 35/Tools.PITCH_WIDTH_CM)
+						break;
+				}
+				mSim.putAt(robot1.getX(), robot1.getY(), 0, 180-r.nextInt(360));
+				mSim.putAt(robot2.getX(), robot2.getY(), 1, 180-r.nextInt(360));
+				mSim.putBallAt(ballpos.getX(), ballpos.getY());
+				if (trainer.isRecording()) {
+					try {
+						sleep(500);
+					} catch (InterruptedException e) {}
+					trainer.Resume();
+				}
+			}
+		}.start();
 	}
 }

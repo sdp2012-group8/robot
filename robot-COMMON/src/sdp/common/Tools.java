@@ -270,22 +270,20 @@ public class Tools {
 		Vector2D rel_goal = Vector2D.rotateVector(Vector2D.subtract(goal, my_coords), -me.getAngle());
 		// get nearest collision points
 		double 	cp_f_l = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getFrontLeft()).getLength(),
-				cp_f_r = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getFrontRight()).getLength(),
-				cp_b_l = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getBackLeft()).getLength(),
 				cp_b_r = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getBackRight()).getLength();
 		// if you change something here, don't forget to change number of inputs in trainer
-		return normalizeCoordinateTo1(new double[] {
-			cp_f_l,
-			cp_f_r,
-			cp_b_l,
-			cp_b_r,
-			rel_ball.getX(),
-			rel_ball.getY(),
-			rel_en.getX(),
-			rel_en.getY(),
-			rel_goal.getX(),
-			rel_goal.getY()
-		});
+		// TODO no coordinates whatsoever, only distances and angles!
+		return new double[] {
+				(180+normalizeAngle(me.getAngle()))/360,
+				normalizeCoordinateTo1(cp_f_l),
+				normalizeCoordinateTo1(cp_b_r),
+				normalizeCoordinateTo1(rel_ball.getX()),
+				normalizeCoordinateTo1(rel_ball.getY()),
+				normalizeCoordinateTo1(rel_en.getX()),
+				normalizeCoordinateTo1(rel_en.getY()),
+				normalizeCoordinateTo1(rel_goal.getX()),
+				normalizeCoordinateTo1(rel_goal.getY())
+		};
 	}
 	
 	
@@ -302,18 +300,6 @@ public class Tools {
 		if (length > 1)
 			length = 1;
 		return length;
-	}
-	
-	/** FOR AI ONLY, DON'T USE FOR ANYTHING ELSE!
-	 * Maps distance between 0 and 1
-	 * @param length the length in centimeters
-	 * @return mapped between 0 and 1 wrt width of pitch
-	 */
-	private static double[] normalizeCoordinateTo1(double[] coords) {
-		double[] ans = new double[coords.length];
-		for (int i = 0; i < ans.length; i++)
-			ans[i] = normalizeCoordinateTo1(coords[i]);
-		return ans;
 	}
 	
 	/**

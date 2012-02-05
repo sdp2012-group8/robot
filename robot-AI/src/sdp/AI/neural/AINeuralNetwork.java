@@ -11,14 +11,16 @@ import sdp.common.WorldStateProvider;
 import sdp.common.Communicator.opcode;
 
 public class AINeuralNetwork extends AI {
-
-	private NeuralNetwork neuralNetwork;
+	
+	private final static int network_count = 5;
+	private NeuralNetwork[] nets = new NeuralNetwork[network_count];
 	private boolean blue_selected;
 
 	public AINeuralNetwork(Communicator Comm, WorldStateProvider Obs, String fname, boolean blue_selected) {
 		super(Comm, Obs);
 		this.blue_selected = blue_selected;
-		neuralNetwork = NeuralNetwork.load(fname);
+		for (int i = 0; i < nets.length; i++)
+			nets[i] = NeuralNetwork.load(fname+"/nn"+i+".nnet");
 	}
 
 	@Override
@@ -32,20 +34,17 @@ public class AINeuralNetwork extends AI {
 	}
 	
 	private void chaseBall() {
-		
-		neuralNetwork.setInput(Tools.generateAIinput(worldState, blue_selected, my_goal_left));
-		neuralNetwork.calculate();
-		double[] output = neuralNetwork.getOutput();
-		boolean is_going_forwards	= output[0] > 0.5,
-				is_standing_still 	= output[1] > 0.5,
-				is_turning_right 	= output[2] > 0.5,
-				is_not_turning 		= output[3] > 0.5,
-				is_it_kicking 		= output[4] > 0.5;
-		System.out.println("forwards "+is_going_forwards+"("+output[0]+"); " +
-				"still "+is_standing_still+"("+output[1]+"); " +
-						"right "+is_turning_right+"("+output[2]+"); " +
-								"not_turn "+is_not_turning+"("+output[3]+"); " +
-										"kick "+is_it_kicking+"("+output[4]+"); ");
+		double[] input = Tools.generateAIinput(worldState, blue_selected, my_goal_left);
+		for (int i = 0; i < nets.length; i++) {
+			nets[i].setInput(input);
+			nets[i].calculate();
+		}
+		boolean is_going_forwards	= Tools.recoverOutput(nets[0].getOutput()),
+				is_standing_still 	= Tools.recoverOutput(nets[1].getOutput()),
+				is_turning_right 	= Tools.recoverOutput(nets[2].getOutput()),
+				is_not_turning 		= Tools.recoverOutput(nets[3].getOutput()),
+				is_it_kicking 		= Tools.recoverOutput(nets[4].getOutput());
+		System.out.println(is_going_forwards+" "+is_standing_still+" "+is_turning_right+" "+is_not_turning+" "+is_it_kicking);
 		try {
 			int speed = is_standing_still ? 0 : (is_going_forwards ? MAX_SPEED_CM_S : - MAX_SPEED_CM_S);
 			int turn_speed =  is_not_turning ? 0 : (is_turning_right ? 127 : -127); 
