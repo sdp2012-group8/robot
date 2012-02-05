@@ -22,11 +22,17 @@ import sdp.common.WorldState;
  */
 public class MainImageProcessor extends ImageProcessor {
 	
+	/** OpenCV memory storage. */
+	private CvMemStorage storage;
+
+	
 	/**
 	 * The main constructor.
 	 */
 	public MainImageProcessor() {
 		super();
+		
+		storage = CvMemStorage.create();
 	}
 	
 
@@ -45,73 +51,11 @@ public class MainImageProcessor extends ImageProcessor {
 
 		IplImage frame_ipl = IplImage.createFrom(frame);
 		cvSetImageROI(frame_ipl, getCurrentROI());
-		
-		CvMemStorage storage = CvMemStorage.create();
-        CvSeq contour = new CvSeq(null);
-
-        IplImage ball = IplImage.createFrom(ballThreshold);
-        IplImage blue = IplImage.createFrom(blueThreshold);
-		IplImage yellow = IplImage.createFrom(yellowThreshold);
-		
-		cvFindContours(ball, storage, contour, Loader.sizeof(CvContour.class),
-                CV_RETR_LIST, CV_CHAIN_APPROX_NONE);        
-        while (contour != null && !contour.isNull()) {
-            if (contour.elem_size() > 0) {
-                CvSeq points = cvApproxPoly(contour, Loader.sizeof(CvContour.class),
-                        storage, CV_POLY_APPROX_DP, cvContourPerimeter(contour)*0.02, 0);
-                cvDrawContours(frame_ipl, points, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
-                
-                CvRect r = cvBoundingRect(contour, 0);
-                CvPoint pt1 = new CvPoint(r.x(), r.y());
-                CvPoint pt2 = new CvPoint(r.x() + r.width(), r.y() + r.height());
-                cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
-            }
-            contour = contour.h_next();
-        }
-        
-        contour = new CvSeq(null);
-        cvFindContours(blue, storage, contour, Loader.sizeof(CvContour.class),
-                CV_RETR_LIST, CV_CHAIN_APPROX_NONE);        
-        while (contour != null && !contour.isNull()) {
-            if (contour.elem_size() > 0) {
-                CvSeq points = cvApproxPoly(contour, Loader.sizeof(CvContour.class),
-                        storage, CV_POLY_APPROX_DP, cvContourPerimeter(contour)*0.02, 0);
-                cvDrawContours(frame_ipl, points, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
-                
-                CvRect r = cvBoundingRect(contour, 0);
-                CvPoint pt1 = new CvPoint(r.x(), r.y());
-                CvPoint pt2 = new CvPoint(r.x() + r.width(), r.y() + r.height());
-                cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
-            }
-            contour = contour.h_next();
-        }
-		
-        contour = new CvSeq(null);
-        cvFindContours(yellow, storage, contour, Loader.sizeof(CvContour.class),
-                CV_RETR_LIST, CV_CHAIN_APPROX_NONE);        
-        while (contour != null && !contour.isNull()) {
-            if (contour.elem_size() > 0) {
-                CvSeq points = cvApproxPoly(contour, Loader.sizeof(CvContour.class),
-                        storage, CV_POLY_APPROX_DP, cvContourPerimeter(contour)*0.02, 0);
-                cvDrawContours(frame_ipl, points, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
-                
-                CvRect r = cvBoundingRect(contour, 0);
-                CvPoint pt1 = new CvPoint(r.x(), r.y());
-                CvPoint pt2 = new CvPoint(r.x() + r.width(), r.y() + r.height());
-                cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
-            }
-            contour = contour.h_next();
-        }
-				
-		Point2D.Double ballPos = new Point2D.Double(0.0, 0.0);
-		Robot blueRobot = new Robot(new Point2D.Double(0.0, 0.0), 0.0);
-		Robot yellowRobot = new Robot(new Point2D.Double(0.0, 0.0), 0.0);
-		
-		BufferedImage worldImage = frame_ipl.getBufferedImage();
-		Graphics2D wiGraphics = worldImage.createGraphics();
-		wiGraphics.setColor(Color.white);
-		wiGraphics.drawRect(config.getFieldLowX(), config.getFieldLowY(),
-				config.getFieldWidth(), config.getFieldHeight());
+						
+		Point2D.Double ballPos = findBall(frame_ipl, ballThreshold);
+		Robot blueRobot = findRobot(frame_ipl, blueThreshold);
+		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold);
+		BufferedImage worldImage = finaliseWorldImage(frame_ipl);
 		
 		return new WorldState(ballPos, blueRobot, yellowRobot, worldImage);
 	}
@@ -138,7 +82,8 @@ public class MainImageProcessor extends ImageProcessor {
 	 * 
 	 * The reason I have used BufferedImage here instead of opencv's IplImage
 	 * is because opencv's thresholding functions are somewhat limited. I do 
-	 * know of a way to threshold by both RGB and HSV values, for instance. 
+	 * know of a way to threshold by both RGB and HSV values, for instance.
+	 * One cannot use arbitrary conditions either.
 	 * 
 	 * @param frame Frame to threshold.
 	 * @return Thresholded components.
@@ -186,6 +131,94 @@ public class MainImageProcessor extends ImageProcessor {
 		return retValue;
 	}
 	
+	
+	/**
+	 * Locate the ball in the world.
+	 * 
+	 * @param frame_ipl The original frame.
+	 * @param threshImage Thresholded image to search in.
+	 * @return The position of the ball.
+	 */
+	private Point2D.Double findBall(IplImage frame_ipl, BufferedImage threshImage) {
+		IplImage ballThresh = IplImage.createFrom(threshImage);
+		
+		CvSeq contour = findContours(ballThresh);
+        while (contour != null && !contour.isNull()) {
+            if (contour.elem_size() > 0) {
+                CvSeq points = cvApproxPoly(contour, Loader.sizeof(CvContour.class),
+                        storage, CV_POLY_APPROX_DP, cvContourPerimeter(contour)*0.02, 0);
+                cvDrawContours(frame_ipl, points, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+                
+                CvRect r = cvBoundingRect(contour, 0);
+                CvPoint pt1 = new CvPoint(r.x(), r.y());
+                CvPoint pt2 = new CvPoint(r.x() + r.width(), r.y() + r.height());
+                cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
+            }
+            contour = contour.h_next();
+        }
+
+		return new Point2D.Double(0.0, 0.0);
+	}
+	
+	/**
+	 * Locate a robot in the world.
+	 * 
+	 * @param frame_ipl The original frame.
+	 * @param threshImage Thresholded image to search in.
+	 * @return The position of the ball.
+	 */
+	private Robot findRobot(IplImage frame_ipl, BufferedImage threshImage) {
+		IplImage ballThresh = IplImage.createFrom(threshImage);
+		
+		CvSeq contour = findContours(ballThresh);
+        while (contour != null && !contour.isNull()) {
+            if (contour.elem_size() > 0) {
+                CvSeq points = cvApproxPoly(contour, Loader.sizeof(CvContour.class),
+                        storage, CV_POLY_APPROX_DP, cvContourPerimeter(contour)*0.02, 0);
+                cvDrawContours(frame_ipl, points, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+                
+                CvRect r = cvBoundingRect(contour, 0);
+                CvPoint pt1 = new CvPoint(r.x(), r.y());
+                CvPoint pt2 = new CvPoint(r.x() + r.width(), r.y() + r.height());
+                cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
+            }
+            contour = contour.h_next();
+        }
+
+		return new Robot(new Point2D.Double(0.0, 0.0), 0.0);
+	}
+	
+	
+	/**
+	 * Add finishing details to frame.
+	 * 
+	 * @param frame_ipl Frame to process.
+	 * @return Final world image.
+	 */
+	private BufferedImage finaliseWorldImage(IplImage frame_ipl) {
+		BufferedImage finalFrame = frame_ipl.getBufferedImage();		
+		Graphics2D wiGraphics = finalFrame.createGraphics();
+		
+		wiGraphics.setColor(Color.white);
+		wiGraphics.drawRect(config.getFieldLowX(), config.getFieldLowY(),
+				config.getFieldWidth(), config.getFieldHeight());	
+
+		return finalFrame;
+	}
+	
+	
+	/**
+	 * Find the contour in the specified image.
+	 * 
+	 * @param image Image to search.
+	 * @return Image shapes' contour.
+	 */
+	private CvSeq findContours(IplImage image) {
+		CvSeq contour = new CvSeq();
+		cvFindContours(image, storage, contour, Loader.sizeof(CvContour.class),
+                CV_RETR_LIST, CV_CHAIN_APPROX_NONE);        
+		return contour;
+	}
 	
 	/**
 	 * Get the current frame's region of interest.
