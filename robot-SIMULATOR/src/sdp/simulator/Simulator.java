@@ -7,6 +7,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 import sdp.common.Robot;
+import sdp.common.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
 

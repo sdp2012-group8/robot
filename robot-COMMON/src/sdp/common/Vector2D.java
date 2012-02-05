@@ -1,4 +1,4 @@
-package sdp.simulator;
+package sdp.common;
 
 import java.awt.geom.Point2D;
 

@@ -3,7 +3,9 @@ package sdp.AI;
 import java.io.IOException;
 
 import sdp.common.Communicator;
+import sdp.common.Robot;
 import sdp.common.Tools;
+import sdp.common.Vector2D;
 import sdp.common.WorldStateProvider;
 import sdp.common.Communicator.opcode;
 
@@ -22,9 +24,10 @@ public class AIVisualServoing extends AI {
 	 * @param new_state the new world state (low-pass filtered)
 	 */
 	protected synchronized void worldChanged() {
+		// worldState is now in centimeters!!!
 
 		distance_to_ball = Tools.getDistanceBetweenPoint(robot.getCoords(), worldState.getBallCoords());
-		distance_to_goal = Tools.getDistanceBetweenPoint(toCentimeters(robot.getCoords()), enemy_goal);
+		distance_to_goal = Tools.getDistanceBetweenPoint(robot.getCoords(), enemy_goal);
 
 		
 		switch (state) {
@@ -39,43 +42,38 @@ public class AIVisualServoing extends AI {
 	}
 
 	public void chaseBall() {
-		// System.out.println("Chasing ball");
-		double angle_between = anglebetween(robot.getCoords(), worldState.getBallCoords());
-		double turning_angle = angle_between - robot.getAngle();
-		byte forward_speed = 40;
-		
-		System.out.println("I'm in chase ball :)");
-		//System.out.println("Turning angle: " + turning_angle + " Angle between:" + angle_between + " Robot get angle: " + robot.getAngle());
-		//System.out.println(robot.getCoords() + " " + worldState.getBallCoords());
+		// ged direction from robot to ball
+		Vector2D dir = Vector2D.subtract(new Vector2D(worldState.getBallCoords()), new Vector2D(robot.getCoords()));
 		// Keep the turning angle between -180 and 180
-		if (turning_angle > 180) turning_angle -= 360;
-		if (turning_angle < -180) turning_angle += 360;
-		
-		if (distance_to_ball < robot.getSize()) forward_speed = 0;
-			
-		if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
-		if (turning_angle < -128) turning_angle = -128;
+		double turning_angle = Tools.normalizeAngle(
+				-robot.getAngle()
+				+Vector2D.getDirection(dir));
+		// calculates speed formula:
+		// speed_when_robot_next_to_ball+(distance_to_ball/max_distance)*speed_when_over_max_distance
+		// every distance between 0 and max_distance will be mapped between speed_when_robot_next_to_ball and speed_when_over_max_distance
+		double forward_speed = 5+(distance_to_ball/40)*40;
+
+		System.out.println("I'm in chase ball :)");
+		// do the backwards turn
+		if (turning_angle > 90 || turning_angle < -90)
+			forward_speed = - forward_speed;
+
+		// make turning faster
+		turning_angle *= 2;
+		// normalize angles
+		if (turning_angle > 127) turning_angle = 127;
+		if (turning_angle < -127) turning_angle = -127;
+		// don't exceed speed limit
+		if (forward_speed > MAX_SPEED_CM_S) forward_speed = MAX_SPEED_CM_S;
+		if (forward_speed < -MAX_SPEED_CM_S) forward_speed = -MAX_SPEED_CM_S;
+		// send command
 		try {
-			if (turning_angle > TURNING_ACCURACY){
-				
-				mComm.sendMessage(opcode.operate, forward_speed, (byte)127);
-				//System.out.println("Chasing ball - Turning: " + turning_angle);
-			} 
-			else if( turning_angle < -TURNING_ACCURACY){
-				mComm.sendMessage(opcode.operate, forward_speed, (byte)-127);
-				//System.out.println("Chasing ball - Turning: " + turning_angle);	
-			}
-			else if (distance_to_ball > robot.getSize()/2) {
-				
-				mComm.sendMessage(opcode.operate, (byte)(20 + 50*distance_to_ball), (byte)0);
-				//System.out.println("Chasing ball - Moving Forward");
-			} else {
-				//System.out.println("Chasing ball - At Ball: " + distance + " " + robot.getCoords() + " " + worldState.getBallCoords());
+			mComm.sendMessage(opcode.operate, (byte) (forward_speed), (byte) (turning_angle));
+			// check whether to go into got_ball mode
+			if (Math.abs(turning_angle) < TURNING_ACCURACY && distance_to_ball < 4+Robot.LENGTH_CM/2) {
 				setMode(mode.got_ball);
 			}
-				
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -84,7 +82,7 @@ public class AIVisualServoing extends AI {
 		
 		System.out.println("I'm in ALIGN TO GOAL :O");
 	
-		double angle_between = anglebetween(toCentimeters(robot.getCoords()), enemy_goal);
+		double angle_between = anglebetween(robot.getCoords(), enemy_goal);
 		double turning_angle = angle_between - robot.getAngle();
 		byte forward_speed = 20;
 		
@@ -95,15 +93,18 @@ public class AIVisualServoing extends AI {
 		if (turning_angle < -180) turning_angle += 360;
 		
 		
-		if (distance_to_goal < robot.getSize()) forward_speed = 0;
+		if (distance_to_goal < Robot.LENGTH_CM) forward_speed = 0;
 		
 		System.out.println(distance_to_goal);
 		
 		
 		if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
 		if (turning_angle < -128) turning_angle = -128;
+		// don't exceed speed limit
+		if (forward_speed > MAX_SPEED_CM_S) forward_speed = MAX_SPEED_CM_S;
+		if (forward_speed < -MAX_SPEED_CM_S) forward_speed = -MAX_SPEED_CM_S;
 		try {
-			if (distance_to_ball > robot.getSize()) {
+			if (distance_to_ball > Robot.LENGTH_CM) {
 				setMode(mode.chase_ball);
 			} else if (turning_angle > TURNING_ACCURACY && (distance_to_goal > 1)){
 				mComm.sendMessage(opcode.operate, forward_speed, (byte)127);
@@ -123,7 +124,6 @@ public class AIVisualServoing extends AI {
 			}
 				
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

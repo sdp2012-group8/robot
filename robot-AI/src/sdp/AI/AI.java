@@ -90,7 +90,7 @@ public abstract class AI extends WorldStateProvider {
 			@Override
 			public void run() {
 				while (!isInterrupted()) {
-					WorldState state = mObs.getNextState();
+					WorldState state = toCentimeters(mObs.getNextState());
 					// do low pass filtering
 					if (worldState == null)
 						worldState = state;
@@ -140,8 +140,20 @@ public abstract class AI extends WorldStateProvider {
 
 	// Helpers
 
-	protected Point2D.Double toCentimeters(Point2D.Double original) {
+	private Point2D.Double toCentimeters(Point2D.Double original) {
 		return new Point2D.Double(original.getX()*PITCH_WIDTH_CM, original.getY()*PITCH_WIDTH_CM);
+	}
+	
+	private Robot toCentimeters(Robot orig) {
+		return new Robot(toCentimeters(orig.getCoords()), orig.getAngle());
+	}
+	
+	private WorldState toCentimeters(WorldState orig) {
+		return new WorldState(
+				toCentimeters(orig.getBallCoords()),
+				toCentimeters(orig.getBlueRobot()),
+				toCentimeters(orig.getYellowRobot()),
+				orig.getWorldImage());
 	}
 
 	/**

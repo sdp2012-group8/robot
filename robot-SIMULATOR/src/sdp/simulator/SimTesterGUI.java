@@ -99,7 +99,7 @@ public class SimTesterGUI {
 		frmAlphaTeamSimulator.getContentPane().setLayout(null);
 		
 		final JComboBox combo_team = new JComboBox();
-		combo_team.setModel(new DefaultComboBoxModel(new String[] {"Blue", "Yellow"}));
+		combo_team.setModel(new DefaultComboBoxModel(new String[] {"ME = Blue", "ME = Yellow"}));
 		combo_team.setBounds(662, 47, 117, 24);
 		frmAlphaTeamSimulator.getContentPane().add(combo_team);
 		

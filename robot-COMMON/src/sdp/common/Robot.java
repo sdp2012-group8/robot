@@ -11,9 +11,11 @@ import java.awt.geom.Point2D;
 public final class Robot {
 	
 	/** Length of the robot's top plate. */
-	public static final double LENGTH = 20/244d;
+	public static final double LENGTH_CM = 20;
+	public static final double LENGTH = LENGTH_CM/244d;
 	/** Width of the robot's top plate. */
-	public static final double WIDTH = 18/244d;
+	public static final double WIDTH_CM = 18;
+	public static final double WIDTH = WIDTH_CM/244d;
 	
 
 	/** Coordinates of the robot's center on the field. */
@@ -29,9 +31,7 @@ public final class Robot {
 	private Point2D.Double backLeftPoint;
 	/** Coordinates of the robot's back-right corner. */
 	private Point2D.Double backRightPoint;
-	
-	/** Size of the Robot **/
-	private double robotSize;
+
 	
 
 	
@@ -138,14 +138,5 @@ public final class Robot {
 	 */
 	public final Point2D.Double getBackRight() {
 		return backRightPoint;
-	}
-
-	/**
-	 * Return the size of the robot using the getDistanceBetweenPoint function
-	 * and the robot's Front Left and Back Left Coordinates
-	 * @return Size of the robot in double.
-	 */
-	public final double getSize(){
-		return  Tools.getDistanceBetweenPoint(getBackLeft(),getFrontRight());
 	}
 }
