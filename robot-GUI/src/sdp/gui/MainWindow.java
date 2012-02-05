@@ -14,6 +14,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.JTabbedPane;
 
+import sdp.common.FPSCounter;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.vision.ImageProcessorConfiguration;
@@ -43,13 +44,19 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	/** In what integer range will floats be represented in spinners. */
 	private static final int SPINNER_FLOAT_RANGE = 1000;
 	
+	/** The window title. */
+	private static final String WINDOW_TITLE = "Battlestation";
+	
+	
+	/** Window's FPS counter. */
+	private FPSCounter fpsCounter;
+	
+	/** Active vision subsystem instance. */
+	private Vision vision = null;
 	
 	/** GUI's world state provider. */
 	private WorldStateObserver worldStateObserver;
 	
-	/** Active vision subsystem instance. */
-	private Vision vision = null;
-
 	
 	/**
 	 * Create the main GUI with the specified components.
@@ -67,12 +74,11 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			this.worldStateObserver = worldStateObserver;
 		}
 		
-		this.vision = vision;		
+		this.vision = vision;
+		fpsCounter = new FPSCounter();
 		
-		setSize(new Dimension(840, 480));
-		setPreferredSize(new Dimension(840, 480));
-		getContentPane().setMinimumSize(new Dimension(640, 480));
-		setTitle("Battlestation");
+		setSize(new Dimension(840, 500));
+		setTitle(WINDOW_TITLE);
 		initComponents();
 		
 		if (vision != null) {
@@ -292,6 +298,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		while (!Thread.interrupted()) {
 			WorldState state = worldStateObserver.getNextState();
 			setImage(state.getWorldImage());
+			
+			fpsCounter.tick();
+			setTitle(String.format("%s - %.1f FPS", WINDOW_TITLE, fpsCounter.getFPS()));
 			
 			System.out.println("NEW STATE: " +
 					"Ball at (" + state.getBallCoords().x + ", " + state.getBallCoords().y + "), " +
