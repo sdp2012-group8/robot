@@ -6,7 +6,6 @@ import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
 import sdp.vision.processing.AlternativeImageProcessor;
 import sdp.vision.processing.ImageProcessor;
-import sdp.vision.processing.Team9ImageProcessor;
 
 
 /**

@@ -62,7 +62,7 @@ public class ImageVisualInputProvider extends VisualInputProvider implements Run
 	@Override
 	public void run() {
 		while (!Thread.interrupted()) {
-			sendNextFrame(images[nextImageIndex]);			
+			sendNextFrame(images[nextImageIndex]);
 			nextImageIndex = (nextImageIndex + 1) % images.length;
 			
 			try {
