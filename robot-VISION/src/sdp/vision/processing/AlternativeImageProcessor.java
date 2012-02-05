@@ -6,6 +6,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
 import com.googlecode.javacpp.BytePointer;
+import com.googlecode.javacpp.Loader;
 import com.googlecode.javacv.cpp.opencv_core.CvMat;
 
 import static com.googlecode.javacv.cpp.opencv_core.*;
@@ -36,7 +37,7 @@ public class AlternativeImageProcessor extends ImageProcessor {
 	 * @see sdp.vision.processing.ImageProcessor#extractWorldState(java.awt.image.BufferedImage)
 	 */
 	@Override
-	public WorldState extractWorldState(BufferedImage frame) {
+	public synchronized WorldState extractWorldState(BufferedImage frame) {
 		CvRect frameROI = cvRect(config.getFieldLowX(), config.getFieldLowY(),
 				config.getFieldWidth(), config.getFieldHeight());
 
@@ -46,11 +47,13 @@ public class AlternativeImageProcessor extends ImageProcessor {
 		BufferedImage workingImage = frame_ipl.getBufferedImage();
 		
 		BufferedImage ballThreshold = new BufferedImage(config.getFieldWidth(), 
-				config.getFieldHeight(), BufferedImage.TYPE_BYTE_BINARY);
+				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
 		BufferedImage blueThreshold = new BufferedImage(config.getFieldWidth(), 
-				config.getFieldHeight(), BufferedImage.TYPE_BYTE_BINARY);
+				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
 		BufferedImage yellowThreshold = new BufferedImage(config.getFieldWidth(), 
-				config.getFieldHeight(), BufferedImage.TYPE_BYTE_BINARY);
+				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
+		BufferedImage blackThreshold = new BufferedImage(config.getFieldWidth(), 
+				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
 		
 		for (int x = 0; x < config.getFieldWidth(); ++x) {
 			for (int y = 0; y < config.getFieldHeight(); ++y) {
@@ -71,22 +74,81 @@ public class AlternativeImageProcessor extends ImageProcessor {
 					ballThreshold.setRGB(x, y, Color.white.getRGB());
 					frame.setRGB(ox, oy, Color.red.getRGB());
 				}
-				if ((h >= 150 && h <= 250 && s >= 20 && v >= 20)) {
+				if ((h >= 120 && h <= 210 && s >= 0 && v >= 40)) {
 					blueThreshold.setRGB(x, y, Color.white.getRGB());
 		    		frame.setRGB(ox, oy, Color.blue.getRGB());
 			    }
-			    if ((h >= 25 && h <= 75 && s <= 40 && v >= 30)) {
+			    if ((h >= 25 && h <= 75 && s >= 60 && v >= 60)) {
 			    	yellowThreshold.setRGB(x, y, Color.white.getRGB());
 		    		frame.setRGB(ox, oy, Color.yellow.getRGB());
 			    }
+			    if ((v <= 30)) {
+			    	blackThreshold.setRGB(x, y, Color.white.getRGB());
+			    	frame.setRGB(ox, oy, Color.black.getRGB());
+			    }
 			}
 		}
+		
+		CvMemStorage storage = CvMemStorage.create();
+        CvSeq contour = new CvSeq(null);
+
+        IplImage ball = IplImage.createFrom(ballThreshold);
+        IplImage blue = IplImage.createFrom(blueThreshold);
+		IplImage yellow = IplImage.createFrom(yellowThreshold);
+		IplImage black = IplImage.createFrom(blackThreshold);
+		
+		cvFindContours(ball, storage, contour, Loader.sizeof(CvContour.class),
+                CV_RETR_LIST, CV_CHAIN_APPROX_NONE);        
+        while (contour != null && !contour.isNull()) {
+            if (contour.elem_size() > 0) {
+                CvSeq points = cvApproxPoly(contour, Loader.sizeof(CvContour.class),
+                        storage, CV_POLY_APPROX_DP, cvContourPerimeter(contour)*0.02, 0);
+                cvDrawContours(frame_ipl, points, CvScalar.RED, CvScalar.RED, -1, 1, CV_AA);
+            }
+            contour = contour.h_next();
+        }
+        
+        contour = new CvSeq(null);
+        cvFindContours(blue, storage, contour, Loader.sizeof(CvContour.class),
+                CV_RETR_LIST, CV_CHAIN_APPROX_NONE);        
+        while (contour != null && !contour.isNull()) {
+            if (contour.elem_size() > 0) {
+                CvSeq points = cvApproxPoly(contour, Loader.sizeof(CvContour.class),
+                        storage, CV_POLY_APPROX_DP, cvContourPerimeter(contour)*0.02, 0);
+                cvDrawContours(frame_ipl, points, CvScalar.BLUE, CvScalar.BLUE, -1, 1, CV_AA);
+            }
+            contour = contour.h_next();
+        }
+		
+        contour = new CvSeq(null);
+        cvFindContours(yellow, storage, contour, Loader.sizeof(CvContour.class),
+                CV_RETR_LIST, CV_CHAIN_APPROX_NONE);        
+        while (contour != null && !contour.isNull()) {
+            if (contour.elem_size() > 0) {
+                CvSeq points = cvApproxPoly(contour, Loader.sizeof(CvContour.class),
+                        storage, CV_POLY_APPROX_DP, cvContourPerimeter(contour)*0.02, 0);
+                cvDrawContours(frame_ipl, points, CvScalar.YELLOW, CvScalar.YELLOW, -1, 1, CV_AA);
+            }
+            contour = contour.h_next();
+        }
+        
+        contour = new CvSeq(null);
+        cvFindContours(black, storage, contour, Loader.sizeof(CvContour.class),
+                CV_RETR_LIST, CV_CHAIN_APPROX_NONE);        
+        while (contour != null && !contour.isNull()) {
+            if (contour.elem_size() > 0) {
+                CvSeq points = cvApproxPoly(contour, Loader.sizeof(CvContour.class),
+                        storage, CV_POLY_APPROX_DP, cvContourPerimeter(contour)*0.02, 0);
+                cvDrawContours(frame_ipl, points, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+            }
+            contour = contour.h_next();
+        }
 				
 		Point2D.Double ballPos = new Point2D.Double(0.0, 0.0);
 		Robot blueRobot = new Robot(new Point2D.Double(0.0, 0.0), 0.0);
 		Robot yellowRobot = new Robot(new Point2D.Double(0.0, 0.0), 0.0);
 		
-		BufferedImage worldImage = workingImage;
+		BufferedImage worldImage = frame_ipl.getBufferedImage();
 		Graphics2D wiGraphics = worldImage.createGraphics();
 		wiGraphics.setColor(Color.white);
 		wiGraphics.drawRect(config.getFieldLowX(), config.getFieldLowY(),

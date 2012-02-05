@@ -170,7 +170,7 @@ public class Launcher extends JFrame implements Runnable {
 		
 		standardComboBox = new JComboBox();
 		standardComboBox.setModel(new DefaultComboBoxModel(new String[] {"NTSC", "PAL", "SECAM", "WEBCAM"}));
-		standardComboBox.setSelectedIndex(1);
+		standardComboBox.setSelectedIndex(3);
 		standardLabel.setLabelFor(standardComboBox);
 		GridBagConstraints gbc_standardComboBox = new GridBagConstraints();
 		gbc_standardComboBox.insets = new Insets(0, 0, 5, 0);
