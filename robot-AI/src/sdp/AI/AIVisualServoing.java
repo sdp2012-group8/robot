@@ -124,15 +124,13 @@ public class AIVisualServoing extends AI {
 				mComm.sendMessage(opcode.operate, forward_speed, (byte)-50);
 				System.out.println("Going to goal - Turning: " + turning_angle);	
 			}
+			
 			else if (distance_to_goal > 1) {
-				/* if (robot in the way) {
-				 * 	move around robot
-				 *  } else {
-				 * kick to score
-				 * }
-				 */
-				//mComm.sendMessage(opcode.operate, (byte)60, (byte)0);
-				mComm.sendMessage(opcode.kick);
+				if(!(distance_to_goal <100)){
+					mComm.sendMessage(opcode.operate, (byte)60, (byte)0);
+				} else{
+					mComm.sendMessage(opcode.kick);	
+				}
 				System.out.println("GOING FORWARD TO GOAL");
 				
 			} else {
