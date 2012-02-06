@@ -22,7 +22,7 @@ import sdp.common.WorldStateProvider;
 public abstract class AI extends WorldStateProvider {
 	
 	public enum mode {
-		chase_once, chase_ball, sit, got_ball
+		chase_once, chase_ball, sit, got_ball, dribble
 	}
 
 

@@ -41,7 +41,14 @@ public class AIVisualServoing extends AI {
 		case got_ball:
 			alignToGoal();
 			break;
+			
+		case dribble:
+			dribbleBall();
+			break;
 		}
+		
+		
+			
 	}
 	
 	
@@ -54,13 +61,14 @@ public class AIVisualServoing extends AI {
 			start_point = robot.getCoords();
 		}
 		double distance = Tools.getDistanceBetweenPoint(robot.getCoords(), start_point);
+		System.out.println("distance: " + distance);
 		try {
-		if (distance > 25) {
+		if (distance > 20) {
 			//stop
-			mComm.sendMessage(opcode.operate, (byte)0);
+			mComm.sendMessage(opcode.operate, (byte)0, (byte)0, (byte) 30);
 		} else {
 			//go forward
-			mComm.sendMessage(opcode.operate, (byte)60);
+			mComm.sendMessage(opcode.operate, (byte)25, (byte)0);
 		}
 		
 		} catch (IOException e) {
