@@ -182,7 +182,9 @@ public class Tools {
 	}
 	
 	private static Robot toCentimeters(Robot orig) {
-		return new Robot(toCentimeters(orig.getCoords()), orig.getAngle());
+		Robot robot = new Robot(toCentimeters(orig.getCoords()), orig.getAngle());
+		robot.setCoords(true);
+		return robot;
 	}
 	
 	public static WorldState toCentimeters(WorldState orig) {

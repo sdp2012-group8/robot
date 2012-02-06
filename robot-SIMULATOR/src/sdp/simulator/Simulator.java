@@ -4,6 +4,7 @@ package sdp.simulator;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
 import sdp.common.Robot;
@@ -28,6 +29,8 @@ public class Simulator extends WorldStateProvider {
 	private final static double ball_max_speed = 350; // cm/s
 	private final static double ball_friction_acc = 25; // in cm/s
 	private final static double ball_radius = 4.27/2; // in cm
+	
+	private WorldState state = null;
 
 	private final static double wall_bounciness = 0.4; // 0 - inelastic, 1 - elastic
 	private final static double robot_bounciness = 0.3; // 0 - 1
@@ -565,7 +568,7 @@ public class Simulator extends WorldStateProvider {
 							}
 			}
 		// notify that we have change
-		WorldState state = new WorldState(
+		state = new WorldState(
 				Vector2D.divide(ball, pitch_width_cm),
 				new Robot(Vector2D.divide(positions[0], pitch_width_cm), directions[0]),
 				new Robot(Vector2D.divide(positions[1], pitch_width_cm), directions[1]), image(dt));
@@ -582,6 +585,7 @@ public class Simulator extends WorldStateProvider {
 		if (im == null) {
 			im = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT+IMAGE_INFO_SEC_HEIGHT, BufferedImage.TYPE_INT_RGB);
 			g = im.createGraphics();
+			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		}
 		// draw table
 		g.setColor(new Color(10, 80, 0));
@@ -599,22 +603,25 @@ public class Simulator extends WorldStateProvider {
 				(int) (IMAGE_WIDTH*2/pitch_width_cm),
 				(int) (IMAGE_WIDTH*goal_size/pitch_width_cm));
 		// draw robots
+		WorldState state_cm = null;
+		if (state != null)
+			state_cm = Tools.toCentimeters(state);
 		for (int i = 0; i < robot.length; i++) {
 			Robot robot;
+			Color color = Color.gray;
 			// chose robot color
 			switch (i) {
 			case 0:
-				g.setColor(Color.blue);
+				color = Color.blue;
 				break;
 			case 1:
-				g.setColor(new Color(220, 220, 0));
-				break;
-			default:
-				g.setColor(Color.gray);
+				color = new Color(220, 220, 0);
 				break;
 			}
 			if (i == mouse_over_robot)
-				g.setColor(brighter(g.getColor()));
+				g.setColor(brighter(color));
+			else
+				g.setColor(color);
 			g.setStroke(new BasicStroke(1.0f));
 			robot = new Robot(Vector2D.divide(positions[i], pitch_width_cm), directions[i]);
 			// draw body of robot
@@ -632,6 +639,7 @@ public class Simulator extends WorldStateProvider {
 					(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH)
 			}, 5);
 			// draw filppers
+			g.setStroke(new BasicStroke(3.0f));
 			double dir_x = flipper_size*Math.cos(robot.getAngle()*Math.PI/180d)/pitch_width_cm;
 			double dir_y = -flipper_size*Math.sin(robot.getAngle()*Math.PI/180d)/pitch_width_cm;
 			g.drawLine(
@@ -663,6 +671,18 @@ public class Simulator extends WorldStateProvider {
 					(int)((robot.getCoords().getY()-dir_y/2-shift_y)*IMAGE_WIDTH),
 					(int)((robot.getCoords().getX()+dir_x/2-shift_x)*IMAGE_WIDTH),
 					(int)((robot.getCoords().getY()+dir_y/2-shift_y)*IMAGE_WIDTH));
+			// draw nearest points of collision
+			if (i < 2 && state_cm != null) {
+				color = brighter(color);
+				g.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 25));
+				g.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[] {10.0f}, 0.0f));
+				boolean am_i_blue = i == 0;
+				robot = am_i_blue ? state_cm.getBlueRobot() : state_cm.getYellowRobot();
+				drawVector(new Vector2D(robot.getFrontLeft()), Tools.getNearestCollisionPoint(state_cm, am_i_blue, robot.getFrontLeft()));
+				drawVector(new Vector2D(robot.getFrontRight()), Tools.getNearestCollisionPoint(state_cm, am_i_blue, robot.getFrontRight()));
+				drawVector(new Vector2D(robot.getBackLeft()), Tools.getNearestCollisionPoint(state_cm, am_i_blue, robot.getBackLeft()));
+				drawVector(new Vector2D(robot.getBackRight()), Tools.getNearestCollisionPoint(state_cm, am_i_blue, robot.getBackRight()));
+			}
 		}
 		// draw ball
 		g.setColor(Color.red);
@@ -689,6 +709,19 @@ public class Simulator extends WorldStateProvider {
 	}
 	
 	// helpers
+	
+	/**
+	 * Draw vecrtor
+	 * @param origin in cm
+	 * @param vector in cm
+	 */
+	private void drawVector(Vector2D origin, Vector2D vector) {
+		g.drawLine(
+				(int)(origin.getX()*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
+				(int)(origin.getY()*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
+				(int)((origin.getX()+vector.getX())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
+				(int)((origin.getY()+vector.getY())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM));
+	}
 	
 	/**
 	 * Returns the velocity that should be added to current position due to 
