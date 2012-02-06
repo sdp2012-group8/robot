@@ -12,7 +12,7 @@ import sdp.common.Communicator.opcode;
 
 public class AINeuralNetwork extends AI {
 	
-	private final static int network_count = 5;
+	private final static int network_count = 3;
 	private NeuralNetwork[] nets = new NeuralNetwork[network_count];
 	private boolean blue_selected;
 
@@ -39,17 +39,26 @@ public class AINeuralNetwork extends AI {
 			nets[i].setInput(input);
 			nets[i].calculate();
 		}
-		boolean is_going_forwards	= Tools.recoverOutput(nets[0].getOutput()),
-				is_standing_still 	= Tools.recoverOutput(nets[1].getOutput()),
-				is_turning_right 	= Tools.recoverOutput(nets[2].getOutput()),
-				is_not_turning 		= Tools.recoverOutput(nets[3].getOutput()),
-				is_it_kicking 		= Tools.recoverOutput(nets[4].getOutput());
-		System.out.println(is_going_forwards+" "+is_standing_still+" "+is_turning_right+" "+is_not_turning+" "+is_it_kicking);
+		int[] results = new int[nets.length];
+		// get results
+		for (int i = 0; i < results.length; i++)
+			results[i] = Tools.recoverOutput(nets[i].getOutput());
+
 		try {
-			int speed = is_standing_still ? 0 : (is_going_forwards ? MAX_SPEED_CM_S : - MAX_SPEED_CM_S);
-			int turn_speed =  is_not_turning ? 0 : (is_turning_right ? 127 : -127); 
+			int speed = 0;
+			if (results[0] == 1)
+				speed = MAX_SPEED_CM_S;
+			else if (results[0] == 2)
+				speed = - MAX_SPEED_CM_S;
+			
+			int turn_speed = 0;
+			if (results[1] == 1)
+				turn_speed = 127;
+			else if (results[1] == 2)
+				turn_speed = -127;
+			
 			mComm.sendMessage(opcode.operate, (byte) speed, (byte) turn_speed);
-			if (is_it_kicking)
+			if (results[2] == 1)
 				mComm.sendMessage(opcode.kick);
 		} catch (IOException e) {
 			e.printStackTrace();

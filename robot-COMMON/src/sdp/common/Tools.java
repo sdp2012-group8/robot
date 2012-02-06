@@ -260,34 +260,44 @@ public class Tools {
 	 */
 	public static double[] generateAIinput(WorldState worldState, boolean am_i_blue, boolean my_goal_left) {
 		Robot me = am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot();
-		Robot enemy = am_i_blue ? worldState.getYellowRobot() : worldState.getBlueRobot();
 		Vector2D goal = new Vector2D(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM);
 		// get coordinates relative to table
 		Vector2D my_coords = new Vector2D(me.getCoords());
-		Vector2D en_coords = new Vector2D(enemy.getCoords());
 		Vector2D ball = new Vector2D(worldState.getBallCoords());
-		// transform coordinates relative to robot
-		Vector2D rel_ball = Vector2D.rotateVector(Vector2D.subtract(ball, my_coords), -me.getAngle());
-		Vector2D rel_en = Vector2D.rotateVector(Vector2D.subtract(en_coords, my_coords), -me.getAngle());
-		Vector2D rel_goal = Vector2D.rotateVector(Vector2D.subtract(goal, my_coords), -me.getAngle());
 		// get nearest collision points
-		double 	cp_f_l = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getFrontLeft()).getLength(),
-				cp_b_r = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getBackRight()).getLength();
+		Vector2D cp_f_l = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getFrontLeft()),
+				 cp_b_r = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getBackRight());
+		// rel angles
+		double angle_to_ball = getTurningAngle(me, ball);
+		double dist_to_ball = Vector2D.subtract(my_coords, ball).getLength();
+		double angle_to_goal = getTurningAngle(me, goal);
+		double dist_to_goal = Vector2D.subtract(my_coords, goal).getLength();
+		double angle_to_cp_f_l = getTurningAngle(me, cp_f_l);
+		double angle_to_cp_b_r = getTurningAngle(me, cp_b_r);
+		double collis_dist = (Vector2D.subtract(my_coords, cp_f_l).getLength()+Vector2D.subtract(my_coords, cp_b_r).getLength())/2;
+
 		// if you change something here, don't forget to change number of inputs in trainer
-		// TODO no coordinates whatsoever, only distances and angles!
 		return new double[] {
-				(180+normalizeAngle(me.getAngle()))/360,
-				normalizeCoordinateTo1(cp_f_l),
-				normalizeCoordinateTo1(cp_b_r),
-				normalizeCoordinateTo1(rel_ball.getX()),
-				normalizeCoordinateTo1(rel_ball.getY()),
-				normalizeCoordinateTo1(rel_en.getX()),
-				normalizeCoordinateTo1(rel_en.getY()),
-				normalizeCoordinateTo1(rel_goal.getX()),
-				normalizeCoordinateTo1(rel_goal.getY())
+				AI_normalizeAngleTo1(angle_to_ball),
+				AI_normalizeCoordinateTo1(dist_to_ball),
+				AI_normalizeAngleTo1(angle_to_goal),
+				AI_normalizeCoordinateTo1(dist_to_goal),
+				AI_normalizeAngleTo1(angle_to_cp_f_l),
+				AI_normalizeAngleTo1(angle_to_cp_b_r),
+				AI_normalizeCoordinateTo1(collis_dist)
 		};
 	}
 	
+	/**
+	 * Gets how many degrees should a robot turn in order to face a point
+	 * Units don't matter as long as they are consistent.
+	 * @param me
+	 * @param point
+	 * @return
+	 */
+	public static double getTurningAngle(Robot me, Vector2D point) {
+		return Tools.normalizeAngle(-me.getAngle()+Vector2D.getDirection(new Vector2D(-me.getCoords().getX()+point.getX(), -me.getCoords().getY()+point.getY())));
+	}
 	
 	/**
 	 * FOR AI ONLY, DON'T USE FOR ANYTHING ELSE!
@@ -295,13 +305,17 @@ public class Tools {
 	 * @param length the length in centimeters
 	 * @return mapped between 0 and 1 wrt width of pitch
 	 */
-	private static double normalizeCoordinateTo1(double length) {
+	private static double AI_normalizeCoordinateTo1(double length) {
 		length = (1+length/Tools.PITCH_WIDTH_CM)/2;
 		if (length < 0)
 			length = 0;
 		if (length > 1)
 			length = 1;
 		return length;
+	}
+	
+	private static double AI_normalizeAngleTo1(double angle) {
+		return (180+normalizeAngle(angle))/360;
 	}
 	
 	/**
@@ -329,8 +343,11 @@ public class Tools {
 	 * @param condition condition to be encoded
 	 * @return output
 	 */
-	public static double[] generateOutput(boolean condition) {
-		return new double[] {condition ? 1 : 0, condition ? 0 : 1};
+	public static double[] generateOutput(int current_id, int max) {
+		double[] ans  = new double[max];
+		for (int i = 0; i < ans.length; i++)
+			ans[i] = i == current_id ? 1 : 0;
+		return ans;
 	}
 	
 	/**
@@ -339,8 +356,15 @@ public class Tools {
 	 * @param output array with two outputs from neural network
 	 * @return the state of the original condition
 	 */
-	public static boolean recoverOutput(double[] output) {
-		return output[0] > output[1];
+	public static int recoverOutput(double[] output) {
+		double max = 0;
+		int id = 0;
+		for (int i = 0; i < output.length; i++)
+			if (output[i] > max) {
+				max = output[i];
+				id = i;
+			}
+		return id;
 	}
 
 }

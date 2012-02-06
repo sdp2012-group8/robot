@@ -200,10 +200,17 @@ public class SimTesterGUI {
 		btnConnect.setBounds(662, 10, 117, 25);
 		frmAlphaTeamSimulator.getContentPane().add(btnConnect);
 		
-		JButton btnChaseBall = new JButton("AI: Chase");
+		
+		final JComboBox comboBox = new JComboBox();
+		comboBox.setBounds(662, 342, 117, 24);
+		for (int i = 0; i < AI.mode.values().length; i++)
+			comboBox.addItem(AI.mode.values()[i]);
+		frmAlphaTeamSimulator.getContentPane().add(comboBox);
+		
+		JButton btnChaseBall = new JButton("Change State");
 		btnChaseBall.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				mAI.setMode(mode.chase_ball);
+				mAI.setMode(mode.values()[comboBox.getSelectedIndex()]);
 			}
 		});
 		btnChaseBall.setBounds(662, 378, 117, 25);
