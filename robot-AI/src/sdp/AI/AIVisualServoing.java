@@ -53,10 +53,12 @@ public class AIVisualServoing extends AI {
 		// every distance between 0 and max_distance will be mapped between speed_when_robot_next_to_ball and speed_when_over_max_distance
 		double forward_speed = 5+(distance_to_ball/40)*40;
 
-		System.out.println("I'm in chase ball :)");
+		System.out.println("Currently going to the ball");
 		// do the backwards turn
-		if (turning_angle > 90 || turning_angle < -90)
+		/*if (turning_angle > 90 || turning_angle < -90)
 			forward_speed = - forward_speed;
+			
+		*/
 
 		// make turning faster
 		turning_angle *= 2;
@@ -71,6 +73,7 @@ public class AIVisualServoing extends AI {
 			mComm.sendMessage(opcode.operate, (byte) (forward_speed), (byte) (turning_angle));
 			// check whether to go into got_ball mode
 			if (Math.abs(turning_angle) < TURNING_ACCURACY && distance_to_ball < 4+Robot.LENGTH_CM/2) {
+				System.out.println("Got the ball, going to alignToGoal.");
 				setMode(mode.got_ball);
 			}
 		} catch (Exception e) {
@@ -119,7 +122,7 @@ public class AIVisualServoing extends AI {
 				System.out.println("GOING FORWARD TO GOAL");
 				
 			} else {
-				System.out.println("The old man the boat");
+				System.out.println("Lost contact with ball, going back to chaseBall");
 				setMode(mode.chase_ball);
 			}
 				

@@ -31,6 +31,10 @@ public final class Robot {
 	private Point2D.Double backLeftPoint;
 	/** Coordinates of the robot's back-right corner. */
 	private Point2D.Double backRightPoint;
+	/** Coordinates of the robot's front-center. */
+	private Point2D.Double frontCenterPoint;
+	/** Coordinates of the robot's back-center. */
+	private Point2D.Double backCenterPoint;
 
 	
 
@@ -82,6 +86,8 @@ public final class Robot {
 		
 		backRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-LENGTH / 2, -WIDTH / 2), angle_rad);
 		Utilities.translatePoint(backRightPoint, coords);
+		
+		
 	}
 
 	
@@ -138,5 +144,34 @@ public final class Robot {
 	 */
 	public final Point2D.Double getBackRight() {
 		return backRightPoint;
+	}
+	
+	/**
+	 * Get coordinates of the front center of the robot.
+	 * 
+	 * @return Coordinates of the front center of robot.
+	 */
+	
+	public final Point2D.Double getFrontCenter(){
+		
+		Double x = (getFrontRight().getX() + getFrontLeft().getX())/2;
+		Double y = (getFrontRight().getY() + getFrontLeft().getY())/2;
+		frontCenterPoint.setLocation(x, y);
+		
+		return frontCenterPoint;
+	}
+	
+	/**
+	 * Get coordinates of the back center of the robot.
+	 * 
+	 * @return Coordinates of the back center of the robot.
+	 */
+	
+	public final Point2D.Double getBackCenter(){
+		
+		Double x = (getBackRight().getX() + getBackLeft().getX())/2;
+		Double y = (getBackRight().getY() + getBackLeft().getY())/2;
+		backCenterPoint.setLocation(x, y);
+		return backCenterPoint;
 	}
 }
