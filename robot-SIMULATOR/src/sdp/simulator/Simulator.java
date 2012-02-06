@@ -465,7 +465,7 @@ public class Simulator extends WorldStateProvider {
 				if (robot[i].is_kicking) {
 					if (ball_distance < kicker_range && ball_distance > 0 && future_rel_ball.y < VBrick.front_left.getY() && future_rel_ball.y > VBrick.front_right.getY()) {
 						double power = kicker_max_speed-kicker_min_speed-(kicker_max_speed-kicker_min_speed)*ball_distance/kicker_range;
-						System.out.print("power "+power);
+						System.out.println("power "+power);
 						curr_rel_spd.setX(curr_rel_spd.getX()+power);
 					}
 					robot[i].is_kicking = false;
