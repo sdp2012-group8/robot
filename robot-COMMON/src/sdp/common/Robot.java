@@ -11,9 +11,9 @@ import java.awt.geom.Point2D;
 public final class Robot {
 	
 	/** Length of the robot's top plate. */
-	public static final double LENGTH = 70.0;
+	public static final double LENGTH = 20/244d;
 	/** Width of the robot's top plate. */
-	public static final double WIDTH = 50.0;
+	public static final double WIDTH = 18/244d;
 	
 
 	/** Coordinates of the robot's center on the field. */
@@ -29,28 +29,58 @@ public final class Robot {
 	private Point2D.Double backLeftPoint;
 	/** Coordinates of the robot's back-right corner. */
 	private Point2D.Double backRightPoint;
+	
+	/** Size of the Robot **/
+	private double robotSize;
+	
 
 	
 	/**
 	 * The main constructor.
 	 * 
 	 * @param coords The robot's coordinates.
-	 * @param angle The angle the robot is facing, in radians.
+	 * @param angle The angle the robot is facing, in degrees.
 	 */
 	public Robot(Point2D.Double coords, double angle) {
+		setCoords(coords, angle);
+	}
+	
+	/**
+	 * Set angle
+	 * @param angle in degrees
+	 */
+	public final void setCoords(double angle) {
+		setCoords(coords, angle);
+	}
+	
+	/**
+	 * Set coordinates only
+	 * @param coords
+	 */
+	public final void setCoords(Point2D.Double coords) {
+		setCoords(coords, angle);
+	}
+	
+	/**
+	 * Sets the coordinates of the robot
+	 * @param coords
+	 * @param angle in degrees
+	 */
+	public final void setCoords(Point2D.Double coords, double angle) {
+		double angle_rad = angle*Math.PI/180;
 		this.coords = coords;
 		this.angle = angle;
 		
-		frontLeftPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(LENGTH / 2, WIDTH / 2), angle);
+		frontLeftPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(LENGTH / 2, WIDTH / 2), angle_rad);
 		Utilities.translatePoint(frontLeftPoint, coords);
 		
-		frontRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(LENGTH / 2, -WIDTH / 2), angle);
+		frontRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(LENGTH / 2, -WIDTH / 2), angle_rad);
 		Utilities.translatePoint(frontRightPoint, coords);
 		
-		backLeftPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-LENGTH / 2, WIDTH / 2), angle);
+		backLeftPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-LENGTH / 2, WIDTH / 2), angle_rad);
 		Utilities.translatePoint(backLeftPoint, coords);
 		
-		backRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-LENGTH / 2, -WIDTH / 2), angle);
+		backRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-LENGTH / 2, -WIDTH / 2), angle_rad);
 		Utilities.translatePoint(backRightPoint, coords);
 	}
 
@@ -65,9 +95,9 @@ public final class Robot {
 	}
 
 	/**
-	 * Get the angle the robot is facing, in radians.
+	 * Get the angle the robot is facing, in degrees.
 	 * 
-	 * @return The angle the robot is facing, in radians.
+	 * @return The angle the robot is facing, in degrees.
 	 */
 	public final double getAngle() {
 		return angle;
@@ -110,4 +140,12 @@ public final class Robot {
 		return backRightPoint;
 	}
 
+	/**
+	 * Return the size of the robot using the getDistanceBetweenPoint function
+	 * and the robot's Front Left and Back Left Coordinates
+	 * @return Size of the robot in double.
+	 */
+	public final double getSize(){
+		return  Tools.getDistanceBetweenPoint(getBackLeft(),getFrontRight());
+	}
 }

@@ -45,8 +45,8 @@ public class Utilities {
     	double xDiff = point.x - origin.x;
     	double yDiff = point.y - origin.y;
     	
-    	double rotX = (xDiff * Math.cos(angle)) - (yDiff * Math.sin(angle)) + origin.x;
-    	double rotY = (xDiff * Math.sin(angle)) + (yDiff * Math.cos(angle)) + origin.y;
+    	double rotX = (xDiff * Math.cos(angle)) - (yDiff * Math.sin(-angle)) + origin.x;
+    	double rotY = (xDiff * Math.sin(-angle)) + (yDiff * Math.cos(angle)) + origin.y;
     	
     	return new Point2D.Double(rotX, rotY);
     }

@@ -18,7 +18,8 @@ public class Test implements MessageListener {
 	
 	public Test() throws IOException, InterruptedException{
 		Communicator my = null;
-		my = new JComm(this); // initialize bluetooth communicator
+		my = new JComm();
+		my.registerListener(this); // initialize bluetooth communicator
 		// send move message
 		my.sendMessage(opcode.move, (byte)2);
 		Thread.sleep(12000);
