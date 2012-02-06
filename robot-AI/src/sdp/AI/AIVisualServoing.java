@@ -15,7 +15,6 @@ public class AIVisualServoing extends AI {
 	// Ball and goal position
 	private double distance_to_ball = 0;
 	private double distance_to_goal = 0;
-	private double recorded_distance = 0;
 	private Point2D.Double start_point; // Used to measure distance for dribble
 
 	public AIVisualServoing(Communicator Comm, WorldStateProvider Obs) {
@@ -177,5 +176,25 @@ public class AIVisualServoing extends AI {
 			e.printStackTrace();
 		}
 	}
-
+	
+	/**
+	 * Move behind the ball before attempting to score
+	 */
+	public void navigateBehindBall() {
+		
+	}
+	
+	/**
+	 * Defend against penalties
+	 */
+	public void penaltiesDefend() {
+		//TODO: Find direction of opposing robot and move into intercept path.
+	}
+	
+	/**
+	 * Score a penalty
+	 */
+	public void penaltiesAttack() {
+		//TODO: Determine shoot path - Turn and shoot quickly.
+	}
 }

@@ -37,7 +37,7 @@ import javax.swing.JPanel;
  * 
  * It also starts the AI.
  * 
- * @author martinmarinov
+ * @author Martin Marinov
  *
  */
 public class AITesterGUI {
@@ -72,7 +72,7 @@ public class AITesterGUI {
 	}
 
 	/**
-	 * Initialize the contents of the frame.
+	 * Initialise the contents of the frame.
 	 */
 	private void initialize() {
 		frmAlphaTeamAi = new JFrame();
