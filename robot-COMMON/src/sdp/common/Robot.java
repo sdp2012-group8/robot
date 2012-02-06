@@ -38,11 +38,11 @@ public final class Robot {
 	/**
 	 * The main constructor.
 	 * 
-	 * @param coords The robot's coordinates.
+	 * @param coords The robot's coordinates. In 0..1, use {@link #setCoords(boolean)} for cm.
 	 * @param angle The angle the robot is facing, in degrees.
 	 */
 	public Robot(Point2D.Double coords, double angle) {
-		setCoords(coords, angle);
+		setCoords(coords, angle, false);
 	}
 	
 	/**
@@ -50,38 +50,48 @@ public final class Robot {
 	 * @param angle in degrees
 	 */
 	public final void setCoords(double angle) {
-		setCoords(coords, angle);
+		setCoords(coords, angle, false);
 	}
 	
 	/**
 	 * Set coordinates only
-	 * @param coords
+	 * @param coords in 0..1, use {@link #setCoords(boolean)} for cm.
 	 */
 	public final void setCoords(Point2D.Double coords) {
-		setCoords(coords, angle);
+		setCoords(coords, angle, false);
 	}
 	
 	/**
 	 * Sets the coordinates of the robot
 	 * @param coords
 	 * @param angle in degrees
+	 * @param cm are coordinates in cm?
 	 */
-	public final void setCoords(Point2D.Double coords, double angle) {
+	public final void setCoords(Point2D.Double coords, double angle, boolean cm) {
 		double angle_rad = angle*Math.PI/180;
 		this.coords = coords;
 		this.angle = angle;
-		
-		frontLeftPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(LENGTH / 2, WIDTH / 2), angle_rad);
+		double length = cm ? LENGTH_CM : LENGTH;
+		double width = cm ? WIDTH_CM : WIDTH;
+		frontLeftPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, width / 2), angle_rad);
 		Utilities.translatePoint(frontLeftPoint, coords);
 		
-		frontRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(LENGTH / 2, -WIDTH / 2), angle_rad);
+		frontRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, -width / 2), angle_rad);
 		Utilities.translatePoint(frontRightPoint, coords);
 		
-		backLeftPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-LENGTH / 2, WIDTH / 2), angle_rad);
+		backLeftPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, width / 2), angle_rad);
 		Utilities.translatePoint(backLeftPoint, coords);
 		
-		backRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-LENGTH / 2, -WIDTH / 2), angle_rad);
+		backRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, -width / 2), angle_rad);
 		Utilities.translatePoint(backRightPoint, coords);
+	}
+	
+	/**
+	 * Converts coordinates that the robot was initialized with in cm or in 0..1
+	 * @param cm
+	 */
+	public final void setCoords(boolean cm) {
+		setCoords(coords, angle, cm);
 	}
 
 	
