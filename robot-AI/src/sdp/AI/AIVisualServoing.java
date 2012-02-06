@@ -41,6 +41,11 @@ public class AIVisualServoing extends AI {
 		}
 	}
 
+	/**
+	 * Mode to go towards the ball.
+	 * When it reaches the ball, transition into the goToGoal state.
+	 * WARNING - Doesn't use and prediction to go towards the ball.
+	 */
 	public void chaseBall() {
 		// ged direction from robot to ball
 		Vector2D dir = Vector2D.subtract(new Vector2D(worldState.getBallCoords()), new Vector2D(robot.getCoords()));
@@ -55,10 +60,8 @@ public class AIVisualServoing extends AI {
 
 		System.out.println("Currently going to the ball");
 		// do the backwards turn
-		/*if (turning_angle > 90 || turning_angle < -90)
-			forward_speed = - forward_speed;
-			
-		*/
+		if (turning_angle > 90 || turning_angle < -90)
+			forward_speed = -10;
 
 		// make turning faster
 		turning_angle *= 2;
@@ -81,13 +84,17 @@ public class AIVisualServoing extends AI {
 		}
 	}
 
+	/**
+	 * Mode set if got ball.
+	 * Aims and shoots the ball into the opposing goal. 
+	 */
 	public void alignToGoal(){
 		
 		System.out.println("I'm in ALIGN TO GOAL :O");
 	
 		double angle_between = anglebetween(robot.getCoords(), enemy_goal);
 		double turning_angle = angle_between - robot.getAngle();
-		byte forward_speed = 20;
+		byte forward_speed = 5;
 		
 		//System.out.println("Turning angle: " + turning_angle + " Angle between:" + angle_between + " Robot get angle: " + robot.getAngle());
 		//System.out.println(robot.getCoords() + " " + worldState.getBallCoords());
@@ -110,15 +117,22 @@ public class AIVisualServoing extends AI {
 			if (distance_to_ball > Robot.LENGTH_CM) {
 				setMode(mode.chase_ball);
 			} else if (turning_angle > TURNING_ACCURACY && (distance_to_goal > 1)){
-				mComm.sendMessage(opcode.operate, forward_speed, (byte)127);
+				mComm.sendMessage(opcode.operate, forward_speed, (byte)50);
 				System.out.println("Going to goal - Turning: " + turning_angle);
 			} 
 			else if( turning_angle < -TURNING_ACCURACY && (distance_to_goal > 1)){
-				mComm.sendMessage(opcode.operate, forward_speed, (byte)-128);
+				mComm.sendMessage(opcode.operate, forward_speed, (byte)-50);
 				System.out.println("Going to goal - Turning: " + turning_angle);	
 			}
 			else if (distance_to_goal > 1) {
-				mComm.sendMessage(opcode.operate, (byte)60, (byte)0);
+				/* if (robot in the way) {
+				 * 	move around robot
+				 *  } else {
+				 * kick to score
+				 * }
+				 */
+				//mComm.sendMessage(opcode.operate, (byte)60, (byte)0);
+				mComm.sendMessage(opcode.kick);
 				System.out.println("GOING FORWARD TO GOAL");
 				
 			} else {

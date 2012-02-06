@@ -6,19 +6,21 @@ import org.neuroph.core.NeuralNetwork;
 
 import sdp.AI.AI;
 import sdp.common.Communicator;
-import sdp.common.Robot;
+import sdp.common.Tools;
 import sdp.common.WorldStateProvider;
 import sdp.common.Communicator.opcode;
 
 public class AINeuralNetwork extends AI {
-
-	private NeuralNetwork neuralNetwork;
+	
+	private final static int network_count = 5;
+	private NeuralNetwork[] nets = new NeuralNetwork[network_count];
 	private boolean blue_selected;
 
 	public AINeuralNetwork(Communicator Comm, WorldStateProvider Obs, String fname, boolean blue_selected) {
 		super(Comm, Obs);
 		this.blue_selected = blue_selected;
-		neuralNetwork = NeuralNetwork.load(fname);
+		for (int i = 0; i < nets.length; i++)
+			nets[i] = NeuralNetwork.load(fname+"/nn"+i+".nnet");
 	}
 
 	@Override
@@ -32,20 +34,23 @@ public class AINeuralNetwork extends AI {
 	}
 	
 	private void chaseBall() {
-		Robot me = blue_selected ? worldState.getBlueRobot() : worldState.getYellowRobot();
-		Robot enemy = blue_selected ? worldState.getYellowRobot() : worldState.getBlueRobot();
-		neuralNetwork.setInput(									
-				me.getCoords().getX(),
-				me.getCoords().getY(),
-				enemy.getCoords().getX(),
-				enemy.getCoords().getY(),
-				worldState.getBallCoords().getX(),
-				worldState.getBallCoords().getY());
-		neuralNetwork.calculate();
-		double[] output = neuralNetwork.getOutput();
-		System.out.println("0 : "+output[0]+"; 1 : "+output[1]+"; 2 : "+output[2]);
+		double[] input = Tools.generateAIinput(worldState, blue_selected, my_goal_left);
+		for (int i = 0; i < nets.length; i++) {
+			nets[i].setInput(input);
+			nets[i].calculate();
+		}
+		boolean is_going_forwards	= Tools.recoverOutput(nets[0].getOutput()),
+				is_standing_still 	= Tools.recoverOutput(nets[1].getOutput()),
+				is_turning_right 	= Tools.recoverOutput(nets[2].getOutput()),
+				is_not_turning 		= Tools.recoverOutput(nets[3].getOutput()),
+				is_it_kicking 		= Tools.recoverOutput(nets[4].getOutput());
+		System.out.println(is_going_forwards+" "+is_standing_still+" "+is_turning_right+" "+is_not_turning+" "+is_it_kicking);
 		try {
-			mComm.sendMessage(opcode.operate, (byte) output[0], (byte) output[1]);
+			int speed = is_standing_still ? 0 : (is_going_forwards ? MAX_SPEED_CM_S : - MAX_SPEED_CM_S);
+			int turn_speed =  is_not_turning ? 0 : (is_turning_right ? 127 : -127); 
+			mComm.sendMessage(opcode.operate, (byte) speed, (byte) turn_speed);
+			if (is_it_kicking)
+				mComm.sendMessage(opcode.kick);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
