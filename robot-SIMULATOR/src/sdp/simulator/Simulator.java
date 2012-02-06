@@ -84,7 +84,7 @@ public class Simulator extends WorldStateProvider {
 	private BufferedImage im = null;
 	private Graphics2D g = null;
 
-
+	private boolean paused = false;
 	private boolean running = true;
 
 	public Simulator() {
@@ -98,7 +98,8 @@ public class Simulator extends WorldStateProvider {
 				long curr_time;
 				while(running) {
 					// call simulation giving time elapsed
-					simulate(delta_time/1000d);
+					if (!paused)
+						simulate(delta_time/1000d);
 					// calculate time required for simulation to return
 					curr_time = System.currentTimeMillis();
 					delta_time = curr_time-old_time;
@@ -119,6 +120,20 @@ public class Simulator extends WorldStateProvider {
 		}.start();
 	}
 
+	/**
+	 * @param paused true for pause, false for resume
+	 */
+	public void setPause(boolean paused) {
+		this.paused = paused;
+	}
+	
+	/**
+	 * @return true if simulator is in pause
+	 */
+	public boolean getPause() {
+		return paused;
+	}
+	
 	/**
 	 * Put ball at given location
 	 * @param x from 0 to 1

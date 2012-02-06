@@ -19,6 +19,8 @@ import sdp.AI.AI.mode;
 import sdp.AI.AIVisualServoing;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
+import sdp.common.Tools;
+import sdp.common.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 
@@ -27,6 +29,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -212,7 +215,7 @@ public class SimTesterGUI {
 				resetField();
 			}
 		});
-		btnResetField.setBounds(662, 119, 117, 25);
+		btnResetField.setBounds(662, 156, 117, 25);
 		frmAlphaTeamSimulator.getContentPane().add(btnResetField);
 		
 		JButton btnResetBall = new JButton("Reset ball");
@@ -221,8 +224,32 @@ public class SimTesterGUI {
 				mSim.putBallAt();
 			}
 		});
-		btnResetBall.setBounds(662, 156, 117, 25);
+		btnResetBall.setBounds(662, 193, 117, 25);
 		frmAlphaTeamSimulator.getContentPane().add(btnResetBall);
+		
+		final JButton btnPause = new JButton("Pause");
+		btnPause.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (mSim.getPause()) {
+					mSim.setPause(false);
+					btnPause.setText("Pause");
+				} else {
+					mSim.setPause(true);
+					btnPause.setText("Resume");
+				}
+			}
+		});
+		btnPause.setBounds(662, 119, 117, 25);
+		frmAlphaTeamSimulator.getContentPane().add(btnPause);
+		
+		JButton btnRandomizeField = new JButton("Randomize");
+		btnRandomizeField.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				RandomizeField();
+			}
+		});
+		btnRandomizeField.setBounds(662, 230, 117, 25);
+		frmAlphaTeamSimulator.getContentPane().add(btnRandomizeField);
 		
 		// key listener
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
@@ -334,6 +361,32 @@ public class SimTesterGUI {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private void RandomizeField() {
+		Random r = new Random();
+		Vector2D ballpos, robot2;
+		Vector2D robot1 = new Vector2D(
+				(25 + r.nextDouble()*(Tools.PITCH_WIDTH_CM-50))/Tools.PITCH_WIDTH_CM,
+				(25 + r.nextDouble()*(Tools.PITCH_HEIGHT_CM-50))/Tools.PITCH_WIDTH_CM);
+		while (true) {
+			robot2 = new Vector2D(
+					(25 + r.nextDouble()*(Tools.PITCH_WIDTH_CM-50))/Tools.PITCH_WIDTH_CM,
+					(25 + r.nextDouble()*(Tools.PITCH_HEIGHT_CM-50))/Tools.PITCH_WIDTH_CM);
+			if (Vector2D.subtract(robot1, robot2).getLength() > 35/Tools.PITCH_WIDTH_CM)
+				break;
+		}
+		while (true) {
+			ballpos = new Vector2D(
+					(7.5 + r.nextDouble()*(Tools.PITCH_WIDTH_CM-30))/Tools.PITCH_WIDTH_CM,
+					(7.5 + r.nextDouble()*(Tools.PITCH_HEIGHT_CM-30))/Tools.PITCH_WIDTH_CM);
+			if (Vector2D.subtract(robot1, ballpos).getLength() > 35/Tools.PITCH_WIDTH_CM &&
+					Vector2D.subtract(robot1, ballpos).getLength() > 35/Tools.PITCH_WIDTH_CM)
+				break;
+		}
+		mSim.putAt(robot1.getX(), robot1.getY(), 0, 180-r.nextInt(360));
+		mSim.putAt(robot2.getX(), robot2.getY(), 1, 180-r.nextInt(360));
+		mSim.putBallAt(ballpos.getX(), ballpos.getY());
 	}
 }
 
