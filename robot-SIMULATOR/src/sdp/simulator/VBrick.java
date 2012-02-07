@@ -24,7 +24,7 @@ public class VBrick implements Communicator {
 	// radius of wheel
 	public static final float WHEELR = 4F;
 	// acceleration set on brick
-	public static final float ACC = 1000; // acc in degrees/s/s
+	public double acc = 1000; // acc in degrees/s/s
 	// robot size
 	public static final double ROBOT_WIDTH = Robot.WIDTH*Simulator.pitch_width_cm; // in cm
 	public static final double ROBOT_LENGTH = Robot.LENGTH*Simulator.pitch_width_cm; // in cm
@@ -35,8 +35,8 @@ public class VBrick implements Communicator {
 	public static final Vector2D back_right = new Vector2D(-ROBOT_LENGTH / 2, -ROBOT_WIDTH / 2);
 	public static final Vector2D[] rect = new Vector2D[] {front_left, front_right, back_right, back_left};
 	
-	private static final double acceleration = ACC*0.017453292519943295*WHEELR;//69.8;
-	private static final double turn_acceleration = ACC*WHEELR/ROBOTR;
+	private double acceleration = acc*0.017453292519943295*WHEELR;//69.8;
+	private double turn_acceleration = acc*WHEELR/ROBOTR;
 	
 	public boolean is_kicking = false;
 
@@ -51,7 +51,13 @@ public class VBrick implements Communicator {
 		switch (op) {
 		case operate:
 			desired_speed = args[0];
-			desired_turning_speed = args[1];
+			if (args.length > 1) desired_turning_speed = args[1];
+			if (args.length > 2) {
+				// set acceleration
+				acceleration = args[2];
+				acc = acceleration/(0.017453292519943295*WHEELR);
+				turn_acceleration = acc*WHEELR/ROBOTR;
+			}
 			break;
 		case kick:
 			is_kicking = true;
