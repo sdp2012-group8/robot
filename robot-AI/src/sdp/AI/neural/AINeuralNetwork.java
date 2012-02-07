@@ -34,15 +34,15 @@ public class AINeuralNetwork extends AI {
 	}
 	
 	private void chaseBall() {
-		double[] input = Tools.generateAIinput(worldState, blue_selected, my_goal_left);
-		for (int i = 0; i < nets.length; i++) {
-			nets[i].setInput(input);
-			nets[i].calculate();
-		}
+		nets[0].setInput(Tools.generateAIinput(worldState, blue_selected, my_goal_left, 0));
+		nets[1].setInput(Tools.generateAIinput(worldState, blue_selected, my_goal_left, 1));
 		int[] results = new int[nets.length];
 		// get results
 		for (int i = 0; i < results.length; i++) {
-			results[i] = Tools.recoverOutput(nets[i].getOutput());
+			nets[i].calculate();
+			double[] out = nets[i].getOutput();
+			results[i] = Tools.recoverOutput(out);
+			
 			if (results[i] == -1) {
 				System.out.println("The network is misbehaving");
 				return;
@@ -50,49 +50,10 @@ public class AINeuralNetwork extends AI {
 		}
 		System.out.println(results[0]+" with confidence "+String.format("%.2f", 100d*Tools.probability(results[0], nets[0].getOutput()))+"%");
 		try {
-			int speed = 0, turn_speed = 0;
-			switch (results[0]) {
-			case 0:
-				speed = 35;
-				turn_speed = 90;
-				break;
-			case 1:
-				speed = 35;
-				turn_speed = -90;
-				break;
-			case 2:
-				speed = 35;
-				turn_speed = 0;
-				break;
-			case 3:
-				speed = -35;
-				turn_speed = 90;
-				break;
-			case 4:
-				speed = -35;
-				turn_speed = -90;
-				break;
-			case 5:
-				speed = -35;
-				turn_speed = 0;
-				break;
-			case 6:
-				speed = 0;
-				turn_speed = 90;
-				break;
-			case 7:
-				speed = 0;
-				turn_speed = -90;
-				break;
-			case 8:
-				speed = 0;
-				turn_speed = 0;
-				break;
-
-			}
+			// 35 and 90
+			int speed = results[0] == 0 ? 0 : (results[0] == 1 ? 35 : -35);
+			int turn_speed = results[1] == 0 ? 0 : (results[1] == 1 ? 90 : -90);
 			mComm.sendMessage(opcode.operate, (byte) speed, (byte) turn_speed);
-			if (results[1] == 1)
-				mComm.sendMessage(opcode.kick);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

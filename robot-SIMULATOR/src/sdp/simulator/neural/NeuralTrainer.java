@@ -260,7 +260,7 @@ public class NeuralTrainer {
 		frame.getContentPane().add(btnResetField);
 		
 		dtrpnhomemartinmarinov = new JEditorPane();
-		dtrpnhomemartinmarinov.setText("/home/martinmarinov/robotbrain");
+		dtrpnhomemartinmarinov.setText("data");
 		dtrpnhomemartinmarinov.setBounds(662, 254, 117, 36);
 		frame.getContentPane().add(dtrpnhomemartinmarinov);
 		

@@ -80,7 +80,7 @@ public class Tools {
     /**
      * Normalizes the given angle
      * @param initial given angle in degrees
-     * @return normalized angle between -Pi and Pi
+     * @return normalized angle between -180 and 180
      */
     public static double normalizeAngle(double initial) {
     	initial = initial % 360;
@@ -204,6 +204,19 @@ public class Tools {
 	 * @return the vector to the closest point when collision may occur
 	 */
 	public static Vector2D getNearestCollisionPoint(WorldState ls, boolean am_i_blue, Point2D.Double point) {
+		return getNearestCollisionPoint(ls, am_i_blue, point, true);
+	}
+	
+	/**
+	 * Returns the vector to the closest collision point in the world (wall or enemy)
+	 * 
+	 * @param ls current world in centimeters
+	 * @param am_i_blue true if my robot is blue, false otherwise; prevents testing with itself
+	 * @param point the point to be tested, usually a point inside the robot (more usually edges of my robot)
+	 * @param include_enemy whether to include enemy
+	 * @return the vector to the closest point when collision may occur
+	 */
+	public static Vector2D getNearestCollisionPoint(WorldState ls, boolean am_i_blue, Point2D.Double point, boolean include_enemy) {
 		Robot enemy = am_i_blue ? ls.getYellowRobot() : ls.getBlueRobot();
 		Vector2D[] enemy_pts = new Vector2D[] {
 				new Vector2D(enemy.getFrontLeft()),
@@ -227,9 +240,11 @@ public class Tools {
 		if (temp.getLength() < min.getLength())
 			min = temp;
 		// closest distance to enemy
+		if (include_enemy) {
 		temp = closestDistance(enemy_pts, new Vector2D(point));
 		if (temp.getLength() < min.getLength())
 			min = temp;
+		}
 		// we have our point
 		return min;
 	}
@@ -256,32 +271,39 @@ public class Tools {
 	 * @param worldState in centimeters
 	 * @param am_i_blue
 	 * @param my_goal_left
+	 * @param id which network is receiving it
 	 * @return the input array
 	 */
-	public static double[] generateAIinput(WorldState worldState, boolean am_i_blue, boolean my_goal_left) {
+	public static double[] generateAIinput(WorldState worldState, boolean am_i_blue, boolean my_goal_left, int id) {
 		Robot me = am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot();
-		//Robot enemy = am_i_blue ? worldState.getYellowRobot() : worldState.getBlueRobot();
+		Robot enemy = am_i_blue ? worldState.getYellowRobot() : worldState.getBlueRobot();
 		//Vector2D goal = new Vector2D(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM);
 		// get coordinates relative to table
-		//Vector2D my_coords = new Vector2D(me.getCoords());
-		//Vector2D en_coords = new Vector2D(enemy.getCoords());
+		Vector2D my_coords = new Vector2D(me.getCoords());
+		Vector2D en_coords = new Vector2D(enemy.getCoords());
 		Vector2D ball = new Vector2D(worldState.getBallCoords());
-		//Vector2D nearest = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getCoords());
+		Vector2D nearest = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getCoords(), false);
 		// rel coords
 		Vector2D rel_ball = getLocalVector(me, ball);
 		//Vector2D rel_goal = getLocalVector(me, goal);
-		//Vector2D rel_coll = getLocalVector(me, Vector2D.add(my_coords, nearest));
-		
+		Vector2D rel_coll = getLocalVector(me, Vector2D.add(my_coords, nearest));
+		Vector2D rel_en = getLocalVector(me, en_coords);
 		// if you change something here, don't forget to change number of inputs in trainer
-		return new double[] {
-				AI_normalizeCoordinateTo1(rel_ball.getX(), PITCH_WIDTH_CM),
-				AI_normalizeCoordinateTo1(rel_ball.getY(), PITCH_WIDTH_CM),
-				//AI_normalizeCoordinateTo1(rel_goal.getX(), PITCH_WIDTH_CM),
-				//AI_normalizeCoordinateTo1(rel_goal.getY(), PITCH_WIDTH_CM),
-				//AI_normalizeCoordinateTo1(rel_coll.getX(), PITCH_WIDTH_CM),
-				//AI_normalizeCoordinateTo1(rel_coll.getY(), PITCH_WIDTH_CM),
-				
-		};
+		switch (id) {
+		case 0:
+			return new double[] {
+					AI_normalizeCoordinateTo1(rel_ball.getX(), PITCH_WIDTH_CM),
+					AI_normalizeCoordinateTo1(rel_coll.getX(), 60),
+					AI_normalizeCoordinateTo1(rel_en.getX(), 60),
+			};
+		case 1:
+			return new double[] {
+					AI_normalizeAngleTo1(Vector2D.getDirection(rel_ball)),
+					AI_normalizeAngleTo1(Vector2D.getDirection(rel_coll)),
+					AI_normalizeAngleTo1(Vector2D.getDirection(rel_en)),
+			};
+		}
+		return null;		
 	}
 	
 	/**
@@ -313,14 +335,22 @@ public class Tools {
 	 * @return mapped between 0 and 1 wrt width of pitch
 	 */
 	private static double AI_normalizeCoordinateTo1(double length, double threshold) {
-		if (length > threshold)
-			return 0;
-		length = (threshold-length)/threshold;
-		if (length < 0)
-			length = 0;
+		length = length/threshold;//(threshold-length)/threshold;
+		if (length < -1)
+			length = -1;
 		if (length > 1)
 			length = 1;
 		return length;
+	}
+	
+	/**
+	 * FOR AI ONLY, DON'T USE FOR ANYTHING ELSE!
+	 * Maps angle between 0 and 1
+	 * @param angle the angle in deg
+	 * @return mapped between 0 and 1 wrt width of pitch
+	 */
+	private static double AI_normalizeAngleTo1(double angle) {
+		return (normalizeAngle(angle))/180d;
 	}
 	
 	/**
@@ -363,8 +393,10 @@ public class Tools {
 	 */
 	public static int recoverOutput(double[] output) {
 		double max = 0;
+		double sum = 0;
 		int id = 0;
 		for (int i = 0; i < output.length; i++) {
+			sum+=output[i];
 			if (output[i] == Double.NaN)
 				return -1;
 			if (output[i] > max) {
@@ -372,6 +404,8 @@ public class Tools {
 				id = i;
 			}
 		}
+		if (sum == 0)
+			return -1;
 		return id;
 	}
 	
@@ -404,18 +438,6 @@ public class Tools {
 		for (int i = 1; i < array.length; i++)
 			ans=ans+"\t"+array[i];
 		return ans+"\t]";
-	}
-	
-	/**
-	 * Just for printing arrays
-	 * @param array
-	 * @return
-	 */
-	public static String printArray(Double[] array) {
-		Double[] ans = new Double[array.length];
-		for (int i = 0; i < ans.length; i++)
-			ans[i] = array[i];
-		return printArray(ans);
 	}
 	
 	/**

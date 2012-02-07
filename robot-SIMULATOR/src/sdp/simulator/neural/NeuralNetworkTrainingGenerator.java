@@ -8,6 +8,7 @@ import org.neuroph.core.NeuralNetwork;
 import org.neuroph.core.learning.SupervisedTrainingElement;
 import org.neuroph.core.learning.TrainingSet;
 import org.neuroph.nnet.MultiLayerPerceptron;
+import org.neuroph.nnet.Perceptron;
 
 import sdp.common.Tools;
 import sdp.common.WorldState;
@@ -24,15 +25,15 @@ import sdp.simulator.VBrick;
 public class NeuralNetworkTrainingGenerator extends VBrick {
 
 	private final static int network_count = 2;
-	private final static int n_inputs = 2;
+	private final static int n_inputs = 3;
 	
 	private final static double network_desired_error = 99;
 	
 	private String fname;
 	
-	private final static long testing_time = 5000;
+	private final static long testing_time = 1000;
 	private final static long min_trai_time = 10000;
-	private final static long wait_time_for_1000_f = 4000;
+	private final static long wait_time_for_1000_f = 2000;
 	
 	// how much of the data should be used for testing instead of training
 	private final static double percentage_test = 25;
@@ -71,8 +72,8 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 		} catch (Exception e) {}
 		if (!allfine) {
 			// INITIALIZE NETWORKS HERE
-			nets[0] = new MultiLayerPerceptron(n_inputs, 19 ,9);
-			nets[1] = new MultiLayerPerceptron(n_inputs, 5 ,2);
+			nets[0] = new MultiLayerPerceptron(n_inputs, 4, 3);
+			nets[1] = new MultiLayerPerceptron(n_inputs, 4, 3);
 			for (int i = 0; i < tsets.length; i++) {
 				nets[i].randomizeWeights();
 			}
@@ -139,30 +140,13 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 							// outputs normalized to 1
 							boolean
 							is_it_kicking = is_kicking;
-							int pos = -1;
-							if (desired_speed > 0	&& desired_turning_speed > 0)
-								pos = 0;
-							if (desired_speed > 0	&& desired_turning_speed < 0)
-								pos = 1;
-							if (desired_speed > 0	&& desired_turning_speed == 0)
-								pos = 2;
-							if (desired_speed < 0	&& desired_turning_speed > 0)
-								pos = 3;
-							if (desired_speed < 0	&& desired_turning_speed < 0)
-								pos = 4;
-							if (desired_speed < 0	&& desired_turning_speed == 0)
-								pos = 5;
-							if (desired_speed == 0	&& desired_turning_speed > 0)
-								pos = 6;
-							if (desired_speed == 0	&& desired_turning_speed < 0)
-								pos = 7;
-							if (desired_speed == 0	&& desired_turning_speed == 0)
-								pos = 8;
 							// create training set
-							double[] input = Tools.generateAIinput(worldState, am_i_blue, my_goal_left);
-							//System.out.println("Out: "+Tools.printArray(input));
-							tsets[0].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(pos, 9)));
-							tsets[1].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(is_it_kicking ? 0 : 1, 2)));
+							tsets[0].addElement(new SupervisedTrainingElement(
+									Tools.generateAIinput(worldState, am_i_blue, my_goal_left, 0),
+									Tools.generateOutput(desired_speed == 0 ? 0 : (desired_speed > 0 ? 1 : 2), 3)));
+							tsets[1].addElement(new SupervisedTrainingElement(
+									Tools.generateAIinput(worldState, am_i_blue, my_goal_left, 1),
+									Tools.generateOutput(desired_turning_speed == 0 ? 0 : (desired_turning_speed > 0 ? 1 : 2), 3)));
 							frames++;
 							if (frames % 100 == 0)
 								System.out.println(frames+" frames recorded last - "+frames+" and "+desired_speed);
@@ -195,8 +179,7 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	 */
 	public void Save() {
 		double testing_last = frames*percentage_test/100d;
-		if (frames < testing_last)
-			System.out.println("Too little test data. Provide more than "+testing_last+" frames");
+		System.out.println("Preparing sets...");
 		// split training arrays into testing and training
 		@SuppressWarnings("unchecked")
 		final TrainingSet<SupervisedTrainingElement>[] training = new TrainingSet[network_count];
@@ -214,15 +197,19 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 				else
 					training[i].addElement(new SupervisedTrainingElement(pair.getInputArray(), pair.getIdealArray()));
 			}
+			tsets[i].save(fname+"/ts"+i+".tset");
+			tsets[i].saveAsTxt(fname+"/csv-ts"+i+".txt", " ");
+			tsets[i].clear();
+			tsets[i] = null;
 		}
 		// start learning
+		// TODO relative velocity of ball instead of positt
 		saving = true;
-		final long waittime = frames < 2000 ? 2*wait_time_for_1000_f : wait_time_for_1000_f*frames/1000;
+		final long waittime = (long) (wait_time_for_1000_f*frames/1000d);
 		new Thread() {
 			@Override
 			public void run() {
-				for (int i = 0; i < tsets.length; i++)
-					if (tsets[i] != null) {
+				for (int i = 0; i < tsets.length; i++) {
 						skip = false;
 						int outputs = nets[i].getOutputNeurons().size();
 						double accuracy = 0;
@@ -264,14 +251,10 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 							sleep(500);
 						} catch (InterruptedException e) {}
 						nets[i].save(fname+"/nn"+i+".nnet");
-						tsets[i].save(fname+"/ts"+i+".tset");
-						tsets[i].saveAsTxt(fname+"/csv-ts"+i+".txt", " ");
 						testing[i].clear();
 						testing[i] = null;
 						training[i].clear();
 						training[i] = null;
-						tsets[i].clear();
-						tsets[i] = null;
 						System.out.println("Saved");
 					}
 				saving = false;
@@ -291,7 +274,10 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 			net.setInput(input);
 			net.calculate();
 			double[] noutput = net.getOutput();
-			accuracy += Tools.recoverOutput(noutput) == Tools.recoverOutput(output) ? 100d/sisze : 0;
+			int out1 = Tools.recoverOutput(noutput);
+			int out2 = Tools.recoverOutput(output);
+			if (out1 != -1)
+				accuracy += out1  == out2 ? 100d/sisze : 0;
 		}
 		return accuracy;
 	}
