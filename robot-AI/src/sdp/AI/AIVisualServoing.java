@@ -1,6 +1,7 @@
 package sdp.AI;
 
 import java.io.IOException;
+import java.awt.geom.Point2D;
 
 import sdp.common.Communicator;
 import sdp.common.Robot;
@@ -10,15 +11,16 @@ import sdp.common.WorldStateProvider;
 import sdp.common.Communicator.opcode;
 
 public class AIVisualServoing extends AI {
-	
+
 	// Ball and goal position
 	private double distance_to_ball = 0;
 	private double distance_to_goal = 0;
+	private Point2D.Double start_point; // Used to measure distance for dribble
 
 	public AIVisualServoing(Communicator Comm, WorldStateProvider Obs) {
 		super(Comm, Obs);
 	}
-	
+
 	/**
 	 * This method is fired when a new state is available. Decisions should be done here.
 	 * @param new_state the new world state (low-pass filtered)
@@ -29,16 +31,49 @@ public class AIVisualServoing extends AI {
 		distance_to_ball = Tools.getDistanceBetweenPoint(robot.getCoords(), worldState.getBallCoords());
 		distance_to_goal = Tools.getDistanceBetweenPoint(robot.getCoords(), enemy_goal);
 
-		
+
 		switch (state) {
 		case chase_ball:
 			chaseBall();
 			break;
-			
+
 		case got_ball:
 			alignToGoal();
 			break;
+			
+		case dribble:
+			dribbleBall();
+			break;
 		}
+		
+		
+			
+	}
+	
+	
+	/**
+	 * Method to dribble ball 30cm.
+	 * Used for Milestone 2.
+	 */
+	public void dribbleBall() {
+		if (start_point == null) {
+			start_point = robot.getCoords();
+		}
+		double distance = Tools.getDistanceBetweenPoint(robot.getCoords(), start_point);
+		System.out.println("distance: " + distance);
+		try {
+		if (distance > 20) {
+			//stop
+			mComm.sendMessage(opcode.operate, (byte)0, (byte)0, (byte) 30);
+		} else {
+			//go forward
+			mComm.sendMessage(opcode.operate, (byte)25, (byte)0);
+		}
+		
+		} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 	}
 
 	/**
@@ -89,25 +124,25 @@ public class AIVisualServoing extends AI {
 	 * Aims and shoots the ball into the opposing goal. 
 	 */
 	public void alignToGoal(){
-		
+
 		System.out.println("I'm in ALIGN TO GOAL :O");
-	
+
 		double angle_between = anglebetween(robot.getCoords(), enemy_goal);
 		double turning_angle = angle_between - robot.getAngle();
 		byte forward_speed = 5;
-		
+
 		//System.out.println("Turning angle: " + turning_angle + " Angle between:" + angle_between + " Robot get angle: " + robot.getAngle());
 		//System.out.println(robot.getCoords() + " " + worldState.getBallCoords());
 		// Keep the turning angle between -180 and 180
 		if (turning_angle > 180) turning_angle -= 360;
 		if (turning_angle < -180) turning_angle += 360;
-		
-		
+
+
 		if (distance_to_goal < Robot.LENGTH_CM) forward_speed = 0;
-		
+
 		System.out.println(distance_to_goal);
-		
-		
+
+
 		if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
 		if (turning_angle < -128) turning_angle = -128;
 		// don't exceed speed limit
@@ -126,21 +161,42 @@ public class AIVisualServoing extends AI {
 			}
 			
 			else if (distance_to_goal > 1) {
+
 				if(!(distance_to_goal <100)){
 					mComm.sendMessage(opcode.operate, (byte)60, (byte)0);
 				} else{
 					mComm.sendMessage(opcode.kick);	
 				}
 				System.out.println("GOING FORWARD TO GOAL");
-				
+
 			} else {
 				System.out.println("Lost contact with ball, going back to chaseBall");
 				setMode(mode.chase_ball);
 			}
-				
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-
+	
+	/**
+	 * Move behind the ball before attempting to score
+	 */
+	public void navigateBehindBall() {
+		
+	}
+	
+	/**
+	 * Defend against penalties
+	 */
+	public void penaltiesDefend() {
+		//TODO: Find direction of opposing robot and move into intercept path.
+	}
+	
+	/**
+	 * Score a penalty
+	 */
+	public void penaltiesAttack() {
+		//TODO: Determine shoot path - Turn and shoot quickly.
+	}
 }

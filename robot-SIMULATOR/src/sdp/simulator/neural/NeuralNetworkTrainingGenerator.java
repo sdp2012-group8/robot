@@ -21,7 +21,8 @@ import sdp.simulator.VBrick;
  */
 public class NeuralNetworkTrainingGenerator extends VBrick {
 
-	private final static int network_count = 5;
+	private final static int network_count = 3;
+	private final static int n_inputs = 7;
 	
 	private String fname;
 
@@ -38,7 +39,6 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	
 	private boolean saving = false;
 
-	private final static int n_inputs = 9;
 
 	/**
 	 * Initialize neural network
@@ -57,11 +57,15 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 				nets[i] = NeuralNetwork.load(fname+"/nn"+i+".nnet");
 			}
 		} catch (Exception e) {}
-		if (!allfine)
+		if (!allfine) {
+			// INITIALIZE NETWORKS HERE
+			nets[0] = new MultiLayerPerceptron(n_inputs, 5 ,3);
+			nets[1] = new MultiLayerPerceptron(n_inputs, 5 ,3);
+			nets[2] = new MultiLayerPerceptron(n_inputs, 5 ,2);
 			for (int i = 0; i < tsets.length; i++) {
-				nets[i] = new MultiLayerPerceptron(n_inputs, 5 ,2);
 				nets[i].randomizeWeights();
 			}
+		}
 		mObs = new WorldStateObserver(provider);
 		for (int i = 0; i < tsets.length; i++)
 			if (nets[i] == null) {
@@ -111,7 +115,7 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 				tsets[i].clear();
 				tsets[i] = null;
 			}
-			tsets[i] = new TrainingSet<SupervisedTrainingElement>(n_inputs, 2);
+			tsets[i] = new TrainingSet<SupervisedTrainingElement>(nets[i].getInputNeurons().size(), nets[i].getOutputNeurons().size());
 		}
 		System.out.println("Starting record");
 		new Thread() {
@@ -129,11 +133,9 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 							is_it_kicking = is_kicking;
 							// create training set
 							double[] input = Tools.generateAIinput(oldWorldState, am_i_blue, my_goal_left);
-							tsets[0].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(is_going_forwards)));
-							tsets[1].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(is_standing_still)));
-							tsets[2].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(is_turning_right)));
-							tsets[3].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(is_not_turning)));
-							tsets[4].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(is_it_kicking)));
+							tsets[0].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(is_standing_still ? 0 : (is_going_forwards ? 1 : 2), 3)));
+							tsets[1].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(is_not_turning ? 0 : (is_turning_right ? 1 : 2), 3)));
+							tsets[2].addElement(new SupervisedTrainingElement(input, Tools.generateOutput(is_it_kicking ? 0 : 1, 2)));
 							frames++;
 							if (frames % 100 == 0)
 								System.out.println(frames+" frames recorded last - "+frames+" and "+desired_speed);
