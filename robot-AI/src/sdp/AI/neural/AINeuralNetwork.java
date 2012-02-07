@@ -12,7 +12,7 @@ import sdp.common.Communicator.opcode;
 
 public class AINeuralNetwork extends AI {
 	
-	private final static int network_count = 3;
+	private final static int network_count = 2;
 	private NeuralNetwork[] nets = new NeuralNetwork[network_count];
 	private boolean blue_selected;
 
@@ -41,24 +41,57 @@ public class AINeuralNetwork extends AI {
 		}
 		int[] results = new int[nets.length];
 		// get results
-		for (int i = 0; i < results.length; i++)
+		for (int i = 0; i < results.length; i++) {
 			results[i] = Tools.recoverOutput(nets[i].getOutput());
-
+			if (results[i] == -1) {
+				System.out.println("The network is misbehaving");
+				return;
+			}
+		}
+		System.out.println(results[0]+" with confidence "+String.format("%.2f", 100d*Tools.probability(results[0], nets[0].getOutput()))+"%");
 		try {
-			int speed = 0;
-			if (results[0] == 1)
-				speed = MAX_SPEED_CM_S;
-			else if (results[0] == 2)
-				speed = - MAX_SPEED_CM_S;
-			
-			int turn_speed = 0;
-			if (results[1] == 1)
-				turn_speed = 127;
-			else if (results[1] == 2)
-				turn_speed = -127;
-			
+			int speed = 0, turn_speed = 0;
+			switch (results[0]) {
+			case 0:
+				speed = 35;
+				turn_speed = 90;
+				break;
+			case 1:
+				speed = 35;
+				turn_speed = -90;
+				break;
+			case 2:
+				speed = 35;
+				turn_speed = 0;
+				break;
+			case 3:
+				speed = -35;
+				turn_speed = 90;
+				break;
+			case 4:
+				speed = -35;
+				turn_speed = -90;
+				break;
+			case 5:
+				speed = -35;
+				turn_speed = 0;
+				break;
+			case 6:
+				speed = 0;
+				turn_speed = 90;
+				break;
+			case 7:
+				speed = 0;
+				turn_speed = -90;
+				break;
+			case 8:
+				speed = 0;
+				turn_speed = 0;
+				break;
+
+			}
 			mComm.sendMessage(opcode.operate, (byte) speed, (byte) turn_speed);
-			if (results[2] == 1)
+			if (results[1] == 1)
 				mComm.sendMessage(opcode.kick);
 		} catch (IOException e) {
 			e.printStackTrace();

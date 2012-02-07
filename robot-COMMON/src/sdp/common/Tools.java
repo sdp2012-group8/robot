@@ -263,10 +263,14 @@ public class Tools {
 	 */
 	public static double[] generateAIinput(WorldState worldState, boolean am_i_blue, boolean my_goal_left) {
 		Robot me = am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot();
+		//Robot enemy = am_i_blue ? worldState.getYellowRobot() : worldState.getBlueRobot();
 		Vector2D goal = new Vector2D(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM);
+		
 		// get coordinates relative to table
 		Vector2D my_coords = new Vector2D(me.getCoords());
+		//Vector2D en_coords = new Vector2D(enemy.getCoords());
 		Vector2D ball = new Vector2D(worldState.getBallCoords());
+
 		// get nearest collision points
 		Vector2D cp_f_l = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getFrontLeft()),
 				cp_b_r = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getBackRight());
@@ -279,15 +283,22 @@ public class Tools {
 		double angle_to_cp_b_r = getTurningAngle(me, cp_b_r);
 		double collis_dist = (Vector2D.subtract(my_coords, cp_f_l).getLength()+Vector2D.subtract(my_coords, cp_b_r).getLength())/2;
 
+
+		//Vector2D nearest = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getCoords());
+		// rel coords
+		Vector2D rel_ball = getLocalVector(me, ball);
+		//Vector2D rel_goal = getLocalVector(me, goal);
+		//Vector2D rel_coll = getLocalVector(me, Vector2D.add(my_coords, nearest));
+		
 		// if you change something here, don't forget to change number of inputs in trainer
 		return new double[] {
-				AI_normalizeAngleTo1(angle_to_ball),
-				AI_normalizeCoordinateTo1(dist_to_ball),
-				AI_normalizeAngleTo1(angle_to_goal),
-				AI_normalizeCoordinateTo1(dist_to_goal),
-				AI_normalizeAngleTo1(angle_to_cp_f_l),
-				AI_normalizeAngleTo1(angle_to_cp_b_r),
-				AI_normalizeCoordinateTo1(collis_dist)
+				AI_normalizeCoordinateTo1(rel_ball.getX(), PITCH_WIDTH_CM),
+				AI_normalizeCoordinateTo1(rel_ball.getY(), PITCH_WIDTH_CM),
+				//AI_normalizeCoordinateTo1(rel_goal.getX(), PITCH_WIDTH_CM),
+				//AI_normalizeCoordinateTo1(rel_goal.getY(), PITCH_WIDTH_CM),
+				//AI_normalizeCoordinateTo1(rel_coll.getX(), PITCH_WIDTH_CM),
+				//AI_normalizeCoordinateTo1(rel_coll.getY(), PITCH_WIDTH_CM),
+				
 		};
 	}
 
@@ -303,13 +314,26 @@ public class Tools {
 	}
 
 	/**
+	 * Transforms a vector from table coordinates to robot coordinates
+	 * @param me
+	 * @param vector
+	 * @return
+	 */
+	public static Vector2D getLocalVector(Robot me, Vector2D vector) {
+		return Vector2D.rotateVector(Vector2D.subtract(vector, new Vector2D(me.getCoords())), -me.getAngle());
+	}
+	
+	/**
 	 * FOR AI ONLY, DON'T USE FOR ANYTHING ELSE!
 	 * Maps distance between 0 and 1
 	 * @param length the length in centimeters
+	 * @param threshold the normalization; if length is meaningful only for short distances, use smaller one
 	 * @return mapped between 0 and 1 wrt width of pitch
 	 */
-	private static double AI_normalizeCoordinateTo1(double length) {
-		length = (1+length/Tools.PITCH_WIDTH_CM)/2;
+	private static double AI_normalizeCoordinateTo1(double length, double threshold) {
+		if (length > threshold)
+			return 0;
+		length = (threshold-length)/threshold;
 		if (length < 0)
 			length = 0;
 		if (length > 1)
@@ -362,12 +386,82 @@ public class Tools {
 	public static int recoverOutput(double[] output) {
 		double max = 0;
 		int id = 0;
-		for (int i = 0; i < output.length; i++)
+		for (int i = 0; i < output.length; i++) {
+			if (output[i] == Double.NaN)
+				return -1;
 			if (output[i] > max) {
 				max = output[i];
 				id = i;
 			}
+		}
 		return id;
+	}
+	
+	/**
+	 * AI:
+	 * Gives the calculated probability of taking action item
+	 * give network output
+	 * @param item
+	 * @param output
+	 * @return
+	 */
+	public static double probability(int item, double[] output) {
+		double sum = 0;
+		for (int i = 0; i < output.length; i++)
+			sum+=output[i];
+		return output[item]/sum;
+	}
+	
+	/**
+	 * Just for printing arrays
+	 * @param array
+	 * @return
+	 */
+	public static String printArray(Object[] array) {
+		if (array == null || array.length == 0)
+			return "[\tEMPTY\t]";
+		if (array.length == 1)
+			return "[\t"+array[0]+"\t]";
+		String ans = "["+array[0];
+		for (int i = 1; i < array.length; i++)
+			ans=ans+"\t"+array[i];
+		return ans+"\t]";
+	}
+	
+	/**
+	 * Just for printing arrays
+	 * @param array
+	 * @return
+	 */
+	public static String printArray(Double[] array) {
+		Double[] ans = new Double[array.length];
+		for (int i = 0; i < ans.length; i++)
+			ans[i] = array[i];
+		return printArray(ans);
+	}
+	
+	/**
+	 * Just for printing arrays
+	 * @param array
+	 * @return
+	 */
+	public static String printArray(int[] array) {
+		Integer[] ans = new Integer[array.length];
+		for (int i = 0; i < ans.length; i++)
+			ans[i] = array[i];
+		return printArray(ans);
+	}
+	
+	/**
+	 * Just for printing arrays
+	 * @param array
+	 * @return
+	 */
+	public static String printArray(double[] array) {
+		Double[] ans = new Double[array.length];
+		for (int i = 0; i < ans.length; i++)
+			ans[i] = array[i];
+		return printArray(ans);
 	}
 
 	public static Point2D.Double pointSubtract(Point2D.Double a, Point2D.Double  b) {
