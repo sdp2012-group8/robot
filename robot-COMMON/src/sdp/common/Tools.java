@@ -261,30 +261,25 @@ public class Tools {
 	public static double[] generateAIinput(WorldState worldState, boolean am_i_blue, boolean my_goal_left) {
 		Robot me = am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot();
 		//Robot enemy = am_i_blue ? worldState.getYellowRobot() : worldState.getBlueRobot();
-		Vector2D goal = new Vector2D(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM);
+		//Vector2D goal = new Vector2D(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM);
 		// get coordinates relative to table
-		Vector2D my_coords = new Vector2D(me.getCoords());
+		//Vector2D my_coords = new Vector2D(me.getCoords());
 		//Vector2D en_coords = new Vector2D(enemy.getCoords());
 		Vector2D ball = new Vector2D(worldState.getBallCoords());
-		Vector2D nearest = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getCoords());
-		// rel angles
-		double angle_to_ball = getTurningAngle(me, ball);
-		double dist_to_ball = Vector2D.subtract(Vector2D.divide(Vector2D.add(new Vector2D(me.getFrontLeft()), new Vector2D(me.getFrontRight())),2), ball).getLength();
-		double angle_to_goal = getTurningAngle(me, goal);
-		double dist_to_goal = Vector2D.subtract(Vector2D.divide(Vector2D.add(new Vector2D(me.getFrontLeft()), new Vector2D(me.getFrontRight())),2), goal).getLength();
-		//double angle_to_en = getTurningAngle(me, en_coords);
-		//double dist_to_en = Vector2D.subtract(my_coords, en_coords).getLength();
-		//double angle_collis = getTurningAngle(me, coll);
-		double dist_near = nearest.getLength();
-		double angle_near = getTurningAngle(me, Vector2D.add(my_coords, nearest));
+		//Vector2D nearest = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getCoords());
+		// rel coords
+		Vector2D rel_ball = getLocalVector(me, ball);
+		//Vector2D rel_goal = getLocalVector(me, goal);
+		//Vector2D rel_coll = getLocalVector(me, Vector2D.add(my_coords, nearest));
+		
 		// if you change something here, don't forget to change number of inputs in trainer
 		return new double[] {
-				AI_normalizeAngleTo1(angle_to_ball),
-				AI_normalizeCoordinateTo1(dist_to_ball, PITCH_WIDTH_CM),
-				AI_normalizeAngleTo1(angle_to_goal),
-				AI_normalizeCoordinateTo1(dist_to_goal, PITCH_WIDTH_CM),
-				AI_normalizeAngleTo1(angle_near),
-				AI_normalizeCoordinateTo1(dist_near, PITCH_WIDTH_CM),
+				AI_normalizeCoordinateTo1(rel_ball.getX(), PITCH_WIDTH_CM),
+				AI_normalizeCoordinateTo1(rel_ball.getY(), PITCH_WIDTH_CM),
+				//AI_normalizeCoordinateTo1(rel_goal.getX(), PITCH_WIDTH_CM),
+				//AI_normalizeCoordinateTo1(rel_goal.getY(), PITCH_WIDTH_CM),
+				//AI_normalizeCoordinateTo1(rel_coll.getX(), PITCH_WIDTH_CM),
+				//AI_normalizeCoordinateTo1(rel_coll.getY(), PITCH_WIDTH_CM),
 				
 		};
 	}
@@ -298,6 +293,16 @@ public class Tools {
 	 */
 	public static double getTurningAngle(Robot me, Vector2D point) {
 		return Tools.normalizeAngle(-me.getAngle()+Vector2D.getDirection(new Vector2D(-me.getCoords().getX()+point.getX(), -me.getCoords().getY()+point.getY())));
+	}
+	
+	/**
+	 * Transforms a vector from table coordinates to robot coordinates
+	 * @param me
+	 * @param vector
+	 * @return
+	 */
+	public static Vector2D getLocalVector(Robot me, Vector2D vector) {
+		return Vector2D.rotateVector(Vector2D.subtract(vector, new Vector2D(me.getCoords())), -me.getAngle());
 	}
 	
 	/**
@@ -316,10 +321,6 @@ public class Tools {
 		if (length > 1)
 			length = 1;
 		return length;
-	}
-	
-	private static double AI_normalizeAngleTo1(double angle) {
-		return (180+normalizeAngle(angle))/360;
 	}
 	
 	/**
