@@ -4,7 +4,7 @@ import java.awt.geom.Point2D;
 
 /**
  * 
- * Takes care of vecotor/location operations
+ * Takes care of vector/location operations
  * 
  * @author MartinMarinov
  *

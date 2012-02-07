@@ -58,7 +58,7 @@ public class Brick {
 			 * Add your movement logic inside this method
 			 */
 			@Override
-			public void receiveMessage(opcode op, byte[] args, Communicator controler) {
+			public void receiveMessage(opcode op, byte[] args, Communicator controller) {
 				final int def_vol = Sound.getVolume();
 				// to send messages back to PC, use mCont.sendMessage
 				switch (op) {
@@ -191,7 +191,7 @@ public class Brick {
 						// to degrees per second for the motor
 						float conv_angle = 0;
 						if (args.length > 1) conv_angle = args[1]*ROBOTR/WHEELR;
-						float speed_angle = args[0]/(0.017453292519943295f*WHEELR); // Radius*Pi*Angle/180
+						float speed_angle = (args[0]*10)/(0.017453292519943295f*WHEELR); // Radius*Pi*Angle/180
 						// set desired speed
 						speed_a = speed_angle+conv_angle;
 						speed_c = speed_angle-conv_angle;
@@ -202,7 +202,7 @@ public class Brick {
 						// check if we need to start motors or turn their direction
 						if (args.length > 2) {
 							//change acceleration
-							acceleration = args[2];
+							acceleration = args[2]*10;
 							acc = (int) (acceleration/(0.017453292519943295*WHEELR));
 							turn_acceleration = acc*WHEELR/ROBOTR;
 						}

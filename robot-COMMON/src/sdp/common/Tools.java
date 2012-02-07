@@ -4,61 +4,64 @@ import java.awt.Point;
 import java.awt.geom.Point2D;
 
 public class Tools {
-	
+
 	// pitch constants
 	public final static double PITCH_WIDTH_CM = 244;
 	public final static double PITCH_HEIGHT_CM = 113.7;
 	public final static double GOAL_Y_CM = PITCH_HEIGHT_CM/2;
 
 	public static double getDistBetweenPoints(Point p1, Point p2)
-    {
-    	return Math.sqrt((double) (Math.pow(p1.x-p2.x,2) + (Math.pow(p1.y-p2.y,2))));
-    }
-    
-    public static Point getRelativePos(Point startPoint, Point relativePoint)
-    {
-    	return new Point(relativePoint.x - startPoint.x,relativePoint.y-startPoint.y);
-    }
-    
-    
-    public static double getAngleFrom0_0(Point pos)
-    {
-    	//deals with cases where pos is on the x-axis
-    	if (pos.y == 0)
-    	{
-    		return (pos.x > 0 ? 0: Math.PI);
-    	}
-    	else
-    	{
-    		if (pos.x > 0)
-    			return (Math.atan(((float) pos.y) / pos.x));
-    		else
-    			return (Math.PI + Math.atan(((float) pos.y) / pos.x));
-    	}
-    }
-    
-    public static void printCoors(String s, Point c)
-    {
-    	System.out.println(s + c.x + ", " + c.y);
-    }
-    
-    public static void rest(int howLong)
-    {
-    	try {
+	{
+		return Math.sqrt((double) (Math.pow(p1.x-p2.x,2) + (Math.pow(p1.y-p2.y,2))));
+	}
+
+	public static Point getRelativePos(Point startPoint, Point relativePoint)
+	{
+		return new Point(relativePoint.x - startPoint.x,relativePoint.y-startPoint.y);
+	}
+
+	public static boolean isLeft(Point2D.Double a, Point2D.Double b, Point2D.Double c){
+		return ((b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x)) > 0;
+	}
+
+	public static double getAngleFrom0_0(Point pos)
+	{
+		//deals with cases where pos is on the x-axis
+		if (pos.y == 0)
+		{
+			return (pos.x > 0 ? 0: Math.PI);
+		}
+		else
+		{
+			if (pos.x > 0)
+				return (Math.atan(((float) pos.y) / pos.x));
+			else
+				return (Math.PI + Math.atan(((float) pos.y) / pos.x));
+		}
+	}
+
+	public static void printCoors(String s, Point c)
+	{
+		System.out.println(s + c.x + ", " + c.y);
+	}
+
+	public static void rest(int howLong)
+	{
+		try {
 			Thread.sleep(howLong);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-    }
+	}
 
-    public static double getAngleToFacePoint(Point ourCoor, double angle, Point target) {
+	public static double getAngleToFacePoint(Point ourCoor, double angle, Point target) {
 
 		// first I want to find where the target is in relation to our robot
 		Point targetRelativePos = Tools.getRelativePos(ourCoor, target);
-		
+
 		double targetFromNxt = Tools.getAngleFrom0_0(targetRelativePos);
 
-		
+
 		if (targetFromNxt < 0)
 			targetFromNxt = 2 * Math.PI + targetFromNxt;
 
@@ -72,24 +75,24 @@ public class Tools {
 		else if (howMuchToTurn > Math.PI)
 			howMuchToTurn = - (2 * Math.PI - howMuchToTurn);
 
-		
+
 		return howMuchToTurn;
 
 	}
-	
-    /**
-     * Normalizes the given angle
-     * @param initial given angle in degrees
-     * @return normalized angle between -Pi and Pi
-     */
-    public static double normalizeAngle(double initial) {
-    	initial = initial % 360;
-    	if (initial > 180)
-    		initial -= 360;
-    	if (initial < -180)
-    		initial += 360;
-    	return initial;
-    }
+
+	/**
+	 * Normalizes the given angle
+	 * @param initial given angle in degrees
+	 * @return normalized angle between -Pi and Pi
+	 */
+	public static double normalizeAngle(double initial) {
+		initial = initial % 360;
+		if (initial > 180)
+			initial -= 360;
+		if (initial < -180)
+			initial += 360;
+		return initial;
+	}
 
 	/**
 	 * Calculates distance between two points.
@@ -101,92 +104,92 @@ public class Tools {
 	{
 		return Math.sqrt((double)(Math.pow(p1.x-p2.x,2)+(Math.pow(p1.y-p2.y,2))));
 	}
-    /**
-     * Rotate point p2 around point p1 by deg degrees
-     * @param p1 rotation point
-     * @param p2 point to be rotated
-     * @param deg degrees
-     * @return new rotated coordinates
-     */
-    public static Point rotatePoint(Point p1, Point p2, int deg)
-    {
-    	p2.x -= p1.x;
-    	p2.y -= p1.y;
-    	double rad = (double) Math.toRadians(deg);
-    	int xtemp;
-    	xtemp = (int) Math.round((p2.x * (double)Math.cos(rad)) - (p2.y * (double)Math.sin(rad)));
-    	p2.y = (int) Math.round((p2.x * (double)Math.sin(rad)) + (p2.y * (double)Math.cos(rad)));
-    	p2.x = xtemp;
-    	return new Point (p2.x+p1.x, p2.y+p1.y);
-    }
-    
-    /**
-     * Find the most common value in the given array
-     * @param in the input array
-     * @return the most common value
-     */
-    public static int goodAvg(int[] in){
-    	int[] values = new int[in.length];
-    	int[] counts = new int[in.length];
-    	for(int i = 0; i < in.length; i++){
-    		int c = gotInt(values, in[i]);
-    		if(c != -1){
-    			counts[c]++;
-    		} else {
-    	    	for(int ii = 0; ii < in.length; ii++){
-    	    		if(values[ii] == 0)
-    	    			values[ii] = in[ii];
-    	    	}
-    		}
-    	}
-    	int max = 0;
-    	int maxi = -1;
-    	for(int i = 0; i < in.length; i++){
-    		if(counts[i] > max){
-    			max = counts[i];
-    			maxi = i;
-    		}
-    	}
-    	return values[maxi];
-    }
-    /**
-     * Check if array in contains integer n
-     * @param in input array of ints
-     * @param n search for this number
-     * @return position or -1 if not found
-     */
-    public static int gotInt(int[] in, int n){
-    	for(int i = 0; i < in.length; i++){
-    		if(in[i] == n)
-    			return i;
-    	}
-    	return -1;
-    }
-    /**
-     * Push int n into array in. 0th element will be the new element.
-     * last element will be lost
-     * @param in array to be appended
-     * @param n int to be inserted
-     * @return new array
-     */
-    public static int[] push(int[] in, int n) {
+	/**
+	 * Rotate point p2 around point p1 by deg degrees
+	 * @param p1 rotation point
+	 * @param p2 point to be rotated
+	 * @param deg degrees
+	 * @return new rotated coordinates
+	 */
+	public static Point rotatePoint(Point p1, Point p2, int deg)
+	{
+		p2.x -= p1.x;
+		p2.y -= p1.y;
+		double rad = (double) Math.toRadians(deg);
+		int xtemp;
+		xtemp = (int) Math.round((p2.x * (double)Math.cos(rad)) - (p2.y * (double)Math.sin(rad)));
+		p2.y = (int) Math.round((p2.x * (double)Math.sin(rad)) + (p2.y * (double)Math.cos(rad)));
+		p2.x = xtemp;
+		return new Point (p2.x+p1.x, p2.y+p1.y);
+	}
+
+	/**
+	 * Find the most common value in the given array
+	 * @param in the input array
+	 * @return the most common value
+	 */
+	public static int goodAvg(int[] in){
+		int[] values = new int[in.length];
+		int[] counts = new int[in.length];
+		for(int i = 0; i < in.length; i++){
+			int c = gotInt(values, in[i]);
+			if(c != -1){
+				counts[c]++;
+			} else {
+				for(int ii = 0; ii < in.length; ii++){
+					if(values[ii] == 0)
+						values[ii] = in[ii];
+				}
+			}
+		}
+		int max = 0;
+		int maxi = -1;
+		for(int i = 0; i < in.length; i++){
+			if(counts[i] > max){
+				max = counts[i];
+				maxi = i;
+			}
+		}
+		return values[maxi];
+	}
+	/**
+	 * Check if array in contains integer n
+	 * @param in input array of ints
+	 * @param n search for this number
+	 * @return position or -1 if not found
+	 */
+	public static int gotInt(int[] in, int n){
+		for(int i = 0; i < in.length; i++){
+			if(in[i] == n)
+				return i;
+		}
+		return -1;
+	}
+	/**
+	 * Push int n into array in. 0th element will be the new element.
+	 * last element will be lost
+	 * @param in array to be appended
+	 * @param n int to be inserted
+	 * @return new array
+	 */
+	public static int[] push(int[] in, int n) {
 		for(int i = in.length-1; i > 0; i--){
 			in[i] = in[i-1];
 		}
 		in[0] = n;
 		return in;
-    }
-    
+	}
+
 	private static Point2D.Double toCentimeters(Point2D.Double original) {
 		return new Point2D.Double(original.getX()*PITCH_WIDTH_CM, original.getY()*PITCH_WIDTH_CM);
 	}
-	
+
 	private static Robot toCentimeters(Robot orig) {
 		Robot robot = new Robot(toCentimeters(orig.getCoords()), orig.getAngle());
 		robot.setCoords(true);
 		return robot;
 	}
-	
+
 	public static WorldState toCentimeters(WorldState orig) {
 		return new WorldState(
 				toCentimeters(orig.getBallCoords()),
@@ -194,7 +197,7 @@ public class Tools {
 				toCentimeters(orig.getYellowRobot()),
 				orig.getWorldImage());
 	}
-	
+
 	/**
 	 * Returns the vector to the closest collision point in the world (wall or enemy)
 	 * 
@@ -233,7 +236,7 @@ public class Tools {
 		// we have our point
 		return min;
 	}
-	
+
 	/**
 	 * Return the distance to the closest point in the set
 	 * @param pts set of points
@@ -249,7 +252,7 @@ public class Tools {
 		}
 		return min;
 	}
-	
+
 	/**
 	 * Generates input array for the AI
 	 * 
@@ -266,7 +269,7 @@ public class Tools {
 		Vector2D ball = new Vector2D(worldState.getBallCoords());
 		// get nearest collision points
 		Vector2D cp_f_l = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getFrontLeft()),
-				 cp_b_r = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getBackRight());
+				cp_b_r = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getBackRight());
 		// rel angles
 		double angle_to_ball = getTurningAngle(me, ball);
 		double dist_to_ball = Vector2D.subtract(my_coords, ball).getLength();
@@ -287,7 +290,7 @@ public class Tools {
 				AI_normalizeCoordinateTo1(collis_dist)
 		};
 	}
-	
+
 	/**
 	 * Gets how many degrees should a robot turn in order to face a point
 	 * Units don't matter as long as they are consistent.
@@ -298,7 +301,7 @@ public class Tools {
 	public static double getTurningAngle(Robot me, Vector2D point) {
 		return Tools.normalizeAngle(-me.getAngle()+Vector2D.getDirection(new Vector2D(-me.getCoords().getX()+point.getX(), -me.getCoords().getY()+point.getY())));
 	}
-	
+
 	/**
 	 * FOR AI ONLY, DON'T USE FOR ANYTHING ELSE!
 	 * Maps distance between 0 and 1
@@ -313,18 +316,18 @@ public class Tools {
 			length = 1;
 		return length;
 	}
-	
+
 	private static double AI_normalizeAngleTo1(double angle) {
 		return (180+normalizeAngle(angle))/360;
 	}
-	
+
 	/**
 	 * Change in state of a robot
 	 */
 	private static double delta(Robot old_r, Robot new_r) {
 		return old_r.getCoords().distance(new_r.getCoords())+Math.abs(new_r.getAngle()-old_r.getAngle());
 	}
-	
+
 	/**
 	 * Returns differences in two world states. If nothing changed a lot, the number would be very small
 	 * 
@@ -337,7 +340,7 @@ public class Tools {
 				delta(old_w.getYellowRobot(), new_w.getYellowRobot())+
 				new_w.getBallCoords().distance(old_w.getBallCoords());
 	}
-	
+
 	/**
 	 * Generate training output
 	 * @param condition condition to be encoded
@@ -349,7 +352,7 @@ public class Tools {
 			ans[i] = i == current_id ? 1 : 0;
 		return ans;
 	}
-	
+
 	/**
 	 * What was the original condition
 	 * 
@@ -367,4 +370,62 @@ public class Tools {
 		return id;
 	}
 
+	public static Point2D.Double pointSubtract(Point2D.Double a, Point2D.Double  b) {
+		return new Point2D.Double(a.x-b.x, a.y-b.y);
+	}
+
+	public static Point3D crossProduct(Point2D.Double a, Point2D.Double b) {
+		return crossProduct(new Point3D(a.x,a.y,0), new Point3D(b.x,b.y,0));
+	}
+
+	public static Point3D crossProduct(Point3D a, Point3D b) {
+		return new Point3D(a.y*b.z - a.z*b.y, a.x*b.z - a.z*b.x, a.x*b.y - a.y*b.x);
+	}
+
+	public static double dotProduct(Point3D a, Point3D b) {
+		return a.x*b.x + a.y*b.y + a.z*b.z;
+	}
+
+	public static boolean sameSide(Point2D.Double p1, Point2D.Double p2, Point2D.Double a, Point2D.Double b){
+		Point3D cp1 = crossProduct(pointSubtract(b,a), pointSubtract(p1,a));
+		Point3D cp2 = crossProduct(pointSubtract(b,a), pointSubtract(p2,a));
+		if (dotProduct(cp1, cp2) >= 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Calculates if a point p is within the triangle abc
+	 * @param p Point in triangle
+	 * @param a
+	 * @param b
+	 * @param c
+	 * @return returns true if point is in triangle, false otherwise
+	 */
+	public static boolean pointInTriangle(Point2D.Double p, Point2D.Double a, Point2D.Double b, Point2D.Double c) {
+		if (sameSide(p,a, b,c) && sameSide(p,b, a,c) && sameSide(p,c, a,b)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Calculates the point of intersection between two lines given 4 points
+	 * @param a
+	 * @param b
+	 * @param c
+	 * @param d
+	 * @return Returns the point of intersection or null if none exist
+	 */
+	public static Point2D.Double intersection(Point2D.Double a, Point2D.Double b, Point2D.Double c, Point2D.Double d) {
+		double D = (a.x-b.x)*(c.y-d.y) - (a.y-b.y)*(c.x-d.x);
+		if (D == 0) return null;
+		double xi = ((c.x-d.x)*(a.x*b.y-a.y*b.x)-(a.x-b.x)*(c.x*d.y-c.y*d.x))/D;
+		double yi = ((c.y-d.y)*(a.x*b.y-a.y*b.x)-(a.y-b.y)*(c.x*d.y-c.y*d.x))/D;
+
+		return new Point2D.Double(xi,yi);
+	}
 }
