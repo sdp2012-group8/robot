@@ -260,31 +260,32 @@ public class Tools {
 	 */
 	public static double[] generateAIinput(WorldState worldState, boolean am_i_blue, boolean my_goal_left) {
 		Robot me = am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot();
+		//Robot enemy = am_i_blue ? worldState.getYellowRobot() : worldState.getBlueRobot();
 		Vector2D goal = new Vector2D(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM);
 		// get coordinates relative to table
 		Vector2D my_coords = new Vector2D(me.getCoords());
+		//Vector2D en_coords = new Vector2D(enemy.getCoords());
 		Vector2D ball = new Vector2D(worldState.getBallCoords());
-		// get nearest collision points
-		Vector2D cp_f_l = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getFrontLeft()),
-				 cp_b_r = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getBackRight());
+		Vector2D nearest = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getCoords());
 		// rel angles
 		double angle_to_ball = getTurningAngle(me, ball);
-		double dist_to_ball = Vector2D.subtract(my_coords, ball).getLength();
+		double dist_to_ball = Vector2D.subtract(Vector2D.divide(Vector2D.add(new Vector2D(me.getFrontLeft()), new Vector2D(me.getFrontRight())),2), ball).getLength();
 		double angle_to_goal = getTurningAngle(me, goal);
-		double dist_to_goal = Vector2D.subtract(my_coords, goal).getLength();
-		double angle_to_cp_f_l = getTurningAngle(me, cp_f_l);
-		double angle_to_cp_b_r = getTurningAngle(me, cp_b_r);
-		double collis_dist = (Vector2D.subtract(my_coords, cp_f_l).getLength()+Vector2D.subtract(my_coords, cp_b_r).getLength())/2;
-
+		double dist_to_goal = Vector2D.subtract(Vector2D.divide(Vector2D.add(new Vector2D(me.getFrontLeft()), new Vector2D(me.getFrontRight())),2), goal).getLength();
+		//double angle_to_en = getTurningAngle(me, en_coords);
+		//double dist_to_en = Vector2D.subtract(my_coords, en_coords).getLength();
+		//double angle_collis = getTurningAngle(me, coll);
+		double dist_near = nearest.getLength();
+		double angle_near = getTurningAngle(me, Vector2D.add(my_coords, nearest));
 		// if you change something here, don't forget to change number of inputs in trainer
 		return new double[] {
 				AI_normalizeAngleTo1(angle_to_ball),
-				AI_normalizeCoordinateTo1(dist_to_ball),
+				AI_normalizeCoordinateTo1(dist_to_ball, PITCH_WIDTH_CM),
 				AI_normalizeAngleTo1(angle_to_goal),
-				AI_normalizeCoordinateTo1(dist_to_goal),
-				AI_normalizeAngleTo1(angle_to_cp_f_l),
-				AI_normalizeAngleTo1(angle_to_cp_b_r),
-				AI_normalizeCoordinateTo1(collis_dist)
+				AI_normalizeCoordinateTo1(dist_to_goal, PITCH_WIDTH_CM),
+				AI_normalizeAngleTo1(angle_near),
+				AI_normalizeCoordinateTo1(dist_near, PITCH_WIDTH_CM),
+				
 		};
 	}
 	
@@ -303,10 +304,13 @@ public class Tools {
 	 * FOR AI ONLY, DON'T USE FOR ANYTHING ELSE!
 	 * Maps distance between 0 and 1
 	 * @param length the length in centimeters
+	 * @param threshold the normalization; if length is meaningful only for short distances, use smaller one
 	 * @return mapped between 0 and 1 wrt width of pitch
 	 */
-	private static double AI_normalizeCoordinateTo1(double length) {
-		length = (1+length/Tools.PITCH_WIDTH_CM)/2;
+	private static double AI_normalizeCoordinateTo1(double length, double threshold) {
+		if (length > threshold)
+			return 0;
+		length = (threshold-length)/threshold;
 		if (length < 0)
 			length = 0;
 		if (length > 1)
@@ -359,12 +363,82 @@ public class Tools {
 	public static int recoverOutput(double[] output) {
 		double max = 0;
 		int id = 0;
-		for (int i = 0; i < output.length; i++)
+		for (int i = 0; i < output.length; i++) {
+			if (output[i] == Double.NaN)
+				return -1;
 			if (output[i] > max) {
 				max = output[i];
 				id = i;
 			}
+		}
 		return id;
+	}
+	
+	/**
+	 * AI:
+	 * Gives the calculated probability of taking action item
+	 * give network output
+	 * @param item
+	 * @param output
+	 * @return
+	 */
+	public static double probability(int item, double[] output) {
+		double sum = 0;
+		for (int i = 0; i < output.length; i++)
+			sum+=output[i];
+		return output[item]/sum;
+	}
+	
+	/**
+	 * Just for printing arrays
+	 * @param array
+	 * @return
+	 */
+	public static String printArray(Object[] array) {
+		if (array == null || array.length == 0)
+			return "[\tEMPTY\t]";
+		if (array.length == 1)
+			return "[\t"+array[0]+"\t]";
+		String ans = "["+array[0];
+		for (int i = 1; i < array.length; i++)
+			ans=ans+"\t"+array[i];
+		return ans+"\t]";
+	}
+	
+	/**
+	 * Just for printing arrays
+	 * @param array
+	 * @return
+	 */
+	public static String printArray(Double[] array) {
+		Double[] ans = new Double[array.length];
+		for (int i = 0; i < ans.length; i++)
+			ans[i] = array[i];
+		return printArray(ans);
+	}
+	
+	/**
+	 * Just for printing arrays
+	 * @param array
+	 * @return
+	 */
+	public static String printArray(int[] array) {
+		Integer[] ans = new Integer[array.length];
+		for (int i = 0; i < ans.length; i++)
+			ans[i] = array[i];
+		return printArray(ans);
+	}
+	
+	/**
+	 * Just for printing arrays
+	 * @param array
+	 * @return
+	 */
+	public static String printArray(double[] array) {
+		Double[] ans = new Double[array.length];
+		for (int i = 0; i < ans.length; i++)
+			ans[i] = array[i];
+		return printArray(ans);
 	}
 
 }
