@@ -30,7 +30,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	
 	/** Required by Serializable. */
 	private static final long serialVersionUID = 8597348579639499324L;
-	
+
 	/** Class name. */
 	public static String className = null;
 	

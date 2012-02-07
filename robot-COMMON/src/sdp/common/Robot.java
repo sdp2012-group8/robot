@@ -18,7 +18,7 @@ public final class Robot {
 	public static final double WIDTH = WIDTH_CM/244d;
 	
 
-	/** Coordinates of the robot's center on the field. */
+	/** Coordinates of the robot's centre on the field. */
 	private Point2D.Double coords;
 	/** The angle the robot is facing, in radians. */
 	private double angle;
@@ -69,7 +69,7 @@ public final class Robot {
 	 * Sets the coordinates of the robot
 	 * @param coords
 	 * @param angle in degrees
-	 * @param cm are coordinates in cm?
+	 * @param cm Are coordinates in cm?
 	 */
 	public final void setCoords(Point2D.Double coords, double angle, boolean cm) {
 		double angle_rad = angle*Math.PI/180;
@@ -93,7 +93,7 @@ public final class Robot {
 	}
 	
 	/**
-	 * Converts coordinates that the robot was initialized with in cm or in 0..1
+	 * Converts coordinates that the robot was initialised with in cm or in 0..1
 	 * @param cm
 	 */
 	public final void setCoords(boolean cm) {
@@ -102,9 +102,9 @@ public final class Robot {
 
 	
 	/**
-	 * Get coordinates of the robot's center.
+	 * Get coordinates of the robot's centre.
 	 * 
-	 * @return Coordinates of the robot's center.
+	 * @return Coordinates of the robot's centre.
 	 */
 	public final Point2D.Double getCoords() {
 		return coords;

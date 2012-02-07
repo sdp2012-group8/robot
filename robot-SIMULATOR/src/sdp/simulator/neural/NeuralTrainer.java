@@ -260,8 +260,8 @@ public class NeuralTrainer {
 		frame.getContentPane().add(btnResetField);
 		
 		dtrpnhomemartinmarinov = new JEditorPane();
-		dtrpnhomemartinmarinov.setText("/home/martinmarinov/robotbrain");
-		dtrpnhomemartinmarinov.setBounds(662, 293, 117, 36);
+		dtrpnhomemartinmarinov.setText("data");
+		dtrpnhomemartinmarinov.setBounds(662, 254, 117, 36);
 		frame.getContentPane().add(dtrpnhomemartinmarinov);
 		
 		final JButton btnNewButton = new JButton("Record");
@@ -278,7 +278,7 @@ public class NeuralTrainer {
 				}
 			}
 		});
-		btnNewButton.setBounds(662, 341, 117, 25);
+		btnNewButton.setBounds(662, 302, 117, 25);
 		frame.getContentPane().add(btnNewButton);
 		
 		JButton btnSave = new JButton("Save");
@@ -295,6 +295,20 @@ public class NeuralTrainer {
 		combo_AI.setModel(new DefaultComboBoxModel(new String[] {"VisualServoing", "NeuralNetwork"}));
 		combo_AI.setBounds(662, 218, 117, 24);
 		frame.getContentPane().add(combo_AI);
+		
+		JButton btnStopLearning = new JButton("Stop lning");
+		btnStopLearning.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (trainer == null)
+					return;
+				if (trainer.isLearning())
+					trainer.stopLearning();
+				else
+					System.out.println("You must have training data ready and the system must be learning in order to stop it.");
+			}
+		});
+		btnStopLearning.setBounds(662, 341, 117, 25);
+		frame.getContentPane().add(btnStopLearning);
 		
 
 		

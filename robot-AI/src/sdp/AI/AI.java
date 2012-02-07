@@ -3,6 +3,7 @@ package sdp.AI;
 import java.awt.geom.Point2D;
 
 import sdp.common.Communicator;
+import sdp.common.Goal;
 import sdp.common.MessageQueue;
 import sdp.common.Tools;
 import sdp.common.WorldState;
@@ -37,11 +38,8 @@ public abstract class AI extends WorldStateProvider {
 	private Thread mVisionThread;
 	private MessageQueue mQueue = null;
 	protected Communicator mComm = null;
-	
 
-
-	Point2D.Double enemy_goal = new Point2D.Double(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM);
-
+	Goal enemy_goal = new Goal(new Point2D.Double(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM));
 
 	protected mode state = mode.sit;
 
@@ -55,6 +53,7 @@ public abstract class AI extends WorldStateProvider {
 	private int filteredAngleAmount = 2;
 
 	protected Robot robot;
+	protected Robot enemy_robot;
 
 	/**
 	 * Initialise the AI
@@ -84,7 +83,7 @@ public abstract class AI extends WorldStateProvider {
 	 */
 	public void start(final boolean my_team_blue, final boolean my_goal_left) {
 		this.my_goal_left = my_goal_left;
-		enemy_goal = new Point2D.Double(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM);
+		enemy_goal = new Goal(new Point2D.Double(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM));
 		mVisionThread = new Thread() {
 			@Override
 			public void run() {
@@ -99,7 +98,14 @@ public abstract class AI extends WorldStateProvider {
 								lowPass(worldState.getBlueRobot(), state.getBlueRobot()),
 								lowPass(worldState.getYellowRobot(), state.getYellowRobot()),
 								state.getWorldImage());
-					robot = my_team_blue ? worldState.getBlueRobot() : worldState.getYellowRobot();
+					if (my_team_blue) {
+						robot = worldState.getBlueRobot();
+						enemy_robot = worldState.getYellowRobot();
+					} else {
+						robot = worldState.getYellowRobot();
+						enemy_robot = worldState.getBlueRobot();
+					}
+						
 					// pass coordinates to decision making logic
 
 					setChanged();

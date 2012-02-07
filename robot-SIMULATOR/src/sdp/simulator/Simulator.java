@@ -5,6 +5,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
 import sdp.common.Robot;
@@ -653,7 +654,7 @@ public class Simulator extends WorldStateProvider {
 					(int)(robot.getBackLeft().getY()*IMAGE_WIDTH),
 					(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH)
 			}, 5);
-			// draw filppers
+			// draw flipper's
 			g.setStroke(new BasicStroke(3.0f));
 			double dir_x = flipper_size*Math.cos(robot.getAngle()*Math.PI/180d)/pitch_width_cm;
 			double dir_y = -flipper_size*Math.sin(robot.getAngle()*Math.PI/180d)/pitch_width_cm;
