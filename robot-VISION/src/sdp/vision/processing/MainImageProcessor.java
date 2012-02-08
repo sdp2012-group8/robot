@@ -5,6 +5,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
 import com.googlecode.javacpp.Loader;
 
@@ -147,34 +148,28 @@ public class MainImageProcessor extends ImageProcessor {
 	 */
 	private Point2D.Double findBall(IplImage frame_ipl, BufferedImage threshImage) {
 		IplImage ballThresh = IplImage.createFrom(threshImage);
-		CvSeq contour = findContours(ballThresh);
+		CvSeq contour = findAllContours(ballThresh);		
+		ArrayList<CvSeq> ballShapes = sizeFilterContours(contour, 5, 25, 5, 25);
 		
-        while (contour != null && !contour.isNull()) {
-            if (contour.elem_size() > 0) {
-            	double epsilon = cvContourPerimeter(contour) * POLY_APPROX_ERROR;
-                CvSeq points = cvApproxPoly(contour, Loader.sizeof(CvContour.class),
-                        storage, CV_POLY_APPROX_DP, epsilon, 0);
-                
-                CvRect boundingRect = cvBoundingRect(contour, 0);
-                int x = boundingRect.x();
-                int y = boundingRect.y();
-                int w = boundingRect.width();
-                int h = boundingRect.height();
-                
-                if ((w >= 5) && (w <= 25) && (h >= 5) && (h <= 25)) {
-                    cvDrawContours(frame_ipl, points, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
-                    
-                    CvPoint pt1 = new CvPoint(x, y);
-                    CvPoint pt2 = new CvPoint(x + w, y + h);
-                    cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
-                    
-                    return frameToNormalCoordinates(x + w/2, y + h/2, true);
-                }
-            }
-            contour = contour.h_next();
-        }
-
-		return new Point2D.Double(-1.0, -1.0);
+		if (ballShapes.size() == 0) {
+			return new Point2D.Double(-1.0, -1.0);
+		} else {
+			CvSeq ballContour = ballShapes.get(0);
+			
+            CvRect boundingRect = cvBoundingRect(ballContour, 0);
+            int x = boundingRect.x();
+            int y = boundingRect.y();
+            int w = boundingRect.width();
+            int h = boundingRect.height();
+            
+            cvDrawContours(frame_ipl, ballContour, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+            
+            CvPoint pt1 = new CvPoint(x, y);
+            CvPoint pt2 = new CvPoint(x + w, y + h);
+            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
+            
+            return frameToNormalCoordinates(x + w/2, y + h/2, true);
+		}
 	}
 	
 	/**
@@ -186,47 +181,41 @@ public class MainImageProcessor extends ImageProcessor {
 	 */
 	private Robot findRobot(IplImage frame_ipl, BufferedImage threshImage) {        
         IplImage robotThresh = IplImage.createFrom(threshImage);
-		CvSeq contour = findContours(robotThresh);
+		CvSeq contour = findAllContours(robotThresh);
+		ArrayList<CvSeq> tShapes = sizeFilterContours(contour, 10, 55, 10, 55);
 		
-        while (contour != null && !contour.isNull()) {
-            if (contour.elem_size() > 0) {
-            	double epsilon = cvContourPerimeter(contour) * POLY_APPROX_ERROR;
-                CvSeq points = cvApproxPoly(contour, Loader.sizeof(CvContour.class),
-                        storage, CV_POLY_APPROX_DP, epsilon, 0);
-                
-                CvRect boundingRect = cvBoundingRect(contour, 0);
-                int x = boundingRect.x();
-                int y = boundingRect.y();
-                int w = boundingRect.width();
-                int h = boundingRect.height();
-                
-                if ((w >= 15) && (w <= 55) && (h >= 15) && (h <= 55)) {
-                    cvDrawContours(frame_ipl, points, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
-                    
-                    CvPoint pt1 = new CvPoint(x, y);
-                    CvPoint pt2 = new CvPoint(x + w, y + h);
-                    cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
-                    
-                    cvSetImageROI(robotThresh, boundingRect);
-                    CvMoments moments = new CvMoments();
-                    cvMoments(robotThresh, moments, 1);
-                    
-                    double rx = x + w / 2;
-                    double ry = y + h / 2;
-                    
-                    double mx = moments.m10() / moments.m00() + x;
-                    double my = moments.m01() / moments.m00() + y;
-                    
-                    double angle = Math.atan2(ry - my, rx - mx);
-                    
-//                    return new Robot(frameToNormalCoordinates(rx, ry, true), 0.0);
-                    return new Robot(frameToNormalCoordinates(mx, my, true), angle);
-                }
-            }
-            contour = contour.h_next();
-        }
-
-		return new Robot(new Point2D.Double(-1.0, -1.0), 0.0);
+		if (tShapes.size() == 0) {
+			return new Robot(new Point2D.Double(-1.0, -1.0), 0.0);
+		} else {
+			CvSeq tContour = tShapes.get(0);
+			
+            CvRect boundingRect = cvBoundingRect(tContour, 0);
+            int x = boundingRect.x();
+            int y = boundingRect.y();
+            int w = boundingRect.width();
+            int h = boundingRect.height();
+            
+            cvDrawContours(frame_ipl, tContour, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+            
+            CvPoint pt1 = new CvPoint(x, y);
+            CvPoint pt2 = new CvPoint(x + w, y + h);
+            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
+            
+            cvSetImageROI(robotThresh, boundingRect);
+            CvMoments moments = new CvMoments();
+            cvMoments(robotThresh, moments, 1);
+            
+            double rx = x + w / 2;
+            double ry = y + h / 2;
+            
+            double mx = moments.m10() / moments.m00() + x;
+            double my = moments.m01() / moments.m00() + y;
+            
+            double angle = Math.atan2(ry - my, rx - mx);
+            
+//            return new Robot(frameToNormalCoordinates(rx, ry, true), 0.0);
+            return new Robot(frameToNormalCoordinates(mx, my, true), angle);
+		}
 	}
 	
 	
@@ -247,9 +236,11 @@ public class MainImageProcessor extends ImageProcessor {
 		graphics.drawRect(config.getFieldLowX(), config.getFieldLowY(),
 				config.getFieldWidth(), config.getFieldHeight());
 		
+		// Draw ball position.
 		pt1 = normalToFrameCoordinates(ball.x, ball.y, false);
 		graphics.drawArc(pt1.x - 2, pt1.y - 2, 4, 4, 0, 360);
 		
+		// Draw blue robot position and direction.
 		pt1 = normalToFrameCoordinates(blueRobot.getCoords().x,
 				blueRobot.getCoords().y, false);
 		pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
@@ -257,6 +248,7 @@ public class MainImageProcessor extends ImageProcessor {
 		graphics.drawArc(pt1.x - 2, pt1.y - 2, 4, 4, 0, 360);
 		graphics.drawLine(pt1.x, pt1.y, pt2.x, pt2.y);
 		
+		// Draw yellow robot position and direction.
 		pt1 = normalToFrameCoordinates(yellowRobot.getCoords().x,
 				yellowRobot.getCoords().y, false);
 		pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
@@ -269,18 +261,57 @@ public class MainImageProcessor extends ImageProcessor {
 	
 	
 	/**
-	 * Find the contour in the specified image.
+	 * Find the all contours in the specified image.
 	 * 
 	 * @param image Image to search.
 	 * @return Image shapes' contour.
 	 */
-	private CvSeq findContours(IplImage image) {
+	private CvSeq findAllContours(IplImage image) {
 		CvSeq contour = new CvSeq();
 		cvFindContours(image, storage, contour, Loader.sizeof(CvContour.class),
                 CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);        
 		return contour;
 	}
 	
+	/**
+	 * Take a contour and return all shapes in it that fit within the
+	 * specified dimensions.
+	 * 
+	 * @param contour Contour to disect.
+	 * @param minWidth Minimum required shape width.
+	 * @param maxWidth Maximum required shape width.
+	 * @param minHeight Minimum required shape height.
+	 * @param maxHeight Maximum required shape height.
+	 * @return A list of fitting shapes in the contour.
+	 */
+	private ArrayList<CvSeq> sizeFilterContours(CvSeq contour, int minWidth,
+			int maxWidth, int minHeight, int maxHeight) {
+		ArrayList<CvSeq> shapes = new ArrayList<CvSeq>();
+		CvSeq contourSeq = contour;
+		
+		while (contourSeq != null && !contourSeq.isNull()) {
+            if (contourSeq.elem_size() > 0) {
+            	double epsilon = cvContourPerimeter(contourSeq) * POLY_APPROX_ERROR;
+                CvSeq points = cvApproxPoly(contourSeq, Loader.sizeof(CvContour.class),
+                        storage, CV_POLY_APPROX_DP, epsilon, 0);
+                
+                CvRect boundingRect = cvBoundingRect(points, 0);
+                int w = boundingRect.width();
+                int h = boundingRect.height();
+                
+                if ((w >= minWidth) && (w <= maxWidth)
+                		&& (h >= minHeight) && (h <= maxHeight)) {
+                	shapes.add(points);
+                }
+            }
+            
+            contourSeq = contourSeq.h_next();
+        }
+		
+		return shapes;
+	}
+	
+
 	/**
 	 * Get the current frame's region of interest.
 	 * 
@@ -302,18 +333,13 @@ public class MainImageProcessor extends ImageProcessor {
 	 * @return Normalised coordinates.
 	 */
 	private Point2D.Double frameToNormalCoordinates(double x, double y, boolean withinROI) {
-		double scaleFactor = (double)(config.getFieldWidth());		
-		double nx, ny;
+		double scaleFactor = (double)(config.getFieldWidth());
 		
 		if (!withinROI) {
-			nx = (x + config.getFieldLowX()) / scaleFactor;
-			ny = (y + config.getFieldLowY()) / scaleFactor;
-		} else {
-			nx = x / scaleFactor;
-			ny = y / scaleFactor;
+			x += config.getFieldLowX();
+			y += config.getFieldLowY();
 		}
-		
-		return new Point2D.Double(nx, ny);
+		return new Point2D.Double(x / scaleFactor, y / scaleFactor);
 	}
 	
 	/**
@@ -326,17 +352,15 @@ public class MainImageProcessor extends ImageProcessor {
 	 * @return Frame coordinates.
 	 */
 	private Point normalToFrameCoordinates(double x, double y, boolean withinROI) {
-		int scaleFactor = config.getFieldWidth();		
-		int nx, ny;
+		int scaleFactor = config.getFieldWidth();
 		
-		if (withinROI) {
-			nx = (int)(x * scaleFactor);
-			ny = (int)(y * scaleFactor);
-		} else {
-			nx = (int)(x * scaleFactor) + config.getFieldLowX();
-			ny = (int)(y * scaleFactor) + config.getFieldLowY();
+		x *= scaleFactor;
+		y *= scaleFactor;
+		
+		if (!withinROI) {
+			x += config.getFieldLowX();
+			y += config.getFieldLowY();
 		}
-		
-		return new Point(nx, ny);
+		return new Point((int)x, (int)y);
 	}
 }
