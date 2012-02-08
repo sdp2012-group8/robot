@@ -280,11 +280,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			setImage(state.getWorldImage());
 			
 			fpsCounter.tick();
-			if (fpsCounter.getTickCount() % 5 == 0) {
-				setTitle(String.format("%s - %.1f FPS", WINDOW_TITLE, fpsCounter.getFPS()));
-				if (visionChangesEnabled) {
-					setNewVisionConfiguration();
-				}
+			setTitle(String.format("%s - %.1f FPS", WINDOW_TITLE, fpsCounter.getFPS()));
+			if (visionChangesEnabled) {
+				setNewVisionConfiguration();
 			}
 			
 			System.out.println(String.format(

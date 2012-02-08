@@ -28,11 +28,7 @@ public final class Robot {
 	/** Coordinates of the robot's back-left corner. */
 	private Point2D.Double backLeftPoint;
 	/** Coordinates of the robot's back-right corner. */
-	private Point2D.Double backRightPoint;
-	
-	/** Size of the Robot **/
-	private double robotSize;
-	
+	private Point2D.Double backRightPoint;	
 
 	
 	/**

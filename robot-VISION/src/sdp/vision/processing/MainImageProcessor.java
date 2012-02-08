@@ -55,10 +55,9 @@ public class MainImageProcessor extends ImageProcessor {
 		IplImage ballThreshold = IplImage.createFrom(thresholds[1]);		
 		IplImage blueThreshold = IplImage.createFrom(thresholds[2]);
 		IplImage yellowThreshold = IplImage.createFrom(thresholds[3]);
-		IplImage markerThreshold = IplImage.createFrom(thresholds[4]);
-
+		IplImage markerThreshold = IplImage.createFrom(thresholds[4]);		
 		cvSetImageROI(frame_ipl, getCurrentROI());
-						
+
 		Point2D.Double ballPos = findBall(frame_ipl, ballThreshold);
 		Robot blueRobot = findRobot(frame_ipl, blueThreshold, markerThreshold);
 		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold, markerThreshold);
@@ -133,7 +132,8 @@ public class MainImageProcessor extends ImageProcessor {
 			    	yellow.setRGB(x, y, Color.white.getRGB());
 			    	frame.setRGB(ox, oy, Color.orange.getRGB());
 			    }
-			    if ((r <= 100) && (g <= 100) && (b <= 50)) {
+			    
+			    if ((r <= 100) && (g <= 100) && (b <= 50) && (v <= 40)) {
 			    	marker.setRGB(x, y, Color.white.getRGB());
 			    	frame.setRGB(ox, oy, Color.pink.getRGB());
 			    }
@@ -153,27 +153,27 @@ public class MainImageProcessor extends ImageProcessor {
 	 * @return The position of the ball.
 	 */
 	private Point2D.Double findBall(IplImage frame_ipl, IplImage ballThresh) {
-		CvSeq contour = findAllContours(ballThresh);		
-		ArrayList<CvSeq> ballShapes = sizeFilterContours(contour, 5, 25, 5, 25);
+		CvSeq fullBallContour = findAllContours(ballThresh);		
+		ArrayList<CvSeq> ballShapes = sizeFilterContours(fullBallContour, 5, 25, 5, 25);
 		
 		if (ballShapes.size() == 0) {
 			return new Point2D.Double(-1.0, -1.0);
 		} else {
-			CvSeq ballContour = ballShapes.get(0);
+			CvSeq curBallShape = ballShapes.get(0);
 			
-            CvRect boundingRect = cvBoundingRect(ballContour, 0);
-            int x = boundingRect.x();
-            int y = boundingRect.y();
-            int w = boundingRect.width();
-            int h = boundingRect.height();
+            CvRect ballBoundingRect = cvBoundingRect(curBallShape, 0);
+            int bX = ballBoundingRect.x();
+            int bY = ballBoundingRect.y();
+            int bW = ballBoundingRect.width();
+            int bH = ballBoundingRect.height();
             
-            cvDrawContours(frame_ipl, ballContour, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+            cvDrawContours(frame_ipl, curBallShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
             
-            CvPoint pt1 = new CvPoint(x, y);
-            CvPoint pt2 = new CvPoint(x + w, y + h);
+            CvPoint pt1 = new CvPoint(bX, bY);
+            CvPoint pt2 = new CvPoint(bX + bW, bY + bH);
             cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
             
-            return frameToNormalCoordinates(x + w/2, y + h/2, true);
+            return frameToNormalCoordinates(bX + bW / 2, bY + bH / 2, true);
 		}
 	}
 	
@@ -186,70 +186,68 @@ public class MainImageProcessor extends ImageProcessor {
 	 * @return The position of the ball.
 	 */
 	private Robot findRobot(IplImage frame_ipl, IplImage robotThresh,
-			IplImage markerThresh) {
-		CvSeq contour = findAllContours(robotThresh);
-		ArrayList<CvSeq> tShapes = sizeFilterContours(contour, 10, 55, 10, 55);
+			IplImage markerThresh) {		
+		CvSeq fullRobotContour = findAllContours(robotThresh);
+		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour, 10, 55, 10, 55);
 		
-		if (tShapes.size() == 0) {
+		if (robotShapes.size() == 0) {
 			return new Robot(new Point2D.Double(-1.0, -1.0), 0.0);
 		} else {
-			CvSeq tContour = tShapes.get(0);
+			CvSeq curRobotShape = robotShapes.get(0);
 			
-            CvRect boundingRect = cvBoundingRect(tContour, 0);
-            int x = boundingRect.x();
-            int y = boundingRect.y();
-            int w = boundingRect.width();
-            int h = boundingRect.height();
+            CvRect robotBoundingRect = cvBoundingRect(curRobotShape, 0);
+            int rX = robotBoundingRect.x();
+            int rY = robotBoundingRect.y();
+            int rW = robotBoundingRect.width();
+            int rH = robotBoundingRect.height();
             
-            cvDrawContours(frame_ipl, tContour, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+            int rcX = rX + rW / 2;
+            int rcY = rY + rH / 2;
             
-            CvPoint pt1 = new CvPoint(x, y);
-            CvPoint pt2 = new CvPoint(x + w, y + h);
+            cvDrawContours(frame_ipl, curRobotShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+            
+            CvPoint pt1 = new CvPoint(rX, rY);
+            CvPoint pt2 = new CvPoint(rX + rW, rY + rH);
             cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
             
-            CvRect surroundingBox = cvRect(x - 20, y - 20, w + 40, h + 40);
-            cvSetImageROI(markerThresh, surroundingBox);
+            cvSetImageROI(robotThresh, robotBoundingRect);
+            CvMoments moments = new CvMoments();
+            cvMoments(robotThresh, moments, 1);
+            cvResetImageROI(robotThresh);
             
-    		CvSeq markerContour = findAllContours(markerThresh);
-    		ArrayList<CvSeq> markerShapes = sizeFilterContours(markerContour, 3, 15, 3, 15);
+            double mx = moments.m10() / moments.m00() + rX;
+            double my = moments.m01() / moments.m00() + rY;            
+            double angle = Math.atan2(rcY - my, rcX - mx);
+            
+            double bestProps = Double.MAX_VALUE;
+            
+    		CvSeq fullMarkerContour = findAllContours(markerThresh);
+    		ArrayList<CvSeq> markerShapes = sizeFilterContours(fullMarkerContour, 3, 15, 3, 15);
     		
-    		if (markerShapes.size() == 0) {            
-	            cvSetImageROI(robotThresh, boundingRect);
-	            CvMoments moments = new CvMoments();
-	            cvMoments(robotThresh, moments, 1);
-	            
-	            double rx = x + w / 2;
-	            double ry = y + h / 2;
-	            
-	            double mx = moments.m10() / moments.m00() + x;
-	            double my = moments.m01() / moments.m00() + y;
-	            
-	            double angle = Math.atan2(ry - my, rx - mx);
-	            
-	            return new Robot(frameToNormalCoordinates(mx, my, true), angle);
-    		} else {
-    			CvSeq dirContour = markerShapes.get(0);
-    			
-                CvRect dirRect = cvBoundingRect(dirContour, 0);
-                int dx = dirRect.x();
-                int dy = dirRect.y();
-                int dw = dirRect.width();
-                int dh = dirRect.height();
+			for (CvSeq curMarkerShape : markerShapes) {    			
+                CvRect markerBoundingBox = cvBoundingRect(curMarkerShape, 0);
+                int mX = markerBoundingBox.x();
+                int mY = markerBoundingBox.y();
+                int mW = markerBoundingBox.width();
+                int mH = markerBoundingBox.height();
                 
-                double rx = x + w / 2;
-	            double ry = y + h / 2;
-                double mx = dx + dw / 2;
-                double my = dy + dh / 2;
-	            double angle = Math.atan2(ry - my, rx - mx);
-
-                System.err.println(dx + " " + dy + " " + dw + " " + dh);
+                int mcX = mX + mW / 2;
+                int mcY = mY + mH / 2;
                 
-                cvSetImageROI(frame_ipl, getCurrentROI());
-                cvSetImageROI(frame_ipl, surroundingBox);
-                cvDrawContours(frame_ipl, dirContour, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
-                
-	            return new Robot(frameToNormalCoordinates(mx, my, true), angle);
-    		}
+                double dist = Point.distance(rcX, rcY, mcX, mcY);
+                if ((dist >= 17.0) && (dist <= 23.0)) {
+                	double prop = (double)mW / (double) mH;
+                	if (prop < 1.0) {
+                		prop = 1.0 / prop;
+                	}
+                	if (prop > bestProps) {
+                		angle = Math.atan2(mcY - rcY, rcX - mcX);
+    	                cvDrawContours(frame_ipl, curMarkerShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+                	}
+                }
+			}
+            
+            return new Robot(frameToNormalCoordinates(rcX, rcY, true), angle);
 		}
 	}
 	
@@ -304,7 +302,7 @@ public class MainImageProcessor extends ImageProcessor {
 	private CvSeq findAllContours(IplImage image) {
 		CvSeq contour = new CvSeq();
 		cvFindContours(image, storage, contour, Loader.sizeof(CvContour.class),
-                CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);        
+                CV_RETR_LIST, CV_CHAIN_APPROX_NONE);        
 		return contour;
 	}
 	
