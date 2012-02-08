@@ -222,7 +222,7 @@ public class MainImageProcessor extends ImageProcessor {
             double bestProps = Double.MAX_VALUE;
             
     		CvSeq fullMarkerContour = findAllContours(markerThresh);
-    		ArrayList<CvSeq> markerShapes = sizeFilterContours(fullMarkerContour, 3, 15, 3, 15);
+    		ArrayList<CvSeq> markerShapes = sizeFilterContours(fullMarkerContour, 5, 15, 5, 15);
     		
 			for (CvSeq curMarkerShape : markerShapes) {    			
                 CvRect markerBoundingBox = cvBoundingRect(curMarkerShape, 0);
@@ -235,12 +235,12 @@ public class MainImageProcessor extends ImageProcessor {
                 int mcY = mY + mH / 2;
                 
                 double dist = Point.distance(rcX, rcY, mcX, mcY);
-                if ((dist >= 17.0) && (dist <= 23.0)) {
+                if ((dist >= 15.0) && (dist <= 40.0)) {
                 	double prop = (double)mW / (double) mH;
                 	if (prop < 1.0) {
                 		prop = 1.0 / prop;
                 	}
-                	if (prop > bestProps) {
+                	if (prop < bestProps) {
                 		angle = Math.atan2(mcY - rcY, rcX - mcX);
     	                cvDrawContours(frame_ipl, curMarkerShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
                 	}
