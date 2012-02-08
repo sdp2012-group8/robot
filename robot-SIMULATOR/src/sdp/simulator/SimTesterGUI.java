@@ -66,6 +66,8 @@ public class SimTesterGUI {
 	private double blue_placement, yellow_placement;
 	
 	private final HashMap<Integer, Timer> key_pressed = new HashMap<Integer, Timer>();
+	
+	private Integer camera = null;
 
 	/**
 	 * Launch the application.
@@ -257,6 +259,20 @@ public class SimTesterGUI {
 		});
 		btnRandomizeField.setBounds(662, 230, 117, 25);
 		frmAlphaTeamSimulator.getContentPane().add(btnRandomizeField);
+		
+		JButton btnCamera = new JButton("Camera");
+		btnCamera.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (camera == null)
+					camera = -1;
+				camera ++;
+				if (camera == 2)
+					camera = null;
+				mSim.centerViewAround(camera);
+			}
+		});
+		btnCamera.setBounds(662, 267, 117, 25);
+		frmAlphaTeamSimulator.getContentPane().add(btnCamera);
 		
 		// key listener
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {

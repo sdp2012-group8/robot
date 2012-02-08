@@ -77,6 +77,7 @@ public class NeuralTrainer {
 	private NeuralNetworkTrainingGenerator trainer = null;
 	
 	private final HashMap<Integer, Timer> key_pressed = new HashMap<Integer, Timer>();
+	private Integer camera = null;
 
 	/**
 	 * Launch the application.
@@ -106,7 +107,7 @@ public class NeuralTrainer {
 	 */
 	private void initialize() {
 		frame = new JFrame();
-		frame.setBounds(100, 100, 802, 447);
+		frame.setBounds(100, 100, 802, 479);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 		
@@ -161,17 +162,24 @@ public class NeuralTrainer {
 				mSim.highlightBall(drag_ball);
 				drag_robot = -1;
 				mSim.highlightRobot(drag_robot);
+				if (trainer != null && trainer.isRecording()) {
+					trainer.Resume();
+				}
 			}
 			
 			@Override
 			public void mousePressed(MouseEvent e) {
 				if (mSim == null)
 					return;
+				if (trainer != null && trainer.isRecording()) {
+					trainer.Pause();
+				}
 				mouse_scaled_x = e.getX()/(double)panel.getWidth();
 				mouse_scaled_y = e.getY()/(double) panel.getWidth();
 				drag_ball = mSim.isInsideBall(mouse_scaled_x, mouse_scaled_y);
 				drag_robot = mSim.isInsideRobot(mouse_scaled_x, mouse_scaled_y);
 				mSim.highlightRobot(drag_robot);
+
 			}
 
 			@Override
@@ -261,7 +269,7 @@ public class NeuralTrainer {
 		
 		dtrpnhomemartinmarinov = new JEditorPane();
 		dtrpnhomemartinmarinov.setText("data");
-		dtrpnhomemartinmarinov.setBounds(662, 254, 117, 36);
+		dtrpnhomemartinmarinov.setBounds(662, 254, 117, 24);
 		frame.getContentPane().add(dtrpnhomemartinmarinov);
 		
 		final JButton btnNewButton = new JButton("Record");
@@ -278,7 +286,7 @@ public class NeuralTrainer {
 				}
 			}
 		});
-		btnNewButton.setBounds(662, 302, 117, 25);
+		btnNewButton.setBounds(662, 290, 117, 25);
 		frame.getContentPane().add(btnNewButton);
 		
 		JButton btnSave = new JButton("Save");
@@ -288,7 +296,7 @@ public class NeuralTrainer {
 					trainer.Save();
 			}
 		});
-		btnSave.setBounds(662, 378, 117, 25);
+		btnSave.setBounds(662, 364, 117, 25);
 		frame.getContentPane().add(btnSave);
 		
 		combo_AI = new JComboBox();
@@ -307,8 +315,22 @@ public class NeuralTrainer {
 					System.out.println("You must have training data ready and the system must be learning in order to stop it.");
 			}
 		});
-		btnStopLearning.setBounds(662, 341, 117, 25);
+		btnStopLearning.setBounds(662, 327, 117, 25);
 		frame.getContentPane().add(btnStopLearning);
+		
+		JButton btnCamera = new JButton("Camera");
+		btnCamera.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (camera == null)
+					camera = -1;
+				camera ++;
+				if (camera == 2)
+					camera = null;
+				mSim.centerViewAround(camera);
+			}
+		});
+		btnCamera.setBounds(20, 410, 117, 25);
+		frame.getContentPane().add(btnCamera);
 		
 
 		

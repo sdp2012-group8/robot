@@ -8,8 +8,8 @@ import org.neuroph.core.NeuralNetwork;
 import org.neuroph.core.learning.SupervisedTrainingElement;
 import org.neuroph.core.learning.TrainingSet;
 import org.neuroph.nnet.MultiLayerPerceptron;
-import org.neuroph.nnet.Perceptron;
 
+import sdp.common.NNetTools;
 import sdp.common.Tools;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
@@ -24,10 +24,12 @@ import sdp.simulator.VBrick;
  */
 public class NeuralNetworkTrainingGenerator extends VBrick {
 
-	private final static int network_count = 2;
-	private final static int n_inputs = 3;
+	private NeuralNetwork[] nets = new NeuralNetwork[] {
+			new MultiLayerPerceptron(2, 5, 7, 3),
+			new MultiLayerPerceptron(2, 5, 7, 3)
+	};
 	
-	private final static double network_desired_error = 99;
+	private final static double network_desired_error = 80;
 	
 	private String fname;
 	
@@ -39,8 +41,8 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	private final static double percentage_test = 25;
 
 	@SuppressWarnings("unchecked")
-	private TrainingSet<SupervisedTrainingElement>[] tsets = new TrainingSet[network_count];
-	private NeuralNetwork[] nets = new NeuralNetwork[network_count];
+	private TrainingSet<SupervisedTrainingElement>[] tsets = new TrainingSet[nets.length];
+	
 	private WorldStateObserver mObs;
 	private boolean recording = false;
 	private WorldState oldWorldState = null;
@@ -72,8 +74,7 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 		} catch (Exception e) {}
 		if (!allfine) {
 			// INITIALIZE NETWORKS HERE
-			nets[0] = new MultiLayerPerceptron(n_inputs, 4, 3);
-			nets[1] = new MultiLayerPerceptron(n_inputs, 4, 3);
+			System.out.println("New networks generated.");
 			for (int i = 0; i < tsets.length; i++) {
 				nets[i].randomizeWeights();
 			}
@@ -86,8 +87,6 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 				
 		if (allfine)
 			System.out.println("Networks loaded from file.");
-		else
-			System.out.println("New networks generated.");
 	}
 
 	/**
@@ -138,15 +137,15 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 					if (!pause) {
 						if (oldWorldState != null && Tools.delta(oldWorldState, worldState) > 0.1) {
 							// outputs normalized to 1
-							boolean
-							is_it_kicking = is_kicking;
+							//boolean
+							//is_it_kicking = is_kicking;
 							// create training set
 							tsets[0].addElement(new SupervisedTrainingElement(
-									Tools.generateAIinput(worldState, am_i_blue, my_goal_left, 0),
-									Tools.generateOutput(desired_speed == 0 ? 0 : (desired_speed > 0 ? 1 : 2), 3)));
+									NNetTools.generateAIinput(worldState, am_i_blue, my_goal_left, 0),
+									NNetTools.generateOutput(desired_speed == 0 ? 1 : (desired_speed > 0 ? 2 : 0), 3)));
 							tsets[1].addElement(new SupervisedTrainingElement(
-									Tools.generateAIinput(worldState, am_i_blue, my_goal_left, 1),
-									Tools.generateOutput(desired_turning_speed == 0 ? 0 : (desired_turning_speed > 0 ? 1 : 2), 3)));
+									NNetTools.generateAIinput(worldState, am_i_blue, my_goal_left, 1),
+									NNetTools.generateOutput(desired_turning_speed == 0 ? 1 : (desired_turning_speed > 0 ? 2 : 0), 3)));
 							frames++;
 							if (frames % 100 == 0)
 								System.out.println(frames+" frames recorded last - "+frames+" and "+desired_speed);
@@ -182,9 +181,9 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 		System.out.println("Preparing sets...");
 		// split training arrays into testing and training
 		@SuppressWarnings("unchecked")
-		final TrainingSet<SupervisedTrainingElement>[] training = new TrainingSet[network_count];
+		final TrainingSet<SupervisedTrainingElement>[] training = new TrainingSet[nets.length];
 		@SuppressWarnings("unchecked")
-		final TrainingSet<SupervisedTrainingElement>[] testing = new TrainingSet[network_count];
+		final TrainingSet<SupervisedTrainingElement>[] testing = new TrainingSet[nets.length];
 		for (int i = 0; i < training.length; i++) {
 			training[i] = new TrainingSet<SupervisedTrainingElement>(nets[i].getInputNeurons().size(), nets[i].getOutputNeurons().size());
 			testing[i] = new TrainingSet<SupervisedTrainingElement>(nets[i].getInputNeurons().size(), nets[i].getOutputNeurons().size());
@@ -197,13 +196,12 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 				else
 					training[i].addElement(new SupervisedTrainingElement(pair.getInputArray(), pair.getIdealArray()));
 			}
-			tsets[i].save(fname+"/ts"+i+".tset");
-			tsets[i].saveAsTxt(fname+"/csv-ts"+i+".txt", " ");
+			//tsets[i].save(fname+"/ts"+i+".tset");
+			//tsets[i].saveAsTxt(fname+"/csv-ts"+i+".txt", " ");
 			tsets[i].clear();
 			tsets[i] = null;
 		}
 		// start learning
-		// TODO relative velocity of ball instead of positt
 		saving = true;
 		final long waittime = (long) (wait_time_for_1000_f*frames/1000d);
 		new Thread() {
@@ -213,7 +211,7 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 						skip = false;
 						int outputs = nets[i].getOutputNeurons().size();
 						double accuracy = 0;
-						System.out.println("Learning network "+(i+1)+"/"+network_count);					
+						System.out.println("Learning network "+(i+1)+"/"+nets.length);					
 						nets[i].learnInNewThread(training[i]);
 						long elapsed = 0;
 						long last_max = 0;
@@ -274,8 +272,8 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 			net.setInput(input);
 			net.calculate();
 			double[] noutput = net.getOutput();
-			int out1 = Tools.recoverOutput(noutput);
-			int out2 = Tools.recoverOutput(output);
+			int out1 = NNetTools.recoverOutput(noutput);
+			int out2 = NNetTools.recoverOutput(output);
 			if (out1 != -1)
 				accuracy += out1  == out2 ? 100d/sisze : 0;
 		}
