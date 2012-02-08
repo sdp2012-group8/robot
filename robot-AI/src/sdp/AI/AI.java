@@ -201,6 +201,29 @@ public abstract class AI extends WorldStateProvider {
 				lowPass(old_value.getAngle(), new_value.getAngle()));
 	}
 
+	/**
+	 * Calculates if the ball has a direct line of sight to the enemy goal.
+	 * @return -1 if error, 0 if false, 1 if can see top, 2 middle, 3 bottom.
+	 */
+	public int canWeShoot() {
+		int can_we_shoot = 1;
+		enemy_robot.setCoords(true); //need to convert robot coords to cm
+		
+		//System.out.println("goal.top: " + enemy_goal.getTop() + "  goal.bottom: " + enemy_goal.getBottom() + "  robot.left: " + enemy_robot.getFrontLeft() + "  robot.right: " + enemy_robot.getFrontRight());
+		//System.out.println("Ball: " + worldState.getBallCoords() + "  frontleft: " + enemy_robot.getFrontLeft() + "  frontRight: " + enemy_robot.getFrontRight() + "  inter: " + intersection); 
+		
+		Point2D.Double intersection = Tools.intersection(enemy_goal.getTop(), enemy_robot.getFrontRight(), enemy_goal.getBottom(), enemy_robot.getFrontLeft());
+		if ((intersection == null)) {
+			return -1;
+		} else if (Tools.pointInTriangle(worldState.getBallCoords(), enemy_robot.getFrontLeft(), enemy_robot.getFrontRight(), intersection)) {
+			return 0;
+		}
+		
+		//if it gets here it can see the goal
+		
+		
+		return can_we_shoot;
+	}
 
 	protected abstract void worldChanged();
 
