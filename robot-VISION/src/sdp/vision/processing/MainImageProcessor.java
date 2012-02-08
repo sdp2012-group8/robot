@@ -51,17 +51,17 @@ public class MainImageProcessor extends ImageProcessor {
 		frame = preprocessFrame(frame);
 		
 		BufferedImage thresholds[] = thresholdFrame(frame);
-		frame = thresholds[0];
-		BufferedImage ballThreshold = thresholds[1];		
-		BufferedImage blueThreshold = thresholds[2];
-		BufferedImage yellowThreshold = thresholds[3];
+		IplImage frame_ipl = IplImage.createFrom(thresholds[0]);
+		IplImage ballThreshold = IplImage.createFrom(thresholds[1]);		
+		IplImage blueThreshold = IplImage.createFrom(thresholds[2]);
+		IplImage yellowThreshold = IplImage.createFrom(thresholds[3]);
+		IplImage markerThreshold = IplImage.createFrom(thresholds[4]);
 
-		IplImage frame_ipl = IplImage.createFrom(frame);
 		cvSetImageROI(frame_ipl, getCurrentROI());
 						
 		Point2D.Double ballPos = findBall(frame_ipl, ballThreshold);
-		Robot blueRobot = findRobot(frame_ipl, blueThreshold);
-		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold);
+		Robot blueRobot = findRobot(frame_ipl, blueThreshold, markerThreshold);
+		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold, markerThreshold);
 		BufferedImage worldImage = finaliseWorldImage(frame_ipl, ballPos, blueRobot, yellowRobot);
 		
 		return new WorldState(ballPos, blueRobot, yellowRobot, worldImage);
@@ -102,6 +102,8 @@ public class MainImageProcessor extends ImageProcessor {
 				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
 		BufferedImage yellow = new BufferedImage(config.getFieldWidth(),
 				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
+		BufferedImage marker = new BufferedImage(config.getFieldWidth(),
+				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY); 
 		
 		for (int x = 0; x < config.getFieldWidth(); ++x) {
 			for (int y = 0; y < config.getFieldHeight(); ++y) {
@@ -131,10 +133,14 @@ public class MainImageProcessor extends ImageProcessor {
 			    	yellow.setRGB(x, y, Color.white.getRGB());
 			    	frame.setRGB(ox, oy, Color.orange.getRGB());
 			    }
+			    if ((r <= 100) && (g <= 100) && (b <= 50)) {
+			    	marker.setRGB(x, y, Color.white.getRGB());
+			    	frame.setRGB(ox, oy, Color.pink.getRGB());
+			    }
 			}
 		}
 		
-		BufferedImage retValue[] = { frame, ball, blue, yellow };
+		BufferedImage retValue[] = { frame, ball, blue, yellow, marker };
 		return retValue;
 	}
 	
@@ -143,11 +149,10 @@ public class MainImageProcessor extends ImageProcessor {
 	 * Locate the ball in the world.
 	 * 
 	 * @param frame_ipl The original frame.
-	 * @param threshImage Thresholded image to search in.
+	 * @param ballThresh Thresholded image to search in.
 	 * @return The position of the ball.
 	 */
-	private Point2D.Double findBall(IplImage frame_ipl, BufferedImage threshImage) {
-		IplImage ballThresh = IplImage.createFrom(threshImage);
+	private Point2D.Double findBall(IplImage frame_ipl, IplImage ballThresh) {
 		CvSeq contour = findAllContours(ballThresh);		
 		ArrayList<CvSeq> ballShapes = sizeFilterContours(contour, 5, 25, 5, 25);
 		
@@ -176,11 +181,12 @@ public class MainImageProcessor extends ImageProcessor {
 	 * Locate a robot in the world.
 	 * 
 	 * @param frame_ipl The original frame.
-	 * @param threshImage Thresholded image to search in.
+	 * @param robotThresh Thresholded image to search for the robot's T.
+	 * @param markerThresh Thresholded image to search for direction marker.
 	 * @return The position of the ball.
 	 */
-	private Robot findRobot(IplImage frame_ipl, BufferedImage threshImage) {        
-        IplImage robotThresh = IplImage.createFrom(threshImage);
+	private Robot findRobot(IplImage frame_ipl, IplImage robotThresh,
+			IplImage markerThresh) {
 		CvSeq contour = findAllContours(robotThresh);
 		ArrayList<CvSeq> tShapes = sizeFilterContours(contour, 10, 55, 10, 55);
 		
@@ -201,20 +207,49 @@ public class MainImageProcessor extends ImageProcessor {
             CvPoint pt2 = new CvPoint(x + w, y + h);
             cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
             
-            cvSetImageROI(robotThresh, boundingRect);
-            CvMoments moments = new CvMoments();
-            cvMoments(robotThresh, moments, 1);
+            CvRect surroundingBox = cvRect(x - 20, y - 20, w + 40, h + 40);
+            cvSetImageROI(markerThresh, surroundingBox);
             
-            double rx = x + w / 2;
-            double ry = y + h / 2;
-            
-            double mx = moments.m10() / moments.m00() + x;
-            double my = moments.m01() / moments.m00() + y;
-            
-            double angle = Math.atan2(ry - my, rx - mx);
-            
-//            return new Robot(frameToNormalCoordinates(rx, ry, true), 0.0);
-            return new Robot(frameToNormalCoordinates(mx, my, true), angle);
+    		CvSeq markerContour = findAllContours(markerThresh);
+    		ArrayList<CvSeq> markerShapes = sizeFilterContours(markerContour, 3, 15, 3, 15);
+    		
+    		if (markerShapes.size() == 0) {            
+	            cvSetImageROI(robotThresh, boundingRect);
+	            CvMoments moments = new CvMoments();
+	            cvMoments(robotThresh, moments, 1);
+	            
+	            double rx = x + w / 2;
+	            double ry = y + h / 2;
+	            
+	            double mx = moments.m10() / moments.m00() + x;
+	            double my = moments.m01() / moments.m00() + y;
+	            
+	            double angle = Math.atan2(ry - my, rx - mx);
+	            
+	            return new Robot(frameToNormalCoordinates(mx, my, true), angle);
+    		} else {
+    			CvSeq dirContour = markerShapes.get(0);
+    			
+                CvRect dirRect = cvBoundingRect(dirContour, 0);
+                int dx = dirRect.x();
+                int dy = dirRect.y();
+                int dw = dirRect.width();
+                int dh = dirRect.height();
+                
+                double rx = x + w / 2;
+	            double ry = y + h / 2;
+                double mx = dx + dw / 2;
+                double my = dy + dh / 2;
+	            double angle = Math.atan2(ry - my, rx - mx);
+
+                System.err.println(dx + " " + dy + " " + dw + " " + dh);
+                
+                cvSetImageROI(frame_ipl, getCurrentROI());
+                cvSetImageROI(frame_ipl, surroundingBox);
+                cvDrawContours(frame_ipl, dirContour, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+                
+	            return new Robot(frameToNormalCoordinates(mx, my, true), angle);
+    		}
 		}
 	}
 	
