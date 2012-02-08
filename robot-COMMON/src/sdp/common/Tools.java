@@ -356,6 +356,25 @@ public class Tools {
 			ans[i] = array[i];
 		return printArray(ans);
 	}
+	
+	/**
+	 * Calculates the angle BAC
+	 * @param A
+	 * @param B
+	 * @param C
+	 * @return angle BAC
+	 */
+	public static double getAngle(Point2D.Double A, Point2D.Double B, Point2D.Double C) {
+		double angle = 0d;
+		double AB = getDistanceBetweenPoint(A,B);
+		double AC = getDistanceBetweenPoint(A,C);
+		double BC = getDistanceBetweenPoint(B,C);
+		
+		angle = Math.acos((AC*AC + AB*AB - BC*BC)/(2*AC*AB));
+		
+		return angle;
+	}
+	
 
 	public static Point2D.Double pointSubtract(Point2D.Double a, Point2D.Double  b) {
 		return new Point2D.Double(a.x-b.x, a.y-b.y);
@@ -381,6 +400,19 @@ public class Tools {
 		} else {
 			return false;
 		}
+	}
+	
+	/**
+	 * Determines if a robot is in the way of the path AB
+	 * @param A First point of line
+	 * @param B Second point of line
+	 * @param robot Robot to test against
+	 * @return returns true if the path is clear
+	 */
+	public static boolean isPathClear(Point2D.Double A, Point2D.Double B, Robot robot) {
+		boolean diagonal1 = Tools.sameSide(robot.getBackLeft(), robot.getFrontRight(), A, B);
+		boolean diagonal2 = Tools.sameSide(robot.getFrontLeft(), robot.getBackRight(), A, B);
+		return (diagonal1 && diagonal2);
 	}
 
 	/**

@@ -187,60 +187,77 @@ public class AIVisualServoing extends AI {
 	public void aimAndShoot(){
 		//System.out.println("Attempting to score goal");
 
-		// represents if we can shoot
-		// 0 - no
-		// 1 - top
-		// 2 - bottom
-		int can_we_shoot = 0;
-		enemy_robot.setCoords(true); //need to convert robot coords to cm
-		//System.out.println("goal.top: " + enemy_goal.getTop() + "  goal.bottom: " + enemy_goal.getBottom() + "  robot.left: " + enemy_robot.getFrontLeft() + "  robot.right: " + enemy_robot.getFrontRight());
-		Point2D.Double intersection = Tools.intersection(enemy_goal.getTop(), enemy_robot.getFrontRight(), enemy_goal.getBottom(), enemy_robot.getFrontLeft());
-		if (!(intersection == null)) {
-			//System.out.println("Ball: " + worldState.getBallCoords() + "  frontleft: " + enemy_robot.getFrontLeft() + "  frontRight: " + enemy_robot.getFrontRight() + "  inter: " + intersection); 
-			if (!Tools.pointInTriangle(worldState.getBallCoords(), enemy_robot.getFrontLeft(), enemy_robot.getFrontRight(), intersection)) {
-				// We can see the goal
-				System.out.println("We can shoot");
+		int can_we_shoot = isGoalVisible();
 
-
-				//TODO: check which side of goal to shoot for
-				
-				
-				double angle_between = anglebetween(robot.getCoords(), enemy_goal.getTop());
-				double turning_angle = angle_between - robot.getAngle();
-				byte forward_speed = 5;
-
-				// Keep the turning angle between -180 and 180
-				if (turning_angle > 180) turning_angle -= 360;
-				if (turning_angle < -180) turning_angle += 360;
-
-				if (distance_to_goal < Robot.LENGTH_CM) forward_speed = 0;
-
-				// don't exceed speed limit
-				if (forward_speed > MAX_SPEED_CM_S) forward_speed = MAX_SPEED_CM_S;
-				if (forward_speed < -MAX_SPEED_CM_S) forward_speed = -MAX_SPEED_CM_S;
-
-				try {
-					if (distance_to_ball > Robot.LENGTH_CM) {
-						setMode(mode.chase_ball);
-					} else if (turning_angle > TURNING_ACCURACY && (distance_to_goal > 1)){
-						mComm.sendMessage(opcode.operate, forward_speed, (byte)50);
-						System.out.println("Going to goal - Turning: " + turning_angle);
-					} 
-					else if( turning_angle < -TURNING_ACCURACY && (distance_to_goal > 1)){
-						mComm.sendMessage(opcode.operate, forward_speed, (byte)-50);
-						System.out.println("Going to goal - Turning: " + turning_angle);	
-					} else  {
-						mComm.sendMessage(opcode.kick);
-
-						//System.out.println("The old man the boat");
-						setMode(mode.chase_ball);
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+		if (can_we_shoot > 0) {
+			// We can see the goal
+			System.out.println("We can shoot");
+			Point2D.Double target = null;
+			switch(can_we_shoot) {
+			case 1:
+				target = enemy_goal.getTop();
+				break;
+			case 2:
+				target = enemy_goal.getCentre();
+				break;
+			case 3:
+				target = enemy_goal.getBottom();
+				break;
 			}
+			
+			double angle_between = anglebetween(robot.getCoords(), target);
+			double turning_angle = angle_between - robot.getAngle();
+			byte forward_speed = 5;
+
+			// Keep the turning angle between -180 and 180
+			if (turning_angle > 180) turning_angle -= 360;
+			if (turning_angle < -180) turning_angle += 360;
+
+			if (distance_to_goal < Robot.LENGTH_CM) forward_speed = 0;
+
+			// don't exceed speed limit
+			if (forward_speed > MAX_SPEED_CM_S) forward_speed = MAX_SPEED_CM_S;
+			if (forward_speed < -MAX_SPEED_CM_S) forward_speed = -MAX_SPEED_CM_S;
+
+			try {
+				if (distance_to_ball > Robot.LENGTH_CM) {
+					setMode(mode.chase_ball);
+				} else if (turning_angle > TURNING_ACCURACY && (distance_to_goal > 1)){
+					mComm.sendMessage(opcode.operate, forward_speed, (byte)50);
+					System.out.println("Going to goal - Turning: " + turning_angle);
+				} 
+				else if( turning_angle < -TURNING_ACCURACY && (distance_to_goal > 1)){
+					mComm.sendMessage(opcode.operate, forward_speed, (byte)-50);
+					System.out.println("Going to goal - Turning: " + turning_angle);	
+				} else  {
+					mComm.sendMessage(opcode.kick);
+
+					//System.out.println("The old man the boat");
+					setMode(mode.chase_ball);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+			// Can't see the goal
+			try {
+				System.out.println("robot coords y: " + robot.getCoords().y + "   pitch_height: " + Tools.PITCH_HEIGHT_CM);
+				if (robot.getCoords().y > Tools.PITCH_HEIGHT_CM/2 + 20){
+					// Robot is closest to bottom
+					System.out.println("bottom");
+					mComm.sendMessage(opcode.operate, (byte) 10, (byte) -80);
+				} else {
+					// Robot is closest to top
+					System.out.println("top");
+					mComm.sendMessage(opcode.operate, (byte) 10, (byte) 80);
+				}
+			} catch (Exception e) {
+				
+			}
+			
 		}
 	}
+
 
 	/**
 	 * Move behind the ball before attempting to score
