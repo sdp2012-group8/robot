@@ -161,17 +161,24 @@ public class NeuralTrainer {
 				mSim.highlightBall(drag_ball);
 				drag_robot = -1;
 				mSim.highlightRobot(drag_robot);
+				if (trainer != null && trainer.isRecording()) {
+					trainer.Resume();
+				}
 			}
 			
 			@Override
 			public void mousePressed(MouseEvent e) {
 				if (mSim == null)
 					return;
+				if (trainer != null && trainer.isRecording()) {
+					trainer.Pause();
+				}
 				mouse_scaled_x = e.getX()/(double)panel.getWidth();
 				mouse_scaled_y = e.getY()/(double) panel.getWidth();
 				drag_ball = mSim.isInsideBall(mouse_scaled_x, mouse_scaled_y);
 				drag_robot = mSim.isInsideRobot(mouse_scaled_x, mouse_scaled_y);
 				mSim.highlightRobot(drag_robot);
+
 			}
 
 			@Override
