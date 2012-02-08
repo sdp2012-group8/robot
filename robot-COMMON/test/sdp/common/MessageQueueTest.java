@@ -60,6 +60,11 @@ public class MessageQueueTest {
 			public void close() {
 				// this is not needed
 			}
+
+			@Override
+			public void registerListener(MessageListener listener) {
+				// not needed
+			}
 		});
 		// initialize test
 		for (int i = 0; i < TEST_SIZE; i++) {

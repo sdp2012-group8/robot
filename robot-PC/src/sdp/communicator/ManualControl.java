@@ -433,10 +433,12 @@ public class ManualControl {
 			public void actionPerformed(ActionEvent arg0) {
 				btnConnect.setText("Wait...");
 				btnConnect.setEnabled(false);
+
 				boolean repeat = true;
 				while (repeat) {
 					try {
-						mComm = new JComm(new MessageListener() {
+						mComm = new JComm();
+						mComm.registerListener(new MessageListener() {
 
 							@Override
 							public void receiveMessage(opcode op, byte[] args, Communicator controler) {
