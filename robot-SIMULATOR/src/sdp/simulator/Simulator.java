@@ -87,6 +87,8 @@ public class Simulator extends WorldStateProvider {
 
 	private boolean paused = false;
 	private boolean running = true;
+	
+	private Integer reference_robot_id = null;
 
 	public Simulator() {
 		registerBlue(new VBrick(), 40, pitch_height_cm/2);
@@ -119,6 +121,14 @@ public class Simulator extends WorldStateProvider {
 			};
 
 		}.start();
+	}
+	
+	/**
+	 * 
+	 * @param id follow a 
+	 */
+	public void centerViewAround(Integer id) {
+		reference_robot_id = id;
 	}
 
 	/**
@@ -604,6 +614,8 @@ public class Simulator extends WorldStateProvider {
 			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		}
 		// draw table
+		g.setColor(Color.BLACK);
+		g.fillRect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT+IMAGE_INFO_SEC_HEIGHT);
 		g.setColor(new Color(10, 80, 0));
 		g.fillRect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
 		g.setColor(Color.BLACK);
@@ -727,16 +739,40 @@ public class Simulator extends WorldStateProvider {
 	// helpers
 	
 	/**
+	 * Use instead of g.DrawLine
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 */
+	private void drawRotated(int x1, int y1, int x2, int y2) {
+		Robot rob = null;
+		if (reference_robot_id != null) {
+			rob = new Robot(Vector2D.multiply(positions[reference_robot_id], IMAGE_WIDTH/pitch_width_cm), directions[reference_robot_id]);
+			Vector2D start = transformScreenVectorToLocalOne(x1, y1);
+			Vector2D end = transformScreenVectorToLocalOne(x2, y2);
+			g.drawLine((int) start.getX(), (int) start.getY(), (int) end.getX(), (int) end.getY());
+		} else
+			g.drawLine(x1, y1, x2, y2);
+	}
+	
+	/**
 	 * Draw vecrtor
 	 * @param origin in cm
 	 * @param vector in cm
 	 */
 	private void drawVector(Vector2D origin, Vector2D vector) {
-		g.drawLine(
+		drawRotated(
 				(int)(origin.getX()*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
 				(int)(origin.getY()*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
 				(int)((origin.getX()+vector.getX())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
 				(int)((origin.getY()+vector.getY())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM));
+	}
+	
+	private Vector2D transformScreenVectorToLocalOne(int x, int y) {
+		Robot rob = new Robot(Vector2D.multiply(positions[reference_robot_id], IMAGE_WIDTH/pitch_width_cm), directions[reference_robot_id]);
+		Vector2D centre_pitch = new Vector2D(0.5, 0.5*pitch_height_cm/pitch_width_cm);
+		return Vector2D.add(centre_pitch, Tools.getLocalVector(rob, new Vector2D(x, y)));
 	}
 	
 	/**

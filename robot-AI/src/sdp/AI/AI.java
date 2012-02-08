@@ -23,7 +23,7 @@ import sdp.common.WorldStateProvider;
 public abstract class AI extends WorldStateProvider {
 	
 	public enum mode {
-		chase_once, chase_ball, sit, got_ball, dribble
+		chase_ball, sit, got_ball, dribble
 	}
 
 
@@ -205,8 +205,7 @@ public abstract class AI extends WorldStateProvider {
 	 * Calculates if the ball has a direct line of sight to the enemy goal.
 	 * @return -1 if error, 0 if false, 1 if can see top, 2 middle, 3 bottom.
 	 */
-	public int canWeShoot() {
-		int can_we_shoot = 1;
+	public int isGoalVisible() {
 		enemy_robot.setCoords(true); //need to convert robot coords to cm
 		
 		//System.out.println("goal.top: " + enemy_goal.getTop() + "  goal.bottom: " + enemy_goal.getBottom() + "  robot.left: " + enemy_robot.getFrontLeft() + "  robot.right: " + enemy_robot.getFrontRight());
@@ -220,10 +219,22 @@ public abstract class AI extends WorldStateProvider {
 		}
 		
 		//if it gets here it can see the goal
+		if (Tools.isPathClear(worldState.getBallCoords(), enemy_goal.getCentre(), enemy_robot)) {
+			return 2;
+		} else if (Tools.isPathClear(worldState.getBallCoords(), enemy_goal.getTop(), enemy_robot)) {
+			return 1;
+		} else if (Tools.isPathClear(worldState.getBallCoords(), enemy_goal.getBottom(), enemy_robot)) {
+			return 3;
+		}
 		
-		
-		return can_we_shoot;
+		return -1; //should never be reached
 	}
+	
+	
+	//public int canWeShoot() {
+		
+	//}
+	
 
 	protected abstract void worldChanged();
 
