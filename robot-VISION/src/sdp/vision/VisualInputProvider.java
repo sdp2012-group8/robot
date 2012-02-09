@@ -24,7 +24,7 @@ public abstract class VisualInputProvider {
 	
 	
 	/**
-	 * Send the given image (the next image in the visual input stream) to the
+	 * Send the given image (the next image in the visual input stFileream) to the
 	 * callback object.
 	 * 
 	 * @param frame The next frame.

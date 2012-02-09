@@ -7,5 +7,6 @@
 	<classpathentry kind="lib" path="/robot-COMMON/lib/javacpp.jar"/>
 	<classpathentry kind="lib" path="/robot-COMMON/lib/javacv-linux-x86.jar"/>
 	<classpathentry kind="lib" path="/robot-COMMON/lib/javacv.jar"/>
+	<classpathentry kind="lib" path="xml/fakedocument.xml"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
