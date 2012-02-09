@@ -1,6 +1,11 @@
 package sdp.AI;
 
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import sdp.common.Communicator;
 import sdp.common.Goal;
@@ -201,20 +206,95 @@ public abstract class AI extends WorldStateProvider {
 				lowPass(old_value.getAngle(), new_value.getAngle()));
 	}
 
+	
+	/**
+	 * Comparator to sort Point2D.Double's into descending order of y values
+	 * @author michael
+	 *
+	 */
+	private class yPoints implements Comparator<Point2D.Double> {
+
+		@Override
+		public int compare(Point2D.Double o1, Point2D.Double o2) {
+			return (o1.y > o2.y ? -1 : (o1.y == o2.y ? 0 : 1));
+		}
+		
+	}
+	
+	/**
+	 * Comparator to sort Point2D.Double's into descending order of x values
+	 * @author michael
+	 *
+	 */
+	private class xPoints implements Comparator<Point2D.Double> {
+
+		@Override
+		public int compare(Point2D.Double o1, Point2D.Double o2) {
+			return (o1.x > o2.x ? -1 : (o1.x == o2.x ? 0 : 1));
+		}
+		
+	}
+	
 	/**
 	 * Calculates if the ball has a direct line of sight to the enemy goal.
+	 * @param enemy_robot The robot defending the goal
+	 * @param enemy_goal The goal of the opposing robot
 	 * @return -1 if error, 0 if false, 1 if can see top, 2 middle, 3 bottom.
 	 */
-	public int isGoalVisible() {
+	public int isGoalVisible(Robot enemy_robot, Goal enemy_goal) {
 		enemy_robot.setCoords(true); //need to convert robot coords to cm
 		
 		//System.out.println("goal.top: " + enemy_goal.getTop() + "  goal.bottom: " + enemy_goal.getBottom() + "  robot.left: " + enemy_robot.getFrontLeft() + "  robot.right: " + enemy_robot.getFrontRight());
 		//System.out.println("Ball: " + worldState.getBallCoords() + "  frontleft: " + enemy_robot.getFrontLeft() + "  frontRight: " + enemy_robot.getFrontRight() + "  inter: " + intersection); 
+		// TODO: change robot points from front to more accurate ones (flipper's / max/min y values)
 		
-		Point2D.Double intersection = Tools.intersection(enemy_goal.getTop(), enemy_robot.getFrontRight(), enemy_goal.getBottom(), enemy_robot.getFrontLeft());
+		// Array of the 3 possible points on the robot
+		Point2D.Double[] points = new Point2D.Double[3];
+		// List of all the points on the robot so we can sort them
+		List<Point2D.Double> e_robot_points = new ArrayList<Point2D.Double>(); 
+		e_robot_points.add(enemy_robot.getBackLeft());
+		e_robot_points.add(enemy_robot.getFrontLeft());
+		e_robot_points.add(enemy_robot.getBackRight());
+		e_robot_points.add(enemy_robot.getFrontRight());
+		
+		// Sorting to find the point with the highest and lowest y value
+		Collections.sort(e_robot_points, new yPoints());
+		points[0] = e_robot_points.get(0);
+		points[1] = e_robot_points.get(3);
+		
+		// Sorting to find the 2 points with the highest x value
+		Collections.sort(e_robot_points, new xPoints());
+		
+		// The value in the top two that isn't already in points[] is the one we want.
+		if (e_robot_points.get(0) == points[0] || e_robot_points.get(0) == points[1]) {
+			points[2] = e_robot_points.get(0);
+		} else {
+			points[2] = e_robot_points.get(1);
+		}
+		
+		Point2D.Double top;
+		Point2D.Double bottom;
+		
+		// Find top point by checking if two of the points are on the same side of the
+		// line between the third point and the top of the goal
+		if (Tools.sameSide(points[1], points[2], enemy_goal.getTop(), points[0])) {
+			top = points[0];
+		} else {
+			top = points[2];
+		}
+		
+		// Find bottom Point
+		if (Tools.sameSide(points[0], points[2], enemy_goal.getTop(), points[1])) {
+			bottom = points[1];
+		} else {
+			bottom = points[2];
+		}
+		
+		// Finds the intersection of the lines from the top and bottom of the goals to the robot corners.
+		Point2D.Double intersection = Tools.intersection(enemy_goal.getTop(), top, enemy_goal.getBottom(), bottom);
 		if ((intersection == null)) {
 			return -1;
-		} else if (Tools.pointInTriangle(worldState.getBallCoords(), enemy_robot.getFrontLeft(), enemy_robot.getFrontRight(), intersection)) {
+		} else if (Tools.pointInTriangle(worldState.getBallCoords(), top, bottom, intersection)) {
 			return 0;
 		}
 		
@@ -230,13 +310,10 @@ public abstract class AI extends WorldStateProvider {
 		return -1; //should never be reached
 	}
 	
-	
 	//public int canWeShoot() {
 		
 	//}
 	
-
 	protected abstract void worldChanged();
-
 
 }

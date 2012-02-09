@@ -4,7 +4,6 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
 import sdp.common.Robot;
@@ -722,59 +721,6 @@ public class Simulator extends WorldStateProvider {
 									will_be_in_collision[i] = true;
 									will_be_in_collision[j] = true;
 
-									// let's see what happens
-
-									/*
-									 * Vector2D robotDistance =
-									 * Vector2D.subtract(positions[i],
-									 * positions[j]); double distance =
-									 * 2*robotDistance.getLength(); Vector2D
-									 * normal =
-									 * Vector2D.getNormal(robotDistance);
-									 * Vector2D tangent = new Vector2D(normal.x,
-									 * -normal.y);
-									 * 
-									 * //assume masses are equal Vector2D
-									 * minimumTranslation =
-									 * Vector2D.multiply(tangent,robot.length -
-									 * distance/2);
-									 * 
-									 * positions[i].setX(positions[i].getX() +
-									 * Vector2D.multiply(minimumTranslation,
-									 * 0.5).getX());
-									 * positions[i].setY(positions[i].getY() +
-									 * Vector2D.multiply(minimumTranslation,
-									 * 0.5).getY());
-									 * 
-									 * positions[j].setX(positions[j].getX() -
-									 * Vector2D.multiply(minimumTranslation,
-									 * 0.5).getX());
-									 * positions[j].setY(positions[j].getY() -
-									 * Vector2D.multiply(minimumTranslation,
-									 * 0.5).getY());
-									 * 
-									 * Vector2D velocity1n =
-									 * Vector2D.multiply(normal,
-									 * Vector2D.dot(velocities[i], normal));
-									 * Vector2D velocity1t =
-									 * Vector2D.multiply(tangent,
-									 * Vector2D.dot(velocities[i], tangent));
-									 * 
-									 * Vector2D velocity2n =
-									 * Vector2D.multiply(normal,
-									 * Vector2D.dot(velocities[j], normal));
-									 * Vector2D velocity2t =
-									 * Vector2D.multiply(tangent,
-									 * Vector2D.dot(velocities[j], tangent));
-									 * 
-									 * velocities[i] = Vector2D.add(velocity1t,
-									 * Vector2D.multiply(normal,
-									 * velocity1n.getLength())); velocities[j] =
-									 * Vector2D.add(velocity2t,
-									 * Vector2D.multiply(normal,
-									 * velocity2n.getLength()));
-									 */
-
 									/**
 									 * If the robots collide, they will back
 									 * away with a distance equal to the
@@ -787,19 +733,6 @@ public class Simulator extends WorldStateProvider {
 											0, 0);
 									Vector2D backAwayDistance2 = new Vector2D(
 											0, 0);
-									int fasterRobot = j;
-									if (velocities[i].getLength() > velocities[j]
-											.getLength())
-										fasterRobot = i;
-
-									Vector2D velocityDifference;
-
-									if (fasterRobot == i)
-										velocityDifference = Vector2D.subtract(
-												velocities[i], velocities[j]);
-									else
-										velocityDifference = Vector2D.subtract(
-												velocities[j], velocities[i]);
 
 									backAwayDistance1.addmul_to(velocities[j],
 											dt);
@@ -855,20 +788,19 @@ public class Simulator extends WorldStateProvider {
 		g.setColor(Color.BLACK);
 		g.fillRect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT + IMAGE_INFO_SEC_HEIGHT);
 		g.setColor(new Color(10, 80, 0));
-		g.fillRect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
-		g.setColor(Color.BLACK);
-		g.fillRect(0, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_INFO_SEC_HEIGHT);
+		fillRect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
 		// draw goals
 		g.setColor(new Color(180, 180, 180));
-		g.fillRect(0, (int) (IMAGE_WIDTH
-				* (pitch_height_cm / 2 - goal_size / 2) / pitch_width_cm),
-				(int) (IMAGE_WIDTH * 2 / pitch_width_cm), (int) (IMAGE_WIDTH
-						* goal_size / pitch_width_cm));
-		g.fillRect(
-				(int) (IMAGE_WIDTH - IMAGE_WIDTH * 2 / pitch_width_cm),
-				(int) (IMAGE_WIDTH * (pitch_height_cm / 2 - goal_size / 2) / pitch_width_cm),
-				(int) (IMAGE_WIDTH * 2 / pitch_width_cm), (int) (IMAGE_WIDTH
-						* goal_size / pitch_width_cm));
+
+		fillRect(0,
+				(int) (IMAGE_WIDTH*(pitch_height_cm/2-goal_size/2)/pitch_width_cm),
+				(int) (IMAGE_WIDTH*2/pitch_width_cm),
+				(int) (IMAGE_WIDTH*goal_size/pitch_width_cm));
+		fillRect((int) (IMAGE_WIDTH - IMAGE_WIDTH*2/pitch_width_cm),
+				(int) (IMAGE_WIDTH*(pitch_height_cm/2-goal_size/2)/pitch_width_cm),
+				(int) (IMAGE_WIDTH*2/pitch_width_cm),
+				(int) (IMAGE_WIDTH*goal_size/pitch_width_cm));
+
 		// draw robots
 		WorldState state_cm = null;
 		if (state != null)
@@ -893,58 +825,57 @@ public class Simulator extends WorldStateProvider {
 			robot = new Robot(Vector2D.divide(positions[i], pitch_width_cm),
 					directions[i]);
 			// draw body of robot
-			g.fillPolygon(
-					new int[] {
-							(int) (robot.getFrontLeft().getX() * IMAGE_WIDTH),
-							(int) (robot.getFrontRight().getX() * IMAGE_WIDTH),
-							(int) (robot.getBackRight().getX() * IMAGE_WIDTH),
-							(int) (robot.getBackLeft().getX() * IMAGE_WIDTH),
-							(int) (robot.getFrontLeft().getX() * IMAGE_WIDTH) },
-					new int[] {
-							(int) (robot.getFrontLeft().getY() * IMAGE_WIDTH),
-							(int) (robot.getFrontRight().getY() * IMAGE_WIDTH),
-							(int) (robot.getBackRight().getY() * IMAGE_WIDTH),
-							(int) (robot.getBackLeft().getY() * IMAGE_WIDTH),
-							(int) (robot.getFrontLeft().getY() * IMAGE_WIDTH) },
-					5);
+
+			fillPolygon(new int[] {
+					(int)(robot.getFrontLeft().getX()*IMAGE_WIDTH),
+					(int)(robot.getFrontRight().getX()*IMAGE_WIDTH),
+					(int)(robot.getBackRight().getX()*IMAGE_WIDTH),
+					(int)(robot.getBackLeft().getX()*IMAGE_WIDTH),
+					(int)(robot.getFrontLeft().getX()*IMAGE_WIDTH)
+			}, new int[] {
+					(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH),
+					(int)(robot.getFrontRight().getY()*IMAGE_WIDTH),
+					(int)(robot.getBackRight().getY()*IMAGE_WIDTH),
+					(int)(robot.getBackLeft().getY()*IMAGE_WIDTH),
+					(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH)
+			}, 5);
 			// draw flipper's
 			g.setStroke(new BasicStroke(3.0f));
-			double dir_x = flipper_size
-					* Math.cos(robot.getAngle() * Math.PI / 180d)
-					/ pitch_width_cm;
-			double dir_y = -flipper_size
-					* Math.sin(robot.getAngle() * Math.PI / 180d)
-					/ pitch_width_cm;
-			g.drawLine(
-					(int) (robot.getFrontLeft().getX() * IMAGE_WIDTH),
-					(int) (robot.getFrontLeft().getY() * IMAGE_WIDTH),
-					(int) ((robot.getFrontLeft().getX() + dir_x) * IMAGE_WIDTH),
-					(int) ((robot.getFrontLeft().getY() + dir_y) * IMAGE_WIDTH));
-			g.drawLine(
-					(int) (robot.getFrontRight().getX() * IMAGE_WIDTH),
-					(int) (robot.getFrontRight().getY() * IMAGE_WIDTH),
-					(int) ((robot.getFrontRight().getX() + dir_x) * IMAGE_WIDTH),
-					(int) ((robot.getFrontRight().getY() + dir_y) * IMAGE_WIDTH));
+			double dir_x = flipper_size*Math.cos(robot.getAngle()*Math.PI/180d)/pitch_width_cm;
+			double dir_y = -flipper_size*Math.sin(robot.getAngle()*Math.PI/180d)/pitch_width_cm;
+			drawLine(
+					(int)(robot.getFrontLeft().getX()*IMAGE_WIDTH),
+					(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH),
+					(int)((robot.getFrontLeft().getX()+dir_x)*IMAGE_WIDTH),
+					(int)((robot.getFrontLeft().getY()+dir_y)*IMAGE_WIDTH));
+			drawLine(
+					(int)(robot.getFrontRight().getX()*IMAGE_WIDTH),
+					(int)(robot.getFrontRight().getY()*IMAGE_WIDTH),
+					(int)((robot.getFrontRight().getX()+dir_x)*IMAGE_WIDTH),
+					(int)((robot.getFrontRight().getY()+dir_y)*IMAGE_WIDTH));
+
 			// draw direction pointer
 			double shift_x = 0.01 * Math.cos(robot.getAngle() * Math.PI / 180d);
 			double shift_y = -0.01
 					* Math.sin(robot.getAngle() * Math.PI / 180d);
 			g.setColor(Color.white);
 			g.setStroke(new BasicStroke(10.0f));
-			dir_x = 0.04 * Math.cos(robot.getAngle() * Math.PI / 180d);
-			dir_y = -0.04 * Math.sin(robot.getAngle() * Math.PI / 180d);
-			g.drawLine(
-					(int) ((robot.getCoords().getX() - shift_x) * IMAGE_WIDTH),
-					(int) ((robot.getCoords().getY() - shift_y) * IMAGE_WIDTH),
-					(int) ((robot.getCoords().getX() + dir_x - shift_x) * IMAGE_WIDTH),
-					(int) ((robot.getCoords().getY() + dir_y - shift_y) * IMAGE_WIDTH));
-			dir_x = 0.03 * Math.cos((robot.getAngle() + 90) * Math.PI / 180d);
-			dir_y = -0.03 * Math.sin((robot.getAngle() + 90) * Math.PI / 180d);
-			g.drawLine(
-					(int) ((robot.getCoords().getX() - dir_x / 2 - shift_x) * IMAGE_WIDTH),
-					(int) ((robot.getCoords().getY() - dir_y / 2 - shift_y) * IMAGE_WIDTH),
-					(int) ((robot.getCoords().getX() + dir_x / 2 - shift_x) * IMAGE_WIDTH),
-					(int) ((robot.getCoords().getY() + dir_y / 2 - shift_y) * IMAGE_WIDTH));
+
+			dir_x = 0.04*Math.cos(robot.getAngle()*Math.PI/180d);
+			dir_y = -0.04*Math.sin(robot.getAngle()*Math.PI/180d);
+			drawLine(
+					(int)((robot.getCoords().getX()-shift_x)*IMAGE_WIDTH),
+					(int)((robot.getCoords().getY()-shift_y)*IMAGE_WIDTH),
+					(int)((robot.getCoords().getX()+dir_x-shift_x)*IMAGE_WIDTH),
+					(int)((robot.getCoords().getY()+dir_y-shift_y)*IMAGE_WIDTH));
+			dir_x = 0.03*Math.cos((robot.getAngle()+90)*Math.PI/180d);
+			dir_y = -0.03*Math.sin((robot.getAngle()+90)*Math.PI/180d);
+			drawLine(
+					(int)((robot.getCoords().getX()-dir_x/2-shift_x)*IMAGE_WIDTH),
+					(int)((robot.getCoords().getY()-dir_y/2-shift_y)*IMAGE_WIDTH),
+					(int)((robot.getCoords().getX()+dir_x/2-shift_x)*IMAGE_WIDTH),
+					(int)((robot.getCoords().getY()+dir_y/2-shift_y)*IMAGE_WIDTH));
+
 			// draw nearest points of collision
 			if (i < 2 && state_cm != null) {
 				color = brighter(color);
@@ -975,13 +906,15 @@ public class Simulator extends WorldStateProvider {
 		if (mouse_over_ball)
 			g.setColor(brighter(g.getColor()));
 		g.setStroke(new BasicStroke(1.0f));
-		g.fillOval(
+		fillOval(
 
 				(int) ((ball.getX() - ball_radius) * IMAGE_WIDTH / pitch_width_cm),
 				(int) ((ball.getY() - ball_radius) * IMAGE_WIDTH / pitch_width_cm),
 				(int) (2 * ball_radius * IMAGE_WIDTH / pitch_width_cm),
 				(int) (2 * ball_radius * IMAGE_WIDTH / pitch_width_cm));
 		// draw Strings
+		g.setColor(Color.BLACK);
+		g.fillRect(0, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_INFO_SEC_HEIGHT);
 		g.setColor(Color.white);
 		g.drawString((int) (1 / dt) + " fps", IMAGE_WIDTH - 50, 20);
 		g.drawString("Score: " + score_left + " : " + score_right,
@@ -1017,6 +950,53 @@ public class Simulator extends WorldStateProvider {
 
 	// helpers
 
+	
+	private void fillRect(int x, int y, int w, int h) {
+		fillPolygon(new int[] {
+				x,
+				x+w,
+				x+w,
+				x,
+				x
+		}, new int[] {
+				y,
+				y,
+				y+h,
+				y+h,
+				y
+		}, 5);
+	}
+	
+	/**
+	 * Use instead of g.fillOval
+	 * @param x
+	 * @param y
+	 * @param w
+	 * @param h
+	 */
+	private void fillOval(int x, int y, int w, int h) {
+		Vector2D cent = transformScreenVectorToLocalOne(x, y);
+		g.fillOval((int) cent.getX(), (int) cent.getY(), w, h);
+	}
+	
+	/**
+	 * Use instead of g.fillPolygon
+	 * @param xs
+	 * @param ys
+	 * @param size number of points
+	 */
+	private void fillPolygon(int[] xs, int[] ys, int size) {
+		Vector2D[] points = new Vector2D[size];
+		int[] newxs = new int[size], newys = new int[size];
+		for (int i = 0; i < size; i++) {
+			points[i] = transformScreenVectorToLocalOne(xs[i], ys[i]);
+			newxs[i] = (int) points[i].getX();
+			newys[i] = (int) points[i].getY();
+		}
+		g.fillPolygon(newxs, newys, size);
+	}
+	
+
 	/**
 	 * Use instead of g.DrawLine
 	 * 
@@ -1025,12 +1005,9 @@ public class Simulator extends WorldStateProvider {
 	 * @param x2
 	 * @param y2
 	 */
-	private void drawRotated(int x1, int y1, int x2, int y2) {
-		Robot rob = null;
+	private void drawLine(int x1, int y1, int x2, int y2) {
 		if (reference_robot_id != null) {
-			rob = new Robot(Vector2D.multiply(positions[reference_robot_id],
-					IMAGE_WIDTH / pitch_width_cm),
-					directions[reference_robot_id]);
+
 			Vector2D start = transformScreenVectorToLocalOne(x1, y1);
 			Vector2D end = transformScreenVectorToLocalOne(x2, y2);
 			g.drawLine((int) start.getX(), (int) start.getY(),
@@ -1048,20 +1025,23 @@ public class Simulator extends WorldStateProvider {
 	 *            in cm
 	 */
 	private void drawVector(Vector2D origin, Vector2D vector) {
-		drawRotated(
-				(int) (origin.getX() * IMAGE_WIDTH / Tools.PITCH_WIDTH_CM),
-				(int) (origin.getY() * IMAGE_WIDTH / Tools.PITCH_WIDTH_CM),
-				(int) ((origin.getX() + vector.getX()) * IMAGE_WIDTH / Tools.PITCH_WIDTH_CM),
-				(int) ((origin.getY() + vector.getY()) * IMAGE_WIDTH / Tools.PITCH_WIDTH_CM));
+
+		drawLine(
+				(int)(origin.getX()*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
+				(int)(origin.getY()*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
+				(int)((origin.getX()+vector.getX())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
+				(int)((origin.getY()+vector.getY())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM));
+
 	}
 
 	private Vector2D transformScreenVectorToLocalOne(int x, int y) {
-		Robot rob = new Robot(Vector2D.multiply(positions[reference_robot_id],
-				IMAGE_WIDTH / pitch_width_cm), directions[reference_robot_id]);
-		Vector2D centre_pitch = new Vector2D(0.5, 0.5 * pitch_height_cm
-				/ pitch_width_cm);
-		return Vector2D.add(centre_pitch,
-				Tools.getLocalVector(rob, new Vector2D(x, y)));
+
+		if (reference_robot_id == null)
+			return new Vector2D(x, y);
+		Robot rob = new Robot(Vector2D.multiply(positions[reference_robot_id], IMAGE_WIDTH/pitch_width_cm), directions[reference_robot_id]);
+		Vector2D centre_pitch = new Vector2D(0.5*IMAGE_WIDTH, 0.5*pitch_height_cm*IMAGE_WIDTH/pitch_width_cm);
+		return Vector2D.add(centre_pitch, Tools.getLocalVector(rob, new Vector2D(x, y)));
+
 	}
 
 	/**

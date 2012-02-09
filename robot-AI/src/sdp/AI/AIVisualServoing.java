@@ -187,7 +187,7 @@ public class AIVisualServoing extends AI {
 	public void aimAndShoot(){
 		//System.out.println("Attempting to score goal");
 
-		int can_we_shoot = isGoalVisible();
+		int can_we_shoot = isGoalVisible(enemy_robot, enemy_goal);
 
 		if (can_we_shoot > 0) {
 			// We can see the goal
@@ -224,11 +224,11 @@ public class AIVisualServoing extends AI {
 					setMode(mode.chase_ball);
 				} else if (turning_angle > TURNING_ACCURACY && (distance_to_goal > 1)){
 					mComm.sendMessage(opcode.operate, forward_speed, (byte)50);
-					System.out.println("Going to goal - Turning: " + turning_angle);
+					//System.out.println("Going to goal - Turning: " + turning_angle);
 				} 
 				else if( turning_angle < -TURNING_ACCURACY && (distance_to_goal > 1)){
 					mComm.sendMessage(opcode.operate, forward_speed, (byte)-50);
-					System.out.println("Going to goal - Turning: " + turning_angle);	
+					//System.out.println("Going to goal - Turning: " + turning_angle);	
 				} else  {
 					mComm.sendMessage(opcode.kick);
 
@@ -241,14 +241,14 @@ public class AIVisualServoing extends AI {
 		} else {
 			// Can't see the goal
 			try {
-				System.out.println("robot coords y: " + robot.getCoords().y + "   pitch_height: " + Tools.PITCH_HEIGHT_CM);
+				//System.out.println("robot coords y: " + robot.getCoords().y + "   pitch_height: " + Tools.PITCH_HEIGHT_CM);
 				if (robot.getCoords().y > Tools.PITCH_HEIGHT_CM/2 + 20){
 					// Robot is closest to bottom
-					System.out.println("bottom");
+					//System.out.println("bottom");
 					mComm.sendMessage(opcode.operate, (byte) 10, (byte) -80);
 				} else {
 					// Robot is closest to top
-					System.out.println("top");
+					//System.out.println("top");
 					mComm.sendMessage(opcode.operate, (byte) 10, (byte) 80);
 				}
 			} catch (Exception e) {
