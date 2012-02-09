@@ -78,6 +78,14 @@ public abstract class AI extends WorldStateProvider {
 	public void setMode(mode new_mode) {
 		state = new_mode;
 	}
+	
+	/**
+	 * Gets AI mode
+	 * @return
+	 */
+	public mode getMode() {
+		return state;
+	}
 
 	/**
 	 * Starts the AI in a new decision thread. (Not true, starts a new thread that updates the world state every time it changes)

@@ -25,8 +25,8 @@ import sdp.simulator.VBrick;
 public class NeuralNetworkTrainingGenerator extends VBrick {
 
 	private NeuralNetwork[] nets = new NeuralNetwork[] {
-			new MultiLayerPerceptron(2, 5, 7, 3),
-			new MultiLayerPerceptron(2, 5, 7, 3)
+			new MultiLayerPerceptron(1, 5, 7, 3),
+			new MultiLayerPerceptron(1, 5, 7, 3)
 	};
 	
 	private final static double network_desired_error = 80;
@@ -100,14 +100,26 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	
 	
 	public void Pause() {
+		if (!recording) 
+			return;
+		if (pause)
+			return;
 		pause = true;
 		System.out.println("Recording paused");
 	}
 	
 	public void Resume() {
+		if (!recording) 
+			return;
+		if (!pause)
+			return;
 		oldWorldState = null;
 		pause = false;
 		System.out.println("Resumed");
+	}
+	
+	public boolean isPaused() {
+		return pause;
 	}
 
 	/**
@@ -140,12 +152,14 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 							//boolean
 							//is_it_kicking = is_kicking;
 							// create training set
+							int spd_test = desired_speed == 0 ? 1 : (desired_speed > 0 ? 2 : 0);
+							int trn_test = desired_turning_speed == 0 ? 1 : (desired_turning_speed > 0 ? 2 : 0);
 							tsets[0].addElement(new SupervisedTrainingElement(
 									NNetTools.generateAIinput(worldState, am_i_blue, my_goal_left, 0),
-									NNetTools.generateOutput(desired_speed == 0 ? 1 : (desired_speed > 0 ? 2 : 0), 3)));
+									NNetTools.generateOutput(spd_test, 3)));
 							tsets[1].addElement(new SupervisedTrainingElement(
 									NNetTools.generateAIinput(worldState, am_i_blue, my_goal_left, 1),
-									NNetTools.generateOutput(desired_turning_speed == 0 ? 1 : (desired_turning_speed > 0 ? 2 : 0), 3)));
+									NNetTools.generateOutput(trn_test, 3)));
 							frames++;
 							if (frames % 100 == 0)
 								System.out.println(frames+" frames recorded last - "+frames+" and "+desired_speed);
