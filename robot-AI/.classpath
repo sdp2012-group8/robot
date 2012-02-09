@@ -6,9 +6,11 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/robot-PC"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/robot-VISION"/>
 	<classpathentry kind="con" path="org.lejos.nxt.ldt.LEJOS_LIBRARY_CONTAINER/pc"/>
+
 	<classpathentry kind="lib" path="/robot-COMMON/lib/v4l4j.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/robot-NXT"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="/robot-COMMON/lib/neuroph-2.6.jar"/>
+
 	<classpathentry kind="output" path="bin"/>
 </classpath>
