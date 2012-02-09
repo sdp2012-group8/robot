@@ -7,7 +7,7 @@ package sdp.common;
  * 
  * It begins recording frame from the first tick, not since the object's
  * creation. The FPS value returned should be representative of the last
- * SAMPLE_SIZE (50 when this was written) frames, after the said number
+ * SAMPLE_SIZE (10 when this was written) frames, after the said number
  * of frames had passed.
  * 
  * @author Gediminas Liktaras
@@ -15,7 +15,7 @@ package sdp.common;
 public class FPSCounter {
 	
 	/** How many frames to sample for FPS computations. */
-	private static final int SAMPLE_SIZE = 50;
+	private static final int SAMPLE_SIZE = 10;
 	
 	/** The buffer that contains the last SAMPLE_SIZE tick lengths. */
 	private int tickLength[];	
@@ -42,7 +42,7 @@ public class FPSCounter {
 	
 	
 	/**
-	 * Get the number of FPS within the last SAMPLE_SIZE (50) frames.
+	 * Get the number of FPS within the last SAMPLE_SIZE (10) frames.
 	 * 
 	 * @return Frames per second.
 	 */

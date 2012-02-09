@@ -119,6 +119,10 @@ public class MainImageProcessor extends ImageProcessor {
 				int s = (int) (hsv[1] * 100);
 				int v = (int) (hsv[2] * 100);
 				
+				if (h >= 40 && h <= 180 && v >= 35 && s >= 40) {
+			    	marker.setRGB(x, y, Color.white.getRGB());
+			    	frame.setRGB(ox, oy, Color.pink.getRGB());
+			    }
 				if ((h >= 350 || h <= 20) && (s >= 60) && (s >= 60)) {
 					ball.setRGB(x, y, Color.white.getRGB());
 					frame.setRGB(ox, oy, Color.red.getRGB());
@@ -131,11 +135,6 @@ public class MainImageProcessor extends ImageProcessor {
 			    if ((h >= 25) && (h <= 75) && (s >= 60) && (v >= 60)) {
 			    	yellow.setRGB(x, y, Color.white.getRGB());
 			    	frame.setRGB(ox, oy, Color.orange.getRGB());
-			    }
-			    
-			    if ((r <= 100) && (g <= 100) && (b <= 50) && (v <= 40)) {
-			    	marker.setRGB(x, y, Color.white.getRGB());
-			    	frame.setRGB(ox, oy, Color.pink.getRGB());
 			    }
 			}
 		}
@@ -235,7 +234,7 @@ public class MainImageProcessor extends ImageProcessor {
                 int mcY = mY + mH / 2;
                 
                 double dist = Point.distance(rcX, rcY, mcX, mcY);
-                if ((dist >= 15.0) && (dist <= 40.0)) {
+                if ((dist >= 15.0) && (dist <= 30.0)) {
                 	double prop = (double)mW / (double) mH;
                 	if (prop < 1.0) {
                 		prop = 1.0 / prop;
@@ -310,7 +309,7 @@ public class MainImageProcessor extends ImageProcessor {
 	 * Take a contour and return all shapes in it that fit within the
 	 * specified dimensions.
 	 * 
-	 * @param contour Contour to disect.
+	 * @param contour Contour to bisect.
 	 * @param minWidth Minimum required shape width.
 	 * @param maxWidth Maximum required shape width.
 	 * @param minHeight Minimum required shape height.
