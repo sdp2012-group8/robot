@@ -38,9 +38,24 @@ public class ImageProcessorConfiguration {
 	private int ballValMaxValue = 100;
 	/** Upper bound of the ball contour size. */
 	private int ballSizeMaxValue = 25;
-	/** Whether to show thresholded ball image. */
-	private boolean showBallThreshold = false;
-		
+	
+	/** Lower bound of the Blue threshold's hue value. */
+	private int blueHueMinValue = 70;
+	/** Lower bound of the Blue threshold's saturation value. */
+	private int blueSatMinValue = 0;
+	/** Lower bound of the Blue threshold's value value. */
+	private int blueValMinValue = 30;
+	/** Lower bound of the Blue contour size. */
+	private int blueSizeMinValue = 10;
+	/** Upper bound of the Blue threshold's hue value. */
+	private int blueHueMaxValue = 210;
+	/** Upper bound of the Blue threshold's saturation value. */
+	private int blueSatMaxValue = 100;
+	/** Upper bound of the Blue threshold's value value. */
+	private int blueValMaxValue = 100;
+	/** Upper bound of the Blue contour size. */
+	private int blueSizeMaxValue = 50;
+	
 
 	/**
 	 * The default constructor. Creates the default vision configuration.
@@ -390,24 +405,156 @@ public class ImageProcessorConfiguration {
 	public void setBallSizeMaxValue(int ballSizeMaxValue) {
 		this.ballSizeMaxValue = ballSizeMaxValue;
 	}
-
-
+	
+	
 	/**
-	 * Get whether the ball's threshold should be shown.
+	 * Get the lower bound of the blue threshold's hue value.
 	 * 
-	 * @return Whether the ball's threshold should be shown.
+	 * @return Minimum blue hue value.
 	 */
-	public boolean showBallThreshold() {
-		return showBallThreshold;
+	public int getBlueHueMinValue() {
+		return blueHueMinValue;
 	}
 
 	/**
-	 * Set whether the ball's threshold should be shown.
+	 * Set the lower bound of the blue threshold's hue value.
 	 * 
-	 * @param showBallThreshold Whether the ball's threshold should be shown.
+	 * @param blueHueMinValue The minimum blue hue value.
 	 */
-	public void setShowBallThreshold(boolean showBallThreshold) {
-		this.showBallThreshold = showBallThreshold;
+	public void setBlueHueMinValue(int blueHueMinValue) {
+		this.blueHueMinValue = blueHueMinValue;
+	}
+
+
+	/**
+	 * Get the lower bound of the blue threshold's saturation value.
+	 * 
+	 * @return Minimum blue saturation value.
+	 */
+	public int getBlueSatMinValue() {
+		return blueSatMinValue;
+	}
+
+	/**
+	 * Set the lower bound of the blue threshold's saturation value.
+	 * 
+	 * @param blueSatMinValue The minimum blue saturation value.
+	 */
+	public void setBlueSatMinValue(int blueSatMinValue) {
+		this.blueSatMinValue = blueSatMinValue;
+	}
+
+
+	/**
+	 * Get the lower bound of the blue threshold's value value.
+	 * 
+	 * @return Minimum blue value value.
+	 */
+	public int getBlueValMinValue() {
+		return blueValMinValue;
+	}
+
+	/**
+	 * Set the lower bound of the blue threshold's value value.
+	 * 
+	 * @param blueValMinValue The minimum blue value value.
+	 */
+	public void setBlueValMinValue(int blueValMinValue) {
+		this.blueValMinValue = blueValMinValue;
+	}
+	
+	
+	/**
+	 * Get the lower bound of the blue contour's size.
+	 * 
+	 * @return Minimum blue contour size.
+	 */
+	public int getBlueSizeMinValue() {
+		return blueSizeMinValue;
+	}
+
+	/**
+	 * Set the lower bound of the blue contour's size.
+	 * 
+	 * @param blueSizeMinValue Minimum blue contour size.
+	 */
+	public void setBlueSizeMinValue(int blueSizeMinValue) {
+		this.blueSizeMinValue = blueSizeMinValue;
+	}
+
+
+	/**
+	 * Get the upper bound of the blue threshold's hue value.
+	 * 
+	 * @return Maximum blue hue value.
+	 */
+	public int getBlueHueMaxValue() {
+		return blueHueMaxValue;
+	}
+
+	/**
+	 * Set the upper bound of the blue threshold's hue value.
+	 * 
+	 * @param blueHueMaxValue The maximum blue hue value.
+	 */
+	public void setBlueHueMaxValue(int blueHueMaxValue) {
+		this.blueHueMaxValue = blueHueMaxValue;
+	}
+
+
+	/**
+	 * Get the upper bound of the blue threshold's saturation value.
+	 * 
+	 * @return Maximum blue saturation value.
+	 */
+	public int getBlueSatMaxValue() {
+		return blueSatMaxValue;
+	}
+
+	/**
+	 * Set the upper bound of the blue threshold's saturation value.
+	 * 
+	 * @param blueSatMaxValue The maximum blue saturation value.
+	 */
+	public void setBlueSatMaxValue(int blueSatMaxValue) {
+		this.blueSatMaxValue = blueSatMaxValue;
+	}
+
+
+	/**
+	 * Get the upper bound of the blue threshold's value value.
+	 * 
+	 * @return Maximum blue value value.
+	 */
+	public int getBlueValMaxValue() {
+		return blueValMaxValue;
+	}
+
+	/**
+	 * Set the upper bound of the blue threshold's value value.
+	 * 
+	 * @param blueValMaxValue The maximum blue value value.
+	 */
+	public void setBlueValMaxValue(int blueValMaxValue) {
+		this.blueValMaxValue = blueValMaxValue;
+	}
+
+	/**
+	 * Get the upper bound of the blue contour's size.
+	 * 
+	 * @return Maximum blue contour size.
+	 */
+	public int getBlueSizeMaxValue() {
+		return blueSizeMaxValue;
+	}
+
+	/**
+	 * Set the upper bound of the blue contour's size.
+	 * 
+	 * @param blueSizeMaxValue Maximum blue contour size.
+	 */
+	public void setBlueSizeMaxValue(int blueSizeMaxValue) {
+		this.blueSizeMaxValue = blueSizeMaxValue;
 	}
 	
 }

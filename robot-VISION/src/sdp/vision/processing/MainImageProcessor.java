@@ -59,8 +59,9 @@ public class MainImageProcessor extends ImageProcessor {
 		cvSetImageROI(frame_ipl, getCurrentROI());
 
 		Point2D.Double ballPos = findBall(frame_ipl, ballThreshold);
-		Robot blueRobot = findRobot(frame_ipl, blueThreshold, markerThreshold);
-		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold, markerThreshold);
+		Robot blueRobot = findRobot(frame_ipl, blueThreshold, markerThreshold,
+				config.getBlueSizeMinValue(), config.getBlueSizeMaxValue());
+		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold, markerThreshold, 10, 55);
 		BufferedImage worldImage = finaliseWorldImage(frame_ipl, ballPos, blueRobot, yellowRobot);
 		
 		return new WorldState(ballPos, blueRobot, yellowRobot, worldImage);
@@ -128,15 +129,20 @@ public class MainImageProcessor extends ImageProcessor {
 						&& Utilities.valueWithinBounds(s, config.getBallSatMinValue(),
 								config.getBallSatMaxValue())
 						&& Utilities.valueWithinBounds(v, config.getBallValMinValue(),
-								config.getBallValMaxValue())) {			
-					ball.setRGB(x, y, Color.white.getRGB());
+								config.getBallValMaxValue())) {	
 					
-					if (config.showBallThreshold()) {
-						frame.setRGB(ox, oy, Color.red.getRGB());
-					}
+					ball.setRGB(x, y, Color.white.getRGB());
+					frame.setRGB(ox, oy, Color.red.getRGB());
 				}
-				if ((h >= 70) && (h <= 210) && (s >= 0) && (v >= 30) 
+				
+				if (Utilities.valueWithinBounds(h, config.getBlueHueMinValue(), 
+								config.getBlueHueMaxValue())
+						&& Utilities.valueWithinBounds(s, config.getBlueSatMinValue(),
+								config.getBlueSatMaxValue())
+						&& Utilities.valueWithinBounds(v, config.getBlueValMinValue(),
+								config.getBlueValMaxValue())
 						&& (g < (int)(b * 1.5))) {
+					
 					blue.setRGB(x, y, Color.white.getRGB());
 					frame.setRGB(ox, oy, Color.blue.getRGB());
 			    }
@@ -193,9 +199,9 @@ public class MainImageProcessor extends ImageProcessor {
 	 * @return The position of the ball.
 	 */
 	private Robot findRobot(IplImage frame_ipl, IplImage robotThresh,
-			IplImage markerThresh) {		
+			IplImage markerThresh, int minSize, int maxSize) {		
 		CvSeq fullRobotContour = findAllContours(robotThresh);
-		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour, 10, 55);
+		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour, minSize, maxSize);
 		
 		if (robotShapes.size() == 0) {
 			return new Robot(new Point2D.Double(-1.0, -1.0), 0.0);
