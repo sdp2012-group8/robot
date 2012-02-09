@@ -56,6 +56,23 @@ public class ImageProcessorConfiguration {
 	/** Upper bound of the Blue contour size. */
 	private int blueSizeMaxValue = 50;
 	
+	/** Lower bound of the Yellow threshold's hue value. */
+	private int yellowHueMinValue = 25;
+	/** Lower bound of the Yellow threshold's saturation value. */
+	private int yellowSatMinValue = 60;
+	/** Lower bound of the Yellow threshold's value value. */
+	private int yellowValMinValue = 60;
+	/** Lower bound of the Yellow contour size. */
+	private int yellowSizeMinValue = 10;
+	/** Upper bound of the Yellow threshold's hue value. */
+	private int yellowHueMaxValue = 75;
+	/** Upper bound of the Yellow threshold's saturation value. */
+	private int yellowSatMaxValue = 100;
+	/** Upper bound of the Yellow threshold's value value. */
+	private int yellowValMaxValue = 100;
+	/** Upper bound of the Yellow contour size. */
+	private int yellowSizeMaxValue = 50;
+	
 
 	/**
 	 * The default constructor. Creates the default vision configuration.
@@ -557,4 +574,156 @@ public class ImageProcessorConfiguration {
 		this.blueSizeMaxValue = blueSizeMaxValue;
 	}
 	
+	
+
+	/**
+	 * Get the lower bound of the yellow threshold's hue value.
+	 * 
+	 * @return Minimum yellow hue value.
+	 */
+	public int getYellowHueMinValue() {
+		return yellowHueMinValue;
+	}
+
+	/**
+	 * Set the lower bound of the yellow threshold's hue value.
+	 * 
+	 * @param yellowHueMinValue The minimum yellow hue value.
+	 */
+	public void setYellowHueMinValue(int yellowHueMinValue) {
+		this.yellowHueMinValue = yellowHueMinValue;
+	}
+
+
+	/**
+	 * Get the lower bound of the yellow threshold's saturation value.
+	 * 
+	 * @return Minimum yellow saturation value.
+	 */
+	public int getYellowSatMinValue() {
+		return yellowSatMinValue;
+	}
+
+	/**
+	 * Set the lower bound of the yellow threshold's saturation value.
+	 * 
+	 * @param yellowSatMinValue The minimum yellow saturation value.
+	 */
+	public void setYellowSatMinValue(int yellowSatMinValue) {
+		this.yellowSatMinValue = yellowSatMinValue;
+	}
+
+
+	/**
+	 * Get the lower bound of the yellow threshold's value value.
+	 * 
+	 * @return Minimum yellow value value.
+	 */
+	public int getYellowValMinValue() {
+		return yellowValMinValue;
+	}
+
+	/**
+	 * Set the lower bound of the yellow threshold's value value.
+	 * 
+	 * @param yellowValMinValue The minimum yellow value value.
+	 */
+	public void setYellowValMinValue(int yellowValMinValue) {
+		this.yellowValMinValue = yellowValMinValue;
+	}
+	
+	
+	/**
+	 * Get the lower bound of the yellow contour's size.
+	 * 
+	 * @return Minimum yellow contour size.
+	 */
+	public int getYellowSizeMinValue() {
+		return yellowSizeMinValue;
+	}
+
+	/**
+	 * Set the lower bound of the yellow contour's size.
+	 * 
+	 * @param yellowSizeMinValue Minimum yellow contour size.
+	 */
+	public void setYellowSizeMinValue(int yellowSizeMinValue) {
+		this.yellowSizeMinValue = yellowSizeMinValue;
+	}
+
+
+	/**
+	 * Get the upper bound of the yellow threshold's hue value.
+	 * 
+	 * @return Maximum yellow hue value.
+	 */
+	public int getYellowHueMaxValue() {
+		return yellowHueMaxValue;
+	}
+
+	/**
+	 * Set the upper bound of the yellow threshold's hue value.
+	 * 
+	 * @param yellowHueMaxValue The maximum yellow hue value.
+	 */
+	public void setYellowHueMaxValue(int yellowHueMaxValue) {
+		this.yellowHueMaxValue = yellowHueMaxValue;
+	}
+
+
+	/**
+	 * Get the upper bound of the yellow threshold's saturation value.
+	 * 
+	 * @return Maximum yellow saturation value.
+	 */
+	public int getYellowSatMaxValue() {
+		return yellowSatMaxValue;
+	}
+
+	/**
+	 * Set the upper bound of the yellow threshold's saturation value.
+	 * 
+	 * @param yellowSatMaxValue The maximum yellow saturation value.
+	 */
+	public void setYellowSatMaxValue(int yellowSatMaxValue) {
+		this.yellowSatMaxValue = yellowSatMaxValue;
+	}
+
+
+	/**
+	 * Get the upper bound of the yellow threshold's value value.
+	 * 
+	 * @return Maximum yellow value value.
+	 */
+	public int getYellowValMaxValue() {
+		return yellowValMaxValue;
+	}
+
+	/**
+	 * Set the upper bound of the yellow threshold's value value.
+	 * 
+	 * @param yellowValMaxValue The maximum yellow value value.
+	 */
+	public void setYellowValMaxValue(int yellowValMaxValue) {
+		this.yellowValMaxValue = yellowValMaxValue;
+	}
+
+	/**
+	 * Get the upper bound of the yellow contour's size.
+	 * 
+	 * @return Maximum yellow contour size.
+	 */
+	public int getYellowSizeMaxValue() {
+		return yellowSizeMaxValue;
+	}
+
+	/**
+	 * Set the upper bound of the yellow contour's size.
+	 * 
+	 * @param yellowSizeMaxValue Maximum yellow contour size.
+	 */
+	public void setYellowSizeMaxValue(int yellowSizeMaxValue) {
+		this.yellowSizeMaxValue = yellowSizeMaxValue;
+	}
+
 }

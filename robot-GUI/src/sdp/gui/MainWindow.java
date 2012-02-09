@@ -21,7 +21,6 @@ import sdp.vision.ImageProcessorConfiguration;
 import sdp.vision.Vision;
 import java.util.logging.Logger;
 import javax.swing.JLabel;
-import javax.swing.JCheckBox;
 import javax.swing.border.LineBorder;
 import java.awt.Color;
 
@@ -307,6 +306,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		ballThreshPanel.add(ballSizeLabel, gbc_ballSizeLabel);
 		
 		ballSizeMinSpinner = new JSpinner();
+		ballSizeMinSpinner.setModel(new SpinnerNumberModel(new Integer(0), new Integer(0), null, new Integer(1)));
 		GridBagConstraints gbc_ballSizeMinSpinner = new GridBagConstraints();
 		gbc_ballSizeMinSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_ballSizeMinSpinner.insets = new Insets(0, 0, 5, 5);
@@ -315,6 +315,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		ballThreshPanel.add(ballSizeMinSpinner, gbc_ballSizeMinSpinner);
 		
 		ballSizeMaxSpinner = new JSpinner();
+		ballSizeMaxSpinner.setModel(new SpinnerNumberModel(new Integer(0), new Integer(0), null, new Integer(1)));
 		GridBagConstraints gbc_ballSizeMaxSpinner = new GridBagConstraints();
 		gbc_ballSizeMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_ballSizeMaxSpinner.insets = new Insets(0, 0, 5, 5);
@@ -424,6 +425,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		blueThreshPanel.add(blueSizeLabel, gbc_blueSizeLabel);
 		
 		blueSizeMinSpinner = new JSpinner();
+		blueSizeMinSpinner.setModel(new SpinnerNumberModel(new Integer(0), new Integer(0), null, new Integer(1)));
 		GridBagConstraints gbc_blueSizeMinSpinner = new GridBagConstraints();
 		gbc_blueSizeMinSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_blueSizeMinSpinner.insets = new Insets(0, 0, 0, 5);
@@ -432,6 +434,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		blueThreshPanel.add(blueSizeMinSpinner, gbc_blueSizeMinSpinner);
 		
 		blueSizeMaxSpinner = new JSpinner();
+		blueSizeMaxSpinner.setModel(new SpinnerNumberModel(new Integer(0), new Integer(0), null, new Integer(1)));
 		GridBagConstraints gbc_blueSizeMaxSpinner = new GridBagConstraints();
 		gbc_blueSizeMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_blueSizeMaxSpinner.insets = new Insets(0, 0, 0, 5);
@@ -440,7 +443,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		blueThreshPanel.add(blueSizeMaxSpinner, gbc_blueSizeMaxSpinner);
 		
 		yellowThreshPanel = new JPanel();
-		yellowThreshPanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Yellow T thresholds", TitledBorder.CENTER, TitledBorder.TOP, null, new Color(51, 51, 51)));
+		yellowThreshPanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Yellow T settings", TitledBorder.CENTER, TitledBorder.TOP, null, new Color(51, 51, 51)));
 		GridBagConstraints gbc_yellowThreshPanel = new GridBagConstraints();
 		gbc_yellowThreshPanel.insets = new Insets(0, 0, 5, 0);
 		gbc_yellowThreshPanel.fill = GridBagConstraints.BOTH;
@@ -448,89 +451,115 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_yellowThreshPanel.gridy = 1;
 		visionSettingPanel.add(yellowThreshPanel, gbc_yellowThreshPanel);
 		GridBagLayout gbl_yellowThreshPanel = new GridBagLayout();
-		gbl_yellowThreshPanel.columnWidths = new int[]{0, 28, 28, 44, 0, 0};
-		gbl_yellowThreshPanel.rowHeights = new int[]{17, 20, 20, 25, 0};
+		gbl_yellowThreshPanel.columnWidths = new int[]{0, 28, 0, 28, 0, 0};
+		gbl_yellowThreshPanel.rowHeights = new int[]{17, 20, 20, 0, 0};
 		gbl_yellowThreshPanel.columnWeights = new double[]{1.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		gbl_yellowThreshPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
 		yellowThreshPanel.setLayout(gbl_yellowThreshPanel);
 		
 		yellowHueLabel = new JLabel("HUE");
 		GridBagConstraints gbc_yellowHueLabel = new GridBagConstraints();
+		gbc_yellowHueLabel.anchor = GridBagConstraints.EAST;
 		gbc_yellowHueLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowHueLabel.gridx = 1;
 		gbc_yellowHueLabel.gridy = 0;
 		yellowThreshPanel.add(yellowHueLabel, gbc_yellowHueLabel);
 		
-		yellowSatLabel = new JLabel("SAT");
-		GridBagConstraints gbc_yellowSatLabel = new GridBagConstraints();
-		gbc_yellowSatLabel.insets = new Insets(0, 0, 5, 5);
-		gbc_yellowSatLabel.gridx = 2;
-		gbc_yellowSatLabel.gridy = 0;
-		yellowThreshPanel.add(yellowSatLabel, gbc_yellowSatLabel);
-		
-		yellowValLabel = new JLabel("VAL");
-		GridBagConstraints gbc_yellowValLabel = new GridBagConstraints();
-		gbc_yellowValLabel.insets = new Insets(0, 0, 5, 5);
-		gbc_yellowValLabel.gridx = 3;
-		gbc_yellowValLabel.gridy = 0;
-		yellowThreshPanel.add(yellowValLabel, gbc_yellowValLabel);
-		
 		yellowHueMinSpinner = new JSpinner();
 		yellowHueMinSpinner.setModel(new SpinnerNumberModel(0, 0, 360, 1));
 		GridBagConstraints gbc_yellowHueMinSpinner = new GridBagConstraints();
+		gbc_yellowHueMinSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_yellowHueMinSpinner.insets = new Insets(0, 0, 5, 5);
-		gbc_yellowHueMinSpinner.gridx = 1;
-		gbc_yellowHueMinSpinner.gridy = 1;
+		gbc_yellowHueMinSpinner.gridx = 2;
+		gbc_yellowHueMinSpinner.gridy = 0;
 		yellowThreshPanel.add(yellowHueMinSpinner, gbc_yellowHueMinSpinner);
+		
+		yellowHueMaxSpinner = new JSpinner();
+		yellowHueMaxSpinner.setModel(new SpinnerNumberModel(0, 0, 360, 1));
+		GridBagConstraints gbc_yellowHueMaxSpinner = new GridBagConstraints();
+		gbc_yellowHueMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
+		gbc_yellowHueMaxSpinner.insets = new Insets(0, 0, 5, 5);
+		gbc_yellowHueMaxSpinner.gridx = 3;
+		gbc_yellowHueMaxSpinner.gridy = 0;
+		yellowThreshPanel.add(yellowHueMaxSpinner, gbc_yellowHueMaxSpinner);
+		
+		yellowSatLabel = new JLabel("SAT");
+		GridBagConstraints gbc_yellowSatLabel = new GridBagConstraints();
+		gbc_yellowSatLabel.anchor = GridBagConstraints.EAST;
+		gbc_yellowSatLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_yellowSatLabel.gridx = 1;
+		gbc_yellowSatLabel.gridy = 1;
+		yellowThreshPanel.add(yellowSatLabel, gbc_yellowSatLabel);
 		
 		yellowSatMinSpinner = new JSpinner();
 		yellowSatMinSpinner.setModel(new SpinnerNumberModel(0, 0, 100, 1));
 		GridBagConstraints gbc_yellowSatMinSpinner = new GridBagConstraints();
+		gbc_yellowSatMinSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_yellowSatMinSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowSatMinSpinner.gridx = 2;
 		gbc_yellowSatMinSpinner.gridy = 1;
 		yellowThreshPanel.add(yellowSatMinSpinner, gbc_yellowSatMinSpinner);
 		
-		yellowValMinSpinner = new JSpinner();
-		yellowValMinSpinner.setModel(new SpinnerNumberModel(0, 0, 100, 1));
-		GridBagConstraints gbc_yellowValMinSpinner = new GridBagConstraints();
-		gbc_yellowValMinSpinner.insets = new Insets(0, 0, 5, 5);
-		gbc_yellowValMinSpinner.gridx = 3;
-		gbc_yellowValMinSpinner.gridy = 1;
-		yellowThreshPanel.add(yellowValMinSpinner, gbc_yellowValMinSpinner);
-		
-		yellowHueMaxSpinner = new JSpinner();
-		yellowHueMaxSpinner.setModel(new SpinnerNumberModel(0, 0, 360, 1));
-		GridBagConstraints gbc_yellowHueMaxSpinner = new GridBagConstraints();
-		gbc_yellowHueMaxSpinner.insets = new Insets(0, 0, 5, 5);
-		gbc_yellowHueMaxSpinner.gridx = 1;
-		gbc_yellowHueMaxSpinner.gridy = 2;
-		yellowThreshPanel.add(yellowHueMaxSpinner, gbc_yellowHueMaxSpinner);
-		
 		yellowSatMaxSpinner = new JSpinner();
 		yellowSatMaxSpinner.setModel(new SpinnerNumberModel(0, 0, 100, 1));
 		GridBagConstraints gbc_yellowSatMaxSpinner = new GridBagConstraints();
+		gbc_yellowSatMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_yellowSatMaxSpinner.insets = new Insets(0, 0, 5, 5);
-		gbc_yellowSatMaxSpinner.gridx = 2;
-		gbc_yellowSatMaxSpinner.gridy = 2;
+		gbc_yellowSatMaxSpinner.gridx = 3;
+		gbc_yellowSatMaxSpinner.gridy = 1;
 		yellowThreshPanel.add(yellowSatMaxSpinner, gbc_yellowSatMaxSpinner);
+		
+		yellowValLabel = new JLabel("VAL");
+		GridBagConstraints gbc_yellowValLabel = new GridBagConstraints();
+		gbc_yellowValLabel.anchor = GridBagConstraints.EAST;
+		gbc_yellowValLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_yellowValLabel.gridx = 1;
+		gbc_yellowValLabel.gridy = 2;
+		yellowThreshPanel.add(yellowValLabel, gbc_yellowValLabel);
+		
+		yellowValMinSpinner = new JSpinner();
+		yellowValMinSpinner.setModel(new SpinnerNumberModel(0, 0, 100, 1));
+		GridBagConstraints gbc_yellowValMinSpinner = new GridBagConstraints();
+		gbc_yellowValMinSpinner.fill = GridBagConstraints.HORIZONTAL;
+		gbc_yellowValMinSpinner.insets = new Insets(0, 0, 5, 5);
+		gbc_yellowValMinSpinner.gridx = 2;
+		gbc_yellowValMinSpinner.gridy = 2;
+		yellowThreshPanel.add(yellowValMinSpinner, gbc_yellowValMinSpinner);
 		
 		yellowValMaxSpinner = new JSpinner();
 		yellowValMaxSpinner.setModel(new SpinnerNumberModel(0, 0, 100, 1));
 		GridBagConstraints gbc_yellowValMaxSpinner = new GridBagConstraints();
+		gbc_yellowValMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_yellowValMaxSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowValMaxSpinner.gridx = 3;
 		gbc_yellowValMaxSpinner.gridy = 2;
 		yellowThreshPanel.add(yellowValMaxSpinner, gbc_yellowValMaxSpinner);
 		
-		yellowThreshCheckbox = new JCheckBox("Show threshold");
-		GridBagConstraints gbc_yellowThreshCheckbox = new GridBagConstraints();
-		gbc_yellowThreshCheckbox.anchor = GridBagConstraints.WEST;
-		gbc_yellowThreshCheckbox.gridwidth = 3;
-		gbc_yellowThreshCheckbox.insets = new Insets(0, 0, 0, 5);
-		gbc_yellowThreshCheckbox.gridx = 1;
-		gbc_yellowThreshCheckbox.gridy = 3;
-		yellowThreshPanel.add(yellowThreshCheckbox, gbc_yellowThreshCheckbox);
+		yellowSizeLabel = new JLabel("SIZE");
+		GridBagConstraints gbc_yellowSizeLabel = new GridBagConstraints();
+		gbc_yellowSizeLabel.anchor = GridBagConstraints.EAST;
+		gbc_yellowSizeLabel.insets = new Insets(0, 0, 0, 5);
+		gbc_yellowSizeLabel.gridx = 1;
+		gbc_yellowSizeLabel.gridy = 3;
+		yellowThreshPanel.add(yellowSizeLabel, gbc_yellowSizeLabel);
+		
+		yellowSizeMinSpinner = new JSpinner();
+		yellowSizeMinSpinner.setModel(new SpinnerNumberModel(new Integer(0), new Integer(0), null, new Integer(1)));
+		GridBagConstraints gbc_yellowSizeMinSpinner = new GridBagConstraints();
+		gbc_yellowSizeMinSpinner.fill = GridBagConstraints.HORIZONTAL;
+		gbc_yellowSizeMinSpinner.insets = new Insets(0, 0, 0, 5);
+		gbc_yellowSizeMinSpinner.gridx = 2;
+		gbc_yellowSizeMinSpinner.gridy = 3;
+		yellowThreshPanel.add(yellowSizeMinSpinner, gbc_yellowSizeMinSpinner);
+		
+		yellowSizeMaxSpinner = new JSpinner();
+		yellowSizeMaxSpinner.setModel(new SpinnerNumberModel(new Integer(0), new Integer(0), null, new Integer(1)));
+		GridBagConstraints gbc_yellowSizeMaxSpinner = new GridBagConstraints();
+		gbc_yellowSizeMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
+		gbc_yellowSizeMaxSpinner.insets = new Insets(0, 0, 0, 5);
+		gbc_yellowSizeMaxSpinner.gridx = 3;
+		gbc_yellowSizeMaxSpinner.gridy = 3;
+		yellowThreshPanel.add(yellowSizeMaxSpinner, gbc_yellowSizeMaxSpinner);
 	}
 	
 	
@@ -581,7 +610,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JSpinner yellowHueMaxSpinner;
 	private JSpinner yellowSatMaxSpinner;
 	private JSpinner yellowValMaxSpinner;
-	private JCheckBox yellowThreshCheckbox;
+	private JLabel yellowSizeLabel;
+	private JSpinner yellowSizeMinSpinner;
+	private JSpinner yellowSizeMaxSpinner;
 	
 	
 	/**
@@ -626,6 +657,15 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			blueSatMaxSpinner.setValue(new Integer(config.getBlueSatMaxValue()));
 			blueValMaxSpinner.setValue(new Integer(config.getBlueValMaxValue()));
 			blueSizeMaxSpinner.setValue(new Integer(config.getBlueSizeMaxValue()));
+			
+			yellowHueMinSpinner.setValue(new Integer(config.getYellowHueMinValue()));
+			yellowSatMinSpinner.setValue(new Integer(config.getYellowSatMinValue()));
+			yellowValMinSpinner.setValue(new Integer(config.getYellowValMinValue()));
+			yellowSizeMinSpinner.setValue(new Integer(config.getYellowSizeMinValue()));
+			yellowHueMaxSpinner.setValue(new Integer(config.getYellowHueMaxValue()));
+			yellowSatMaxSpinner.setValue(new Integer(config.getYellowSatMaxValue()));
+			yellowValMaxSpinner.setValue(new Integer(config.getYellowValMaxValue()));
+			yellowSizeMaxSpinner.setValue(new Integer(config.getYellowSizeMaxValue()));
 		}
 	}
 	
@@ -661,6 +701,15 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			config.setBlueSatMaxValue(((Integer)blueSatMaxSpinner.getValue()).intValue());
 			config.setBlueValMaxValue(((Integer)blueValMaxSpinner.getValue()).intValue());
 			config.setBlueSizeMaxValue(((Integer)blueSizeMaxSpinner.getValue()).intValue());
+			
+			config.setYellowHueMinValue(((Integer)yellowHueMinSpinner.getValue()).intValue());
+			config.setYellowSatMinValue(((Integer)yellowSatMinSpinner.getValue()).intValue());
+			config.setYellowValMinValue(((Integer)yellowValMinSpinner.getValue()).intValue());
+			config.setYellowSizeMinValue(((Integer)yellowSizeMinSpinner.getValue()).intValue());
+			config.setYellowHueMaxValue(((Integer)yellowHueMaxSpinner.getValue()).intValue());
+			config.setYellowSatMaxValue(((Integer)yellowSatMaxSpinner.getValue()).intValue());
+			config.setYellowValMaxValue(((Integer)yellowValMaxSpinner.getValue()).intValue());
+			config.setYellowSizeMaxValue(((Integer)yellowSizeMaxSpinner.getValue()).intValue());
 			
 			vision.setConfiguration(config);
 		}

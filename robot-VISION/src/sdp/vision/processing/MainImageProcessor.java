@@ -61,7 +61,8 @@ public class MainImageProcessor extends ImageProcessor {
 		Point2D.Double ballPos = findBall(frame_ipl, ballThreshold);
 		Robot blueRobot = findRobot(frame_ipl, blueThreshold, markerThreshold,
 				config.getBlueSizeMinValue(), config.getBlueSizeMaxValue());
-		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold, markerThreshold, 10, 55);
+		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold, markerThreshold,
+				config.getYellowSizeMinValue(), config.getYellowSizeMaxValue());
 		BufferedImage worldImage = finaliseWorldImage(frame_ipl, ballPos, blueRobot, yellowRobot);
 		
 		return new WorldState(ballPos, blueRobot, yellowRobot, worldImage);
@@ -120,10 +121,11 @@ public class MainImageProcessor extends ImageProcessor {
 				int s = (int) (hsv[1] * 100);
 				int v = (int) (hsv[2] * 100);
 				
-				/*if (h >= 40 && h <= 180 && v >= 35 && s >= 40) {
+				if (h >= 40 && h <= 180 && v >= 35 && s >= 40) {
 			    	marker.setRGB(x, y, Color.white.getRGB());
 			    	frame.setRGB(ox, oy, Color.pink.getRGB());
-			    }*/
+			    }
+				
 				if (Utilities.valueWithinBounds(h, config.getBallHueMinValue(), 
 								config.getBallHueMaxValue())
 						&& Utilities.valueWithinBounds(s, config.getBallSatMinValue(),
@@ -146,7 +148,14 @@ public class MainImageProcessor extends ImageProcessor {
 					blue.setRGB(x, y, Color.white.getRGB());
 					frame.setRGB(ox, oy, Color.blue.getRGB());
 			    }
-			    if ((h >= 25) && (h <= 75) && (s >= 60) && (v >= 60)) {
+				
+				if (Utilities.valueWithinBounds(h, config.getYellowHueMinValue(), 
+								config.getYellowHueMaxValue())
+						&& Utilities.valueWithinBounds(s, config.getYellowSatMinValue(),
+								config.getYellowSatMaxValue())
+						&& Utilities.valueWithinBounds(v, config.getYellowValMinValue(),
+								config.getYellowValMaxValue())) {
+					
 			    	yellow.setRGB(x, y, Color.white.getRGB());
 			    	frame.setRGB(ox, oy, Color.orange.getRGB());
 			    }
@@ -260,7 +269,7 @@ public class MainImageProcessor extends ImageProcessor {
                 }
 			}
             
-            return new Robot(frameToNormalCoordinates(rcX, rcY, true), angle);
+            return new Robot(frameToNormalCoordinates(mx, my, true), angle);
 		}
 	}
 	
