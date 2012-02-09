@@ -1,6 +1,5 @@
 package sdp.vision;
 
-import java.awt.image.BufferedImage;
 
 /**
  * Vision subsystem configuration container.
@@ -10,58 +9,43 @@ import java.awt.image.BufferedImage;
 public class ImageProcessorConfiguration {
 	
 	/** Height of the incoming images. */
-	private int frameHeight = 480;
-	
+	private int frameHeight = 480;	
 	/** Width of the incoming images. */
 	private int frameWidth = 640;
 	
-	
-	/** The background image. */
-	private BufferedImage background;
-
-	
 	/** The position of the left wall of the field (x low). */
-	private double fieldLowX = 0.05;
-	
+	private double fieldLowX = 0.05;	
 	/** The position of the right wall of the field (x high). */
-	private double fieldHighX = 0.95;
-	
+	private double fieldHighX = 0.95;	
 	/** The position of the top wall of the field (y low). */
-	private double fieldLowY = 0.2;
-	
+	private double fieldLowY = 0.2;	
 	/** The position of the right wall of the field (y high). */
 	private double fieldHighY = 0.8;
+	
+	/** Lower bound of the ball threshold's hue value. */
+	private int ballHueMinValue = 350;
+	/** Lower bound of the ball threshold's saturation value. */
+	private int ballSatMinValue = 60;
+	/** Lower bound of the ball threshold's value value. */
+	private int ballValMinValue = 40;
+	/** Lower bound of the ball contour size. */
+	private int ballSizeMinValue = 5;
+	/** Upper bound of the ball threshold's hue value. */
+	private int ballHueMaxValue = 20;
+	/** Upper bound of the ball threshold's saturation value. */
+	private int ballSatMaxValue = 100;
+	/** Upper bound of the ball threshold's value value. */
+	private int ballValMaxValue = 100;
+	/** Upper bound of the ball contour size. */
+	private int ballSizeMaxValue = 25;
+	/** Whether to show thresholded ball image. */
+	private boolean showBallThreshold = false;
 		
 
 	/**
 	 * The default constructor. Creates the default vision configuration.
 	 */
-	public ImageProcessorConfiguration() {
-		background = new BufferedImage(frameWidth, frameHeight, BufferedImage.TYPE_INT_RGB);
-	}
-	
-
-	/**
-	 * Get the background image.
-	 * 
-	 * @return The background.
-	 */
-	public BufferedImage getBackground() {
-		return background;
-	}
-
-	/**
-	 * Set the background image.
-	 * 
-	 * @param background The background.
-	 */
-	public void setBackground(BufferedImage background) {
-		if (background == null) {
-			throw new NullPointerException("null background image given to the image processor.");
-		} else {
-			this.background = background;
-		}
-	}
+	public ImageProcessorConfiguration() { }
 	
 	
 	/**
@@ -254,6 +238,176 @@ public class ImageProcessorConfiguration {
 		} else {
 			throw new IllegalArgumentException("Tried to set negative frame width.");
 		}
+	}
+
+
+	/**
+	 * Get the lower bound of the ball threshold's hue value.
+	 * 
+	 * @return Minimum ball hue value.
+	 */
+	public int getBallHueMinValue() {
+		return ballHueMinValue;
+	}
+
+	/**
+	 * Set the lower bound of the ball threshold's hue value.
+	 * 
+	 * @param ballHueMinValue The minimum ball hue value.
+	 */
+	public void setBallHueMinValue(int ballHueMinValue) {
+		this.ballHueMinValue = ballHueMinValue;
+	}
+
+
+	/**
+	 * Get the lower bound of the ball threshold's saturation value.
+	 * 
+	 * @return Minimum ball saturation value.
+	 */
+	public int getBallSatMinValue() {
+		return ballSatMinValue;
+	}
+
+	/**
+	 * Set the lower bound of the ball threshold's saturation value.
+	 * 
+	 * @param ballSatMinValue The minimum ball saturation value.
+	 */
+	public void setBallSatMinValue(int ballSatMinValue) {
+		this.ballSatMinValue = ballSatMinValue;
+	}
+
+
+	/**
+	 * Get the lower bound of the ball threshold's value value.
+	 * 
+	 * @return Minimum ball value value.
+	 */
+	public int getBallValMinValue() {
+		return ballValMinValue;
+	}
+
+	/**
+	 * Set the lower bound of the ball threshold's value value.
+	 * 
+	 * @param ballValMinValue The minimum ball value value.
+	 */
+	public void setBallValMinValue(int ballValMinValue) {
+		this.ballValMinValue = ballValMinValue;
+	}
+	
+	
+	/**
+	 * Get the lower bound of the ball contour's size.
+	 * 
+	 * @return Minimum ball contour size.
+	 */
+	public int getBallSizeMinValue() {
+		return ballSizeMinValue;
+	}
+
+	/**
+	 * Set the lower bound of the ball contour's size.
+	 * 
+	 * @param ballSizeMinValue Minimum ball contour size.
+	 */
+	public void setBallSizeMinValue(int ballSizeMinValue) {
+		this.ballSizeMinValue = ballSizeMinValue;
+	}
+
+
+	/**
+	 * Get the upper bound of the ball threshold's hue value.
+	 * 
+	 * @return Maximum ball hue value.
+	 */
+	public int getBallHueMaxValue() {
+		return ballHueMaxValue;
+	}
+
+	/**
+	 * Set the upper bound of the ball threshold's hue value.
+	 * 
+	 * @param ballHueMaxValue The maximum ball hue value.
+	 */
+	public void setBallHueMaxValue(int ballHueMaxValue) {
+		this.ballHueMaxValue = ballHueMaxValue;
+	}
+
+
+	/**
+	 * Get the upper bound of the ball threshold's saturation value.
+	 * 
+	 * @return Maximum ball saturation value.
+	 */
+	public int getBallSatMaxValue() {
+		return ballSatMaxValue;
+	}
+
+	/**
+	 * Set the upper bound of the ball threshold's saturation value.
+	 * 
+	 * @param ballSatMaxValue The maximum ball saturation value.
+	 */
+	public void setBallSatMaxValue(int ballSatMaxValue) {
+		this.ballSatMaxValue = ballSatMaxValue;
+	}
+
+
+	/**
+	 * Get the upper bound of the ball threshold's value value.
+	 * 
+	 * @return Maximum ball value value.
+	 */
+	public int getBallValMaxValue() {
+		return ballValMaxValue;
+	}
+
+	/**
+	 * Set the upper bound of the ball threshold's value value.
+	 * 
+	 * @param ballValMaxValue The maximum ball value value.
+	 */
+	public void setBallValMaxValue(int ballValMaxValue) {
+		this.ballValMaxValue = ballValMaxValue;
+	}
+
+	/**
+	 * Get the upper bound of the ball contour's size.
+	 * 
+	 * @return Maximum ball contour size.
+	 */
+	public int getBallSizeMaxValue() {
+		return ballSizeMaxValue;
+	}
+
+	/**
+	 * Set the upper bound of the ball contour's size.
+	 * 
+	 * @param ballSizeMaxValue Maximum ball contour size.
+	 */
+	public void setBallSizeMaxValue(int ballSizeMaxValue) {
+		this.ballSizeMaxValue = ballSizeMaxValue;
+	}
+
+
+	/**
+	 * Get whether the ball's threshold should be shown.
+	 * 
+	 * @return Whether the ball's threshold should be shown.
+	 */
+	public boolean showBallThreshold() {
+		return showBallThreshold;
+	}
+
+	/**
+	 * Set whether the ball's threshold should be shown.
+	 * 
+	 * @param showBallThreshold Whether the ball's threshold should be shown.
+	 */
+	public void setShowBallThreshold(boolean showBallThreshold) {
+		this.showBallThreshold = showBallThreshold;
 	}
 	
 }

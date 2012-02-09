@@ -206,7 +206,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		fieldWallPanel.add(fieldHighYSpinner, gbc_fieldHighYSpinner);
 		
 		ballThreshPanel = new JPanel();
-		ballThreshPanel.setBorder(new TitledBorder(null, "Ball thresholds", TitledBorder.CENTER, TitledBorder.TOP, null, null));
+		ballThreshPanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Ball settings", TitledBorder.CENTER, TitledBorder.TOP, null, new Color(51, 51, 51)));
 		GridBagConstraints gbc_ballThreshPanel = new GridBagConstraints();
 		gbc_ballThreshPanel.insets = new Insets(0, 0, 5, 0);
 		gbc_ballThreshPanel.fill = GridBagConstraints.BOTH;
@@ -215,87 +215,120 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		visionSettingPanel.add(ballThreshPanel, gbc_ballThreshPanel);
 		GridBagLayout gbl_ballThreshPanel = new GridBagLayout();
 		gbl_ballThreshPanel.columnWidths = new int[]{0, 0, 0, 0, 0, 0};
-		gbl_ballThreshPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0};
+		gbl_ballThreshPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
 		gbl_ballThreshPanel.columnWeights = new double[]{1.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
-		gbl_ballThreshPanel.rowWeights = new double[]{1.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_ballThreshPanel.rowWeights = new double[]{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		ballThreshPanel.setLayout(gbl_ballThreshPanel);
 		
 		ballHueLabel = new JLabel("HUE");
 		GridBagConstraints gbc_ballHueLabel = new GridBagConstraints();
+		gbc_ballHueLabel.anchor = GridBagConstraints.EAST;
 		gbc_ballHueLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_ballHueLabel.gridx = 1;
 		gbc_ballHueLabel.gridy = 1;
 		ballThreshPanel.add(ballHueLabel, gbc_ballHueLabel);
 		
-		ballSatLabel = new JLabel("SAT");
-		GridBagConstraints gbc_ballSatLabel = new GridBagConstraints();
-		gbc_ballSatLabel.insets = new Insets(0, 0, 5, 5);
-		gbc_ballSatLabel.gridx = 2;
-		gbc_ballSatLabel.gridy = 1;
-		ballThreshPanel.add(ballSatLabel, gbc_ballSatLabel);
-		
-		ballValLabel = new JLabel("VAL");
-		GridBagConstraints gbc_ballValLabel = new GridBagConstraints();
-		gbc_ballValLabel.insets = new Insets(0, 0, 5, 5);
-		gbc_ballValLabel.gridx = 3;
-		gbc_ballValLabel.gridy = 1;
-		ballThreshPanel.add(ballValLabel, gbc_ballValLabel);
-		
 		ballHueMinSpinner = new JSpinner();
 		ballHueMinSpinner.setModel(new SpinnerNumberModel(0, 0, 360, 1));
 		GridBagConstraints gbc_ballHueMinSpinner = new GridBagConstraints();
+		gbc_ballHueMinSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_ballHueMinSpinner.insets = new Insets(0, 0, 5, 5);
-		gbc_ballHueMinSpinner.gridx = 1;
-		gbc_ballHueMinSpinner.gridy = 2;
+		gbc_ballHueMinSpinner.gridx = 2;
+		gbc_ballHueMinSpinner.gridy = 1;
 		ballThreshPanel.add(ballHueMinSpinner, gbc_ballHueMinSpinner);
+		
+		ballHueMaxSpinner = new JSpinner();
+		ballHueMaxSpinner.setModel(new SpinnerNumberModel(0, 0, 360, 1));
+		GridBagConstraints gbc_ballHueMaxSpinner = new GridBagConstraints();
+		gbc_ballHueMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
+		gbc_ballHueMaxSpinner.insets = new Insets(0, 0, 5, 5);
+		gbc_ballHueMaxSpinner.gridx = 3;
+		gbc_ballHueMaxSpinner.gridy = 1;
+		ballThreshPanel.add(ballHueMaxSpinner, gbc_ballHueMaxSpinner);
+		
+		ballSatLabel = new JLabel("SAT");
+		GridBagConstraints gbc_ballSatLabel = new GridBagConstraints();
+		gbc_ballSatLabel.anchor = GridBagConstraints.EAST;
+		gbc_ballSatLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_ballSatLabel.gridx = 1;
+		gbc_ballSatLabel.gridy = 2;
+		ballThreshPanel.add(ballSatLabel, gbc_ballSatLabel);
 		
 		ballSatMinSpinner = new JSpinner();
 		ballSatMinSpinner.setModel(new SpinnerNumberModel(0, 0, 100, 1));
 		GridBagConstraints gbc_ballSatMinSpinner = new GridBagConstraints();
+		gbc_ballSatMinSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_ballSatMinSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_ballSatMinSpinner.gridx = 2;
 		gbc_ballSatMinSpinner.gridy = 2;
 		ballThreshPanel.add(ballSatMinSpinner, gbc_ballSatMinSpinner);
 		
-		ballValMinSpinner = new JSpinner();
-		ballValMinSpinner.setModel(new SpinnerNumberModel(0, 0, 100, 1));
-		GridBagConstraints gbc_ballValMinSpinner = new GridBagConstraints();
-		gbc_ballValMinSpinner.insets = new Insets(0, 0, 5, 5);
-		gbc_ballValMinSpinner.gridx = 3;
-		gbc_ballValMinSpinner.gridy = 2;
-		ballThreshPanel.add(ballValMinSpinner, gbc_ballValMinSpinner);
-		
-		ballHueMaxSpinner = new JSpinner();
-		ballHueMaxSpinner.setModel(new SpinnerNumberModel(0, 0, 360, 1));
-		GridBagConstraints gbc_ballHueMaxSpinner = new GridBagConstraints();
-		gbc_ballHueMaxSpinner.insets = new Insets(0, 0, 5, 5);
-		gbc_ballHueMaxSpinner.gridx = 1;
-		gbc_ballHueMaxSpinner.gridy = 3;
-		ballThreshPanel.add(ballHueMaxSpinner, gbc_ballHueMaxSpinner);
-		
 		ballSatMaxSpinner = new JSpinner();
 		ballSatMaxSpinner.setModel(new SpinnerNumberModel(0, 0, 100, 1));
 		GridBagConstraints gbc_ballSatMaxSpinner = new GridBagConstraints();
+		gbc_ballSatMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_ballSatMaxSpinner.insets = new Insets(0, 0, 5, 5);
-		gbc_ballSatMaxSpinner.gridx = 2;
-		gbc_ballSatMaxSpinner.gridy = 3;
+		gbc_ballSatMaxSpinner.gridx = 3;
+		gbc_ballSatMaxSpinner.gridy = 2;
 		ballThreshPanel.add(ballSatMaxSpinner, gbc_ballSatMaxSpinner);
+		
+		ballValLabel = new JLabel("VAL");
+		GridBagConstraints gbc_ballValLabel = new GridBagConstraints();
+		gbc_ballValLabel.anchor = GridBagConstraints.EAST;
+		gbc_ballValLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_ballValLabel.gridx = 1;
+		gbc_ballValLabel.gridy = 3;
+		ballThreshPanel.add(ballValLabel, gbc_ballValLabel);
+		
+		ballValMinSpinner = new JSpinner();
+		ballValMinSpinner.setModel(new SpinnerNumberModel(0, 0, 100, 1));
+		GridBagConstraints gbc_ballValMinSpinner = new GridBagConstraints();
+		gbc_ballValMinSpinner.fill = GridBagConstraints.HORIZONTAL;
+		gbc_ballValMinSpinner.insets = new Insets(0, 0, 5, 5);
+		gbc_ballValMinSpinner.gridx = 2;
+		gbc_ballValMinSpinner.gridy = 3;
+		ballThreshPanel.add(ballValMinSpinner, gbc_ballValMinSpinner);
 		
 		ballValMaxSpinner = new JSpinner();
 		ballValMaxSpinner.setModel(new SpinnerNumberModel(0, 0, 100, 1));
 		GridBagConstraints gbc_ballValMaxSpinner = new GridBagConstraints();
+		gbc_ballValMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_ballValMaxSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_ballValMaxSpinner.gridx = 3;
 		gbc_ballValMaxSpinner.gridy = 3;
 		ballThreshPanel.add(ballValMaxSpinner, gbc_ballValMaxSpinner);
 		
-		ballThreshCheckbox = new JCheckBox("Show threshold");
+		ballSizeLabel = new JLabel("SIZE");
+		GridBagConstraints gbc_ballSizeLabel = new GridBagConstraints();
+		gbc_ballSizeLabel.anchor = GridBagConstraints.EAST;
+		gbc_ballSizeLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_ballSizeLabel.gridx = 1;
+		gbc_ballSizeLabel.gridy = 4;
+		ballThreshPanel.add(ballSizeLabel, gbc_ballSizeLabel);
+		
+		ballSizeMinSpinner = new JSpinner();
+		GridBagConstraints gbc_ballSizeMinSpinner = new GridBagConstraints();
+		gbc_ballSizeMinSpinner.fill = GridBagConstraints.HORIZONTAL;
+		gbc_ballSizeMinSpinner.insets = new Insets(0, 0, 5, 5);
+		gbc_ballSizeMinSpinner.gridx = 2;
+		gbc_ballSizeMinSpinner.gridy = 4;
+		ballThreshPanel.add(ballSizeMinSpinner, gbc_ballSizeMinSpinner);
+		
+		ballSizeMaxSpinner = new JSpinner();
+		GridBagConstraints gbc_ballSizeMaxSpinner = new GridBagConstraints();
+		gbc_ballSizeMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
+		gbc_ballSizeMaxSpinner.insets = new Insets(0, 0, 5, 5);
+		gbc_ballSizeMaxSpinner.gridx = 3;
+		gbc_ballSizeMaxSpinner.gridy = 4;
+		ballThreshPanel.add(ballSizeMaxSpinner, gbc_ballSizeMaxSpinner);
+		
+		ballThreshCheckbox = new JCheckBox("Show processing");
 		GridBagConstraints gbc_ballThreshCheckbox = new GridBagConstraints();
 		gbc_ballThreshCheckbox.anchor = GridBagConstraints.WEST;
 		gbc_ballThreshCheckbox.gridwidth = 3;
 		gbc_ballThreshCheckbox.insets = new Insets(0, 0, 5, 5);
 		gbc_ballThreshCheckbox.gridx = 1;
-		gbc_ballThreshCheckbox.gridy = 4;
+		gbc_ballThreshCheckbox.gridy = 5;
 		ballThreshPanel.add(ballThreshCheckbox, gbc_ballThreshCheckbox);
 		
 		blueThreshPanel = new JPanel();
@@ -486,24 +519,16 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	}
 	
 	
-	/** The label that will contain the camera's image. */
 	private javax.swing.JLabel imageLabel;
 	
-	/** Spinner that contains the field's low Y value. */
-	private JSpinner fieldLowYSpinner;
-	
-	/** Spinner that contains the field's low X value. */
-	private JSpinner fieldLowXSpinner;
-	
-	/** Spinner that contains the field's high X value. */
-	private JSpinner fieldHighXSpinner;
-	
-	/** Spinner that contains the field's high Y value. */
+	private JSpinner fieldLowYSpinner;	
+	private JSpinner fieldLowXSpinner;	
+	private JSpinner fieldHighXSpinner;	
 	private JSpinner fieldHighYSpinner;
 	
-	/** Tabbed pane that contains robot's controls. */
 	private JTabbedPane robotControlTabbedPanel;
-	private JPanel ballThreshPanel;
+	
+	private JPanel ballThreshPanel;	
 	private JSpinner ballHueMinSpinner;
 	private JLabel ballHueLabel;
 	private JLabel ballSatLabel;
@@ -514,6 +539,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JSpinner ballValMinSpinner;
 	private JSpinner ballValMaxSpinner;
 	private JCheckBox ballThreshCheckbox;
+	
 	private JPanel blueThreshPanel;
 	private JLabel blueHueLabel;
 	private JLabel blueSatLabel;
@@ -525,6 +551,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JSpinner blueSatMaxSpinner;
 	private JSpinner blueValMaxSpinner;
 	private JCheckBox blueThreshCheckbox;
+	
 	private JPanel yellowThreshPanel;
 	private JLabel yellowHueLabel;
 	private JLabel yellowSatLabel;
@@ -536,6 +563,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JSpinner yellowSatMaxSpinner;
 	private JSpinner yellowValMaxSpinner;
 	private JCheckBox yellowThreshCheckbox;
+	private JLabel ballSizeLabel;
+	private JSpinner ballSizeMinSpinner;
+	private JSpinner ballSizeMaxSpinner;
 	
 	
 	/**
@@ -562,6 +592,16 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			fieldLowYSpinner.setValue(new Integer((int) (config.getRawFieldLowY() * SPINNER_FLOAT_RANGE)));
 			fieldHighXSpinner.setValue(new Integer((int) (config.getRawFieldHighX() * SPINNER_FLOAT_RANGE)));
 			fieldHighYSpinner.setValue(new Integer((int) (config.getRawFieldHighY() * SPINNER_FLOAT_RANGE)));
+			
+			ballHueMinSpinner.setValue(new Integer(config.getBallHueMinValue()));
+			ballSatMinSpinner.setValue(new Integer(config.getBallSatMinValue()));
+			ballValMinSpinner.setValue(new Integer(config.getBallValMinValue()));
+			ballSizeMinSpinner.setValue(new Integer(config.getBallSizeMinValue()));
+			ballHueMaxSpinner.setValue(new Integer(config.getBallHueMaxValue()));
+			ballSatMaxSpinner.setValue(new Integer(config.getBallSatMaxValue()));
+			ballValMaxSpinner.setValue(new Integer(config.getBallValMaxValue()));
+			ballSizeMaxSpinner.setValue(new Integer(config.getBallSizeMaxValue()));
+			ballThreshCheckbox.setSelected(config.showBallThreshold());
 		}
 	}
 	
@@ -579,6 +619,16 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			config.setRawFieldLowY(((Integer)fieldLowYSpinner.getValue()).intValue() / ((double) SPINNER_FLOAT_RANGE));
 			config.setRawFieldHighX(((Integer)fieldHighXSpinner.getValue()).intValue() / ((double) SPINNER_FLOAT_RANGE));
 			config.setRawFieldHighY(((Integer)fieldHighYSpinner.getValue()).intValue() / ((double) SPINNER_FLOAT_RANGE));
+			
+			config.setBallHueMinValue(((Integer)ballHueMinSpinner.getValue()).intValue());
+			config.setBallSatMinValue(((Integer)ballSatMinSpinner.getValue()).intValue());
+			config.setBallValMinValue(((Integer)ballValMinSpinner.getValue()).intValue());
+			config.setBallSizeMinValue(((Integer)ballSizeMinSpinner.getValue()).intValue());
+			config.setBallHueMaxValue(((Integer)ballHueMaxSpinner.getValue()).intValue());
+			config.setBallSatMaxValue(((Integer)ballSatMaxSpinner.getValue()).intValue());
+			config.setBallValMaxValue(((Integer)ballValMaxSpinner.getValue()).intValue());
+			config.setBallSizeMaxValue(((Integer)ballSizeMaxSpinner.getValue()).intValue());
+			config.setShowBallThreshold(ballThreshCheckbox.isSelected());
 			
 			vision.setConfiguration(config);
 		}

@@ -119,13 +119,21 @@ public class MainImageProcessor extends ImageProcessor {
 				int s = (int) (hsv[1] * 100);
 				int v = (int) (hsv[2] * 100);
 				
-				if (h >= 40 && h <= 180 && v >= 35 && s >= 40) {
+				/*if (h >= 40 && h <= 180 && v >= 35 && s >= 40) {
 			    	marker.setRGB(x, y, Color.white.getRGB());
 			    	frame.setRGB(ox, oy, Color.pink.getRGB());
-			    }
-				if ((h >= 350 || h <= 20) && (s >= 60) && (s >= 60)) {
+			    }*/
+				if (Utilities.valueWithinBounds(h, config.getBallHueMinValue(), 
+								config.getBallHueMaxValue())
+						&& Utilities.valueWithinBounds(s, config.getBallSatMinValue(),
+								config.getBallSatMaxValue())
+						&& Utilities.valueWithinBounds(v, config.getBallValMinValue(),
+								config.getBallValMaxValue())) {			
 					ball.setRGB(x, y, Color.white.getRGB());
-					frame.setRGB(ox, oy, Color.red.getRGB());
+					
+					if (config.showBallThreshold()) {
+						frame.setRGB(ox, oy, Color.red.getRGB());
+					}
 				}
 				if ((h >= 70) && (h <= 210) && (s >= 0) && (v >= 30) 
 						&& (g < (int)(b * 1.5))) {
@@ -153,7 +161,7 @@ public class MainImageProcessor extends ImageProcessor {
 	 */
 	private Point2D.Double findBall(IplImage frame_ipl, IplImage ballThresh) {
 		CvSeq fullBallContour = findAllContours(ballThresh);		
-		ArrayList<CvSeq> ballShapes = sizeFilterContours(fullBallContour, 5, 25, 5, 25);
+		ArrayList<CvSeq> ballShapes = sizeFilterContours(fullBallContour, config.getBallSizeMinValue(), config.getBallSizeMaxValue());
 		
 		if (ballShapes.size() == 0) {
 			return new Point2D.Double(-1.0, -1.0);
@@ -187,7 +195,7 @@ public class MainImageProcessor extends ImageProcessor {
 	private Robot findRobot(IplImage frame_ipl, IplImage robotThresh,
 			IplImage markerThresh) {		
 		CvSeq fullRobotContour = findAllContours(robotThresh);
-		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour, 10, 55, 10, 55);
+		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour, 10, 55);
 		
 		if (robotShapes.size() == 0) {
 			return new Robot(new Point2D.Double(-1.0, -1.0), 0.0);
@@ -221,7 +229,7 @@ public class MainImageProcessor extends ImageProcessor {
             double bestProps = Double.MAX_VALUE;
             
     		CvSeq fullMarkerContour = findAllContours(markerThresh);
-    		ArrayList<CvSeq> markerShapes = sizeFilterContours(fullMarkerContour, 5, 15, 5, 15);
+    		ArrayList<CvSeq> markerShapes = sizeFilterContours(fullMarkerContour, 5, 15);
     		
 			for (CvSeq curMarkerShape : markerShapes) {    			
                 CvRect markerBoundingBox = cvBoundingRect(curMarkerShape, 0);
@@ -316,8 +324,7 @@ public class MainImageProcessor extends ImageProcessor {
 	 * @param maxHeight Maximum required shape height.
 	 * @return A list of fitting shapes in the contour.
 	 */
-	private ArrayList<CvSeq> sizeFilterContours(CvSeq contour, int minWidth,
-			int maxWidth, int minHeight, int maxHeight) {
+	private ArrayList<CvSeq> sizeFilterContours(CvSeq contour, int minSize, int maxSize) {
 		ArrayList<CvSeq> shapes = new ArrayList<CvSeq>();
 		CvSeq contourSeq = contour;
 		
@@ -331,8 +338,7 @@ public class MainImageProcessor extends ImageProcessor {
                 int w = boundingRect.width();
                 int h = boundingRect.height();
                 
-                if ((w >= minWidth) && (w <= maxWidth)
-                		&& (h >= minHeight) && (h <= maxHeight)) {
+                if ((w >= minSize) && (w <= maxSize) && (h >= minSize) && (h <= maxSize)) {
                 	shapes.add(points);
                 }
             }

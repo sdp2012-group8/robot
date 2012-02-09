@@ -77,5 +77,24 @@ public class Utilities {
     	point.x += offset.x;
     	point.y += offset.y;
     }
-
+    
+    
+    /**
+     * Check whether the given value is within specified bounds.
+     * 
+     * If lower > upper, the function checks if the given value is within the
+     * (-INF; upper] OR [lower; +INF) interval.
+     * 
+     * @param value Value to check.
+     * @param lower Lower bound of the interval.
+     * @param upper Upper bound of the interval.
+     * @return Whether the value is within the specified interval.
+     */
+    public static boolean valueWithinBounds(int value, int lower, int upper) {
+    	if (lower > upper) {
+    		return ((value >= lower) || (value <= upper));
+    	} else {
+    		return ((value >= lower) && (value <= upper));
+    	}
+    }
 }
