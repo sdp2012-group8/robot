@@ -52,12 +52,20 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	/* (non-Javadoc)
 	 * @see sdp.vision.VisualInputCallback#nextFrame(java.awt.image.BufferedImage)
 	 */
+	
+	public WorldState worldImageData(BufferedImage frame){
+		WorldState nextState = imageProcessor.extractWorldState(frame);
+		return nextState;
+	
+	}
+	
 	@Override
 	public void nextFrame(BufferedImage frame) {
 		WorldState nextState = imageProcessor.extractWorldState(frame);
-		
+		System.out.print(nextState.getBallCoords());
 		setChanged();
 		notifyObservers(nextState);
+		
 	}
 	
 }

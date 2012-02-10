@@ -1,0 +1,97 @@
+package sdp.vision;
+
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Panel;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import sdp.vision.ImageProcessorConfiguration;
+
+import sdp.common.WorldState;
+
+public class Viewer extends Panel{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	BufferedImage image;
+	WorldState manstate, visstate;
+	ImageProcessorConfiguration config = new ImageProcessorConfiguration();
+	public Viewer(BufferedImage animage, WorldState astate, WorldState bstate){
+		image = animage;
+		manstate = astate;
+		visstate = bstate;
+	}
+	
+
+	public void updateImageAndState(BufferedImage animage,WorldState astate, WorldState bstate){
+		image = animage;
+		manstate = astate;
+		visstate = bstate;
+		repaint();
+	}
+	
+	public int correctX (double x){
+		//x+=config.getRawFieldLowX();
+		//x*=config.getFieldWidth();
+		//x+=config.getFieldLowX();
+		return (int) x;
+	}
+		public int correctY (double y){
+		//y+=config.getRawFieldLowY();
+		//y*=config.getFieldWidth();
+		//y+=config.getFieldLowY();
+		return (int) y;
+	}
+	
+	public void paint(Graphics g){
+		if (image != null){
+			g.drawImage( image, 0, 0, null);
+        	/*
+			// MANUAL TAGGING
+			//Draw Backgrounds
+			//Draw Ball
+			g.setColor(Color.red);
+			g.fillRect((int)(manstate.getBallCoords().x)-4,(int)(manstate.getBallCoords().y)-4, 8, 8);
+			//Draw blue robot
+			g.setColor(Color.blue);
+			g.fillRect((int)(manstate.getBlueRobot().getCoords().x)-4,(int)(manstate.getBlueRobot().getCoords().y)-4, 8, 8);
+			//Draw yellow robot
+			g.setColor(Color.yellow);
+			g.fillRect((int)(manstate.getYellowRobot().getCoords().x)-4,(int)(manstate.getYellowRobot().getCoords().y)-4, 8, 8);
+
+			//Draw Borders                
+			//Draw ball
+			g.setColor(Color.green);
+			g.drawRect((int)(manstate.getBallCoords().x)-4,(int)(manstate.getBallCoords().y)-4, 8, 8);
+			//Draw blue robot
+			g.drawRect((int)(manstate.getBlueRobot().getCoords().x)-4,(int)(manstate.getBlueRobot().getCoords().y)-4, 8, 8);
+			//Draw yellow robot
+			g.drawRect((int)(manstate.getYellowRobot().getCoords().x)-4,(int)(manstate.getYellowRobot().getCoords().y)-4, 8, 8);
+        	*/
+        	// VISION TAGGING
+     		
+     		//Draw Backgrounds
+			//Draw Ball
+			g.setColor(Color.red);
+			g.fillRect(correctX(visstate.getBallCoords().x)-4,correctY(visstate.getBallCoords().y)-4, 8, 8);
+			//Draw blue robot
+			g.setColor(Color.blue);
+			g.fillRect(correctX(visstate.getBlueRobot().getCoords().x)-4,correctY(visstate.getBlueRobot().getCoords().y)-4, 8, 8);
+			//Draw yellow robot
+			g.setColor(Color.yellow);
+			g.fillRect(correctX(visstate.getYellowRobot().getCoords().x)-4,correctY(visstate.getYellowRobot().getCoords().y)-4, 8, 8);
+     		
+			//Draw borders
+     		g.setColor(Color.red);
+			//Draw ball
+			g.drawRect(correctX(visstate.getBallCoords().x)-4,correctY(visstate.getBallCoords().y)-4, 8, 8);
+			//Draw blue robot
+			g.drawRect(correctX(visstate.getBlueRobot().getCoords().x)-4,correctY(visstate.getBlueRobot().getCoords().y)-4, 8, 8);
+			//Draw yellow robot
+			g.drawRect(correctX(visstate.getYellowRobot().getCoords().x)-4,correctY(visstate.getYellowRobot().getCoords().y)-4, 8, 8);
+		}
+	}
+}
