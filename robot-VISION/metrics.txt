@@ -1,0 +1,3 @@
+Average ball error is 2.7167604 pixels.
+Average blue robot error is 3.1805725 pixels.
+Average yellow robot error is 640.0 pixels.

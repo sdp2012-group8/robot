@@ -2,6 +2,7 @@ package sdp.vision;
 
 import javax.swing.JFrame;
 import java.awt.image.BufferedImage;
+import java.io.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -71,7 +72,7 @@ public class Test extends Vision {
 		return states;
 	}
 	
-	//returns the text value from the xml document
+	//returns the text value contained within an XML element
 	private static String getTextValue(Element ele, String tagName) {
 		String textVal = null;
 		NodeList nl = ele.getElementsByTagName(tagName);
@@ -83,13 +84,13 @@ public class Test extends Vision {
 		return textVal.replace("\n", "");
 	}
 
-	//return the float elements from the xml file
+	//return the float value contained within an XML element after first reading it's plaintext.
 	private static float getFloatValue(Element ele, String tagName) {
 		//in production application you would catch the exception
 		return Float.parseFloat(getTextValue(ele,tagName));
 	}
 	
-	//returns a WorldState object with the data from the xml file
+	//returns a WorldState object with the data from one element of the xml file
 	private static WorldState getWorldStateFromElement(Element ws){
 		
 		WorldState state;
@@ -166,9 +167,28 @@ public class Test extends Vision {
 	}
 
 	public static void printMarginsOfError( IterativeWorldStateDifferenceAccumulator difference, ArrayList<WorldState> annotations){
-		System.out.printf("Average ball error is %f pixels.\n", (float)difference.averageBallError(annotations.size()));
-		System.out.printf("Average blue robot error is %f pixels.\n", (float)difference.averageBlueError(annotations.size()));
-		System.out.printf("Average yellow robot error is %f pixels.\n", (float)difference.averageYellowError(annotations.size()));
+		//Error details are generated
+		String ballerror = "Average ball error is " + ((float)difference.averageBallError(annotations.size())) + " pixels.";
+		String blueerror = "Average blue robot error is " + ((float)difference.averageBlueError(annotations.size())) + " pixels.";
+		String yellowerror = "Average yellow robot error is " + ((float)difference.averageYellowError(annotations.size())) + " pixels.";
+
+		//And output to the terminal
+		System.out.println(ballerror);
+		System.out.println(blueerror);
+		System.out.println(yellowerror);
+
+		//Also written to a file that can be pushed to the repository for metric tracking over time.
+		try{
+			  FileWriter fw = new FileWriter("metrics.txt");
+			  BufferedWriter out = new BufferedWriter(fw);
+			  out.append(ballerror+"\n");
+			  out.append(blueerror+"\n");
+			  out.append(yellowerror+"\n");
+			  out.close();
+			  System.out.println("Metrics written to metrics.txt");
+		}catch (Exception e){
+			
+		}
 	}
 	
 	public static void main(String[] args) throws InterruptedException{
