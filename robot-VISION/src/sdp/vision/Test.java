@@ -1,9 +1,12 @@
 package sdp.vision;
 
+import java.awt.*;
+import javax.swing.JFrame;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 
 import javax.imageio.ImageIO;
@@ -18,9 +21,15 @@ import org.xml.sax.SAXException;
 
 import sdp.common.Robot;
 import sdp.common.WorldState;
+import sdp.vision.ImageProcessorConfiguration;
+import sdp.vision.Viewer;
+import sdp.common.Utilities;
 
 
 public class Test extends Vision {
+	static ImageProcessorConfiguration config = new ImageProcessorConfiguration();
+	
+	
 	//gets the document from the xml file
 	private static Document getDocumentFromXML(String filename){
 		//Something about factories. 
@@ -121,20 +130,50 @@ public class Test extends Vision {
 		// location-data -> ball
 		Element balldata = (Element)data.getElementsByTagName("ball").item(0);
 		// ball -> x and ball -> y. Passed into a Point2D.Double ready to be passed to WorldState
-		Point2D.Double ballpos = new Point2D.Double(getFloatValue(balldata,"x"),getFloatValue(balldata,"y"));
+		Point2D.Double ballpos = new Point2D.Double(normX(getFloatValue(balldata,"x")),normY(getFloatValue(balldata,"y")));
 		// location-data -> bluerobot
 		Element bluerobotdata = (Element) data.getElementsByTagName("bluerobot").item(0); 
 		//defining a blue robot object and passing it bluerobot -> x, bluerobot -> y and bluerobot -> angle
-		Robot bluerobot = new Robot(new Point2D.Double(getFloatValue(bluerobotdata,"x"),getFloatValue(bluerobotdata,"y")), (double) getFloatValue(bluerobotdata,"angle") );
+		Robot bluerobot = new Robot(new Point2D.Double(normX(getFloatValue(bluerobotdata,"x")),normY(getFloatValue(bluerobotdata,"y"))), (double) getFloatValue(bluerobotdata,"angle") );
 		// location-data -> yellowrobot
 		Element yellowrobotdata = (Element)data.getElementsByTagName("yellowrobot").item(0); 
 		//defining a yellow robot object and passing it yellowrobot -> x, yellowrobot -> y and yellowrobot -> angle
-		Robot yellowrobot = new Robot(new Point2D.Double(getFloatValue(yellowrobotdata,"x"),getFloatValue(yellowrobotdata,"y")), (double) getFloatValue(yellowrobotdata,"angle") );
+		Robot yellowrobot = new Robot(new Point2D.Double(normX(getFloatValue(yellowrobotdata,"x")),normY(getFloatValue(yellowrobotdata,"y"))), (double) getFloatValue(yellowrobotdata,"angle") );
 		//WorldState object is created with parsed data passed to the constructor. 
 		state = new WorldState(ballpos, bluerobot, yellowrobot, image);
 		//WorldState object is returned to whatever called this method.
 		return state;
 	}
+	
+	//IGNORE THE FOLLOWING TWO METHODS
+	public static float normX(float x){
+		return x; //(float) ((x)/(double)config.getFieldWidth());
+	}
+	public static float normY(float y){
+		return y; //(float) ((y)/(double)config.getFieldWidth());
+	}
+	
+	public static WorldState convertToPixelRange(WorldState ws){
+		Point2D.Double ball = new Point2D.Double(correctX(ws.getBallCoords().x),correctY(ws.getBallCoords().y));
+		Robot blue = new Robot(new Point2D.Double(correctX(ws.getBlueRobot().getCoords().x),correctY(ws.getBlueRobot().getCoords().y)),ws.getBlueRobot().getAngle());
+		Robot yellow = new Robot(new Point2D.Double(correctX(ws.getYellowRobot().getCoords().x),correctY(ws.getYellowRobot().getCoords().y)),ws.getYellowRobot().getAngle());
+		WorldState ns = new WorldState(ball,blue,yellow,ws.getWorldImage());
+		return ns;
+	}
+	
+	public static int correctX (double x){
+		//x+=config.getRawFieldLowX();
+		x*=config.getFieldWidth();
+		x+=config.getFieldLowX();
+		return (int) x;
+	}
+		public static int correctY (double y){
+		//y+=config.getRawFieldLowY();
+		y*=config.getFieldWidth();
+		y+=config.getFieldLowY();
+		return (int) y;
+	}
+	
 	//Compares features of the WorldState(s)
 	public static void compareWorldStates(WorldState reference, WorldState visionresult){
 		System.out.printf("WorldState comparison in format Human | Vision\n");
@@ -155,21 +194,35 @@ public class Test extends Vision {
 		System.out.printf("Yellow Robot angles: %s | %s \n", reference.getYellowRobot().getAngle(), visionresult.getYellowRobot().getAngle());
 		System.out.printf("Distance between perceptions: %f\n", reference.getYellowRobot().getAngle() - visionresult.getYellowRobot().getAngle());
 	}
-	public static void main(String[] args){
+
+	public static void main(String[] args) throws InterruptedException{
 		//The xml file (currently hard coded location) is parsed by the above voodoo and stored in an ArrayList<WorldState>
 		ArrayList<WorldState> Annotations = getWorldStateFromDocument(getDocumentFromXML("xml/imagedata.xml"));
 		//For each state documented in the XML
-		for (WorldState state : Annotations){	
-			System.out.printf("Getting Vision WorldState\n");
-			//The comparative WorldState object that the vision system will construct.
-			WorldState visionimage;
-			Test test =new Test();
-			//The vision system is passed the image from the annotation and generates
-			//a WorldState to be compared with the human perception
-			visionimage = test.worldImageData(state.getWorldImage());
-			//Differences between the WorldStates are calculated
-			compareWorldStates(state,visionimage);
-		
+		JFrame frame = new JFrame("Image Display");
+		frame.setSize(640,480);
+		Viewer base = new Viewer(null, null, null);
+		frame.getContentPane().add(base);
+		frame.setVisible(true);
+		while(true){
+			int ballerror = 0;
+			for (WorldState state : Annotations){
+				Utilities utility = new Utilities();
+				BufferedImage manualimage = utility.deepBufferedImageCopy(state.getWorldImage());
+				System.out.printf("Getting Vision WorldState\n");
+				//The comparative WorldState object that the vision system will construct.
+				WorldState visionimage;
+				Test test =new Test();
+				//The vision system is passed the image from the annotation and generates
+				//a WorldState to be compared with the human perception
+				visionimage = convertToPixelRange(test.worldImageData(utility.deepBufferedImageCopy(state.getWorldImage())));
+				base.updateImageAndState(manualimage,state,visionimage);
+				//Thread.sleep(1000);
+				//Differences between the WorldStates are calculated
+				//compareWorldStates(state,visionimage);
+				ballerror += (float) Math.sqrt( Math.pow(state.getBallCoords().x - visionimage.getBallCoords().x,2) + Math.pow(state.getBallCoords().y  - visionimage.getBallCoords().y,2));
+			}
+			System.out.printf("Average ball error is %f\n", (float)ballerror/Annotations.size());
 		}
 			
 	}
