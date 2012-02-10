@@ -728,21 +728,26 @@ public class Simulator extends WorldStateProvider {
 									 * between frames This is not physically
 									 * accurate...
 									 * */
-
+									
 									Vector2D backAwayDistance1 = new Vector2D(
 											0, 0);
 									Vector2D backAwayDistance2 = new Vector2D(
 											0, 0);
+									
+									
+									Vector2D relative_velocity = Vector2D.add(velocities[i], velocities[j]);
 
-									backAwayDistance1.addmul_to(velocities[j],
+									//scale velocities
+									backAwayDistance1.addmul_to(Vector2D.multiply(velocities[j],1/relative_velocity.getLength()),
 											dt);
-									backAwayDistance2.addmul_to(velocities[i],
+									backAwayDistance2.addmul_to(Vector2D.multiply(velocities[i],1/relative_velocity.getLength()),
 											dt);
 
 									Vector2D distance1 = Vector2D.add(
 											positions[i], backAwayDistance1);
 									Vector2D distance2 = Vector2D.add(
 											positions[j], backAwayDistance2);
+											
 
 									//if the future positions of the robots are still inside the pitch,
 									//set the positions, else the robots remain in the same place
@@ -753,9 +758,11 @@ public class Simulator extends WorldStateProvider {
 											&& distance2.getX() < (pitch_width_cm - 10)
 											&& distance2.getY() < (pitch_height_cm - 10)
 											&& distance2.getX() > 10
-											&& distance2.getY() > 10) {
+											&& distance2.getY() > 10
+											&& Vector2D.subtract(positions[i], positions[j]).getLength()>20) {
 										positions[i] = distance1;
 										positions[j] = distance2;
+										
 									}
 
 								}
