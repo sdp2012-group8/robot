@@ -121,10 +121,13 @@ public class MainImageProcessor extends ImageProcessor {
 				int s = (int) (hsv[1] * 100);
 				int v = (int) (hsv[2] * 100);
 				
-				if (h >= 40 && h <= 180 && v >= 35 && s >= 40) {
+				if (h >= 40 && h <= 180 && v <= 40 && (g > (int)(b * 1.5))) {
 			    	marker.setRGB(x, y, Color.white.getRGB());
 			    	frame.setRGB(ox, oy, Color.pink.getRGB());
 			    }
+				
+				// 134-210 18-100 50-100 20-50
+				// 25-75 0-50 55-75 20-50
 				
 				if (Utilities.valueWithinBounds(h, config.getBallHueMinValue(), 
 								config.getBallHueMaxValue())

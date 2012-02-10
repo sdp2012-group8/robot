@@ -37,7 +37,7 @@ import javax.swing.JPanel;
  * 
  * It also starts the AI.
  * 
- * @author martinmarinov
+ * @author Martin Marinov
  *
  */
 public class AITesterGUI {
@@ -72,7 +72,7 @@ public class AITesterGUI {
 	}
 
 	/**
-	 * Initialize the contents of the frame.
+	 * Initialise the contents of the frame.
 	 */
 	private void initialize() {
 		frmAlphaTeamAi = new JFrame();
@@ -82,6 +82,8 @@ public class AITesterGUI {
 		frmAlphaTeamAi.getContentPane().setLayout(null);
 		
 		final JPanel panel = new JPanel() {
+			private static final long serialVersionUID = 8430961287318430359L;
+
 			@Override
 			protected void paintComponent(Graphics g) {
 				Dimension d = this.getSize();
@@ -195,7 +197,7 @@ public class AITesterGUI {
 							chckbxExecuteCommands.setSelected(false);
 							com = null;
 						}
-						mAI = new AI(com, vision);
+						mAI = new AIVisualServoing(com, vision);
 						mInput.startCapture();
 						mAI.start(rdbtnBlue.isSelected(), rdbtnLeft.isSelected());
 						final WorldStateObserver obs = new WorldStateObserver(mAI);

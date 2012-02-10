@@ -1,9 +1,14 @@
 package sdp.AI;
 
 import java.awt.geom.Point2D;
-import java.io.IOException;
+import java.awt.geom.Point2D.Double;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import sdp.common.Communicator;
+import sdp.common.Goal;
 import sdp.common.MessageQueue;
 import sdp.common.Tools;
 import sdp.common.WorldState;
@@ -20,39 +25,31 @@ import sdp.common.WorldStateProvider;
  *
  */
 
-public class AI extends WorldStateProvider {
+public abstract class AI extends WorldStateProvider {
 	
 	public enum mode {
-		chase_once, chase_ball, sit, got_ball
+		chase_ball, sit, got_ball, dribble
 	}
 
-	// pitch constants
-	private final static double PITCH_WIDTH_CM = 244;
-	private final static double GOAL_Y_CM = 113.7/2;
+
 	// robot constants
-	private final static double TURNING_ACCURACY = 10;
-	private final static double ROBOT_RADIUS_CM = 7;
+	protected final static double TURNING_ACCURACY = 10;
 
-	private final static double ROBOT_ACC_CM_S_S = 69.8; // 1000 degrees/s/s
-	private final static int MAX_SPEED_CM_S = 50; // 50 cm per second
+	protected final static double ROBOT_ACC_CM_S_S = 69.8; // 1000 degrees/s/s
+	protected final static int MAX_SPEED_CM_S = 50; // 50 cm per second
 
-	private boolean my_team_blue = true;
-	private boolean my_goal_left = true;
+	protected boolean my_goal_left = true;
 	private WorldStateObserver mObs;
 	private Thread mVisionThread;
 	private MessageQueue mQueue = null;
-	private Communicator mComm = null;
-	
-	// Ball and goal position
-	private double distance_to_ball = 0;
-	private double distance_to_goal = 0;
-	Point2D.Double enemy_goal = new Point2D.Double(my_goal_left ? PITCH_WIDTH_CM : 0, GOAL_Y_CM);
+	protected Communicator mComm = null;
 
+	Goal enemy_goal = new Goal(new Point2D.Double(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM));
 
-	private mode state = mode.sit;
+	protected mode state = mode.sit;
 
 	// for low pass filtering
-	private WorldState worldState = null;
+	protected WorldState worldState = null;
 	// this is the amount of filtering to be done
 	// higher values mean that the new data will "weigh more"
 	// so the more uncertainty in result, the smaller value you should use
@@ -60,7 +57,8 @@ public class AI extends WorldStateProvider {
 	private int filteredPositionAmount = 6;
 	private int filteredAngleAmount = 2;
 
-	private Robot robot;
+	protected Robot robot;
+	protected Robot enemy_robot;
 
 	/**
 	 * Initialise the AI
@@ -78,16 +76,15 @@ public class AI extends WorldStateProvider {
 	 * Change mode. Can be used for penalty, freeplay, testing, etc
 	 */
 	public void setMode(mode new_mode) {
-		switch (new_mode) {
-		
-		case chase_ball:
-			this.state = mode.chase_ball;
-			break;
-		
-		case got_ball:
-			this.state = mode.got_ball;
-			break;
-		}
+		state = new_mode;
+	}
+	
+	/**
+	 * Gets AI mode
+	 * @return
+	 */
+	public mode getMode() {
+		return state;
 	}
 
 	/**
@@ -98,14 +95,13 @@ public class AI extends WorldStateProvider {
 	 * @param my_goal_left true if my goal is on the left of camera, false otherwise
 	 */
 	public void start(final boolean my_team_blue, final boolean my_goal_left) {
-		this.my_team_blue = my_team_blue;
 		this.my_goal_left = my_goal_left;
-		enemy_goal = new Point2D.Double(my_goal_left ? PITCH_WIDTH_CM : 0, GOAL_Y_CM);
+		enemy_goal = new Goal(new Point2D.Double(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM));
 		mVisionThread = new Thread() {
 			@Override
 			public void run() {
 				while (!isInterrupted()) {
-					WorldState state = mObs.getNextState();
+					WorldState state = Tools.toCentimeters(mObs.getNextState());
 					// do low pass filtering
 					if (worldState == null)
 						worldState = state;
@@ -115,7 +111,14 @@ public class AI extends WorldStateProvider {
 								lowPass(worldState.getBlueRobot(), state.getBlueRobot()),
 								lowPass(worldState.getYellowRobot(), state.getYellowRobot()),
 								state.getWorldImage());
-					robot = my_team_blue ? worldState.getBlueRobot() : worldState.getYellowRobot();
+					if (my_team_blue) {
+						robot = worldState.getBlueRobot();
+						enemy_robot = worldState.getYellowRobot();
+					} else {
+						robot = worldState.getYellowRobot();
+						enemy_robot = worldState.getBlueRobot();
+					}
+						
 					// pass coordinates to decision making logic
 
 					setChanged();
@@ -153,19 +156,13 @@ public class AI extends WorldStateProvider {
 		mQueue.close();
 	}
 
-	// Helpers
-
-	private Point2D.Double toCentimeters(Point2D.Double original) {
-		return new Point2D.Double(original.getX()*PITCH_WIDTH_CM, original.getY()*PITCH_WIDTH_CM);
-	}
-
 	/**
 	 * Gets the angle between two points
 	 * @param A
 	 * @param B
 	 * @return if you stand at A how many degrees should you turn to face B
 	 */
-	private double anglebetween(Point2D.Double A, Point2D.Double B) {
+	protected double anglebetween(Point2D.Double A, Point2D.Double B) {
 		return (180*Math.atan2(-B.getY()+A.getY(), B.getX()-A.getX()))/Math.PI;
 	}
 
@@ -217,188 +214,114 @@ public class AI extends WorldStateProvider {
 				lowPass(old_value.getAngle(), new_value.getAngle()));
 	}
 
-	// Decision making:
-	// Table coordinates:
-	//        __________ y = 1.137 m
-	// Entr  |          |
-	//       |__________|
-	// Right x=2.44 m   x=0, y = 0, Left goal
-	//                       room 3.04
-
-
-	/**
-	 * This method is fired when a new state is available. Decisions should be done here.
-	 * @param new_state the new world state (low-pass filtered)
-	 */
-	private synchronized void worldChanged() {
-
-		distance_to_ball = Tools.getDistanceBetweenPoint(robot.getCoords(), worldState.getBallCoords());
-		distance_to_goal = Tools.getDistanceBetweenPoint(toCentimeters(robot.getCoords()), enemy_goal);
-
-		
-		switch (state) {
-		case chase_ball:
-			chaseBall();
-			break;
-			
-		case got_ball:
-			alignToGoal();
-			break;
-		}
-
-
-		//		Point2D.Double ball = toCentimeters(new_state.getBallCoords());
-		//		Robot my_robot = my_team_blue ? new_state.getBlueRobot() : new_state.getYellowRobot();
-		//		@SuppressWarnings("unused")
-		//		Point2D.Double my_goal = new Point2D.Double(my_goal_left ? 0 : PITCH_WIDTH_CM, goal_y_cm);
-		//		Robot enemy_robot = my_team_blue ? new_state.getYellowRobot() : new_state.getBlueRobot();
-		//		Point2D.Double enemy_goal = new Point2D.Double(my_goal_left ? PITCH_WIDTH_CM : 0, goal_y_cm);
-		//		// start logic
-		//		if (firstrun) {
-		//			firstrun = false;
-		//			goTo(my_robot, ball, anglebetween(ball, enemy_goal));
-		//			System.out.println("Ball at (" + ball.x +", " + ball.y + "), " +"My at (" + my_robot.getCoords().x +", " + my_robot.getCoords().y +", " + my_robot.getAngle() + "), " +"Enemy at (" + enemy_robot.getCoords().x +", " + enemy_robot.getCoords().y +", " + enemy_robot.getAngle() + ").");
-		//		}
-		//System.out.println("Ball at (" + ball.x +", " + ball.y + "), " +"My at (" + my_robot.getCoords().x +", " + my_robot.getCoords().y +", " + my_robot.getAngle() + "), " +"Enemy at (" + enemy_robot.getCoords().x +", " + enemy_robot.getCoords().y +", " + enemy_robot.getAngle() + ").");
-	}
-
-	public void chaseBall() {
-		// System.out.println("Chasing ball");
-		double angle_between = anglebetween(robot.getCoords(), worldState.getBallCoords());
-		double turning_angle = angle_between - robot.getAngle();
-		byte forward_speed = 40;
-		
-		System.out.println("I'm in chase ball :)");
-		//System.out.println("Turning angle: " + turning_angle + " Angle between:" + angle_between + " Robot get angle: " + robot.getAngle());
-		//System.out.println(robot.getCoords() + " " + worldState.getBallCoords());
-		// Keep the turning angle between -180 and 180
-		if (turning_angle > 180) turning_angle -= 360;
-		if (turning_angle < -180) turning_angle += 360;
-		
-		if (distance_to_ball < robot.getSize()) forward_speed = 0;
-		
-		if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
-		if (turning_angle < -128) turning_angle = -128;
-		try {
-			if (turning_angle > TURNING_ACCURACY){
-				
-				mComm.sendMessage(opcode.operate, forward_speed, (byte)127);
-				//System.out.println("Chasing ball - Turning: " + turning_angle);
-			} 
-			else if( turning_angle < -TURNING_ACCURACY){
-				mComm.sendMessage(opcode.operate, forward_speed, (byte)-127);
-				//System.out.println("Chasing ball - Turning: " + turning_angle);	
-			}
-			else if (distance_to_ball > robot.getSize()/2) {
-				
-				mComm.sendMessage(opcode.operate, (byte)20, (byte)0);
-				//System.out.println("Chasing ball - Moving Forward");
-			} else {
-				//System.out.println("Chasing ball - At Ball: " + distance + " " + robot.getCoords() + " " + worldState.getBallCoords());
-				setMode(mode.got_ball);
-			}
-				
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	public void alignToGoal(){
-		
-		System.out.println("I'm in ALIGN TO GOAL :O");
 	
-		double angle_between = anglebetween(toCentimeters(robot.getCoords()), enemy_goal);
-		double turning_angle = angle_between - robot.getAngle();
-		byte forward_speed = 20;
-		
-		//System.out.println("Turning angle: " + turning_angle + " Angle between:" + angle_between + " Robot get angle: " + robot.getAngle());
-		//System.out.println(robot.getCoords() + " " + worldState.getBallCoords());
-		// Keep the turning angle between -180 and 180
-		if (turning_angle > 180) turning_angle -= 360;
-		if (turning_angle < -180) turning_angle += 360;
-		
-		
-		if (distance_to_goal < robot.getSize()) forward_speed = 0;
-		
-		System.out.println(distance_to_goal);
-		
-		
-		if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
-		if (turning_angle < -128) turning_angle = -128;
-		try {
-			if (distance_to_ball > robot.getSize()) {
-				setMode(mode.chase_ball);
-			} else if (turning_angle > TURNING_ACCURACY && (distance_to_goal > 1)){
-				mComm.sendMessage(opcode.operate, forward_speed, (byte)127);
-				System.out.println("Goaing to goal - Turning: " + turning_angle);
-			} 
-			else if( turning_angle < -TURNING_ACCURACY && (distance_to_goal > 1)){
-				mComm.sendMessage(opcode.operate, forward_speed, (byte)-128);
-				System.out.println("Going to goal - Turning: " + turning_angle);	
-			}
-			else if (distance_to_goal > 1) {
-				mComm.sendMessage(opcode.operate, (byte)60, (byte)0);
-				System.out.println("GOING FORAWRD TO GOAL");
-				
-			} else {
-				System.out.println("The old man the boat");
-				setMode(mode.chase_ball);
-			}
-				
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	/**
+	 * Comparator to sort Point2D.Double's into descending order of y values
+	 * @author michael
+	 *
+	 */
+	private class yPoints implements Comparator<Point2D.Double> {
+
+		@Override
+		public int compare(Point2D.Double o1, Point2D.Double o2) {
+			return (o1.y > o2.y ? -1 : (o1.y == o2.y ? 0 : 1));
 		}
+		
 	}
 	
-
 	/**
-	 * Calculates and performs the movements required to go from current position
-	 * to the position final_position and facing the angle final_angle.
-	 * 
-	 * @param my_robot	Object representing our robot.
-	 * @param final_position	Position the robot has to move to.
-	 * @param final_angle	Angle the robot should end up facing.
+	 * Comparator to sort Point2D.Double's into descending order of x values
+	 * @author michael
+	 *
 	 */
-	private void goTo(Robot my_robot, Point2D.Double final_position, double final_angle) {
-		Point2D.Double my_robot_coords = toCentimeters(my_robot.getCoords());
-		double distance = Tools.getDistanceBetweenPoint(my_robot_coords, final_position);
+	private class xPoints implements Comparator<Point2D.Double> {
 
-		if (distance < 20) {
-			System.out.println("Goal reached!");
-			return;
+		@Override
+		public int compare(Point2D.Double o1, Point2D.Double o2) {
+			return (o1.x > o2.x ? -1 : (o1.x == o2.x ? 0 : 1));
 		}
-		// distance to front of robot
-		double angle_between = anglebetween(my_robot_coords, final_position);
-		double turning_angle1= - my_robot.getAngle() - angle_between*180/Math.PI;
-		double turning_angle2= - angle_between*180/Math.PI - final_angle*180/Math.PI;
-		if (turning_angle1 > 180)
-			turning_angle1 -= 360;
-		else if (turning_angle1 < -180)
-			turning_angle1 += 360;
-		if (turning_angle2 > 180)
-			turning_angle2 -= 360;
-		else if (turning_angle2 < -180)
-			turning_angle2 += 360;
-		// time required for acceleration to max_speed
-		double acc_t = MAX_SPEED_CM_S/ROBOT_ACC_CM_S_S;
-		// distance required for acceleration to max speed
-		double acc_distance = ROBOT_ACC_CM_S_S*acc_t*acc_t/2d;
-		// time required travelling with constant speed
-		double const_spd_time = (distance - acc_distance*2)/MAX_SPEED_CM_S;
-		// calculate total time in the two cases:
-		// 1. where the robot won't have enough time to accelerate
-		// 2. otherwise
-		double time = const_spd_time < 0 ? Math.sqrt(distance/ROBOT_ACC_CM_S_S) : acc_t+const_spd_time;
-		double turning_speed1 = 2 * turning_angle1 / time;
-		double turning_speed2 = 2 * turning_angle2 / time;
-		if (turning_speed1 > 128 || turning_speed2 > 128)
-			System.out.println("!!!!!!COMMAND OVERFLOW!!!!!!!!!");
-		mQueue.addMessageToQueue(0, opcode.operate, (byte) MAX_SPEED_CM_S, (byte) turning_speed1);
-		mQueue.addMessageToQueue(time/2, opcode.operate, (byte) MAX_SPEED_CM_S, (byte) turning_speed2);
-		mQueue.addMessageToQueue(time, opcode.operate, (byte) 0, (byte) 0);
-		System.out.println("Expected runtime "+time+"s; distance is "+(int) distance+", tirning_angle2 "+(int) turning_angle2+"; my angle "+(int) my_robot.getAngle()+"; final angle "+(int) (final_angle*180/Math.PI)+"; face_angle "+(int) (angle_between*180/Math.PI));
+		
 	}
+	
+	/**
+	 * Calculates if the ball has a direct line of sight to the enemy goal.
+	 * @param enemy_robot The robot defending the goal
+	 * @param enemy_goal The goal of the opposing robot
+	 * @return -1 if error, 0 if false, 1 if can see top, 2 middle, 3 bottom.
+	 */
+	public int isGoalVisible(Robot enemy_robot, Goal enemy_goal) {
+		enemy_robot.setCoords(true); //need to convert robot coords to cm
+		
+		//System.out.println("goal.top: " + enemy_goal.getTop() + "  goal.bottom: " + enemy_goal.getBottom() + "  robot.left: " + enemy_robot.getFrontLeft() + "  robot.right: " + enemy_robot.getFrontRight());
+		//System.out.println("Ball: " + worldState.getBallCoords() + "  frontleft: " + enemy_robot.getFrontLeft() + "  frontRight: " + enemy_robot.getFrontRight() + "  inter: " + intersection); 
+		// TODO: change robot points from front to more accurate ones (flipper's / max/min y values)
+		
+		// Array of the 3 possible points on the robot
+		Point2D.Double[] points = new Point2D.Double[3];
+		// List of all the points on the robot so we can sort them
+		List<Point2D.Double> e_robot_points = new ArrayList<Point2D.Double>(); 
+		e_robot_points.add(enemy_robot.getBackLeft());
+		e_robot_points.add(enemy_robot.getFrontLeft());
+		e_robot_points.add(enemy_robot.getBackRight());
+		e_robot_points.add(enemy_robot.getFrontRight());
+		
+		// Sorting to find the point with the highest and lowest y value
+		Collections.sort(e_robot_points, new yPoints());
+		points[0] = e_robot_points.get(0);
+		points[1] = e_robot_points.get(3);
+		
+		// Sorting to find the 2 points with the highest x value
+		Collections.sort(e_robot_points, new xPoints());
+		
+		// The value in the top two that isn't already in points[] is the one we want.
+		if (e_robot_points.get(0) == points[0] || e_robot_points.get(0) == points[1]) {
+			points[2] = e_robot_points.get(0);
+		} else {
+			points[2] = e_robot_points.get(1);
+		}
+		
+		Point2D.Double top;
+		Point2D.Double bottom;
+		
+		// Find top point by checking if two of the points are on the same side of the
+		// line between the third point and the top of the goal
+		if (Tools.sameSide(points[1], points[2], enemy_goal.getTop(), points[0])) {
+			top = points[0];
+		} else {
+			top = points[2];
+		}
+		
+		// Find bottom Point
+		if (Tools.sameSide(points[0], points[2], enemy_goal.getTop(), points[1])) {
+			bottom = points[1];
+		} else {
+			bottom = points[2];
+		}
+		
+		// Finds the intersection of the lines from the top and bottom of the goals to the robot corners.
+		Point2D.Double intersection = Tools.intersection(enemy_goal.getTop(), top, enemy_goal.getBottom(), bottom);
+		if ((intersection == null)) {
+			return -1;
+		} else if (Tools.pointInTriangle(worldState.getBallCoords(), top, bottom, intersection)) {
+			return 0;
+		}
+		
+		//if it gets here it can see the goal
+		if (Tools.isPathClear(worldState.getBallCoords(), enemy_goal.getCentre(), enemy_robot)) {
+			return 2;
+		} else if (Tools.isPathClear(worldState.getBallCoords(), enemy_goal.getTop(), enemy_robot)) {
+			return 1;
+		} else if (Tools.isPathClear(worldState.getBallCoords(), enemy_goal.getBottom(), enemy_robot)) {
+			return 3;
+		}
+		
+		return -1; //should never be reached
+	}
+	
+	//public int canWeShoot() {
+		
+	//}
+	
+	protected abstract void worldChanged();
 
 }
