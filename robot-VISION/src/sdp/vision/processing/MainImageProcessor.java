@@ -23,7 +23,7 @@ import sdp.common.WorldState;
  * 
  * @author Gediminas Liktaras
  */
-public class MainImageProcessor extends ImageProcessor {
+public class MainImageProcessor extends BaseImageProcessor {
 	
 	/** Length of the direction line. */
 	private static final int DIR_LINE_LENGTH = 40;

@@ -5,7 +5,7 @@ import java.awt.image.BufferedImage;
 import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
 import sdp.vision.processing.MainImageProcessor;
-import sdp.vision.processing.ImageProcessor;
+import sdp.vision.processing.BaseImageProcessor;
 
 
 /**
@@ -19,7 +19,7 @@ import sdp.vision.processing.ImageProcessor;
 public class Vision extends WorldStateProvider implements VisualInputCallback {
 	
 	/** Image processor. */
-	ImageProcessor imageProcessor;
+	BaseImageProcessor imageProcessor;
 	
 	
 	/**

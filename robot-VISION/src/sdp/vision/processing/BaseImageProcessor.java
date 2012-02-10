@@ -11,7 +11,7 @@ import sdp.vision.ImageProcessorConfiguration;
  * 
  * @author Gediminas Liktaras
  */
-public abstract class ImageProcessor {
+public abstract class BaseImageProcessor {
 
 	/** The processor's configuration. */
 	protected ImageProcessorConfiguration config;
@@ -20,7 +20,7 @@ public abstract class ImageProcessor {
 	/**
 	 * The default constructor.
 	 */
-	public ImageProcessor() {
+	public BaseImageProcessor() {
 		config = new ImageProcessorConfiguration();
 	}
 
