@@ -219,7 +219,7 @@ public class Test extends Vision {
 			  }
 			  out.append("\n");
 
-			  //File closed and write finalised.git 
+			  //File closed and write finalised
 			  out.close();
 			  System.out.println("Metrics written to metrics.txt");
 		}catch (Exception e){
