@@ -3,11 +3,7 @@ package sdp.gui;
 import javax.swing.JFrame;
 
 import au.edu.jcu.v4l4j.V4L4JConstants;
-import sdp.AI.AI.mode;
-import sdp.AI.AIVisualServoing;
-import sdp.common.Communicator;
 import sdp.common.WorldStateObserver;
-import sdp.communicator.JComm;
 import sdp.vision.CameraVisualInputProvider;
 import sdp.vision.ImageVisualInputProvider;
 import sdp.vision.Vision;
@@ -16,8 +12,6 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import javax.swing.JPanel;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 import javax.swing.border.TitledBorder;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
@@ -29,7 +23,9 @@ import javax.swing.SwingUtilities;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.Dimension;
-import java.io.IOException;
+import javax.swing.border.LineBorder;
+import java.awt.Color;
+
 
 /**
  * This is a temporary class for carrying out testing of the old GUI interface.
@@ -41,13 +37,10 @@ public class Launcher extends JFrame implements Runnable {
 	/** Required by Serializable. */
 	private static final long serialVersionUID = -2969477954373112982L;
 	
-	
 	/** Text field for camera device file. */
-	private JTextField deviceFileTextField;
-	
+	private JTextField deviceFileTextField;	
 	/** Combobox for selecting camera capture standard. */
-	private JComboBox standardComboBox;
-	
+	private JComboBox standardComboBox;	
 	/** A spinner for selecting the camera channel. */
 	private JSpinner channelSpinner;
 	
@@ -56,96 +49,30 @@ public class Launcher extends JFrame implements Runnable {
 	 * The main constructor.
 	 */
 	public Launcher() {
-		setSize(new Dimension(370, 130));
+		setSize(new Dimension(198, 215));
 		setTitle("Launcher");
 		GridBagLayout gridBagLayout = new GridBagLayout();
-		gridBagLayout.columnWidths = new int[]{150, 0, 0};
-		gridBagLayout.rowHeights = new int[]{25, 0};
-		gridBagLayout.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
-		gridBagLayout.rowWeights = new double[]{1.0, Double.MIN_VALUE};
+		gridBagLayout.columnWidths = new int[]{150, 0};
+		gridBagLayout.rowHeights = new int[]{25, 0, 0};
+		gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
+		gridBagLayout.rowWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
 		getContentPane().setLayout(gridBagLayout);
 		
-		JPanel startPanel = new JPanel();
-		GridBagConstraints gbc_startPanel = new GridBagConstraints();
-		gbc_startPanel.insets = new Insets(0, 0, 0, 5);
-		gbc_startPanel.fill = GridBagConstraints.BOTH;
-		gbc_startPanel.gridx = 0;
-		gbc_startPanel.gridy = 0;
-		getContentPane().add(startPanel, gbc_startPanel);
-		GridBagLayout gbl_startPanel = new GridBagLayout();
-		gbl_startPanel.columnWidths = new int[]{0, 0};
-		gbl_startPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0};
-		gbl_startPanel.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		gbl_startPanel.rowWeights = new double[]{1.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
-		startPanel.setLayout(gbl_startPanel);
-		
-		JButton startGameButton = new JButton("Start game");
-		startGameButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				startGame();
-			}
-		});
-		GridBagConstraints gbc_startGameButton = new GridBagConstraints();
-		gbc_startGameButton.fill = GridBagConstraints.HORIZONTAL;
-		gbc_startGameButton.insets = new Insets(0, 0, 5, 0);
-		gbc_startGameButton.gridx = 0;
-		gbc_startGameButton.gridy = 1;
-		startPanel.add(startGameButton, gbc_startGameButton);
-		
-		JButton cameraVisionTestButton = new JButton("Vision test (camera)");
-		cameraVisionTestButton.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				startCameraVisionTest();
-			}
-		});
-		GridBagConstraints gbc_cameraVisionTestButton = new GridBagConstraints();
-		gbc_cameraVisionTestButton.insets = new Insets(0, 0, 5, 0);
-		gbc_cameraVisionTestButton.fill = GridBagConstraints.HORIZONTAL;
-		gbc_cameraVisionTestButton.gridx = 0;
-		gbc_cameraVisionTestButton.gridy = 2;
-		startPanel.add(cameraVisionTestButton, gbc_cameraVisionTestButton);
-		
-		JButton imageVisionTestButton = new JButton("Vision test (images)");
-		imageVisionTestButton.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				startImageVisionTest();
-			}
-		});
-		GridBagConstraints gbc_imageVisionTestButton = new GridBagConstraints();
-		gbc_imageVisionTestButton.insets = new Insets(0, 0, 5, 0);
-		gbc_imageVisionTestButton.fill = GridBagConstraints.HORIZONTAL;
-		gbc_imageVisionTestButton.gridx = 0;
-		gbc_imageVisionTestButton.gridy = 3;
-		startPanel.add(imageVisionTestButton, gbc_imageVisionTestButton);
-		
-		JPanel settingsPanel = new JPanel();
-		GridBagConstraints gbc_settingsPanel = new GridBagConstraints();
-		gbc_settingsPanel.fill = GridBagConstraints.BOTH;
-		gbc_settingsPanel.gridx = 1;
-		gbc_settingsPanel.gridy = 0;
-		getContentPane().add(settingsPanel, gbc_settingsPanel);
-		GridBagLayout gbl_settingsPanel = new GridBagLayout();
-		gbl_settingsPanel.columnWidths = new int[]{235, 0};
-		gbl_settingsPanel.rowHeights = new int[]{0, 0};
-		gbl_settingsPanel.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		gbl_settingsPanel.rowWeights = new double[]{1.0, Double.MIN_VALUE};
-		settingsPanel.setLayout(gbl_settingsPanel);
-		
-		JPanel cameraSettingsPanel = new JPanel();
-		cameraSettingsPanel.setBorder(new TitledBorder(null, "Camera Settings", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		GridBagConstraints gbc_cameraSettingsPanel = new GridBagConstraints();
-		gbc_cameraSettingsPanel.fill = GridBagConstraints.BOTH;
-		gbc_cameraSettingsPanel.gridx = 0;
-		gbc_cameraSettingsPanel.gridy = 0;
-		settingsPanel.add(cameraSettingsPanel, gbc_cameraSettingsPanel);
-		GridBagLayout gbl_cameraSettingsPanel = new GridBagLayout();
-		gbl_cameraSettingsPanel.columnWidths = new int[]{0, 0, 0};
-		gbl_cameraSettingsPanel.rowHeights = new int[]{0, 0, 0, 0};
-		gbl_cameraSettingsPanel.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
-		gbl_cameraSettingsPanel.rowWeights = new double[]{0.0, 0.0, 0.0, Double.MIN_VALUE};
-		cameraSettingsPanel.setLayout(gbl_cameraSettingsPanel);
+		JPanel competitionModePanel = new JPanel();
+		GridBagConstraints gbc_competitionModePanel = new GridBagConstraints();
+		gbc_competitionModePanel.fill = GridBagConstraints.HORIZONTAL;
+		gbc_competitionModePanel.anchor = GridBagConstraints.NORTH;
+		gbc_competitionModePanel.insets = new Insets(0, 0, 5, 0);
+		gbc_competitionModePanel.gridx = 0;
+		gbc_competitionModePanel.gridy = 0;
+		getContentPane().add(competitionModePanel, gbc_competitionModePanel);
+		competitionModePanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Competition mode", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(51, 51, 51)));
+		GridBagLayout gbl_competitionModePanel = new GridBagLayout();
+		gbl_competitionModePanel.columnWidths = new int[]{0, 0, 0};
+		gbl_competitionModePanel.rowHeights = new int[]{0, 0, 0, 0, 0};
+		gbl_competitionModePanel.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
+		gbl_competitionModePanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		competitionModePanel.setLayout(gbl_competitionModePanel);
 		
 		JLabel deviceFileLabel = new JLabel("Device file");
 		GridBagConstraints gbc_deviceFileLabel = new GridBagConstraints();
@@ -153,7 +80,7 @@ public class Launcher extends JFrame implements Runnable {
 		gbc_deviceFileLabel.anchor = GridBagConstraints.EAST;
 		gbc_deviceFileLabel.gridx = 0;
 		gbc_deviceFileLabel.gridy = 0;
-		cameraSettingsPanel.add(deviceFileLabel, gbc_deviceFileLabel);
+		competitionModePanel.add(deviceFileLabel, gbc_deviceFileLabel);
 		
 		deviceFileTextField = new JTextField();
 		deviceFileTextField.setText("/dev/video0");
@@ -163,7 +90,7 @@ public class Launcher extends JFrame implements Runnable {
 		gbc_deviceFileTextField.fill = GridBagConstraints.HORIZONTAL;
 		gbc_deviceFileTextField.gridx = 1;
 		gbc_deviceFileTextField.gridy = 0;
-		cameraSettingsPanel.add(deviceFileTextField, gbc_deviceFileTextField);
+		competitionModePanel.add(deviceFileTextField, gbc_deviceFileTextField);
 		deviceFileTextField.setColumns(10);
 		
 		JLabel standardLabel = new JLabel("Standard");
@@ -172,7 +99,7 @@ public class Launcher extends JFrame implements Runnable {
 		gbc_standardLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_standardLabel.gridx = 0;
 		gbc_standardLabel.gridy = 1;
-		cameraSettingsPanel.add(standardLabel, gbc_standardLabel);
+		competitionModePanel.add(standardLabel, gbc_standardLabel);
 		
 		standardComboBox = new JComboBox();
 		standardComboBox.setModel(new DefaultComboBoxModel(new String[] {"NTSC", "PAL", "SECAM", "WEBCAM"}));
@@ -183,65 +110,76 @@ public class Launcher extends JFrame implements Runnable {
 		gbc_standardComboBox.fill = GridBagConstraints.HORIZONTAL;
 		gbc_standardComboBox.gridx = 1;
 		gbc_standardComboBox.gridy = 1;
-		cameraSettingsPanel.add(standardComboBox, gbc_standardComboBox);
+		competitionModePanel.add(standardComboBox, gbc_standardComboBox);
 		
 		JLabel channelLabel = new JLabel("Channel");
 		GridBagConstraints gbc_channelLabel = new GridBagConstraints();
 		gbc_channelLabel.anchor = GridBagConstraints.EAST;
-		gbc_channelLabel.insets = new Insets(0, 0, 0, 5);
+		gbc_channelLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_channelLabel.gridx = 0;
 		gbc_channelLabel.gridy = 2;
-		cameraSettingsPanel.add(channelLabel, gbc_channelLabel);
+		competitionModePanel.add(channelLabel, gbc_channelLabel);
 		
 		channelSpinner = new JSpinner();
 		channelLabel.setLabelFor(channelSpinner);
 		channelSpinner.setModel(new SpinnerNumberModel(0, 0, 99, 1));
 		GridBagConstraints gbc_channelSpinner = new GridBagConstraints();
+		gbc_channelSpinner.insets = new Insets(0, 0, 5, 0);
 		gbc_channelSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_channelSpinner.gridx = 1;
 		gbc_channelSpinner.gridy = 2;
-		cameraSettingsPanel.add(channelSpinner, gbc_channelSpinner);
-	}
-	
-	
-	/**
-	 * Start the game proper.
-	 */
-	private void startGame() {
-		Vision vision = new Vision();
-		CameraVisualInputProvider input = createCameraInputProvider();
-		input.setCallback(vision);
-
-		Communicator com;
-		try {
-			com = new JComm();
-		} catch (IOException e) {
-			System.out.println("Connection with brick failed! Going into testmode");
-			com = null;
-		}
-//		com = null;
+		competitionModePanel.add(channelSpinner, gbc_channelSpinner);
 		
-		AIVisualServoing mAI = new AIVisualServoing(com, vision);		
-		input.startCapture();		
-		mAI.start(false, true);
-		mAI.setMode(mode.dribble);
+		JButton startCompButton = new JButton("Start competition");
+		GridBagConstraints gbc_startCompButton = new GridBagConstraints();
+		gbc_startCompButton.gridwidth = 2;
+		gbc_startCompButton.gridx = 0;
+		gbc_startCompButton.gridy = 3;
+		competitionModePanel.add(startCompButton, gbc_startCompButton);
 		
-		WorldStateObserver aiObserver = new WorldStateObserver(mAI);
+		JPanel panel = new JPanel();
+		panel.setBorder(new TitledBorder(null, "Test mode", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		GridBagConstraints gbc_panel = new GridBagConstraints();
+		gbc_panel.anchor = GridBagConstraints.NORTH;
+		gbc_panel.fill = GridBagConstraints.HORIZONTAL;
+		gbc_panel.gridx = 0;
+		gbc_panel.gridy = 1;
+		getContentPane().add(panel, gbc_panel);
+		GridBagLayout gbl_panel = new GridBagLayout();
+		gbl_panel.columnWidths = new int[]{0, 0};
+		gbl_panel.rowHeights = new int[]{0, 0};
+		gbl_panel.columnWeights = new double[]{1.0, Double.MIN_VALUE};
+		gbl_panel.rowWeights = new double[]{0.0, Double.MIN_VALUE};
+		panel.setLayout(gbl_panel);
 		
-		MainWindow mainGui = new MainWindow(aiObserver, vision);
-		(new Thread(mainGui, "GUI")).start();
-		killLauncherWindow();
+		JButton startTestButton = new JButton("Start testing");
+		GridBagConstraints gbc_startTestButton = new GridBagConstraints();
+		gbc_startTestButton.gridx = 0;
+		gbc_startTestButton.gridy = 0;
+		panel.add(startTestButton, gbc_startTestButton);
+		startTestButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				startTestingMode();
+			}
+		});
+		startCompButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				startCompetitionMode();
+			}
+		});
 	}
 	
 	/**
 	 * Start camera vision test. 
 	 */
-	private void startCameraVisionTest() {
+	private void startCompetitionMode() {
 		Vision vision = new Vision();
 		WorldStateObserver visionObserver = new WorldStateObserver(vision);		
 		CameraVisualInputProvider input = createCameraInputProvider();
 		input.setCallback(vision);
-		MainWindow mainGui = new MainWindow(visionObserver, vision);
+		MainWindow mainGui = new MainWindow(false, visionObserver, vision);
 		
 		input.startCapture();
 		(new Thread(mainGui, "GUI")).start();
@@ -251,21 +189,21 @@ public class Launcher extends JFrame implements Runnable {
 	/**
 	 * Start image vision test.
 	 */
-	private void startImageVisionTest() {
+	private void startTestingMode() {
 		Vision vision = new Vision();
 		WorldStateObserver visionObserver = new WorldStateObserver(vision);
 		
 		ImageVisualInputProvider input = createImageInputProvider();
 		input.setCallback(vision);
 		
-		MainWindow mainGui = new MainWindow(visionObserver, vision);
+		MainWindow mainGui = new MainWindow(true, visionObserver, vision);
 		
 		input.startCapture();
 		(new Thread(mainGui, "GUI")).start();		
 		killLauncherWindow();
 	}
-	
-	
+
+		
 	/**
 	 * Create camera input provider with the values given in the GUI components.
 	 */

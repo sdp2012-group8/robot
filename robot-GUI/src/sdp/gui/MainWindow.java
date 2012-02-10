@@ -14,15 +14,27 @@ import javax.swing.border.TitledBorder;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.JTabbedPane;
 
+import sdp.AI.AI;
+import sdp.AI.AIVisualServoing;
+import sdp.AI.AI.mode;
+import sdp.common.Communicator;
 import sdp.common.FPSCounter;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
+import sdp.communicator.JComm;
 import sdp.vision.ImageProcessorConfiguration;
 import sdp.vision.Vision;
 import java.util.logging.Logger;
 import javax.swing.JLabel;
 import javax.swing.border.LineBorder;
 import java.awt.Color;
+import javax.swing.JRadioButton;
+import javax.swing.JButton;
+import javax.swing.ButtonGroup;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import java.io.IOException;
+import javax.swing.JCheckBox;
 
 
 /**
@@ -48,10 +60,15 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	/** Window's FPS counter. */
 	private FPSCounter fpsCounter;
 	
+	/** Active AI subsystem instance. */
+	private AI aiInstance = null;
+	/** Flag that indicates whether the robot is running. */
+	private boolean robotRunning = false;
+	
 	/** Active vision subsystem instance. */
 	private Vision vision = null;	
 	/** A flag that controls whether vision system calibration is enabled. */
-	private boolean visionChangesEnabled;
+	private boolean visionChangesEnabled = true;
 	
 	/** GUI's world state provider. */
 	private WorldStateObserver worldStateObserver;
@@ -66,7 +83,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 * 		vision subsystem will be assumed to be online and the GUI will not
 	 * 		let you adjust vision settings.
 	 */
-	public MainWindow(WorldStateObserver worldStateObserver, Vision vision) {
+	public MainWindow(boolean testMode, WorldStateObserver worldStateObserver, Vision vision) {
 		if (worldStateObserver == null) {
 			throw new NullPointerException("Main window's state provider cannot be null.");
 		} else {
@@ -84,8 +101,11 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		if (vision != null) {
 			updateVisionComponentValues();
 		} else {
-			int visionIdx = robotControlTabbedPanel.indexOfTab("Vision");
-			robotControlTabbedPanel.setEnabledAt(visionIdx, false);
+			robotControlTabbedPanel.remove(visionSettingPanel);
+		}
+		
+		if (testMode) {
+			robotControlTabbedPanel.remove(robotSettingPanel);
 		}
 	}
 	
@@ -134,15 +154,15 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_robotControlTabbedPanel.gridy = 0;
 		getContentPane().add(robotControlTabbedPanel, gbc_robotControlTabbedPanel);
 		
-		JPanel visionSettingPanel = new JPanel();
-		robotControlTabbedPanel.addTab("Vision", null, visionSettingPanel, null);
+		visionSettingPanel = new JPanel();
+		robotControlTabbedPanel.addTab("Vision Calibration", null, visionSettingPanel, null);
 		robotControlTabbedPanel.setEnabledAt(0, true);
 		visionSettingPanel.setAlignmentY(Component.TOP_ALIGNMENT);
 		GridBagLayout gbl_visionSettingPanel = new GridBagLayout();
 		gbl_visionSettingPanel.columnWidths = new int[]{200, 200, 0};
-		gbl_visionSettingPanel.rowHeights = new int[]{15, 0, 0, 0};
+		gbl_visionSettingPanel.rowHeights = new int[]{15, 0, 0, 0, 0};
 		gbl_visionSettingPanel.columnWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
-		gbl_visionSettingPanel.rowWeights = new double[]{0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_visionSettingPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		visionSettingPanel.setLayout(gbl_visionSettingPanel);
 		
 		JPanel fieldWallPanel = new JPanel();
@@ -326,9 +346,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		blueThreshPanel = new JPanel();
 		blueThreshPanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Blue T settings", TitledBorder.CENTER, TitledBorder.TOP, null, new Color(51, 51, 51)));
 		GridBagConstraints gbc_blueThreshPanel = new GridBagConstraints();
-		gbc_blueThreshPanel.insets = new Insets(0, 0, 5, 5);
+		gbc_blueThreshPanel.insets = new Insets(0, 0, 5, 0);
 		gbc_blueThreshPanel.fill = GridBagConstraints.BOTH;
-		gbc_blueThreshPanel.gridx = 0;
+		gbc_blueThreshPanel.gridx = 1;
 		gbc_blueThreshPanel.gridy = 1;
 		visionSettingPanel.add(blueThreshPanel, gbc_blueThreshPanel);
 		GridBagLayout gbl_blueThreshPanel = new GridBagLayout();
@@ -448,7 +468,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_yellowThreshPanel.insets = new Insets(0, 0, 5, 0);
 		gbc_yellowThreshPanel.fill = GridBagConstraints.BOTH;
 		gbc_yellowThreshPanel.gridx = 1;
-		gbc_yellowThreshPanel.gridy = 1;
+		gbc_yellowThreshPanel.gridy = 2;
 		visionSettingPanel.add(yellowThreshPanel, gbc_yellowThreshPanel);
 		GridBagLayout gbl_yellowThreshPanel = new GridBagLayout();
 		gbl_yellowThreshPanel.columnWidths = new int[]{0, 28, 0, 28, 0, 0};
@@ -560,6 +580,93 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_yellowSizeMaxSpinner.gridx = 3;
 		gbc_yellowSizeMaxSpinner.gridy = 3;
 		yellowThreshPanel.add(yellowSizeMaxSpinner, gbc_yellowSizeMaxSpinner);
+		
+		robotSettingPanel = new JPanel();
+		robotControlTabbedPanel.addTab("Robot", null, robotSettingPanel, null);
+		GridBagLayout gbl_robotSettingPanel = new GridBagLayout();
+		gbl_robotSettingPanel.columnWidths = new int[]{0, 0, 0};
+		gbl_robotSettingPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_robotSettingPanel.columnWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
+		gbl_robotSettingPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		robotSettingPanel.setLayout(gbl_robotSettingPanel);
+		
+		robotTestModeCheckbox = new JCheckBox("Test mode");
+		GridBagConstraints gbc_robotTestModeCheckbox = new GridBagConstraints();
+		gbc_robotTestModeCheckbox.anchor = GridBagConstraints.WEST;
+		gbc_robotTestModeCheckbox.insets = new Insets(0, 0, 5, 5);
+		gbc_robotTestModeCheckbox.gridx = 0;
+		gbc_robotTestModeCheckbox.gridy = 0;
+		robotSettingPanel.add(robotTestModeCheckbox, gbc_robotTestModeCheckbox);
+		
+		robotColorLabel = new JLabel("Color");
+		GridBagConstraints gbc_robotColorLabel = new GridBagConstraints();
+		gbc_robotColorLabel.anchor = GridBagConstraints.WEST;
+		gbc_robotColorLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_robotColorLabel.gridx = 0;
+		gbc_robotColorLabel.gridy = 1;
+		robotSettingPanel.add(robotColorLabel, gbc_robotColorLabel);
+		
+		robotColorBlueButton = new JRadioButton("Blue");
+		robotColorBlueButton.setSelected(true);
+		robotColorButtonGroup.add(robotColorBlueButton);
+		GridBagConstraints gbc_robotColorBlueButton = new GridBagConstraints();
+		gbc_robotColorBlueButton.anchor = GridBagConstraints.WEST;
+		gbc_robotColorBlueButton.insets = new Insets(0, 0, 5, 5);
+		gbc_robotColorBlueButton.gridx = 0;
+		gbc_robotColorBlueButton.gridy = 2;
+		robotSettingPanel.add(robotColorBlueButton, gbc_robotColorBlueButton);
+		
+		robotColorYellowButton = new JRadioButton("Yellow");
+		robotColorButtonGroup.add(robotColorYellowButton);
+		GridBagConstraints gbc_robotColorYellowButton = new GridBagConstraints();
+		gbc_robotColorYellowButton.insets = new Insets(0, 0, 5, 5);
+		gbc_robotColorYellowButton.anchor = GridBagConstraints.WEST;
+		gbc_robotColorYellowButton.gridx = 0;
+		gbc_robotColorYellowButton.gridy = 3;
+		robotSettingPanel.add(robotColorYellowButton, gbc_robotColorYellowButton);
+		
+		robotGateLabel = new JLabel("Our gate");
+		GridBagConstraints gbc_robotGateLabel = new GridBagConstraints();
+		gbc_robotGateLabel.anchor = GridBagConstraints.WEST;
+		gbc_robotGateLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_robotGateLabel.gridx = 0;
+		gbc_robotGateLabel.gridy = 4;
+		robotSettingPanel.add(robotGateLabel, gbc_robotGateLabel);
+		
+		robotGateLeftButton = new JRadioButton("Left");
+		robotGateLeftButton.setSelected(true);
+		robotGateButtonGroup.add(robotGateLeftButton);
+		GridBagConstraints gbc_robotGateLeftButton = new GridBagConstraints();
+		gbc_robotGateLeftButton.anchor = GridBagConstraints.WEST;
+		gbc_robotGateLeftButton.insets = new Insets(0, 0, 5, 5);
+		gbc_robotGateLeftButton.gridx = 0;
+		gbc_robotGateLeftButton.gridy = 5;
+		robotSettingPanel.add(robotGateLeftButton, gbc_robotGateLeftButton);
+		
+		robotGateRightButton = new JRadioButton("Right");
+		robotGateButtonGroup.add(robotGateRightButton);
+		GridBagConstraints gbc_robotGateRightButton = new GridBagConstraints();
+		gbc_robotGateRightButton.insets = new Insets(0, 0, 5, 5);
+		gbc_robotGateRightButton.anchor = GridBagConstraints.WEST;
+		gbc_robotGateRightButton.gridx = 0;
+		gbc_robotGateRightButton.gridy = 6;
+		robotSettingPanel.add(robotGateRightButton, gbc_robotGateRightButton);
+		
+		robotConnectButton = new JButton("Connect");
+		robotConnectButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (!robotRunning) {
+					connectToRobot();
+				} else {
+					disconnectFromRobot();
+				}
+			}
+		});
+		GridBagConstraints gbc_robotConnectButton = new GridBagConstraints();
+		gbc_robotConnectButton.insets = new Insets(0, 0, 0, 5);
+		gbc_robotConnectButton.gridx = 0;
+		gbc_robotConnectButton.gridy = 7;
+		robotSettingPanel.add(robotConnectButton, gbc_robotConnectButton);
 	}
 	
 	
@@ -614,6 +721,19 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JSpinner yellowSizeMinSpinner;
 	private JSpinner yellowSizeMaxSpinner;
 	
+	private JPanel robotSettingPanel;
+	private JRadioButton robotColorBlueButton;
+	private JRadioButton robotColorYellowButton;
+	private JLabel robotColorLabel;
+	private JRadioButton robotGateLeftButton;
+	private JRadioButton robotGateRightButton;
+	private JLabel robotGateLabel;
+	private JButton robotConnectButton;
+	private final ButtonGroup robotColorButtonGroup = new ButtonGroup();
+	private final ButtonGroup robotGateButtonGroup = new ButtonGroup();
+	private JCheckBox robotTestModeCheckbox;
+	private JPanel visionSettingPanel;
+	
 	
 	/**
 	 * Set the camera image to display.
@@ -625,6 +745,48 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			imageLabel.getGraphics().drawImage(image, 0, 0, null);
 		}
 	}
+	
+	
+	/**
+	 * Connect to our robot.
+	 */
+	private void connectToRobot() {
+		Communicator com;
+		if (robotTestModeCheckbox.isSelected()) {
+			com = null;
+		} else {
+			try {
+				com = new JComm();
+			} catch (IOException e) {
+				LOGGER.warning("Connection with brick failed! Going into test mode.");
+				com = null;
+			}
+		}
+		
+		aiInstance = new AIVisualServoing(com, vision);
+		aiInstance.start(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected());
+		aiInstance.setMode(mode.chase_ball);
+		
+		WorldStateObserver aiObserver = new WorldStateObserver(aiInstance);
+		synchronized (worldStateObserver) {
+			worldStateObserver = aiObserver;
+		}
+		
+		robotRunning = true;
+		robotConnectButton.setText("Disconnect");
+	}
+	
+	/**
+	 * Disconnect from our robot.
+	 */
+	private void disconnectFromRobot() {
+		aiInstance.close();
+		aiInstance = null;
+		
+		robotRunning = false;
+		robotConnectButton.setText("Connect");
+	}
+	
 	
 	/** 
 	 * Update the vision tab components to match vision's configuration.
@@ -721,10 +883,15 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 */
 	@Override
 	public void run() {
+		WorldState state = null;
+		
 		setVisible(true);
 				
-		while (!Thread.interrupted()) {
-			WorldState state = worldStateObserver.getNextState();
+		while (!Thread.interrupted()) {			
+			synchronized (worldStateObserver) {
+				state = worldStateObserver.getNextState();
+			}
+			
 			setImage(state.getWorldImage());
 			
 			fpsCounter.tick();
