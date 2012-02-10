@@ -23,17 +23,16 @@ import sdp.common.WorldState;
 public class Test extends Vision {
 	//gets the document from the xml file
 	private static Document getDocumentFromXML(String filename){
+		//Something about factories. 
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		Document dom = null;
 		try {
-
 			//getting  an instance of document builder
 			DocumentBuilder db = dbf.newDocumentBuilder();
-
 			//parse using builder to get  document representation of the XML file
 			 dom = db.parse(filename);
 			System.out.println("Loaded XML file.");
-
+		//In the unlikely event that something breaks
 		}catch(ParserConfigurationException pce) {
 			pce.printStackTrace();
 		}catch(SAXException se) {
@@ -45,23 +44,28 @@ public class Test extends Vision {
 	}
 	//return an array list with the elements required from the xml document
 	private static ArrayList<WorldState> getWorldStateFromDocument(Document dom){
+		//An ArrayList of WordStates is created and then states can be added as they are parsed
 		ArrayList<WorldState> states = new ArrayList<WorldState>();
 		//get the root element from the document
 		Element annotations = dom.getDocumentElement();
 		//get a nodelist of  elements 
 		NodeList nl = annotations.getElementsByTagName("image");
+		//if there are elements then iterate through them to extract each state
 		if(nl != null && nl.getLength() > 0) {
 			for(int i = 0 ; i < nl.getLength();i++) {
-				//get the worldstate element
+				//get the individual state data node
 				Element ws = (Element)nl.item(i);
-				System.out.println("Image object found");
+				System.out.println("State object found");
+				//Element passed to method for parsing individual elements
 				WorldState annotated = getWorldStateFromElement(ws);
-				
+				//parsed state added to Arraylist
 				states.add(annotated);
 			}
 		}
+		//Debug
 		System.out.print(states.size());
 		System.out.println(" world states extracted from XML file.");
+		//ArrayList of parsed states returned to whatever called method
 		return states;
 	}
 	
@@ -76,13 +80,13 @@ public class Test extends Vision {
 			Element el = (Element)nl.item(0);
 			textVal = el.getFirstChild().getNodeValue();
 		}
-
-		return textVal;
+		//Pretty printed linebreaks within the XML broke EVERYTHING but they are gone now
+		return textVal.replace("\n", "");
 	}
 
 
 	/**
-	 * Calls getTextValue and returns a int value
+	 * Calls getTextValue and returns a <s>int</s> FLOAT value
 	 */
 	//return the float elements from the xml file
 	private static float getFloatValue(Element ele, String tagName) {
@@ -94,44 +98,56 @@ public class Test extends Vision {
 	 * End of stolen methods
 	 */
 	
-	//returns a world state object with the data from the xml file
+	//returns a WorldState object with the data from the xml file
 	private static WorldState getWorldStateFromElement(Element ws){
 		
 		WorldState state;
-		String filename = getTextValue(ws,"filename").replace("\n", "");
+		//SLIGHT XML NAVIGATION
+		//image -> filename
+		String filename = getTextValue(ws,"filename");
 		BufferedImage image = null;
 		try{
+			//filename referenced in XML is loaded as a BufferedImage
 			image = ImageIO.read(new File(filename));
 			System.out.printf("Image read from XML: %s\n",filename);
 		}catch (Exception e){
+			//This flags up when you FORGET TO REMOVE LEADING NEWLINES FROM FILENAMES
 			System.out.print(e);
 			System.out.printf("Error loading image from XML: %s\n",filename);
 		}
-		//passing the data by tag name
+		//XML NAVIGATION GOING DEEPER
+		// image -> location-data
 		Element data = (Element)ws.getElementsByTagName("location-data").item(0);
+		// location-data -> ball
 		Element balldata = (Element)data.getElementsByTagName("ball").item(0);
-		//setting the ball coords.
+		// ball -> x and ball -> y. Passed into a Point2D.Double ready to be passed to WorldState
 		Point2D.Double ballpos = new Point2D.Double(getFloatValue(balldata,"x"),getFloatValue(balldata,"y"));
+		// location-data -> bluerobot
 		Element bluerobotdata = (Element) data.getElementsByTagName("bluerobot").item(0); 
-		//defining a blue robot object and passing the data
+		//defining a blue robot object and passing it bluerobot -> x, bluerobot -> y and bluerobot -> angle
 		Robot bluerobot = new Robot(new Point2D.Double(getFloatValue(bluerobotdata,"x"),getFloatValue(bluerobotdata,"y")), (double) getFloatValue(bluerobotdata,"angle") );
+		// location-data -> yellowrobot
 		Element yellowrobotdata = (Element)data.getElementsByTagName("yellowrobot").item(0); 
-		//defining a yellow robot object and passing the data
+		//defining a yellow robot object and passing it yellowrobot -> x, yellowrobot -> y and yellowrobot -> angle
 		Robot yellowrobot = new Robot(new Point2D.Double(getFloatValue(yellowrobotdata,"x"),getFloatValue(yellowrobotdata,"y")), (double) getFloatValue(yellowrobotdata,"angle") );
+		//WorldState object is created with parsed data passed to the constructor. 
 		state = new WorldState(ballpos, bluerobot, yellowrobot, image);
+		//WorldState object is returned to whatever called this method.
 		return state;
 	}
 	
 	public static void main(String[] args){
+		//The xml file (currently hard coded location) is parsed by the above voodoo and stored in an ArrayList<WorldState>
 		ArrayList<WorldState> Annotations = getWorldStateFromDocument(getDocumentFromXML("xml/fakedocument.xml"));
-		
+		//For each state documented in the XML
 		for (WorldState state : Annotations){	
 			System.out.printf("Getting Vision WorldState\n");
+			//The comparative WorldState object that the vision system will construct.
 			WorldState visionimage;
 			Test test =new Test();
-			BufferedImage frame;
-			frame =  state.getWorldImage();
-			visionimage = test.worldImageData(frame);
+			//The vision system is passed the image from the annotation and generates
+			//a WorldState to be compared with the human perception
+			visionimage = test.worldImageData(state.getWorldImage());
 			System.out.println("Ball Data");
 			System.out.printf("Manual location:");
 			System.out.print(state.getBallCoords());
