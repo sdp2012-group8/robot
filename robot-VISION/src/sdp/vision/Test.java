@@ -58,7 +58,7 @@ public class Test extends Vision {
 				System.out.println("State object found");
 				//Element passed to method for parsing individual elements
 				WorldState annotated = getWorldStateFromElement(ws);
-				//parsed state added to Arraylist
+				//parsed state added to ArrayList
 				states.add(annotated);
 			}
 		}
@@ -135,7 +135,26 @@ public class Test extends Vision {
 		//WorldState object is returned to whatever called this method.
 		return state;
 	}
-	
+	//Compares features of the WorldState(s)
+	public static void compareWorldStates(WorldState reference, WorldState visionresult){
+		System.out.printf("WorldState comparison in format Human | Vision\n");
+		System.out.printf("Ball positions: %s | %s \n", reference.getBallCoords(), visionresult.getBallCoords());
+		// Pythagorean distance. Sqrt ((x1-x2)^2 + (y1-y2)^2)
+		float balldist = (float) Math.sqrt( Math.pow(reference.getBallCoords().x - visionresult.getBallCoords().x,2) + Math.pow(reference.getBallCoords().y  - visionresult.getBallCoords().y,2));
+		System.out.printf("Distance between perceptions: %f\n", balldist);
+		System.out.printf("Blue Robot positions: %s | %s \n", reference.getBlueRobot().getCoords(), visionresult.getBlueRobot().getCoords());
+		// Pythagorean distance. Sqrt ((x1-x2)^2 + (y1-y2)^2)
+		float bluedist = (float) Math.sqrt( Math.pow(reference.getBlueRobot().getCoords().x- visionresult.getBlueRobot().getCoords().x,2) + Math.pow(reference.getBlueRobot().getCoords().y  - visionresult.getBlueRobot().getCoords().y,2));
+		System.out.printf("Distance between perceptions: %f\n", bluedist);
+		System.out.printf("Blue Robot angles: %s | %s \n", reference.getBlueRobot().getAngle(), visionresult.getBlueRobot().getAngle());
+		System.out.printf("Distance between perceptions: %f\n", reference.getBlueRobot().getAngle() - visionresult.getBlueRobot().getAngle());
+		System.out.printf("Yellow Robot positions: %s | %s \n", reference.getYellowRobot().getCoords(), visionresult.getYellowRobot().getCoords());
+		// Pythagorean distance. Sqrt ((x1-x2)^2 + (y1-y2)^2)
+		float yellowdist = (float) Math.sqrt( Math.pow(reference.getYellowRobot().getCoords().x- visionresult.getYellowRobot().getCoords().x,2) + Math.pow(reference.getYellowRobot().getCoords().y  - visionresult.getYellowRobot().getCoords().y,2));
+		System.out.printf("Distance between perceptions: %f\n", yellowdist);
+		System.out.printf("Yellow Robot angles: %s | %s \n", reference.getYellowRobot().getAngle(), visionresult.getYellowRobot().getAngle());
+		System.out.printf("Distance between perceptions: %f\n", reference.getYellowRobot().getAngle() - visionresult.getYellowRobot().getAngle());
+	}
 	public static void main(String[] args){
 		//The xml file (currently hard coded location) is parsed by the above voodoo and stored in an ArrayList<WorldState>
 		ArrayList<WorldState> Annotations = getWorldStateFromDocument(getDocumentFromXML("xml/fakedocument.xml"));
@@ -148,13 +167,9 @@ public class Test extends Vision {
 			//The vision system is passed the image from the annotation and generates
 			//a WorldState to be compared with the human perception
 			visionimage = test.worldImageData(state.getWorldImage());
-			System.out.println("Ball Data");
-			System.out.printf("Manual location:");
-			System.out.print(state.getBallCoords());
-			System.out.printf("\nVision location:");
-			System.out.print(visionimage.getBallCoords());
-			System.out.println();
-
+			//Differences between the WorldStates are calculated
+			compareWorldStates(state,visionimage);
+		
 		}
 			
 	}
