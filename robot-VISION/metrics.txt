@@ -1,3 +1,11 @@
+Files used in tests:
+data/testImages/pitch1-3.png
+data/testImages/pitch2-2.png
+data/testImages/pitch2-3.png
+data/testImages/pitch1-2.png
+data/testImages/pitch2-1.png
+data/testImages/pitch.png
+
 Average ball error is 2.7167604 pixels.
 2.236068
 2.236068
@@ -5,6 +13,7 @@ Average ball error is 2.7167604 pixels.
 4.0
 2.0
 2.828427
+
 Average blue robot error is 3.1805725 pixels.
 3.0413814
 3.0
@@ -12,6 +21,7 @@ Average blue robot error is 3.1805725 pixels.
 2.9154758
 2.9154758
 3.6055512
+
 Average yellow robot error is 640.0 pixels.
 640.0
 640.0
@@ -19,3 +29,4 @@ Average yellow robot error is 640.0 pixels.
 640.0
 640.0
 640.0
+

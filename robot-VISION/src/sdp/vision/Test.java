@@ -24,6 +24,7 @@ import sdp.common.Utilities;
 public class Test extends Vision {
 	//Configuration used to convert between relative coordinates and Pixel-Range coordinates
 	static ImageProcessorConfiguration config = new ImageProcessorConfiguration();
+	static ArrayList<String> filelist = new ArrayList<String>();
 	
 	//gets the document from the xml file
 	private static Document getDocumentFromXML(String filename){
@@ -97,6 +98,7 @@ public class Test extends Vision {
 		//SLIGHT XML NAVIGATION
 		//image -> filename
 		String filename = getTextValue(ws,"filename");
+		filelist.add(filename);
 		
 		
 		//attempting to load image from file
@@ -181,18 +183,31 @@ public class Test extends Vision {
 		try{
 			  FileWriter fw = new FileWriter("metrics.txt");
 			  BufferedWriter out = new BufferedWriter(fw);
+			  //Filenames in order so that the cause of high error rates can be investigated
+			  out.append("Files used in tests:\n");
+			  for (String file : filelist){
+				  out.append(file+"\n");
+			  }
+			  out.append("\n");
 			  out.append(ballerror+"\n");
 			  for (float error : difference.balllist){
 				  out.append(error+"\n");
 			  }
+			  out.append("\n");
+
 			  out.append(blueerror+"\n");
 			  for (float error : difference.bluelist){
 				  out.append(error+"\n");
 			  }
+			  out.append("\n");
+
 			  out.append(yellowerror+"\n");
 			  for (float error : difference.yellowlist){
 				  out.append(error+"\n");
 			  }
+			  out.append("\n");
+
+			  //File closed and write finalised.
 			  out.close();
 			  System.out.println("Metrics written to metrics.txt");
 		}catch (Exception e){
