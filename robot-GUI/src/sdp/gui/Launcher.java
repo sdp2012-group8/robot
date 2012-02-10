@@ -219,11 +219,12 @@ public class Launcher extends JFrame implements Runnable {
 			System.out.println("Connection with brick failed! Going into testmode");
 			com = null;
 		}
+//		com = null;
 		
 		AIVisualServoing mAI = new AIVisualServoing(com, vision);		
 		input.startCapture();		
-		mAI.start(true, true);
-		mAI.setMode(mode.chase_ball);
+		mAI.start(false, true);
+		mAI.setMode(mode.dribble);
 		
 		WorldStateObserver aiObserver = new WorldStateObserver(mAI);
 		

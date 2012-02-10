@@ -244,7 +244,23 @@ public class MainImageProcessor extends ImageProcessor {
             double my = moments.m01() / moments.m00() + rY;            
             double angle = Math.atan2(rcY - my, rcX - mx);
             
-            double bestProps = Double.MAX_VALUE;
+            double d = Double.MIN_VALUE;
+            
+            CvSeq curPt = curRobotShape;
+            int t = curPt.total();
+            
+            for (int i = 0; i < t; ++i) {
+            	CvPoint p = new CvPoint(cvGetSeqElem(curPt, i));
+            	double dd = Point2D.distance(mx, my, p.x(), p.y());
+        		//System.err.println(angle + " " + mx + " " + my + " " + d + " " + dd + " " + p.x() + " " + p.y());
+            	
+            	if (dd > d) {
+            		d = dd;
+            		angle = Math.atan2(p.y() - rcY, rcX - p.x());
+            	}
+            }
+            
+            /*double bestProps = Double.MAX_VALUE;
             
     		CvSeq fullMarkerContour = findAllContours(markerThresh);
     		ArrayList<CvSeq> markerShapes = sizeFilterContours(fullMarkerContour, 5, 15);
@@ -270,8 +286,13 @@ public class MainImageProcessor extends ImageProcessor {
     	                cvDrawContours(frame_ipl, curMarkerShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
                 	}
                 }
-			}
+			}*/
             
+            angle = angle + Math.PI * 3;
+            while (angle > Math.PI * 2) {
+            	angle -= Math.PI * 2;
+            }
+            angle = angle * 180.0 / Math.PI;
             return new Robot(frameToNormalCoordinates(mx, my, true), angle);
 		}
 	}
