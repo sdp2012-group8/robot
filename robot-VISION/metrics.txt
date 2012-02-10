@@ -1,3 +1,5 @@
+Error tolerance is set to 20 pixels.
+
 Files used in tests:
 1: data/testImages/pitch1-3.png
 2: data/testImages/pitch2-2.png
@@ -23,10 +25,10 @@ Average blue robot error is 3.1805725 pixels.
 6: 3.6055512
 
 Average yellow robot error is 640.0 pixels.
-1: 640.0
-2: 640.0
-3: 640.0
-4: 640.0
-5: 640.0
-6: 640.0
+1: [ABOVE TOLERANCE] 640.0
+2: [ABOVE TOLERANCE] 640.0
+3: [ABOVE TOLERANCE] 640.0
+4: [ABOVE TOLERANCE] 640.0
+5: [ABOVE TOLERANCE] 640.0
+6: [ABOVE TOLERANCE] 640.0
 

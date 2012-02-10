@@ -183,6 +183,10 @@ public class Test extends Vision {
 		try{
 			  FileWriter fw = new FileWriter("metrics.txt");
 			  BufferedWriter out = new BufferedWriter(fw);
+			  
+			  //Number of pixels difference to ignore
+			  int tolerance = 20;
+			  out.append("Error tolerance is set to "+tolerance+" pixels.\n\n");
 			  //Filenames in order so that the cause of high error rates can be investigated
 			  out.append("Files used in tests:\n");
 			  int index = 0;
@@ -197,6 +201,9 @@ public class Test extends Vision {
 			  for (float error : difference.balllist){
 				  index++;
 				  out.append(index+": ");
+				  if (error > tolerance){
+				   out.append("[ABOVE TOLERANCE] ");
+				  }
 				  out.append(error+"\n");
 			  }
 			  out.append("\n");
@@ -206,6 +213,9 @@ public class Test extends Vision {
 			  for (float error : difference.bluelist){
 				  index++;
 				  out.append(index+": ");
+				  if (error > tolerance){
+					   out.append("[ABOVE TOLERANCE] ");
+					  }
 				  out.append(error+"\n");
 			  }
 			  out.append("\n");
@@ -215,6 +225,9 @@ public class Test extends Vision {
 			  for (float error : difference.yellowlist){
 				  index++;
 				  out.append(index+": ");
+				  if (error > tolerance){
+					   out.append("[ABOVE TOLERANCE] ");
+					  }
 				  out.append(error+"\n");
 			  }
 			  out.append("\n");
