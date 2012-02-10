@@ -772,7 +772,8 @@ public class Simulator extends WorldStateProvider {
 		state = new WorldState(Vector2D.divide(ball, pitch_width_cm),
 				new Robot(Vector2D.divide(positions[0], pitch_width_cm),
 						directions[0]), new Robot(Vector2D.divide(positions[1],
-						pitch_width_cm), directions[1]), image(dt));
+						pitch_width_cm), directions[1]), im);
+		image(dt);
 		setChanged();
 		notifyObservers(state);
 	}
@@ -782,7 +783,7 @@ public class Simulator extends WorldStateProvider {
 	 * 
 	 * @return
 	 */
-	private BufferedImage image(double dt) {
+	private void image(double dt) {
 		// create image if not existing
 		if (im == null) {
 			im = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT
@@ -887,25 +888,27 @@ public class Simulator extends WorldStateProvider {
 			if (i < 2 && state_cm != null) {
 				color = brighter(color);
 				g.setColor(new Color(color.getRed(), color.getGreen(), color
-						.getBlue(), 25));
+						.getBlue(), 50));
 				g.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_BUTT,
 						BasicStroke.JOIN_MITER, 10.0f, new float[] { 10.0f },
 						0.0f));
 				boolean am_i_blue = i == 0;
 				robot = am_i_blue ? state_cm.getBlueRobot() : state_cm
 						.getYellowRobot();
-				drawVector(new Vector2D(robot.getFrontLeft()),
-						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
-								robot.getFrontLeft()));
-				drawVector(new Vector2D(robot.getFrontRight()),
-						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
-								robot.getFrontRight()));
-				drawVector(new Vector2D(robot.getBackLeft()),
-						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
-								robot.getBackLeft()));
-				drawVector(new Vector2D(robot.getBackRight()),
-						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
-								robot.getBackRight()));
+//				drawVector(new Vector2D(robot.getFrontLeft()),
+//						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
+//								robot.getFrontLeft()));
+//				drawVector(new Vector2D(robot.getFrontRight()),
+//						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
+//								robot.getFrontRight()));
+//				drawVector(new Vector2D(robot.getBackLeft()),
+//						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
+//								robot.getBackLeft()));
+//				drawVector(new Vector2D(robot.getBackRight()),
+//						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
+//								robot.getBackRight()));
+				Vector2D local_origin = new Vector2D(Robot.LENGTH_CM/2+2,0);
+				drawVector(Tools.getGlobalVector(robot, local_origin),  Tools.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0)), true);
 			}
 		}
 		// draw ball
@@ -951,8 +954,6 @@ public class Simulator extends WorldStateProvider {
 						+ String.format("%.1f", directions[1]) + "°", 20,
 				IMAGE_HEIGHT + 80);
 		g.drawString("ball : " + ball, IMAGE_WIDTH - 150, IMAGE_HEIGHT + 20);
-
-		return im;
 	}
 
 	// helpers
@@ -982,7 +983,9 @@ public class Simulator extends WorldStateProvider {
 	 * @param h
 	 */
 	private void fillOval(int x, int y, int w, int h) {
-		Vector2D cent = transformScreenVectorToLocalOne(x, y);
+		Vector2D l_r = transformScreenVectorToLocalOne(x-w/2, y-h/2);
+		Vector2D t_r = transformScreenVectorToLocalOne(x+w/2, y+h/2);
+		Vector2D cent = Vector2D.divide(Vector2D.add(l_r, t_r), 2);
 		g.fillOval((int) cent.getX(), (int) cent.getY(), w, h);
 	}
 	
@@ -1031,13 +1034,16 @@ public class Simulator extends WorldStateProvider {
 	 * @param vector
 	 *            in cm
 	 */
-	private void drawVector(Vector2D origin, Vector2D vector) {
-
+	private void drawVector(Vector2D origin, Vector2D vector, boolean draw_point_in_end) {
+		double ex = (origin.getX()+vector.getX())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM, ey = (origin.getY()+vector.getY())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM;
 		drawLine(
 				(int)(origin.getX()*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
 				(int)(origin.getY()*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
-				(int)((origin.getX()+vector.getX())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
-				(int)((origin.getY()+vector.getY())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM));
+				(int)(ex),
+				(int)(ey));
+		if (draw_point_in_end) {
+			fillOval((int) ex-3, (int) ey-3, 6, 6);
+		}
 
 	}
 
