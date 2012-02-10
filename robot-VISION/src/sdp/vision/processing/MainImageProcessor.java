@@ -54,14 +54,13 @@ public class MainImageProcessor extends BaseImageProcessor {
 		IplImage frame_ipl = IplImage.createFrom(thresholds[0]);
 		IplImage ballThreshold = IplImage.createFrom(thresholds[1]);		
 		IplImage blueThreshold = IplImage.createFrom(thresholds[2]);
-		IplImage yellowThreshold = IplImage.createFrom(thresholds[3]);
-		IplImage markerThreshold = IplImage.createFrom(thresholds[4]);		
+		IplImage yellowThreshold = IplImage.createFrom(thresholds[3]);	
 		cvSetImageROI(frame_ipl, getCurrentROI());
 
 		Point2D.Double ballPos = findBall(frame_ipl, ballThreshold);
-		Robot blueRobot = findRobot(frame_ipl, blueThreshold, markerThreshold,
+		Robot blueRobot = findRobot(frame_ipl, blueThreshold,
 				config.getBlueSizeMinValue(), config.getBlueSizeMaxValue());
-		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold, markerThreshold,
+		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold,
 				config.getYellowSizeMinValue(), config.getYellowSizeMaxValue());
 		BufferedImage worldImage = finaliseWorldImage(frame_ipl, ballPos, blueRobot, yellowRobot);
 		
@@ -103,8 +102,6 @@ public class MainImageProcessor extends BaseImageProcessor {
 				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
 		BufferedImage yellow = new BufferedImage(config.getFieldWidth(),
 				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
-		BufferedImage marker = new BufferedImage(config.getFieldWidth(),
-				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY); 
 		
 		for (int x = 0; x < config.getFieldWidth(); ++x) {
 			for (int y = 0; y < config.getFieldHeight(); ++y) {
@@ -120,11 +117,6 @@ public class MainImageProcessor extends BaseImageProcessor {
 				int h = (int) (hsv[0] * 360);
 				int s = (int) (hsv[1] * 100);
 				int v = (int) (hsv[2] * 100);
-				
-				if (h >= 40 && h <= 180 && v <= 40 && (g > (int)(b * 1.5))) {
-			    	marker.setRGB(x, y, Color.white.getRGB());
-			    	frame.setRGB(ox, oy, Color.pink.getRGB());
-			    }
 				
 				// 134-210 18-100 50-100 20-50
 				// 25-75 0-50 55-75 20-50
@@ -165,7 +157,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 			}
 		}
 		
-		BufferedImage retValue[] = { frame, ball, blue, yellow, marker };
+		BufferedImage retValue[] = { frame, ball, blue, yellow };
 		return retValue;
 	}
 	
@@ -211,7 +203,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 * @return The position of the ball.
 	 */
 	private Robot findRobot(IplImage frame_ipl, IplImage robotThresh,
-			IplImage markerThresh, int minSize, int maxSize) {		
+			int minSize, int maxSize) {		
 		CvSeq fullRobotContour = findAllContours(robotThresh);
 		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour, minSize, maxSize);
 		
@@ -240,60 +232,22 @@ public class MainImageProcessor extends BaseImageProcessor {
             cvMoments(robotThresh, moments, 1);
             cvResetImageROI(robotThresh);
             
-            double mx = moments.m10() / moments.m00() + rX;
-            double my = moments.m01() / moments.m00() + rY;            
-            double angle = Math.atan2(rcY - my, rcX - mx);
+            double massCenterX = moments.m10() / moments.m00() + rX;
+            double massCenterY = moments.m01() / moments.m00() + rY;  
+            double angle = 0.0;
             
-            double d = Double.MIN_VALUE;
-            
-            CvSeq curPt = curRobotShape;
-            int t = curPt.total();
-            
-            for (int i = 0; i < t; ++i) {
-            	CvPoint p = new CvPoint(cvGetSeqElem(curPt, i));
-            	double dd = Point2D.distance(mx, my, p.x(), p.y());
-        		//System.err.println(angle + " " + mx + " " + my + " " + d + " " + dd + " " + p.x() + " " + p.y());
+            double minShapeDist = Double.MIN_VALUE;
+            for (int i = 0; i < curRobotShape.total(); ++i) {
+            	CvPoint pt = new CvPoint(cvGetSeqElem(curRobotShape, i));
+            	double curDist = Point2D.distance(massCenterX, massCenterY, pt.x(), pt.y());
             	
-            	if (dd > d) {
-            		d = dd;
-            		angle = Math.atan2(p.y() - rcY, rcX - p.x());
+            	if (curDist > minShapeDist) {
+            		minShapeDist = curDist;
+            		angle = Math.toDegrees( Math.atan2(pt.y() - rcY, rcX - pt.x()) ) + 180.0;
             	}
             }
             
-            /*double bestProps = Double.MAX_VALUE;
-            
-    		CvSeq fullMarkerContour = findAllContours(markerThresh);
-    		ArrayList<CvSeq> markerShapes = sizeFilterContours(fullMarkerContour, 5, 15);
-    		
-			for (CvSeq curMarkerShape : markerShapes) {    			
-                CvRect markerBoundingBox = cvBoundingRect(curMarkerShape, 0);
-                int mX = markerBoundingBox.x();
-                int mY = markerBoundingBox.y();
-                int mW = markerBoundingBox.width();
-                int mH = markerBoundingBox.height();
-                
-                int mcX = mX + mW / 2;
-                int mcY = mY + mH / 2;
-                
-                double dist = Point.distance(rcX, rcY, mcX, mcY);
-                if ((dist >= 15.0) && (dist <= 30.0)) {
-                	double prop = (double)mW / (double) mH;
-                	if (prop < 1.0) {
-                		prop = 1.0 / prop;
-                	}
-                	if (prop < bestProps) {
-                		angle = Math.atan2(mcY - rcY, rcX - mcX);
-    	                cvDrawContours(frame_ipl, curMarkerShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
-                	}
-                }
-			}*/
-            
-            angle = angle + Math.PI * 3;
-            while (angle > Math.PI * 2) {
-            	angle -= Math.PI * 2;
-            }
-            angle = angle * 180.0 / Math.PI;
-            return new Robot(frameToNormalCoordinates(mx, my, true), angle);
+            return new Robot(frameToNormalCoordinates(massCenterX, massCenterY, true), angle);
 		}
 	}
 	

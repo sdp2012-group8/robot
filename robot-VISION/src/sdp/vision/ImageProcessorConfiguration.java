@@ -24,52 +24,52 @@ public class ImageProcessorConfiguration {
 	
 	/** Lower bound of the ball threshold's hue value. */
 	private int ballHueMinValue = 350;
-	/** Lower bound of the ball threshold's saturation value. */
-	private int ballSatMinValue = 60;
-	/** Lower bound of the ball threshold's value value. */
-	private int ballValMinValue = 40;
-	/** Lower bound of the ball contour size. */
-	private int ballSizeMinValue = 5;
 	/** Upper bound of the ball threshold's hue value. */
 	private int ballHueMaxValue = 20;
+	/** Lower bound of the ball threshold's saturation value. */
+	private int ballSatMinValue = 60;
 	/** Upper bound of the ball threshold's saturation value. */
 	private int ballSatMaxValue = 100;
+	/** Lower bound of the ball threshold's value value. */
+	private int ballValMinValue = 40;
 	/** Upper bound of the ball threshold's value value. */
 	private int ballValMaxValue = 100;
+	/** Lower bound of the ball contour size. */
+	private int ballSizeMinValue = 5;
 	/** Upper bound of the ball contour size. */
 	private int ballSizeMaxValue = 25;
 	
 	/** Lower bound of the Blue threshold's hue value. */
-	private int blueHueMinValue = 130;
-	/** Lower bound of the Blue threshold's saturation value. */
-	private int blueSatMinValue = 0;
-	/** Lower bound of the Blue threshold's value value. */
-	private int blueValMinValue = 30;
-	/** Lower bound of the Blue contour size. */
-	private int blueSizeMinValue = 10;
+	private int blueHueMinValue = 150;
 	/** Upper bound of the Blue threshold's hue value. */
 	private int blueHueMaxValue = 210;
+	/** Lower bound of the Blue threshold's saturation value. */
+	private int blueSatMinValue = 0;
 	/** Upper bound of the Blue threshold's saturation value. */
 	private int blueSatMaxValue = 100;
+	/** Lower bound of the Blue threshold's value value. */
+	private int blueValMinValue = 30;
 	/** Upper bound of the Blue threshold's value value. */
 	private int blueValMaxValue = 100;
+	/** Lower bound of the Blue contour size. */
+	private int blueSizeMinValue = 10;
 	/** Upper bound of the Blue contour size. */
 	private int blueSizeMaxValue = 50;
 	
 	/** Lower bound of the Yellow threshold's hue value. */
 	private int yellowHueMinValue = 25;
-	/** Lower bound of the Yellow threshold's saturation value. */
-	private int yellowSatMinValue = 0;
-	/** Lower bound of the Yellow threshold's value value. */
-	private int yellowValMinValue = 55;
-	/** Lower bound of the Yellow contour size. */
-	private int yellowSizeMinValue = 15;
 	/** Upper bound of the Yellow threshold's hue value. */
 	private int yellowHueMaxValue = 75;
+	/** Lower bound of the Yellow threshold's saturation value. */
+	private int yellowSatMinValue = 0;
 	/** Upper bound of the Yellow threshold's saturation value. */
 	private int yellowSatMaxValue = 50;
+	/** Lower bound of the Yellow threshold's value value. */
+	private int yellowValMinValue = 55;
 	/** Upper bound of the Yellow threshold's value value. */
 	private int yellowValMaxValue = 75;
+	/** Lower bound of the Yellow contour size. */
+	private int yellowSizeMinValue = 15;
 	/** Upper bound of the Yellow contour size. */
 	private int yellowSizeMaxValue = 50;
 	

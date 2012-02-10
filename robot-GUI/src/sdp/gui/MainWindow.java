@@ -590,13 +590,13 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbl_robotSettingPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
 		robotSettingPanel.setLayout(gbl_robotSettingPanel);
 		
-		robotTestModeCheckbox = new JCheckBox("Test mode");
-		GridBagConstraints gbc_robotTestModeCheckbox = new GridBagConstraints();
-		gbc_robotTestModeCheckbox.anchor = GridBagConstraints.WEST;
-		gbc_robotTestModeCheckbox.insets = new Insets(0, 0, 5, 5);
-		gbc_robotTestModeCheckbox.gridx = 0;
-		gbc_robotTestModeCheckbox.gridy = 0;
-		robotSettingPanel.add(robotTestModeCheckbox, gbc_robotTestModeCheckbox);
+		robotDebugModeCheckbox = new JCheckBox("Debug mode");
+		GridBagConstraints gbc_robotDebugModeCheckbox = new GridBagConstraints();
+		gbc_robotDebugModeCheckbox.anchor = GridBagConstraints.WEST;
+		gbc_robotDebugModeCheckbox.insets = new Insets(0, 0, 5, 5);
+		gbc_robotDebugModeCheckbox.gridx = 0;
+		gbc_robotDebugModeCheckbox.gridy = 0;
+		robotSettingPanel.add(robotDebugModeCheckbox, gbc_robotDebugModeCheckbox);
 		
 		robotColorLabel = new JLabel("Color");
 		GridBagConstraints gbc_robotColorLabel = new GridBagConstraints();
@@ -731,7 +731,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JButton robotConnectButton;
 	private final ButtonGroup robotColorButtonGroup = new ButtonGroup();
 	private final ButtonGroup robotGateButtonGroup = new ButtonGroup();
-	private JCheckBox robotTestModeCheckbox;
+	private JCheckBox robotDebugModeCheckbox;
 	private JPanel visionSettingPanel;
 	
 	
@@ -752,7 +752,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 */
 	private void connectToRobot() {
 		Communicator com;
-		if (robotTestModeCheckbox.isSelected()) {
+		if (robotDebugModeCheckbox.isSelected()) {
 			com = null;
 		} else {
 			try {
