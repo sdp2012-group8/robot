@@ -29,21 +29,21 @@ public class NNetTools {
 		// rel coords
 		Vector2D rel_ball = Tools.getLocalVector(me, ball);
 		//Vector2D rel_goal = Tools.getLocalVector(me, goal);
-		//Vector2D rel_coll = Tools.getLocalVector(me, Vector2D.add(my_coords, nearest));
+		Vector2D rel_coll = Tools.getLocalVector(me, Vector2D.add(my_coords, nearest));
 		Vector2D rel_en = Tools.getLocalVector(me, en_coords);
 		// if you change something here, don't forget to change number of inputs in trainer
-		// TODO! split tasks in, handle ball, go around enemy, score goal
-		
 		switch (id) {
 		case 0:
 			return new double[] {
-					AI_normalizeCoordinateTo1(rel_ball.getX(), Tools.PITCH_WIDTH_CM),
-					AI_normalizeCoordinateTo1(rel_en.getX(), Tools.PITCH_WIDTH_CM),
+					AI_normalizeCoordinateTo1(rel_ball.getX(), Tools.PITCH_WIDTH_CM)
+					//AI_normalizeCoordinateTo1(rel_en.getX(), Tools.PITCH_WIDTH_CM),
+					//AI_normalizeCoordinateTo1(rel_coll.getX(), Tools.PITCH_WIDTH_CM)
 			};
 		case 1:
 			return new double[] {
-					AI_normalizeAngleTo1(Vector2D.getDirection(rel_ball)),
-					AI_normalizeAngleTo1(Vector2D.getDirection(rel_en)),
+					AI_normalizeAngleTo1(Vector2D.getDirection(rel_ball))
+					//AI_normalizeAngleTo1(Vector2D.getDirection(rel_en)),
+					//AI_normalizeAngleTo1(Vector2D.getDirection(rel_coll))
 			};
 		}
 		return null;		
