@@ -14,11 +14,4 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>xml/imagedata.xml</name>
-			<type>1</type>
-			<location>/home/cronin/robot/robot-VISION/xml/imagedata.xml</location>
-		</link>
-	</linkedResources>
 </projectDescription>
