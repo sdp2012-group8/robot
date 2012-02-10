@@ -157,7 +157,7 @@ public class Test extends Vision {
 	}
 	public static void main(String[] args){
 		//The xml file (currently hard coded location) is parsed by the above voodoo and stored in an ArrayList<WorldState>
-		ArrayList<WorldState> Annotations = getWorldStateFromDocument(getDocumentFromXML("xml/fakedocument.xml"));
+		ArrayList<WorldState> Annotations = getWorldStateFromDocument(getDocumentFromXML("xml/imagedata.xml"));
 		//For each state documented in the XML
 		for (WorldState state : Annotations){	
 			System.out.printf("Getting Vision WorldState\n");
