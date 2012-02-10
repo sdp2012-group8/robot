@@ -185,29 +185,41 @@ public class Test extends Vision {
 			  BufferedWriter out = new BufferedWriter(fw);
 			  //Filenames in order so that the cause of high error rates can be investigated
 			  out.append("Files used in tests:\n");
+			  int index = 0;
 			  for (String file : filelist){
+				  index++;
+				  out.append(index+": ");
 				  out.append(file+"\n");
 			  }
 			  out.append("\n");
 			  out.append(ballerror+"\n");
+			  index = 0;
 			  for (float error : difference.balllist){
+				  index++;
+				  out.append(index+": ");
 				  out.append(error+"\n");
 			  }
 			  out.append("\n");
 
 			  out.append(blueerror+"\n");
+			  index = 0;
 			  for (float error : difference.bluelist){
+				  index++;
+				  out.append(index+": ");
 				  out.append(error+"\n");
 			  }
 			  out.append("\n");
 
 			  out.append(yellowerror+"\n");
+			  index = 0;
 			  for (float error : difference.yellowlist){
+				  index++;
+				  out.append(index+": ");
 				  out.append(error+"\n");
 			  }
 			  out.append("\n");
 
-			  //File closed and write finalised.
+			  //File closed and write finalised.git 
 			  out.close();
 			  System.out.println("Metrics written to metrics.txt");
 		}catch (Exception e){
