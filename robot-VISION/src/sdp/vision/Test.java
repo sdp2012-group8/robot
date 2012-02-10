@@ -197,7 +197,7 @@ public class Test extends Vision {
 
 	public static void main(String[] args) throws InterruptedException{
 		//The xml file (currently hard coded location) is parsed by the above voodoo and stored in an ArrayList<WorldState>
-		ArrayList<WorldState> Annotations = getWorldStateFromDocument(getDocumentFromXML("xml/imagedata.xml"));
+		ArrayList<WorldState> annotations = getWorldStateFromDocument(getDocumentFromXML("xml/imagedata.xml"));
 		//For each state documented in the XML
 		JFrame frame = new JFrame("Image Display");
 		frame.setSize(640,480);
@@ -205,11 +205,11 @@ public class Test extends Vision {
 		frame.getContentPane().add(base);
 		frame.setVisible(true);
 		while(true){
-			int ballerror = 0;
-			for (WorldState state : Annotations){
+			IterativeWorldStateDifferenceAccumulator difference = new IterativeWorldStateDifferenceAccumulator();
+			for (WorldState state : annotations){
 				Utilities utility = new Utilities();
 				BufferedImage manualimage = utility.deepBufferedImageCopy(state.getWorldImage());
-				System.out.printf("Getting Vision WorldState\n");
+				//System.out.printf("Getting Vision WorldState\n");
 				//The comparative WorldState object that the vision system will construct.
 				WorldState visionimage;
 				Test test =new Test();
@@ -217,12 +217,14 @@ public class Test extends Vision {
 				//a WorldState to be compared with the human perception
 				visionimage = convertToPixelRange(test.worldImageData(utility.deepBufferedImageCopy(state.getWorldImage())));
 				base.updateImageAndState(manualimage,state,visionimage);
-				//Thread.sleep(1000);
+				Thread.sleep(1000);
 				//Differences between the WorldStates are calculated
 				//compareWorldStates(state,visionimage);
-				ballerror += (float) Math.sqrt( Math.pow(state.getBallCoords().x - visionimage.getBallCoords().x,2) + Math.pow(state.getBallCoords().y  - visionimage.getBallCoords().y,2));
+				difference.iteration(state, visionimage);
 			}
-			System.out.printf("Average ball error is %f\n", (float)ballerror/Annotations.size());
+			System.out.printf("Average ball error is %f pixels.\n", (float)difference.averageBallError(annotations.size()));
+			System.out.printf("Average blue robot error is %f pixels.\n", (float)difference.averageBlueError(annotations.size()));
+			System.out.printf("Average yellow robot error is %f pixels.\n", (float)difference.averageYellowError(annotations.size()));
 		}
 			
 	}
