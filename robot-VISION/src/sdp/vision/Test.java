@@ -182,8 +182,17 @@ public class Test extends Vision {
 			  FileWriter fw = new FileWriter("metrics.txt");
 			  BufferedWriter out = new BufferedWriter(fw);
 			  out.append(ballerror+"\n");
+			  for (float error : difference.balllist){
+				  out.append(error+"\n");
+			  }
 			  out.append(blueerror+"\n");
+			  for (float error : difference.bluelist){
+				  out.append(error+"\n");
+			  }
 			  out.append(yellowerror+"\n");
+			  for (float error : difference.yellowlist){
+				  out.append(error+"\n");
+			  }
 			  out.close();
 			  System.out.println("Metrics written to metrics.txt");
 		}catch (Exception e){
