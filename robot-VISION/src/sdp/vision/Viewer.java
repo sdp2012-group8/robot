@@ -25,30 +25,31 @@ public class Viewer extends Panel{
 		visstate = bstate;
 	}
 	
-
+	//Allows the viewer to update on each iteration by passing it a new image and states.
 	public void updateImageAndState(BufferedImage animage,WorldState astate, WorldState bstate){
 		image = animage;
 		manstate = astate;
 		visstate = bstate;
+		//Viewer is repainted to draw new state information on the new image.
 		repaint();
 	}
 	
+	//Used to rescale, now just used for typecasting
 	public int correctX (double x){
-		//x+=config.getRawFieldLowX();
-		//x*=config.getFieldWidth();
-		//x+=config.getFieldLowX();
 		return (int) x;
 	}
-		public int correctY (double y){
-		//y+=config.getRawFieldLowY();
-		//y*=config.getFieldWidth();
-		//y+=config.getFieldLowY();
+	
+	//Used to rescale, now just used for typecasting
+	public int correctY (double y){
 		return (int) y;
 	}
 	
 	public void paint(Graphics g){
 		if (image != null){
+			
+			//BufferedImage is loaded into graphics object
 			g.drawImage( image, 0, 0, null);
+			
         	/*
 			// MANUAL TAGGING
 			//Draw Backgrounds
@@ -71,9 +72,10 @@ public class Viewer extends Panel{
 			//Draw yellow robot
 			g.drawRect((int)(manstate.getYellowRobot().getCoords().x)-4,(int)(manstate.getYellowRobot().getCoords().y)-4, 8, 8);
         	*/
-        	// VISION TAGGING
-     		
-     		//Draw Backgrounds
+			
+			
+		// VISION TAGGING
+     	//Draw Backgrounds
 			//Draw Ball
 			g.setColor(Color.red);
 			g.fillRect(correctX(visstate.getBallCoords().x)-4,correctY(visstate.getBallCoords().y)-4, 8, 8);
@@ -84,7 +86,7 @@ public class Viewer extends Panel{
 			g.setColor(Color.yellow);
 			g.fillRect(correctX(visstate.getYellowRobot().getCoords().x)-4,correctY(visstate.getYellowRobot().getCoords().y)-4, 8, 8);
      		
-			//Draw borders
+		//Draw borders
      		g.setColor(Color.red);
 			//Draw ball
 			g.drawRect(correctX(visstate.getBallCoords().x)-4,correctY(visstate.getBallCoords().y)-4, 8, 8);
