@@ -65,6 +65,11 @@ public class Simulator extends WorldStateProvider {
 			speeds = new double[MAX_NUM_ROBOTS],
 			turning_speeds = new double[MAX_NUM_ROBOTS];
 	private static boolean[] will_be_in_collision = new boolean[MAX_NUM_ROBOTS];
+	
+	//boolean flag arrays for collisions
+	private static boolean[] collision_with_walls = new boolean[MAX_NUM_ROBOTS];
+	private static boolean[] collision_with_robot = new boolean[MAX_NUM_ROBOTS];
+	
 	// for use for collision prediction
 	private static Vector2D[] future_positions = new Vector2D[MAX_NUM_ROBOTS],
 			future_velocities = new Vector2D[MAX_NUM_ROBOTS];
@@ -673,8 +678,11 @@ public class Simulator extends WorldStateProvider {
 			ball_velocity = Vector2D.multiply(ball_velocity, wall_bounciness);
 		}
 		// robot - robot collision
-		for (int i = 0; i < robot.length; i++)
+		for (int i = 0; i < robot.length; i++){
 			will_be_in_collision[i] = false;
+			collision_with_walls[i] = false;
+			collision_with_robot[i] = false;
+		}
 		for (int i = 0; i < robot.length; i++)
 			if (robot[i] != null && !will_be_in_collision[i]) {
 				Vector2D[] ri_ps = VBrick.getRobotCoords(future_positions[i],
@@ -685,14 +693,17 @@ public class Simulator extends WorldStateProvider {
 							|| ri_ps[k].getY() < 0
 							|| ri_ps[k].getY() > pitch_height_cm) {
 						will_be_in_collision[i] = true;
-
-						// when it hits a wall, the robot bounces back with the
-						// same speed
-						Vector2D backAwayDistance = new Vector2D(0, 0);
-						backAwayDistance.addmul_to(velocities[i], -dt);
-						positions[i] = Vector2D.add(positions[i],
-								backAwayDistance);
-
+						
+						collision_with_walls[i] = true;					
+				
+						//if the robot isn't in a collision with another robot, set it back
+						//with the same distance with which it would go outside the wall
+						if (collision_with_robot[i] == false){								
+							Vector2D distance = Vector2D.subtract(positions[i], future_positions[i]);
+							positions[i] = Vector2D.add(distance,positions[i]);
+							collision_with_walls[i] = false;
+						}
+						
 						break;
 					}
 				}
@@ -720,52 +731,75 @@ public class Simulator extends WorldStateProvider {
 
 									will_be_in_collision[i] = true;
 									will_be_in_collision[j] = true;
+									
+									collision_with_robot[i] = true;
+									collision_with_robot[j] = true;
 
 									/**
 									 * If the robots collide, they will back
 									 * away with a distance equal to the
-									 * difference in velocities times the time
-									 * between frames This is not physically
+									 * relative velocities times the time
+									 * between frames. This is not physically
 									 * accurate...
 									 * */
-
+									
 									Vector2D backAwayDistance1 = new Vector2D(
 											0, 0);
 									Vector2D backAwayDistance2 = new Vector2D(
 											0, 0);
-
-									backAwayDistance1.addmul_to(velocities[j],
+									
+									//compute relative velocity and scale the rebound velocities wrt to the relative one
+									Vector2D relative_velocity = Vector2D.add(velocities[i], velocities[j]);
+									
+									backAwayDistance1.addmul_to(Vector2D.multiply(velocities[j],velocities[j].getLength()/relative_velocity.getLength()),
 											dt);
-									backAwayDistance2.addmul_to(velocities[i],
+									backAwayDistance2.addmul_to(Vector2D.multiply(velocities[i],velocities[i].getLength()/relative_velocity.getLength()),
 											dt);
 
 									Vector2D distance1 = Vector2D.add(
 											positions[i], backAwayDistance1);
 									Vector2D distance2 = Vector2D.add(
 											positions[j], backAwayDistance2);
-
+									
+										
+									System.out.println("collision");
+									System.out.println("distance "+Vector2D.subtract(distance1, distance2).getLength());
+									
 									//if the future positions of the robots are still inside the pitch,
 									//set the positions, else the robots remain in the same place
-									if (distance1.getX() < (pitch_width_cm - 10)
-											&& distance1.getY() < (pitch_height_cm - 10)
-											&& distance1.getX() > 10
-											&& distance1.getY() > 10
-											&& distance2.getX() < (pitch_width_cm - 10)
-											&& distance2.getY() < (pitch_height_cm - 10)
-											&& distance2.getX() > 10
-											&& distance2.getY() > 10) {
-										positions[i] = distance1;
-										positions[j] = distance2;
+									if (distance1.getX() < (pitch_width_cm - 12)
+											&& distance1.getY() < (pitch_height_cm - 12)
+											&& distance1.getX() > 12
+											&& distance1.getY() > 12
+											&& distance2.getX() < (pitch_width_cm - 12)
+											&& distance2.getY() < (pitch_height_cm - 12)
+											&& distance2.getX() > 12
+											&& distance2.getY() > 12
+											&& Vector2D.subtract(distance1, distance2).getLength()>20) {
+										
+										if (collision_with_walls[i] == false)
+											positions[i] = distance1;
+										if (collision_with_walls[j] == false)
+											positions[j] = distance2;
+										
+										collision_with_robot[i] = false;
+										collision_with_robot[j] = false;
+										
+										
 									}
 
 								}
 							}
+				
+				//
+				
 			}
 		// notify that we have change
 		state = new WorldState(Vector2D.divide(ball, pitch_width_cm),
 				new Robot(Vector2D.divide(positions[0], pitch_width_cm),
 						directions[0]), new Robot(Vector2D.divide(positions[1],
-						pitch_width_cm), directions[1]), image(dt));
+						pitch_width_cm), directions[1]), im);
+		image(dt);
 		setChanged();
 		notifyObservers(state);
 	}
@@ -775,7 +809,7 @@ public class Simulator extends WorldStateProvider {
 	 * 
 	 * @return
 	 */
-	private BufferedImage image(double dt) {
+	private void image(double dt) {
 		// create image if not existing
 		if (im == null) {
 			im = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT
@@ -880,25 +914,27 @@ public class Simulator extends WorldStateProvider {
 			if (i < 2 && state_cm != null) {
 				color = brighter(color);
 				g.setColor(new Color(color.getRed(), color.getGreen(), color
-						.getBlue(), 25));
+						.getBlue(), 50));
 				g.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_BUTT,
 						BasicStroke.JOIN_MITER, 10.0f, new float[] { 10.0f },
 						0.0f));
 				boolean am_i_blue = i == 0;
 				robot = am_i_blue ? state_cm.getBlueRobot() : state_cm
 						.getYellowRobot();
-				drawVector(new Vector2D(robot.getFrontLeft()),
-						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
-								robot.getFrontLeft()));
-				drawVector(new Vector2D(robot.getFrontRight()),
-						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
-								robot.getFrontRight()));
-				drawVector(new Vector2D(robot.getBackLeft()),
-						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
-								robot.getBackLeft()));
-				drawVector(new Vector2D(robot.getBackRight()),
-						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
-								robot.getBackRight()));
+//				drawVector(new Vector2D(robot.getFrontLeft()),
+//						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
+//								robot.getFrontLeft()));
+//				drawVector(new Vector2D(robot.getFrontRight()),
+//						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
+//								robot.getFrontRight()));
+//				drawVector(new Vector2D(robot.getBackLeft()),
+//						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
+//								robot.getBackLeft()));
+//				drawVector(new Vector2D(robot.getBackRight()),
+//						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
+//								robot.getBackRight()));
+				Vector2D local_origin = new Vector2D(Robot.LENGTH_CM/2+2,0);
+				drawVector(Tools.getGlobalVector(robot, local_origin),  Tools.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0)), true);
 			}
 		}
 		// draw ball
@@ -944,8 +980,6 @@ public class Simulator extends WorldStateProvider {
 						+ String.format("%.1f", directions[1]) + "°", 20,
 				IMAGE_HEIGHT + 80);
 		g.drawString("ball : " + ball, IMAGE_WIDTH - 150, IMAGE_HEIGHT + 20);
-
-		return im;
 	}
 
 	// helpers
@@ -975,7 +1009,9 @@ public class Simulator extends WorldStateProvider {
 	 * @param h
 	 */
 	private void fillOval(int x, int y, int w, int h) {
-		Vector2D cent = transformScreenVectorToLocalOne(x, y);
+		Vector2D l_r = transformScreenVectorToLocalOne(x-w/2, y-h/2);
+		Vector2D t_r = transformScreenVectorToLocalOne(x+w/2, y+h/2);
+		Vector2D cent = Vector2D.divide(Vector2D.add(l_r, t_r), 2);
 		g.fillOval((int) cent.getX(), (int) cent.getY(), w, h);
 	}
 	
@@ -1024,13 +1060,16 @@ public class Simulator extends WorldStateProvider {
 	 * @param vector
 	 *            in cm
 	 */
-	private void drawVector(Vector2D origin, Vector2D vector) {
-
+	private void drawVector(Vector2D origin, Vector2D vector, boolean draw_point_in_end) {
+		double ex = (origin.getX()+vector.getX())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM, ey = (origin.getY()+vector.getY())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM;
 		drawLine(
 				(int)(origin.getX()*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
 				(int)(origin.getY()*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
-				(int)((origin.getX()+vector.getX())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
-				(int)((origin.getY()+vector.getY())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM));
+				(int)(ex),
+				(int)(ey));
+		if (draw_point_in_end) {
+			fillOval((int) ex-3, (int) ey-3, 6, 6);
+		}
 
 	}
 
