@@ -3,7 +3,11 @@ package sdp.gui;
 import javax.swing.JFrame;
 
 import au.edu.jcu.v4l4j.V4L4JConstants;
+import sdp.AI.AI.mode;
+import sdp.AI.AIVisualServoing;
+import sdp.common.Communicator;
 import sdp.common.WorldStateObserver;
+import sdp.communicator.JComm;
 import sdp.vision.CameraVisualInputProvider;
 import sdp.vision.ImageVisualInputProvider;
 import sdp.vision.Vision;
@@ -25,6 +29,7 @@ import javax.swing.SwingUtilities;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.Dimension;
+import java.io.IOException;
 
 /**
  * This is a temporary class for carrying out testing of the old GUI interface.
@@ -77,6 +82,7 @@ public class Launcher extends JFrame implements Runnable {
 		JButton startGameButton = new JButton("Start game");
 		startGameButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				startGame();
 			}
 		});
 		GridBagConstraints gbc_startGameButton = new GridBagConstraints();
@@ -197,6 +203,34 @@ public class Launcher extends JFrame implements Runnable {
 		cameraSettingsPanel.add(channelSpinner, gbc_channelSpinner);
 	}
 	
+	
+	/**
+	 * Start the game proper.
+	 */
+	private void startGame() {
+		Vision vision = new Vision();
+		CameraVisualInputProvider input = createCameraInputProvider();
+		input.setCallback(vision);
+
+		Communicator com;
+		try {
+			com = new JComm();
+		} catch (IOException e) {
+			System.out.println("Connection with brick failed! Going into testmode");
+			com = null;
+		}
+		
+		AIVisualServoing mAI = new AIVisualServoing(com, vision);		
+		input.startCapture();		
+		mAI.start(true, true);
+		mAI.setMode(mode.chase_ball);
+		
+		WorldStateObserver aiObserver = new WorldStateObserver(mAI);
+		
+		MainWindow mainGui = new MainWindow(aiObserver, vision);
+		(new Thread(mainGui, "GUI")).start();
+		killLauncherWindow();
+	}
 	
 	/**
 	 * Start camera vision test. 
