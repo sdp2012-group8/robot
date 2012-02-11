@@ -216,9 +216,9 @@ public class MainImageProcessor extends BaseImageProcessor {
 		if (robotShapes.size() == 0) {
 			return new Robot(new Point2D.Double(-1.0, -1.0), 0.0);
 		} else {
-			CvSeq curRobotShape = robotShapes.get(0);
+			CvSeq bestRobotShape = getLargestShape(robotShapes);
 			
-            CvRect robotBoundingRect = cvBoundingRect(curRobotShape, 0);
+            CvRect robotBoundingRect = cvBoundingRect(bestRobotShape, 0);
             int rX = robotBoundingRect.x();
             int rY = robotBoundingRect.y();
             int rW = robotBoundingRect.width();
@@ -228,7 +228,7 @@ public class MainImageProcessor extends BaseImageProcessor {
             int rcY = rY + rH / 2;
             
             if (config.isShowContours()) {
-            	cvDrawContours(frame_ipl, curRobotShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+            	cvDrawContours(frame_ipl, bestRobotShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
             }
             if (config.isShowBoundingBoxes()) {
 	            CvPoint pt1 = new CvPoint(rX, rY);
@@ -246,8 +246,8 @@ public class MainImageProcessor extends BaseImageProcessor {
             double angle = 0.0;
             
             double minShapeDist = Double.MIN_VALUE;
-            for (int i = 0; i < curRobotShape.total(); ++i) {
-            	CvPoint pt = new CvPoint(cvGetSeqElem(curRobotShape, i));
+            for (int i = 0; i < bestRobotShape.total(); ++i) {
+            	CvPoint pt = new CvPoint(cvGetSeqElem(bestRobotShape, i));
             	double curDist = Point2D.distance(massCenterX, massCenterY, pt.x(), pt.y());
             	
             	if (curDist > minShapeDist) {
@@ -351,6 +351,32 @@ public class MainImageProcessor extends BaseImageProcessor {
         }
 		
 		return shapes;
+	}
+	
+	
+	/**
+	 * Find the shape with the largest area in the given array.
+	 * 
+	 * @param shapes A list of shapes to examine.
+	 * @return The polygon with the largest area.
+	 */
+	private CvSeq getLargestShape(ArrayList<CvSeq> shapes) {
+		if (shapes.size() == 0) {
+			return null;
+		} else {
+			CvSeq largestShape = shapes.get(0);
+			double largestArea = ProcessingUtilities.getPolygonArea(largestShape);
+			
+			for (int i = 1; i < shapes.size(); ++i) {
+				double curArea = ProcessingUtilities.getPolygonArea(shapes.get(i));
+				if (curArea > largestArea) {
+					largestArea = curArea;
+					largestShape = shapes.get(i);
+				}
+			}
+			
+			return largestShape;
+		}
 	}
 	
 
