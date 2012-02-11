@@ -29,7 +29,7 @@ import org.xml.sax.SAXException;
 public class ImageProcessorConfigIO {
 	
 	/** Class's logger. */
-	private static final Logger LOGGER = Logger.getLogger("sdp.vision.ImageProcessorConfiguration");
+	private static final Logger LOGGER = Logger.getLogger("sdp.vision.ImageProcessorConfigIO");
 	
 	/** Local instance of DocumentBuilderFactory. */
 	private static DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
