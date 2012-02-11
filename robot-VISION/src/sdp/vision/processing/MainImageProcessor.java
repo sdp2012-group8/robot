@@ -236,13 +236,11 @@ public class MainImageProcessor extends BaseImageProcessor {
 	            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
             }
             
-            cvSetImageROI(robotThresh, robotBoundingRect);
             CvMoments moments = new CvMoments();
-            cvMoments(robotThresh, moments, 1);
-            cvResetImageROI(robotThresh);
+            cvMoments(bestRobotShape, moments, 1);
             
-            double massCenterX = moments.m10() / moments.m00() + rX;
-            double massCenterY = moments.m01() / moments.m00() + rY;  
+            double massCenterX = moments.m10() / moments.m00();
+            double massCenterY = moments.m01() / moments.m00();  
             double angle = 0.0;
             
             double minShapeDist = Double.MIN_VALUE;
@@ -365,10 +363,10 @@ public class MainImageProcessor extends BaseImageProcessor {
 			return null;
 		} else {
 			CvSeq largestShape = shapes.get(0);
-			double largestArea = ProcessingUtilities.getPolygonArea(largestShape);
+			double largestArea = ProcUtils.getPolygonArea(largestShape);
 			
 			for (int i = 1; i < shapes.size(); ++i) {
-				double curArea = ProcessingUtilities.getPolygonArea(shapes.get(i));
+				double curArea = ProcUtils.getPolygonArea(shapes.get(i));
 				if (curArea > largestArea) {
 					largestArea = curArea;
 					largestShape = shapes.get(i);

@@ -10,7 +10,7 @@ import com.googlecode.javacv.cpp.opencv_core.CvPoint;
  * 
  * @author Gediminas Liktaras
  */
-public class ProcessingUtilities {
+public class ProcUtils {
 
 	/**
 	 * Compute the area of an OpenCV polygon.
