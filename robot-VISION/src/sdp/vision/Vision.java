@@ -35,7 +35,7 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	 * 
 	 * @return The image processor's configuration.
 	 */
-	public ImageProcessorConfiguration getConfiguration() {
+	public ImageProcessorConfig getConfiguration() {
 		return imageProcessor.getConfiguration();
 	}
 	
@@ -44,7 +44,7 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	 * 
 	 * @param config The new image processor's configuration.
 	 */
-	public void setConfiguration(ImageProcessorConfiguration config) {
+	public void setConfiguration(ImageProcessorConfig config) {
 		imageProcessor.setConfiguration(config);
 	}
 	

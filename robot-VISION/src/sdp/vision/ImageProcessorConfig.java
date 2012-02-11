@@ -6,7 +6,7 @@ package sdp.vision;
  * 
  * @author Gediminas Liktaras
  */
-public class ImageProcessorConfiguration {
+public class ImageProcessorConfig {
 	
 	/** Height of the incoming images. */
 	private int frameHeight = 480;	
@@ -77,7 +77,7 @@ public class ImageProcessorConfiguration {
 	/**
 	 * The default constructor. Creates the default vision configuration.
 	 */
-	public ImageProcessorConfiguration() { }
+	public ImageProcessorConfig() { }
 	
 	
 	/**

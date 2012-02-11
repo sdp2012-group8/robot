@@ -3,7 +3,7 @@ package sdp.vision.processing;
 import java.awt.image.BufferedImage;
 
 import sdp.common.WorldState;
-import sdp.vision.ImageProcessorConfiguration;
+import sdp.vision.ImageProcessorConfig;
 
 
 /**
@@ -14,14 +14,14 @@ import sdp.vision.ImageProcessorConfiguration;
 public abstract class BaseImageProcessor {
 
 	/** The processor's configuration. */
-	protected ImageProcessorConfiguration config;
+	protected ImageProcessorConfig config;
 
 	
 	/**
 	 * The default constructor.
 	 */
 	public BaseImageProcessor() {
-		config = new ImageProcessorConfiguration();
+		config = new ImageProcessorConfig();
 	}
 
 	
@@ -39,7 +39,7 @@ public abstract class BaseImageProcessor {
 	 * 
 	 * @return The current image processor configuration.
 	 */
-	public final ImageProcessorConfiguration getConfiguration() {
+	public final ImageProcessorConfig getConfiguration() {
 		return config;
 	}
 
@@ -48,7 +48,7 @@ public abstract class BaseImageProcessor {
 	 * 
 	 * @param config The new configuration.
 	 */
-	public final void setConfiguration(ImageProcessorConfiguration config) {
+	public final void setConfiguration(ImageProcessorConfig config) {
 		this.config = config;
 	}
 

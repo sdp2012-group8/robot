@@ -26,7 +26,7 @@ import org.xml.sax.SAXException;
  * 
  * @author Gediminas Liktaras
  */
-public class ImageProcessorConfigurationIO {
+public class ImageProcessorConfigIO {
 	
 	/** Class's logger. */
 	private static final Logger LOGGER = Logger.getLogger("sdp.vision.ImageProcessorConfiguration");
@@ -44,7 +44,7 @@ public class ImageProcessorConfigurationIO {
 	 * @param filename Name of the file that contains the configuration.
 	 * @return An appropriate ImageProcessorConfiguration instance.
 	 */
-	public static ImageProcessorConfiguration loadConfiguration(String filename) {
+	public static ImageProcessorConfig loadConfiguration(String filename) {
 		File configFile = new File(filename);
 		if (!configFile.exists()) {
 			LOGGER.info("The given image processor configuration file does not exist.");
@@ -52,7 +52,7 @@ public class ImageProcessorConfigurationIO {
 		}
 				
 		Document doc = openXmlDocument(configFile);		
-		ImageProcessorConfiguration config = new ImageProcessorConfiguration();
+		ImageProcessorConfig config = new ImageProcessorConfig();
 		
 		Element rootElement = (Element)doc.getElementsByTagName("config").item(0);
 		
@@ -102,7 +102,7 @@ public class ImageProcessorConfigurationIO {
 	 * @param config Configuration to output.
 	 * @param filename Output filename.
 	 */
-	public static void saveConfiguration(ImageProcessorConfiguration config, String filename) {
+	public static void saveConfiguration(ImageProcessorConfig config, String filename) {
 		Document doc = createBlankXmlDocument();
 		
 		Element rootElement = doc.createElement("config");

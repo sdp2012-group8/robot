@@ -22,7 +22,7 @@ import sdp.common.FPSCounter;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.communicator.JComm;
-import sdp.vision.ImageProcessorConfiguration;
+import sdp.vision.ImageProcessorConfig;
 import sdp.vision.Vision;
 import java.util.logging.Logger;
 import javax.swing.JLabel;
@@ -795,7 +795,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		if (vision == null) {
 			LOGGER.info("Tried to read vision configuration when vision subsystem was inactive.");
 		} else {
-			ImageProcessorConfiguration config = vision.getConfiguration();
+			ImageProcessorConfig config = vision.getConfiguration();
 			
 			fieldLowXSpinner.setValue(new Integer((int) (config.getRawFieldLowX() * SPINNER_FLOAT_RANGE)));
 			fieldLowYSpinner.setValue(new Integer((int) (config.getRawFieldLowY() * SPINNER_FLOAT_RANGE)));
@@ -839,7 +839,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		if (vision == null) {
 			LOGGER.info("Tried to set vision configuration when vision subsystem was inactive.");
 		} else {
-			ImageProcessorConfiguration config = new ImageProcessorConfiguration();
+			ImageProcessorConfig config = new ImageProcessorConfig();
 			
 			config.setRawFieldLowX(((Integer)fieldLowXSpinner.getValue()).intValue() / ((double) SPINNER_FLOAT_RANGE));
 			config.setRawFieldLowY(((Integer)fieldLowYSpinner.getValue()).intValue() / ((double) SPINNER_FLOAT_RANGE));
