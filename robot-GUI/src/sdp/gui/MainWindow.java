@@ -795,7 +795,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		if (vision == null) {
 			LOGGER.info("Tried to read vision configuration when vision subsystem was inactive.");
 		} else {
-			ImageProcessorConfiguration config = vision.getConfiguration();		
+			ImageProcessorConfiguration config = vision.getConfiguration();
 			
 			fieldLowXSpinner.setValue(new Integer((int) (config.getRawFieldLowX() * SPINNER_FLOAT_RANGE)));
 			fieldLowYSpinner.setValue(new Integer((int) (config.getRawFieldLowY() * SPINNER_FLOAT_RANGE)));
