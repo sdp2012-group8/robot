@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Panel;
 import java.awt.image.BufferedImage;
-import sdp.vision.ImageProcessorConfiguration;
+import sdp.vision.ImageProcessorConfig;
 
 import sdp.common.WorldState;
 
@@ -15,7 +15,7 @@ public class Viewer extends Panel{
 	private static final long serialVersionUID = 1L;
 	BufferedImage image;
 	WorldState manstate, visstate;
-	ImageProcessorConfiguration config = new ImageProcessorConfiguration();
+	ImageProcessorConfig config = new ImageProcessorConfig();
 	public Viewer(BufferedImage animage, WorldState astate, WorldState bstate){
 		image = animage;
 		manstate = astate;

@@ -6,7 +6,7 @@ package sdp.vision;
  * 
  * @author Gediminas Liktaras
  */
-public class ImageProcessorConfiguration {
+public class ImageProcessorConfig {
 	
 	/** Height of the incoming images. */
 	private int frameHeight = 480;	
@@ -73,11 +73,20 @@ public class ImageProcessorConfiguration {
 	/** Upper bound of the Yellow contour size. */
 	private int yellowSizeMaxValue = 50;
 	
+	/** Whether to show thresholded pixels. */
+	private boolean showThresholds = false;
+	/** Whether to show thresholded contours. */
+	private boolean showContours = false;
+	/** Whether to show coutour bounding boxes. */
+	private boolean showBoundingBoxes = false;
+	/** Whether to show world state data. */
+	private boolean showStateData = true;
+
 
 	/**
 	 * The default constructor. Creates the default vision configuration.
 	 */
-	public ImageProcessorConfiguration() { }
+	public ImageProcessorConfig() { }
 	
 	
 	/**
@@ -724,6 +733,82 @@ public class ImageProcessorConfiguration {
 	 */
 	public void setYellowSizeMaxValue(int yellowSizeMaxValue) {
 		this.yellowSizeMaxValue = yellowSizeMaxValue;
+	}
+
+
+	/**
+	 * Get whether to show thresholded pixels.
+	 * 
+	 * @return Whether to show thresholded pixels.
+	 */
+	public boolean isShowThresholds() {
+		return showThresholds;
+	}
+
+	/**
+	 * Set whether to show thresholded pixels.
+	 * 
+	 * @param showThresholds Whether to show thresholded pixels.
+	 */
+	public void setShowThresholds(boolean showThresholds) {
+		this.showThresholds = showThresholds;
+	}
+
+
+	/**
+	 * Get whether to show thresholded contours.
+	 * 
+	 * @return Whether to show thresholded contours.
+	 */
+	public boolean isShowContours() {
+		return showContours;
+	}
+
+	/**
+	 * Set whether to show thresholded contours.
+	 * 
+	 * @param showContours Whether to show thresholded contours.
+	 */
+	public void setShowContours(boolean showContours) {
+		this.showContours = showContours;
+	}
+
+
+	/**
+	 * Get whether to show contours' bounding boxes.
+	 * 
+	 * @return Whether to show contours' bounding boxes.
+	 */
+	public boolean isShowBoundingBoxes() {
+		return showBoundingBoxes;
+	}
+
+	/**
+	 * Set whether to show contours' bounding boxes.
+	 * 
+	 * @param showBoundingBoxes Whether to show contours' bounding boxes.
+	 */
+	public void setShowBoundingBoxes(boolean showBoundingBoxes) {
+		this.showBoundingBoxes = showBoundingBoxes;
+	}
+	
+	
+	/**
+	 * Get whether to show world's state data.
+	 * 
+	 * @return Whether to show world's state data.
+	 */
+	public boolean isShowStateData() {
+		return showStateData;
+	}
+
+	/**
+	 * Set whether to show world's state data.
+	 * 
+	 * @param showStateData Whether to show world's state data.
+	 */
+	public void setShowStateData(boolean showStateData) {
+		this.showStateData = showStateData;
 	}
 
 }

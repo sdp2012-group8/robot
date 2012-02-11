@@ -118,9 +118,6 @@ public class MainImageProcessor extends BaseImageProcessor {
 				int s = (int) (hsv[1] * 100);
 				int v = (int) (hsv[2] * 100);
 				
-				// 134-210 18-100 50-100 20-50
-				// 25-75 0-50 55-75 20-50
-				
 				if (Utilities.valueWithinBounds(h, config.getBallHueMinValue(), 
 								config.getBallHueMaxValue())
 						&& Utilities.valueWithinBounds(s, config.getBallSatMinValue(),
@@ -129,7 +126,9 @@ public class MainImageProcessor extends BaseImageProcessor {
 								config.getBallValMaxValue())) {	
 					
 					ball.setRGB(x, y, Color.white.getRGB());
-					frame.setRGB(ox, oy, Color.red.getRGB());
+					if (config.isShowThresholds()) {
+						frame.setRGB(ox, oy, Color.red.getRGB());
+					}
 				}
 				
 				if (Utilities.valueWithinBounds(h, config.getBlueHueMinValue(), 
@@ -141,7 +140,9 @@ public class MainImageProcessor extends BaseImageProcessor {
 						&& (g < (int)(b * 1.5))) {
 					
 					blue.setRGB(x, y, Color.white.getRGB());
-					frame.setRGB(ox, oy, Color.blue.getRGB());
+					if (config.isShowThresholds()) {
+						frame.setRGB(ox, oy, Color.blue.getRGB());
+					}
 			    }
 				
 				if (Utilities.valueWithinBounds(h, config.getYellowHueMinValue(), 
@@ -152,7 +153,9 @@ public class MainImageProcessor extends BaseImageProcessor {
 								config.getYellowValMaxValue())) {
 					
 			    	yellow.setRGB(x, y, Color.white.getRGB());
-			    	frame.setRGB(ox, oy, Color.orange.getRGB());
+			    	if (config.isShowThresholds()) {
+			    		frame.setRGB(ox, oy, Color.orange.getRGB());
+			    	}
 			    }
 			}
 		}
@@ -184,11 +187,14 @@ public class MainImageProcessor extends BaseImageProcessor {
             int bW = ballBoundingRect.width();
             int bH = ballBoundingRect.height();
             
-            cvDrawContours(frame_ipl, curBallShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
-            
-            CvPoint pt1 = new CvPoint(bX, bY);
-            CvPoint pt2 = new CvPoint(bX + bW, bY + bH);
-            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
+            if (config.isShowContours()) {
+            	cvDrawContours(frame_ipl, curBallShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+            }            
+            if (config.isShowBoundingBoxes()) {
+	            CvPoint pt1 = new CvPoint(bX, bY);
+	            CvPoint pt2 = new CvPoint(bX + bW, bY + bH);
+	            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
+            }
             
             return frameToNormalCoordinates(bX + bW / 2, bY + bH / 2, true);
 		}
@@ -210,9 +216,9 @@ public class MainImageProcessor extends BaseImageProcessor {
 		if (robotShapes.size() == 0) {
 			return new Robot(new Point2D.Double(-1.0, -1.0), 0.0);
 		} else {
-			CvSeq curRobotShape = robotShapes.get(0);
+			CvSeq bestRobotShape = getLargestShape(robotShapes);
 			
-            CvRect robotBoundingRect = cvBoundingRect(curRobotShape, 0);
+            CvRect robotBoundingRect = cvBoundingRect(bestRobotShape, 0);
             int rX = robotBoundingRect.x();
             int rY = robotBoundingRect.y();
             int rW = robotBoundingRect.width();
@@ -221,24 +227,25 @@ public class MainImageProcessor extends BaseImageProcessor {
             int rcX = rX + rW / 2;
             int rcY = rY + rH / 2;
             
-            cvDrawContours(frame_ipl, curRobotShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+            if (config.isShowContours()) {
+            	cvDrawContours(frame_ipl, bestRobotShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+            }
+            if (config.isShowBoundingBoxes()) {
+	            CvPoint pt1 = new CvPoint(rX, rY);
+	            CvPoint pt2 = new CvPoint(rX + rW, rY + rH);
+	            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
+            }
             
-            CvPoint pt1 = new CvPoint(rX, rY);
-            CvPoint pt2 = new CvPoint(rX + rW, rY + rH);
-            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
-            
-            cvSetImageROI(robotThresh, robotBoundingRect);
             CvMoments moments = new CvMoments();
-            cvMoments(robotThresh, moments, 1);
-            cvResetImageROI(robotThresh);
+            cvMoments(bestRobotShape, moments, 1);
             
-            double massCenterX = moments.m10() / moments.m00() + rX;
-            double massCenterY = moments.m01() / moments.m00() + rY;  
+            double massCenterX = moments.m10() / moments.m00();
+            double massCenterY = moments.m01() / moments.m00();  
             double angle = 0.0;
             
             double minShapeDist = Double.MIN_VALUE;
-            for (int i = 0; i < curRobotShape.total(); ++i) {
-            	CvPoint pt = new CvPoint(cvGetSeqElem(curRobotShape, i));
+            for (int i = 0; i < bestRobotShape.total(); ++i) {
+            	CvPoint pt = new CvPoint(cvGetSeqElem(bestRobotShape, i));
             	double curDist = Point2D.distance(massCenterX, massCenterY, pt.x(), pt.y());
             	
             	if (curDist > minShapeDist) {
@@ -262,32 +269,34 @@ public class MainImageProcessor extends BaseImageProcessor {
 			Point2D.Double ball, Robot blueRobot, Robot yellowRobot) {
 		BufferedImage finalFrame = frame_ipl.getBufferedImage();		
 		Graphics2D graphics = finalFrame.createGraphics();
-		Point pt1, pt2;
-		
 		graphics.setColor(Color.white);
 		
 		graphics.drawRect(config.getFieldLowX(), config.getFieldLowY(),
 				config.getFieldWidth(), config.getFieldHeight());
 		
-		// Draw ball position.
-		pt1 = normalToFrameCoordinates(ball.x, ball.y, false);
-		graphics.drawArc(pt1.x - 2, pt1.y - 2, 4, 4, 0, 360);
-		
-		// Draw blue robot position and direction.
-		pt1 = normalToFrameCoordinates(blueRobot.getCoords().x,
-				blueRobot.getCoords().y, false);
-		pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
-				blueRobot.getAngle());
-		graphics.drawArc(pt1.x - 2, pt1.y - 2, 4, 4, 0, 360);
-		graphics.drawLine(pt1.x, pt1.y, pt2.x, pt2.y);
-		
-		// Draw yellow robot position and direction.
-		pt1 = normalToFrameCoordinates(yellowRobot.getCoords().x,
-				yellowRobot.getCoords().y, false);
-		pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
-				yellowRobot.getAngle());
-		graphics.drawArc(pt1.x - 2, pt1.y - 2, 4, 4, 0, 360);
-		graphics.drawLine(pt1.x, pt1.y, pt2.x, pt2.y);
+		if (config.isShowStateData()) {
+			Point pt1, pt2;
+			
+			// Draw ball position.
+			pt1 = normalToFrameCoordinates(ball.x, ball.y, false);
+			graphics.drawArc(pt1.x - 2, pt1.y - 2, 4, 4, 0, 360);
+			
+			// Draw blue robot position and direction.
+			pt1 = normalToFrameCoordinates(blueRobot.getCoords().x,
+					blueRobot.getCoords().y, false);
+			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
+					blueRobot.getAngle());
+			graphics.drawArc(pt1.x - 2, pt1.y - 2, 4, 4, 0, 360);
+			graphics.drawLine(pt1.x, pt1.y, pt2.x, pt2.y);
+			
+			// Draw yellow robot position and direction.
+			pt1 = normalToFrameCoordinates(yellowRobot.getCoords().x,
+					yellowRobot.getCoords().y, false);
+			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
+					yellowRobot.getAngle());
+			graphics.drawArc(pt1.x - 2, pt1.y - 2, 4, 4, 0, 360);
+			graphics.drawLine(pt1.x, pt1.y, pt2.x, pt2.y);
+		}
 
 		return finalFrame;
 	}
@@ -340,6 +349,32 @@ public class MainImageProcessor extends BaseImageProcessor {
         }
 		
 		return shapes;
+	}
+	
+	
+	/**
+	 * Find the shape with the largest area in the given array.
+	 * 
+	 * @param shapes A list of shapes to examine.
+	 * @return The polygon with the largest area.
+	 */
+	private CvSeq getLargestShape(ArrayList<CvSeq> shapes) {
+		if (shapes.size() == 0) {
+			return null;
+		} else {
+			CvSeq largestShape = shapes.get(0);
+			double largestArea = ProcUtils.getPolygonArea(largestShape);
+			
+			for (int i = 1; i < shapes.size(); ++i) {
+				double curArea = ProcUtils.getPolygonArea(shapes.get(i));
+				if (curArea > largestArea) {
+					largestArea = curArea;
+					largestShape = shapes.get(i);
+				}
+			}
+			
+			return largestShape;
+		}
 	}
 	
 
