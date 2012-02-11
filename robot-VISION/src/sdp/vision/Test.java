@@ -21,7 +21,7 @@ import org.xml.sax.SAXException;
 
 import sdp.common.Robot;
 import sdp.common.WorldState;
-import sdp.vision.ImageProcessorConfig;
+import sdp.vision.ImageProcessorConfiguration;
 import sdp.vision.Viewer;
 import sdp.common.Utilities;
 
