@@ -223,24 +223,24 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 * @return The position of the ball.
 	 */
 	private Robot findRobot(IplImage frame_ipl, IplImage robotThresh,
-			int minSize, int maxSize) {		
+			int minSize, int maxSize) {
 		CvSeq fullRobotContour = findAllContours(robotThresh);
 		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour, minSize, maxSize);
 		
 		if (robotShapes.size() == 0) {
 			return new Robot(new Point2D.Double(-1.0, -1.0), 0.0);
 		} else {
+			// Find the best marching T shape.
 			CvSeq bestRobotShape = getLargestShape(robotShapes);
 			
+			// Find shape's bounding box dimensions.
             CvRect robotBoundingRect = cvBoundingRect(bestRobotShape, 0);
             int rX = robotBoundingRect.x();
             int rY = robotBoundingRect.y();
             int rW = robotBoundingRect.width();
             int rH = robotBoundingRect.height();
             
-            int rcX = rX + rW / 2;
-            int rcY = rY + rH / 2;
-            
+            // Debug output.
             if (config.isShowContours()) {
             	cvDrawContours(frame_ipl, bestRobotShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
             }
@@ -250,6 +250,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 	            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
             }
             
+            // Find the shape's (and robot's) mass center.
             CvMoments moments = new CvMoments();
             cvMoments(bestRobotShape, moments, 1);
             
@@ -257,18 +258,39 @@ public class MainImageProcessor extends BaseImageProcessor {
             double massCenterY = moments.m01() / moments.m00();  
             double angle = 0.0;
             
-            double minShapeDist = Double.MIN_VALUE;
+            // Find the contour's farthest point from the mass center. 
+            double maxShapeDist = Double.MIN_VALUE;
+            int farthestPoint = -1;
+            
             for (int i = 0; i < bestRobotShape.total(); ++i) {
             	CvPoint pt = new CvPoint(cvGetSeqElem(bestRobotShape, i));
             	double curDist = Point2D.distance(massCenterX, massCenterY, pt.x(), pt.y());
             	
-            	if (curDist > minShapeDist) {
-            		minShapeDist = curDist;
-            		angle = Math.toDegrees( Math.atan2(pt.y() - rcY, rcX - pt.x()) ) + 180.0;
+            	if (curDist > maxShapeDist) {
+            		maxShapeDist = curDist;
+            		farthestPoint = i;            		
             	}
             }
             
+            // Smooth angle using adjacent equally distance points.
+            double xSum = 0.0;
+            double ySum = 0.0;
+            
+            for (int i = -1; i <= 1; ++i) {
+            	int j = (farthestPoint + i + bestRobotShape.total()) % bestRobotShape.total();
+            	CvPoint pt = new CvPoint(cvGetSeqElem(bestRobotShape, j));
+            	
+            	double curDist = Point2D.distance(massCenterX, massCenterY, pt.x(), pt.y());            	
+            	if (curDist >= (maxShapeDist - 2.0)) {
+            		xSum = xSum + pt.x() - massCenterX;
+            		ySum = ySum + pt.y() - massCenterY;
+            	}
+            }
+
+            // Compute final robot position and direction.
             Point2D.Double robotPos = ProcUtils.frameToNormalCoordinates(config, massCenterX, massCenterY, true);
+            angle = Math.toDegrees( Math.atan2(ySum, -xSum) ) + 180.0;
+            
             return new Robot(robotPos, angle);
 		}
 	}
