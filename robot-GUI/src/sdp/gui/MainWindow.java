@@ -23,9 +23,10 @@ import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.communicator.JComm;
 import sdp.gui.filefilters.XmlFileFilter;
-import sdp.vision.ImageProcessorConfig;
-import sdp.vision.ImageProcessorConfigIO;
 import sdp.vision.Vision;
+import sdp.vision.processing.ImageProcessorConfig;
+import sdp.vision.processing.ImageProcessorConfigIO;
+
 import java.util.logging.Logger;
 import javax.swing.JLabel;
 import javax.swing.border.LineBorder;

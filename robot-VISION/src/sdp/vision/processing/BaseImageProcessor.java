@@ -3,7 +3,6 @@ package sdp.vision.processing;
 import java.awt.image.BufferedImage;
 
 import sdp.common.WorldState;
-import sdp.vision.ImageProcessorConfig;
 
 
 /**

@@ -4,9 +4,10 @@ import javax.swing.JFrame;
 
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import sdp.common.WorldStateObserver;
-import sdp.vision.CameraVisualInputProvider;
-import sdp.vision.ImageVisualInputProvider;
 import sdp.vision.Vision;
+import sdp.vision.visualinput.CameraVisualInputProvider;
+import sdp.vision.visualinput.ImageVisualInputProvider;
+
 import javax.swing.JButton;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;

@@ -3,8 +3,6 @@ package sdp.vision;
 import javax.swing.JFrame;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.awt.geom.Point2D;
 import javax.imageio.ImageIO;
@@ -17,8 +15,8 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import sdp.common.Robot;
 import sdp.common.WorldState;
-import sdp.vision.ImageProcessorConfig;
 import sdp.vision.Viewer;
+import sdp.vision.processing.ImageProcessorConfig;
 import sdp.common.Utilities;
 
 public class Test extends Vision {

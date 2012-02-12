@@ -4,7 +4,8 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Panel;
 import java.awt.image.BufferedImage;
-import sdp.vision.ImageProcessorConfig;
+
+import sdp.vision.processing.ImageProcessorConfig;
 
 import sdp.common.WorldState;
 

@@ -1,4 +1,4 @@
-package sdp.vision;
+package sdp.vision.visualinput;
 
 import java.util.logging.Logger;
 
