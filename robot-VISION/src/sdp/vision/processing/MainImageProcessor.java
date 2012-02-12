@@ -80,6 +80,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 		return frame_ipl.getBufferedImage();
 	}
 	
+	
 	/**
 	 * Threshold the image for the different features.
 	 * 
@@ -200,7 +201,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 	            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
             }
             
-            return frameToNormalCoordinates(bX + bW / 2, bY + bH / 2, true);
+            return ProcUtils.frameToNormalCoordinates(config, bX + bW / 2, bY + bH / 2, true);
 		}
 	}
 	
@@ -258,7 +259,8 @@ public class MainImageProcessor extends BaseImageProcessor {
             	}
             }
             
-            return new Robot(frameToNormalCoordinates(massCenterX, massCenterY, true), angle);
+            Point2D.Double robotPos = ProcUtils.frameToNormalCoordinates(config, massCenterX, massCenterY, true);
+            return new Robot(robotPos, angle);
 		}
 	}
 	
@@ -282,11 +284,11 @@ public class MainImageProcessor extends BaseImageProcessor {
 			Point pt1, pt2;
 			
 			// Draw ball position.
-			pt1 = normalToFrameCoordinates(ball.x, ball.y, false);
+			pt1 = ProcUtils.normalToFrameCoordinates(config, ball.x, ball.y, false);
 			graphics.drawArc(pt1.x - 2, pt1.y - 2, 4, 4, 0, 360);
 			
 			// Draw blue robot position and direction.
-			pt1 = normalToFrameCoordinates(blueRobot.getCoords().x,
+			pt1 = ProcUtils.normalToFrameCoordinates(config, blueRobot.getCoords().x,
 					blueRobot.getCoords().y, false);
 			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
 					blueRobot.getAngle());
@@ -294,7 +296,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 			graphics.drawLine(pt1.x, pt1.y, pt2.x, pt2.y);
 			
 			// Draw yellow robot position and direction.
-			pt1 = normalToFrameCoordinates(yellowRobot.getCoords().x,
+			pt1 = ProcUtils.normalToFrameCoordinates(config, yellowRobot.getCoords().x,
 					yellowRobot.getCoords().y, false);
 			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
 					yellowRobot.getAngle());
@@ -392,45 +394,4 @@ public class MainImageProcessor extends BaseImageProcessor {
 				config.getFieldWidth(), config.getFieldHeight());
 	}
 	
-	
-	/**
-	 * Convert frame coordinates to normal ones.
-	 * 
-	 * @param x X coordinate.
-	 * @param y Y coordinate.
-	 * @param withinROI Whether the given coordinates are offset to the region
-	 * 		of interest.
-	 * @return Normalised coordinates.
-	 */
-	private Point2D.Double frameToNormalCoordinates(double x, double y, boolean withinROI) {
-		double scaleFactor = (double)(config.getFieldWidth());
-		
-		if (!withinROI) {
-			x += config.getFieldLowX();
-			y += config.getFieldLowY();
-		}
-		return new Point2D.Double(x / scaleFactor, y / scaleFactor);
-	}
-	
-	/**
-	 * Convert normal coordinates to frame ones.
-	 * 
-	 * @param x X coordinate.
-	 * @param y Y coordinate.
-	 * @param withinROI Whether the given coordinates should be offset to the
-	 * 		region of interest.
-	 * @return Frame coordinates.
-	 */
-	private Point normalToFrameCoordinates(double x, double y, boolean withinROI) {
-		int scaleFactor = config.getFieldWidth();
-		
-		x *= scaleFactor;
-		y *= scaleFactor;
-		
-		if (!withinROI) {
-			x += config.getFieldLowX();
-			y += config.getFieldLowY();
-		}
-		return new Point((int)x, (int)y);
-	}
 }

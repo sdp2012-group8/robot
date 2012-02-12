@@ -2,6 +2,9 @@ package sdp.vision.processing;
 
 import static com.googlecode.javacv.cpp.opencv_core.*;
 
+import java.awt.Point;
+import java.awt.geom.Point2D;
+
 import com.googlecode.javacv.cpp.opencv_core.CvPoint;
 
 
@@ -30,5 +33,51 @@ public class ProcUtils {
 		}
 		
 		return Math.abs(area);
+	}
+	
+	
+	/**
+	 * Convert frame coordinates to normal ones.
+	 * 
+	 * @param config Processor configuration to use as reference.
+	 * @param x X coordinate.
+	 * @param y Y coordinate.
+	 * @param withinROI Whether the given coordinates are offset to the region
+	 * 		of interest.
+	 * @return Normalised coordinates.
+	 */
+	public static Point2D.Double frameToNormalCoordinates(ImageProcessorConfig config,
+			double x, double y, boolean withinROI) {
+		double scaleFactor = (double)(config.getFieldWidth());
+		
+		if (!withinROI) {
+			x += config.getFieldLowX();
+			y += config.getFieldLowY();
+		}
+		return new Point2D.Double(x / scaleFactor, y / scaleFactor);
+	}
+	
+	/**
+	 * Convert normal coordinates to frame ones.
+	 * 
+	 * @param config Processor configuration to use as reference.
+	 * @param x X coordinate.
+	 * @param y Y coordinate.
+	 * @param withinROI Whether the given coordinates should be offset to the
+	 * 		region of interest.
+	 * @return Frame coordinates.
+	 */
+	public static Point normalToFrameCoordinates(ImageProcessorConfig config,
+			double x, double y, boolean withinROI) {
+		int scaleFactor = config.getFieldWidth();
+		
+		x *= scaleFactor;
+		y *= scaleFactor;
+		
+		if (!withinROI) {
+			x += config.getFieldLowX();
+			y += config.getFieldLowY();
+		}
+		return new Point((int)x, (int)y);
 	}
 }
