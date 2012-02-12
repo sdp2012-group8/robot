@@ -118,6 +118,10 @@ public class MainImageProcessor extends BaseImageProcessor {
 				int s = (int) (hsv[1] * 100);
 				int v = (int) (hsv[2] * 100);
 				
+				if (!config.isShowWorld()) {
+					frame.setRGB(ox, oy, Color.black.getRGB());
+				}
+				
 				if (Utilities.valueWithinBounds(h, config.getBallHueMinValue(), 
 								config.getBallHueMaxValue())
 						&& Utilities.valueWithinBounds(s, config.getBallSatMinValue(),

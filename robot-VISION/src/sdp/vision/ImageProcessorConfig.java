@@ -73,6 +73,8 @@ public class ImageProcessorConfig {
 	/** Upper bound of the Yellow contour size. */
 	private int yellowSizeMaxValue = 50;
 	
+	/** Whether to show the captured frame itself. */
+	private boolean showWorld = true;
 	/** Whether to show thresholded pixels. */
 	private boolean showThresholds = false;
 	/** Whether to show thresholded contours. */
@@ -733,6 +735,25 @@ public class ImageProcessorConfig {
 	 */
 	public void setYellowSizeMaxValue(int yellowSizeMaxValue) {
 		this.yellowSizeMaxValue = yellowSizeMaxValue;
+	}
+	
+	
+	/**
+	 * Get whether to show the captured frame.
+	 * 
+	 * @return Whether to show the captured frame.
+	 */
+	public boolean isShowWorld() {
+		return showWorld;
+	}
+
+	/**
+	 * Set whether to show the captured frame.
+	 * 
+	 * @param showWorld Whether to show the captured frame.
+	 */
+	public void setShowWorld(boolean showWorld) {
+		this.showWorld = showWorld;
 	}
 
 

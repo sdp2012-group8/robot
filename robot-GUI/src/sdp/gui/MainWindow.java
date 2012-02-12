@@ -101,7 +101,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		fpsCounter = new FPSCounter();
 		visionChangesEnabled = true;
 		
-		fileChooser = new JFileChooser(".");
+		fileChooser = new JFileChooser("../data/Vision Configurations");
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		fileChooser.setAcceptAllFileFilterUsed(false);
 		fileChooser.addChoosableFileFilter(new XmlFileFilter());
@@ -237,6 +237,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		yellowValMaxSpinner.setValue(new Integer(config.getYellowValMaxValue()));
 		yellowSizeMaxSpinner.setValue(new Integer(config.getYellowSizeMaxValue()));
 		
+		showWorldCheckbox.setSelected(config.isShowWorld());
 		showThreshCheckbox.setSelected(config.isShowThresholds());
 		showContoursCheckbox.setSelected(config.isShowContours());
 		showBoxesCheckbox.setSelected(config.isShowBoundingBoxes());
@@ -310,6 +311,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		config.setYellowValMaxValue(((Integer)yellowValMaxSpinner.getValue()).intValue());
 		config.setYellowSizeMaxValue(((Integer)yellowSizeMaxSpinner.getValue()).intValue());
 		
+		config.setShowWorld(showWorldCheckbox.isSelected());
 		config.setShowThresholds(showThreshCheckbox.isSelected());
 		config.setShowContours(showContoursCheckbox.isSelected());
 		config.setShowBoundingBoxes(showBoxesCheckbox.isSelected());
@@ -416,13 +418,13 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_generalSettingPanel.gridy = 0;
 		visionSettingPanel.add(generalSettingPanel, gbc_generalSettingPanel);
 		GridBagLayout gbl_generalSettingPanel = new GridBagLayout();
-		gbl_generalSettingPanel.columnWidths = new int[]{0, 0};
+		gbl_generalSettingPanel.columnWidths = new int[]{0, 0, 0};
 		gbl_generalSettingPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0};
-		gbl_generalSettingPanel.columnWeights = new double[]{0.0, Double.MIN_VALUE};
+		gbl_generalSettingPanel.columnWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
 		gbl_generalSettingPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
 		generalSettingPanel.setLayout(gbl_generalSettingPanel);
 		
-		loadConfigButton = new JButton("Load configuration");
+		loadConfigButton = new JButton("Load");
 		loadConfigButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				loadConfiguration();
@@ -430,26 +432,36 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		});
 		GridBagConstraints gbc_loadConfigButton = new GridBagConstraints();
 		gbc_loadConfigButton.fill = GridBagConstraints.HORIZONTAL;
-		gbc_loadConfigButton.insets = new Insets(0, 0, 5, 0);
+		gbc_loadConfigButton.insets = new Insets(0, 0, 5, 5);
 		gbc_loadConfigButton.gridx = 0;
 		gbc_loadConfigButton.gridy = 0;
 		generalSettingPanel.add(loadConfigButton, gbc_loadConfigButton);
 		
-		saveConfigButton = new JButton("Save configuration");
+		saveConfigButton = new JButton("Save");
 		saveConfigButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				saveConfiguration();
 			}
 		});
 		GridBagConstraints gbc_saveConfigButton = new GridBagConstraints();
-		gbc_saveConfigButton.insets = new Insets(0, 0, 5, 0);
 		gbc_saveConfigButton.fill = GridBagConstraints.HORIZONTAL;
-		gbc_saveConfigButton.gridx = 0;
-		gbc_saveConfigButton.gridy = 1;
+		gbc_saveConfigButton.insets = new Insets(0, 0, 5, 0);
+		gbc_saveConfigButton.gridx = 1;
+		gbc_saveConfigButton.gridy = 0;
 		generalSettingPanel.add(saveConfigButton, gbc_saveConfigButton);
+		
+		showWorldCheckbox = new JCheckBox("Show world");
+		GridBagConstraints gbc_showWorldCheckbox = new GridBagConstraints();
+		gbc_showWorldCheckbox.anchor = GridBagConstraints.WEST;
+		gbc_showWorldCheckbox.gridwidth = 2;
+		gbc_showWorldCheckbox.insets = new Insets(0, 0, 5, 0);
+		gbc_showWorldCheckbox.gridx = 0;
+		gbc_showWorldCheckbox.gridy = 1;
+		generalSettingPanel.add(showWorldCheckbox, gbc_showWorldCheckbox);
 		
 		showThreshCheckbox = new JCheckBox("Show thresholds");
 		GridBagConstraints gbc_showThreshCheckbox = new GridBagConstraints();
+		gbc_showThreshCheckbox.gridwidth = 2;
 		gbc_showThreshCheckbox.anchor = GridBagConstraints.WEST;
 		gbc_showThreshCheckbox.insets = new Insets(0, 0, 5, 0);
 		gbc_showThreshCheckbox.gridx = 0;
@@ -458,6 +470,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		
 		showContoursCheckbox = new JCheckBox("Show contours");
 		GridBagConstraints gbc_showContoursCheckbox = new GridBagConstraints();
+		gbc_showContoursCheckbox.gridwidth = 2;
 		gbc_showContoursCheckbox.anchor = GridBagConstraints.WEST;
 		gbc_showContoursCheckbox.insets = new Insets(0, 0, 5, 0);
 		gbc_showContoursCheckbox.gridx = 0;
@@ -466,6 +479,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		
 		showBoxesCheckbox = new JCheckBox("Show boxes");
 		GridBagConstraints gbc_showBoxesCheckbox = new GridBagConstraints();
+		gbc_showBoxesCheckbox.gridwidth = 2;
 		gbc_showBoxesCheckbox.insets = new Insets(0, 0, 5, 0);
 		gbc_showBoxesCheckbox.anchor = GridBagConstraints.WEST;
 		gbc_showBoxesCheckbox.gridx = 0;
@@ -474,6 +488,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		
 		showStateDataCheckbox = new JCheckBox("Show state data");
 		GridBagConstraints gbc_showStateDataCheckbox = new GridBagConstraints();
+		gbc_showStateDataCheckbox.gridwidth = 2;
 		gbc_showStateDataCheckbox.anchor = GridBagConstraints.WEST;
 		gbc_showStateDataCheckbox.gridx = 0;
 		gbc_showStateDataCheckbox.gridy = 5;
@@ -1055,5 +1070,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private final ButtonGroup robotGateButtonGroup = new ButtonGroup();
 	private JCheckBox robotDebugModeCheckbox;
 	private JCheckBox showStateDataCheckbox;
+	private JCheckBox showWorldCheckbox;
 	
 }

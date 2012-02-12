@@ -1,3 +1,5 @@
+metrics.txt
+
 .metadata/*
 *.class
 *.fuse_hidden*
