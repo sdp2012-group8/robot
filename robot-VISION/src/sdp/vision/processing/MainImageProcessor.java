@@ -25,10 +25,14 @@ import sdp.common.WorldState;
  */
 public class MainImageProcessor extends BaseImageProcessor {
 	
-	/** Length of the direction line. */
-	private static final int DIR_LINE_LENGTH = 40;
 	/** Polygon approximation error (arg in cvApproxPoly). */
 	private static final double POLY_APPROX_ERROR = 0.02;
+	
+	/** Length of the direction line. */
+	private static final int DIR_LINE_LENGTH = 40;
+	/** Size of the position marker. */
+	private static final int POSITION_MARKER_SIZE = 4;
+	
 	
 	/** OpenCV memory storage. */
 	private CvMemStorage storage;
@@ -109,6 +113,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 				int ox = x + config.getFieldLowX();
 				int oy = y + config.getFieldLowY();
 				
+				// Extract current pixel values.
 				Color px = new Color(frame.getRGB(ox, oy));				
 				int r = px.getRed();
 				int g = px.getGreen();
@@ -119,10 +124,12 @@ public class MainImageProcessor extends BaseImageProcessor {
 				int s = (int) (hsv[1] * 100);
 				int v = (int) (hsv[2] * 100);
 				
+				// Whether to hide current pixel.
 				if (!config.isShowWorld()) {
 					frame.setRGB(ox, oy, Color.black.getRGB());
 				}
 				
+				// Ball thresholding.
 				if (Utilities.valueWithinBounds(h, config.getBallHueMinValue(), 
 								config.getBallHueMaxValue())
 						&& Utilities.valueWithinBounds(s, config.getBallSatMinValue(),
@@ -136,6 +143,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 					}
 				}
 				
+				// Blue T thresholding.
 				if (Utilities.valueWithinBounds(h, config.getBlueHueMinValue(), 
 								config.getBlueHueMaxValue())
 						&& Utilities.valueWithinBounds(s, config.getBlueSatMinValue(),
@@ -150,6 +158,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 					}
 			    }
 				
+				// Yellow T thresholding.
 				if (Utilities.valueWithinBounds(h, config.getYellowHueMinValue(), 
 								config.getYellowHueMaxValue())
 						&& Utilities.valueWithinBounds(s, config.getYellowSatMinValue(),
@@ -285,23 +294,21 @@ public class MainImageProcessor extends BaseImageProcessor {
 			
 			// Draw ball position.
 			pt1 = ProcUtils.normalToFrameCoordinates(config, ball.x, ball.y, false);
-			graphics.drawArc(pt1.x - 2, pt1.y - 2, 4, 4, 0, 360);
+			drawPositionMarker(graphics, Color.red, pt1, null);
 			
 			// Draw blue robot position and direction.
 			pt1 = ProcUtils.normalToFrameCoordinates(config, blueRobot.getCoords().x,
 					blueRobot.getCoords().y, false);
 			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
 					blueRobot.getAngle());
-			graphics.drawArc(pt1.x - 2, pt1.y - 2, 4, 4, 0, 360);
-			graphics.drawLine(pt1.x, pt1.y, pt2.x, pt2.y);
+			drawPositionMarker(graphics, Color.blue, pt1, pt2);
 			
 			// Draw yellow robot position and direction.
 			pt1 = ProcUtils.normalToFrameCoordinates(config, yellowRobot.getCoords().x,
 					yellowRobot.getCoords().y, false);
 			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
 					yellowRobot.getAngle());
-			graphics.drawArc(pt1.x - 2, pt1.y - 2, 4, 4, 0, 360);
-			graphics.drawLine(pt1.x, pt1.y, pt2.x, pt2.y);
+			drawPositionMarker(graphics, Color.orange, pt1, pt2);
 		}
 
 		return finalFrame;
@@ -392,6 +399,30 @@ public class MainImageProcessor extends BaseImageProcessor {
 	private CvRect getCurrentROI() {
 		return cvRect(config.getFieldLowX(), config.getFieldLowY(),
 				config.getFieldWidth(), config.getFieldHeight());
+	}
+	
+	
+	/**
+	 * Draw a position marker.
+	 * 
+	 * @param g Graphics that will do the drawing.
+	 * @param col Color of the marker
+	 * @param posPt Point that corresponds to the position of the marker.
+	 * @param dirPt Point that corresponds to the direction of the marker. If
+	 * 		null, direction line will not be drawn.
+	 */
+	private void drawPositionMarker(Graphics2D g, Color col, Point posPt, Point dirPt) {
+		g.setColor(col);
+		g.fillArc(posPt.x - POSITION_MARKER_SIZE, posPt.y - POSITION_MARKER_SIZE, 
+				2 * POSITION_MARKER_SIZE, 2 * POSITION_MARKER_SIZE, 0, 360);
+		
+		g.setColor(Color.white);
+		g.drawArc(posPt.x - POSITION_MARKER_SIZE, posPt.y - POSITION_MARKER_SIZE, 
+				2 * POSITION_MARKER_SIZE, 2 * POSITION_MARKER_SIZE, 0, 360);
+		
+		if (dirPt != null) {
+			g.drawLine(posPt.x, posPt.y, dirPt.x, dirPt.y);
+		}
 	}
 	
 }
