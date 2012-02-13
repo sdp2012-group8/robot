@@ -1,5 +1,9 @@
+metrics.txt
+
 .metadata/*
 *.class
+*.fuse_hidden*
+*.log
 *.nxd
 *.nxj
-*.fuse_hidden*
+*.orig

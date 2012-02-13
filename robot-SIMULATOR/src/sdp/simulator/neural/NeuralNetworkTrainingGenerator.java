@@ -8,6 +8,7 @@ import org.neuroph.core.NeuralNetwork;
 import org.neuroph.core.learning.SupervisedTrainingElement;
 import org.neuroph.core.learning.TrainingSet;
 import org.neuroph.nnet.MultiLayerPerceptron;
+import org.neuroph.nnet.learning.BackPropagation;
 
 import sdp.common.NNetTools;
 import sdp.common.Tools;
@@ -25,8 +26,8 @@ import sdp.simulator.VBrick;
 public class NeuralNetworkTrainingGenerator extends VBrick {
 
 	private NeuralNetwork[] nets = new NeuralNetwork[] {
-			new MultiLayerPerceptron(2, 5, 7, 3),
-			new MultiLayerPerceptron(2, 5, 7, 3)
+			new MultiLayerPerceptron(11, 5, 7, 3),
+			new MultiLayerPerceptron(11, 5, 7, 3)
 	};
 	
 	private final static double network_desired_error = 80;
@@ -35,13 +36,15 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	
 	private final static long testing_time = 1000;
 	private final static long min_trai_time = 10000;
-	private final static long wait_time_for_1000_f = 2000;
+	private final static long wait_time_for_1000_f = 2000000;
 	
 	// how much of the data should be used for testing instead of training
 	private final static double percentage_test = 25;
 
 	@SuppressWarnings("unchecked")
 	private TrainingSet<SupervisedTrainingElement>[] tsets = new TrainingSet[nets.length];
+	
+	private BackPropagation[] propagations = new BackPropagation[nets.length];
 	
 	private WorldStateObserver mObs;
 	private boolean recording = false;
@@ -83,6 +86,10 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 		for (int i = 0; i < tsets.length; i++) {
 			if (nets[i] == null)
 				System.out.println("NET INIT ERROR for "+i+"!");
+			else {
+				propagations[i] = new BackPropagation();
+				nets[i].setLearningRule(propagations[i]);
+			}
 		}
 				
 		if (allfine)
@@ -100,14 +107,26 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	
 	
 	public void Pause() {
+		if (!recording) 
+			return;
+		if (pause)
+			return;
 		pause = true;
 		System.out.println("Recording paused");
 	}
 	
 	public void Resume() {
+		if (!recording) 
+			return;
+		if (!pause)
+			return;
 		oldWorldState = null;
 		pause = false;
 		System.out.println("Resumed");
+	}
+	
+	public boolean isPaused() {
+		return pause;
 	}
 
 	/**
@@ -140,12 +159,14 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 							//boolean
 							//is_it_kicking = is_kicking;
 							// create training set
+							int spd_test = desired_speed == 0 ? 1 : (desired_speed > 0 ? 2 : 0);
+							int trn_test = desired_turning_speed == 0 ? 1 : (desired_turning_speed > 0 ? 2 : 0);
 							tsets[0].addElement(new SupervisedTrainingElement(
 									NNetTools.generateAIinput(worldState, am_i_blue, my_goal_left, 0),
-									NNetTools.generateOutput(desired_speed == 0 ? 1 : (desired_speed > 0 ? 2 : 0), 3)));
+									NNetTools.generateOutput(spd_test, 3)));
 							tsets[1].addElement(new SupervisedTrainingElement(
 									NNetTools.generateAIinput(worldState, am_i_blue, my_goal_left, 1),
-									NNetTools.generateOutput(desired_turning_speed == 0 ? 1 : (desired_turning_speed > 0 ? 2 : 0), 3)));
+									NNetTools.generateOutput(trn_test, 3)));
 							frames++;
 							if (frames % 100 == 0)
 								System.out.println(frames+" frames recorded last - "+frames+" and "+desired_speed);
@@ -158,6 +179,19 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 		}.start();
 	}
 
+	
+	@SuppressWarnings("unchecked")
+	public void loadTSets() {
+		for (int i = 0; i < tsets.length; i++)
+			tsets[i] = TrainingSet.load(fname+"/ts"+i+".tset");
+		for (int i = 0; i < tsets.length; i++)
+			if (tsets[i] == null) {
+				System.out.println("Error loading training sets from file.");
+				return;
+			}
+		System.out.println("Training sets loaded from file.");
+	}
+	
 	/**
 	 * Stop recording
 	 */
@@ -196,8 +230,8 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 				else
 					training[i].addElement(new SupervisedTrainingElement(pair.getInputArray(), pair.getIdealArray()));
 			}
-			//tsets[i].save(fname+"/ts"+i+".tset");
-			//tsets[i].saveAsTxt(fname+"/csv-ts"+i+".txt", " ");
+			tsets[i].save(fname+"/ts"+i+".tset");
+			tsets[i].saveAsTxt(fname+"/csv-ts"+i+".txt", " ");
 			tsets[i].clear();
 			tsets[i] = null;
 		}
@@ -224,9 +258,10 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 							nets[i].pauseLearning();
 							accuracy = testAccuracy(nets[i], testing[i]);
 							double err_n = 100-100*Math.abs(100d/outputs-accuracy)/(100d - 100d/outputs);
-							if (accuracy > max_per) {
+							if (elapsed > min_trai_time && accuracy > max_per) {
 								max_per = accuracy;
 								last_max = elapsed;
+								nets[i].save(fname+"/nn"+i+"acc"+(int)accuracy+".nnet");
 								System.out.println("Network accuracy: "+String.format("%.4f", accuracy)+"% (stat err: "+String.format("%.4f", err_n)+"%), acc on training set "+testAccuracy(nets[i], training[i])+"%. Learning may stopped in "+String.format("%.1f",(waittime/1000d))+" s");
 							} else
 								System.out.println("Network accuracy: "+String.format("%.4f", accuracy)+"% (stat err: "+String.format("%.4f", err_n)+"%), acc on training set "+testAccuracy(nets[i], training[i])+"%");

@@ -5,5 +5,8 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/robot-COMMON"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/robot-VISION"/>
 	<classpathentry kind="lib" path="/robot-COMMON/lib/v4l4j.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/robot-AI"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/robot-PC"/>
+	<classpathentry kind="con" path="org.lejos.nxt.ldt.LEJOS_LIBRARY_CONTAINER/pc"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

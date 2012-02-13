@@ -6,6 +6,8 @@ import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -33,6 +35,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -61,6 +64,7 @@ public class NeuralTrainer {
 	private JPanel panel;
 	private JCheckBox chckbxMouseControl;
 	private JComboBox combo_AI;
+	private JComboBox comboBox;
 	private JEditorPane dtrpnhomemartinmarinov;
 
 	private static final int max_speed = 35;
@@ -76,8 +80,12 @@ public class NeuralTrainer {
 	
 	private NeuralNetworkTrainingGenerator trainer = null;
 	
+	private mode original = null;
+	
 	private final HashMap<Integer, Timer> key_pressed = new HashMap<Integer, Timer>();
+	private final HashSet<Integer> key_pressed_win = new HashSet<Integer>();
 	private Integer camera = null;
+
 
 	/**
 	 * Launch the application.
@@ -132,7 +140,7 @@ public class NeuralTrainer {
 				}
 			}
 		});
-		chckbxMouseControl.setBounds(662, 187, 129, 23);
+		chckbxMouseControl.setBounds(657, 233, 129, 23);
 		frame.getContentPane().add(chckbxMouseControl);
 		
 		panel = new JPanel() {
@@ -144,6 +152,10 @@ public class NeuralTrainer {
 				if (lastWS != null) {
 					synchronized (lastWS) {
 						g.drawImage(lastWS.getWorldImage(), 0, 0, null);
+						if (!panel.isFocusOwner()) {
+							g.setColor(new Color(0,0,0,128));
+							g.fillRect(0, 0, panel.getWidth(), panel.getHeight());
+						}
 					}
 				} else {
 					g.setColor(Color.gray);
@@ -249,15 +261,7 @@ public class NeuralTrainer {
 		btnConnect.setBounds(662, 10, 117, 25);
 		frame.getContentPane().add(btnConnect);
 		
-		JButton btnChaseBall = new JButton("AI: Chase");
-		btnChaseBall.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				mAI.setMode(mode.chase_ball);
-			}
-		});
-		btnChaseBall.setBounds(662, 153, 117, 25);
-		frame.getContentPane().add(btnChaseBall);
-		
+
 		JButton btnResetField = new JButton("Reset field");
 		btnResetField.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -269,7 +273,7 @@ public class NeuralTrainer {
 		
 		dtrpnhomemartinmarinov = new JEditorPane();
 		dtrpnhomemartinmarinov.setText("data");
-		dtrpnhomemartinmarinov.setBounds(662, 254, 117, 24);
+		dtrpnhomemartinmarinov.setBounds(662, 298, 117, 24);
 		frame.getContentPane().add(dtrpnhomemartinmarinov);
 		
 		final JButton btnNewButton = new JButton("Record");
@@ -286,7 +290,7 @@ public class NeuralTrainer {
 				}
 			}
 		});
-		btnNewButton.setBounds(662, 290, 117, 25);
+		btnNewButton.setBounds(662, 333, 117, 25);
 		frame.getContentPane().add(btnNewButton);
 		
 		JButton btnSave = new JButton("Save");
@@ -296,15 +300,15 @@ public class NeuralTrainer {
 					trainer.Save();
 			}
 		});
-		btnSave.setBounds(662, 364, 117, 25);
+		btnSave.setBounds(662, 369, 117, 25);
 		frame.getContentPane().add(btnSave);
 		
 		combo_AI = new JComboBox();
 		combo_AI.setModel(new DefaultComboBoxModel(new String[] {"VisualServoing", "NeuralNetwork"}));
-		combo_AI.setBounds(662, 218, 117, 24);
+		combo_AI.setBounds(662, 263, 117, 24);
 		frame.getContentPane().add(combo_AI);
 		
-		JButton btnStopLearning = new JButton("Stop lning");
+		JButton btnStopLearning = new JButton("Stop learning");
 		btnStopLearning.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (trainer == null)
@@ -315,7 +319,7 @@ public class NeuralTrainer {
 					System.out.println("You must have training data ready and the system must be learning in order to stop it.");
 			}
 		});
-		btnStopLearning.setBounds(662, 327, 117, 25);
+		btnStopLearning.setBounds(307, 410, 117, 25);
 		frame.getContentPane().add(btnStopLearning);
 		
 		JButton btnCamera = new JButton("Camera");
@@ -339,6 +343,22 @@ public class NeuralTrainer {
 			
 			@Override
 			public boolean dispatchKeyEvent(final KeyEvent e) {
+				if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
+					// WINDOWS fix
+					switch (e.getID()) {
+					case KeyEvent.KEY_PRESSED:
+						if (!key_pressed_win.contains(e.getKeyCode())) {
+							keyAction(e.getKeyCode(), true);
+							key_pressed_win.add(e.getKeyCode());
+						}
+						break;
+					case KeyEvent.KEY_RELEASED:
+						key_pressed_win.remove(e.getKeyCode());
+						keyAction(e.getKeyCode(), false);
+						break;
+					}
+					return false;
+				}
 				switch (e.getID()) {
 				case KeyEvent.KEY_PRESSED:
 					Timer t = key_pressed.get(e.getKeyCode());
@@ -366,6 +386,29 @@ public class NeuralTrainer {
 				return false;
 			}
 		});
+		
+		comboBox = new JComboBox();
+		comboBox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (mAI != null)
+					mAI.setMode(mode.values()[comboBox.getSelectedIndex()]);
+			}
+		});
+		comboBox.setBounds(662, 156, 117, 24);
+		for (int i = 0; i < AI.mode.values().length; i++)
+			comboBox.addItem(AI.mode.values()[i]);
+		comboBox.setSelectedIndex(1);
+		frame.getContentPane().add(comboBox);
+		
+		JButton btnLoadTrainingSets = new JButton("Load training sets");
+		btnLoadTrainingSets.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				trainer.loadTSets();
+			}
+		});
+		btnLoadTrainingSets.setBounds(434, 411, 129, 23);
+		frame.getContentPane().add(btnLoadTrainingSets);
+		
 	}
 	
 	private void Connect() {
@@ -387,14 +430,14 @@ public class NeuralTrainer {
 				yellow_placement == placement_left ? 180 : 0);
 		switch (combo_AI.getSelectedIndex()) {
 		case 0:
-			mAI = new AIVisualServoing(bot, mSim);
+			mAI = new AIVisualServoing(mComm, mSim);
 			break;
 		case 1:
-			mAI = new AINeuralNetwork(bot, mSim, dtrpnhomemartinmarinov.getText(), my_door_right);
+			mAI = new AINeuralNetwork(mComm, mSim, dtrpnhomemartinmarinov.getText());
 			break;
 		}
 		
-		mAI.start(!blue_selected, my_door_right);
+		mAI.start(blue_selected, my_door_right);
 		new Thread() {
 			public void run() {
 				while (true) {
@@ -449,29 +492,70 @@ public class NeuralTrainer {
 	private void keyAction(final int key_id, final boolean pressed) {
 		if (mComm == null)
 			return;
+		if (!panel.isFocusOwner())
+			return;
 		try {
 			switch (key_id) {
 			case KeyEvent.VK_UP:
 			case KeyEvent.VK_W:
+
 				speed = pressed ? max_speed : 0;
-				turn_speed = 0;
+				if (pressed) {
+					if (original == null)
+						original = mAI.getMode();
+					mAI.setMode(mode.sit);
+					trainer.Resume();
+				}
 				break;
 			case KeyEvent.VK_DOWN:
 			case KeyEvent.VK_S:
 				speed = pressed ? -max_speed : 0;
-				turn_speed = 0;
+				if (pressed) {
+					if (original == null)
+						original = mAI.getMode();
+					mAI.setMode(mode.sit);
+					trainer.Resume();
+				}
 				break;
 			case KeyEvent.VK_LEFT:
 			case KeyEvent.VK_A:
 				turn_speed = pressed ? max_turn_speed : 0;
+				if (pressed) {
+					if (original == null)
+						original = mAI.getMode();
+					mAI.setMode(mode.sit);
+					trainer.Resume();
+				}
 				break;
 			case KeyEvent.VK_RIGHT:
 			case KeyEvent.VK_D:
 				turn_speed = pressed ? -max_turn_speed : 0;
+				if (pressed) {
+					if (original == null)
+						original = mAI.getMode();
+					mAI.setMode(mode.sit);
+					trainer.Resume();
+				}
 				break;
 			case KeyEvent.VK_ENTER:
 				if (pressed)
 					mComm.sendMessage(opcode.kick);
+				if (pressed) {
+					if (original == null)
+						original = mAI.getMode();
+					mAI.setMode(mode.sit);
+					trainer.Resume();
+				}
+				return;
+			case KeyEvent.VK_R:
+				if (pressed) {
+					if (original == null)
+						return;
+					System.out.println(original);
+					trainer.Pause();
+					mAI.setMode(original);
+					original = null;
+				}
 				return;
 			case KeyEvent.VK_SPACE:
 				if (pressed)
@@ -510,16 +594,18 @@ public class NeuralTrainer {
 					if (Vector2D.subtract(robot1, robot2).getLength() > 35/Tools.PITCH_WIDTH_CM)
 						break;
 				}
+				mSim.putAt(robot1.getX(), robot1.getY(), 0, 180-r.nextInt(360));
+				mSim.putAt(robot2.getX(), robot2.getY(), 1, 180-r.nextInt(360));
 				while (true) {
 					ballpos = new Vector2D(
 							(7.5 + r.nextDouble()*(Tools.PITCH_WIDTH_CM-30))/Tools.PITCH_WIDTH_CM,
 							(7.5 + r.nextDouble()*(Tools.PITCH_HEIGHT_CM-30))/Tools.PITCH_WIDTH_CM);
 					if (Vector2D.subtract(robot1, ballpos).getLength() > 35/Tools.PITCH_WIDTH_CM &&
-							Vector2D.subtract(robot1, ballpos).getLength() > 35/Tools.PITCH_WIDTH_CM)
+							Vector2D.subtract(robot1, ballpos).getLength() > 35/Tools.PITCH_WIDTH_CM &&
+							mSim.isInsideRobot(ballpos.getX()/Tools.PITCH_WIDTH_CM, ballpos.getY()/Tools.PITCH_WIDTH_CM) == -1)
 						break;
 				}
-				mSim.putAt(robot1.getX(), robot1.getY(), 0, 180-r.nextInt(360));
-				mSim.putAt(robot2.getX(), robot2.getY(), 1, 180-r.nextInt(360));
+
 				mSim.putBallAt(ballpos.getX(), ballpos.getY());
 				if (trainer.isRecording()) {
 					try {
