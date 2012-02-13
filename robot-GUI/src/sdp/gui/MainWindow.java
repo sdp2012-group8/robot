@@ -32,6 +32,7 @@ import javax.swing.JLabel;
 import javax.swing.border.LineBorder;
 import java.awt.Color;
 
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JRadioButton;
 import javax.swing.JButton;
@@ -153,7 +154,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		
 		aiInstance = new AIVisualServoing(com, vision);
 		aiInstance.start(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected());
-		aiInstance.setMode(mode.chase_ball);
 		
 		WorldStateObserver aiObserver = new WorldStateObserver(aiInstance);
 		synchronized (worldStateObserver) {
@@ -997,6 +997,21 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_robotConnectButton.gridx = 0;
 		gbc_robotConnectButton.gridy = 7;
 		robotSettingPanel.add(robotConnectButton, gbc_robotConnectButton);
+		
+		final JComboBox comboAI = new JComboBox();
+		comboAI.setBounds(662, 342, 117, 24);
+		for (int i = 0; i < AI.mode.values().length; i++)
+			comboAI.addItem(AI.mode.values()[i]);
+		robotSettingPanel.add(comboAI);
+		
+		JButton btnChaseBall = new JButton("Change State");
+		btnChaseBall.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				aiInstance.setMode(mode.values()[comboAI.getSelectedIndex()]);
+			}
+		});
+		btnChaseBall.setBounds(662, 378, 117, 25);
+		robotSettingPanel.add(btnChaseBall);
 	}
 	
 	
