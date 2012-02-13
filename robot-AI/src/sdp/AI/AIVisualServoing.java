@@ -15,6 +15,8 @@ public class AIVisualServoing extends AI {
 	// Ball and goal position
 	private double distance_to_ball = 0;
 	private double distance_to_goal = 0;
+	private boolean f_got_ball = false;
+
 	private Point2D.Double start_point; // Used to measure distance for dribble
 
 	public AIVisualServoing(Communicator Comm, WorldStateProvider Obs) {
@@ -30,7 +32,6 @@ public class AIVisualServoing extends AI {
 
 		distance_to_ball = Tools.getDistanceBetweenPoint(robot.getCoords(), worldState.getBallCoords());
 		distance_to_goal = Tools.getDistanceBetweenPoint(robot.getCoords(), enemy_goal.getCentre());
-
 
 		switch (state) {
 		case chase_ball:
@@ -62,9 +63,9 @@ public class AIVisualServoing extends AI {
 		double distance = Tools.getDistanceBetweenPoint(robot.getCoords(), start_point);
 		System.out.println("distance: " + distance);
 		try {
-			if (distance < 20) {
+			if (distance < 15) {
 				//go forward
-				mComm.sendMessage(opcode.operate, (byte)25, (byte)0);
+				mComm.sendMessage(opcode.operate, (byte)30, (byte)0);
 			} else if (distance > 30) {
 				mComm.sendMessage(opcode.operate, (byte)0, (byte)0, (byte) 70);
 				setMode(mode.sit);
@@ -79,6 +80,8 @@ public class AIVisualServoing extends AI {
 		}
 	}
 
+	
+	
 	/**
 	 * Mode to go towards the ball.
 	 * When it reaches the ball, transition into the goToGoal state.
@@ -103,7 +106,7 @@ public class AIVisualServoing extends AI {
 
 		// make turning faster
 		turning_angle *= 2;
-		// normalize angles
+		// normalise angles
 		if (turning_angle > 127) turning_angle = 127;
 		if (turning_angle < -127) turning_angle = -127;
 		// don't exceed speed limit
@@ -113,8 +116,8 @@ public class AIVisualServoing extends AI {
 		try {
 			mComm.sendMessage(opcode.operate, (byte) (forward_speed), (byte) (turning_angle));
 			// check whether to go into got_ball mode
-			if (Math.abs(turning_angle) < TURNING_ACCURACY && distance_to_ball < 4+Robot.LENGTH_CM/2) {
-				setMode(mode.got_ball);
+			if (Math.abs(turning_angle) < TURNING_ACCURACY && distance_to_ball < Robot.LENGTH_CM) {
+				f_got_ball = false;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -122,6 +125,115 @@ public class AIVisualServoing extends AI {
 	}
 
 	/**
+	 * Mode set if got ball.
+	 * Aims and shoots the ball into the opposing goal. 
+	 */
+	public void aimAndShoot(){
+		//System.out.println("Attempting to score goal");
+
+		int can_we_shoot = isGoalVisible(enemy_robot, enemy_goal);
+
+		if (can_we_shoot > 0) {
+			// We can see the goal
+			System.out.println("We can shoot");
+			Point2D.Double target = null;
+			switch(can_we_shoot) {
+			case 1:
+				target = enemy_goal.getTop();
+				break;
+			case 2:
+				target = enemy_goal.getCentre();
+				break;
+			case 3:
+				target = enemy_goal.getBottom();
+				break;
+			}
+			
+			double angle_between = anglebetween(robot.getCoords(), target);
+			double turning_angle = angle_between - robot.getAngle();
+			byte forward_speed = 5;
+
+			// Keep the turning angle between -180 and 180
+			if (turning_angle > 180) turning_angle -= 360;
+			if (turning_angle < -180) turning_angle += 360;
+
+			if (distance_to_goal < Robot.LENGTH_CM) forward_speed = 0;
+
+			// don't exceed speed limit
+			if (forward_speed > MAX_SPEED_CM_S) forward_speed = MAX_SPEED_CM_S;
+			if (forward_speed < -MAX_SPEED_CM_S) forward_speed = -MAX_SPEED_CM_S;
+
+			try {
+				// Check if still got ball
+				if (distance_to_ball > Robot.LENGTH_CM) {
+					setMode(mode.chase_ball);
+				} else if (turning_angle > TURNING_ACCURACY && (distance_to_goal > 1)){
+					mComm.sendMessage(opcode.operate, forward_speed, (byte)50);
+					//System.out.println("Going to goal - Turning: " + turning_angle);
+				} 
+				else if( turning_angle < -TURNING_ACCURACY && (distance_to_goal > 1)){
+					mComm.sendMessage(opcode.operate, forward_speed, (byte)-50);
+					//System.out.println("Going to goal - Turning: " + turning_angle);	
+				} else  {
+					mComm.sendMessage(opcode.kick);
+
+					//System.out.println("The old man the boat");
+					setMode(mode.chase_ball);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+			// Can't see the goal
+			try {
+				//System.out.println("robot coords y: " + robot.getCoords().y + "   pitch_height: " + Tools.PITCH_HEIGHT_CM);
+				if (robot.getCoords().y > Tools.PITCH_HEIGHT_CM/2 + 20){
+					// Robot is closest to bottom
+					//System.out.println("bottom");
+					mComm.sendMessage(opcode.operate, (byte) 10, (byte) -80);
+				} else {
+					// Robot is closest to top
+					//System.out.println("top");
+					mComm.sendMessage(opcode.operate, (byte) 10, (byte) 80);
+				}
+			} catch (Exception e) {
+				
+			}
+			
+		}
+	}
+	
+	
+	/**
+	 * Defend against enemy robot
+	 */
+	public void defend() {
+		
+	}
+
+	/**
+	 * Move behind the ball before attempting to score
+	 */
+	public void navigateBehindBall() {
+
+	}
+
+	/**
+	 * Defend against penalties
+	 */
+	public void penaltiesDefend() {
+		//TODO: Find direction of opposing robot and move into intercept path.
+	}
+
+	/**
+	 * Score a penalty
+	 */
+	public void penaltiesAttack() {
+		//TODO: Determine shoot path - Turn and shoot quickly.
+	}
+	
+	/**
+	 * Unused
 	 * Mode set if got ball.
 	 * Aims and shoots the ball into the opposing goal. 
 	 */
@@ -178,105 +290,5 @@ public class AIVisualServoing extends AI {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	/**
-	 * Mode set if got ball.
-	 * Aims and shoots the ball into the opposing goal. 
-	 */
-	public void aimAndShoot(){
-		//System.out.println("Attempting to score goal");
-
-		int can_we_shoot = isGoalVisible(enemy_robot, enemy_goal);
-
-		if (can_we_shoot > 0) {
-			// We can see the goal
-			System.out.println("We can shoot");
-			Point2D.Double target = null;
-			switch(can_we_shoot) {
-			case 1:
-				target = enemy_goal.getTop();
-				break;
-			case 2:
-				target = enemy_goal.getCentre();
-				break;
-			case 3:
-				target = enemy_goal.getBottom();
-				break;
-			}
-			
-			double angle_between = anglebetween(robot.getCoords(), target);
-			double turning_angle = angle_between - robot.getAngle();
-			byte forward_speed = 5;
-
-			// Keep the turning angle between -180 and 180
-			if (turning_angle > 180) turning_angle -= 360;
-			if (turning_angle < -180) turning_angle += 360;
-
-			if (distance_to_goal < Robot.LENGTH_CM) forward_speed = 0;
-
-			// don't exceed speed limit
-			if (forward_speed > MAX_SPEED_CM_S) forward_speed = MAX_SPEED_CM_S;
-			if (forward_speed < -MAX_SPEED_CM_S) forward_speed = -MAX_SPEED_CM_S;
-
-			try {
-				if (distance_to_ball > Robot.LENGTH_CM) {
-					setMode(mode.chase_ball);
-				} else if (turning_angle > TURNING_ACCURACY && (distance_to_goal > 1)){
-					mComm.sendMessage(opcode.operate, forward_speed, (byte)50);
-					//System.out.println("Going to goal - Turning: " + turning_angle);
-				} 
-				else if( turning_angle < -TURNING_ACCURACY && (distance_to_goal > 1)){
-					mComm.sendMessage(opcode.operate, forward_speed, (byte)-50);
-					//System.out.println("Going to goal - Turning: " + turning_angle);	
-				} else  {
-					mComm.sendMessage(opcode.kick);
-
-					//System.out.println("The old man the boat");
-					setMode(mode.chase_ball);
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		} else {
-			// Can't see the goal
-			try {
-				//System.out.println("robot coords y: " + robot.getCoords().y + "   pitch_height: " + Tools.PITCH_HEIGHT_CM);
-				if (robot.getCoords().y > Tools.PITCH_HEIGHT_CM/2 + 20){
-					// Robot is closest to bottom
-					//System.out.println("bottom");
-					mComm.sendMessage(opcode.operate, (byte) 10, (byte) -80);
-				} else {
-					// Robot is closest to top
-					//System.out.println("top");
-					mComm.sendMessage(opcode.operate, (byte) 10, (byte) 80);
-				}
-			} catch (Exception e) {
-				
-			}
-			
-		}
-	}
-
-
-	/**
-	 * Move behind the ball before attempting to score
-	 */
-	public void navigateBehindBall() {
-
-	}
-
-	/**
-	 * Defend against penalties
-	 */
-	public void penaltiesDefend() {
-		//TODO: Find direction of opposing robot and move into intercept path.
-	}
-
-	/**
-	 * Score a penalty
-	 */
-	public void penaltiesAttack() {
-		//TODO: Determine shoot path - Turn and shoot quickly.
 	}
 }

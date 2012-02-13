@@ -130,8 +130,13 @@ public class Brick {
 				case kick:
 					Motor.B.setSpeed(Motor.B.getMaxSpeed());
 					Motor.B.setAcceleration(100000);
+					Motor.B.rotate(10);
+					try {
+						Thread.sleep(10);
+					} catch (InterruptedException e) {
+					}
 					Motor.B.rotate(-80);
-					Motor.B.rotate(80);
+					Motor.B.rotate(70);
 					Motor.B.stop();
 					break;
 
@@ -154,6 +159,28 @@ public class Brick {
 					}
 					break;
 
+				case rotate_kicker_stop:
+					if (args.length > 0) {
+						Motor.B.setSpeed(slowest);
+						Motor.B.setAcceleration(100000);
+						Motor.B.rotate(args[0]);
+					}
+					Motor.B.stop();
+					break;
+					
+				case rotate_kicker_lock:
+					if (args.length > 0) {
+						Motor.B.setSpeed(slowest);
+						Motor.B.setAcceleration(100000);
+						Motor.B.rotate(args[0]);
+					}
+					Motor.B.lock(100);
+					break;
+					
+				case float_motor:
+					Motor.B.flt();
+					break;	
+					
 				case move_to_wall:
 					UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
 					sens.continuous();
