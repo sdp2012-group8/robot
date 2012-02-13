@@ -570,6 +570,7 @@ public class NeuralTrainer {
 				System.out.println("ERROR: CURRENT SPEED OVERFLOW!!! = "+speed);
 			if (turn_speed > 128 || turn_speed < -127)
 				System.out.println("ERROR: TURN SPEED OVERFLOW!!! = "+turn_speed);
+			
 			mComm.sendMessage(opcode.operate, (byte) speed, (byte) turn_speed);
 		} catch (IOException e) {
 			e.printStackTrace();

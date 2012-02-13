@@ -34,9 +34,10 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	
 	private String fname;
 	
-	private final static long testing_time = 1000;
-	private final static long min_trai_time = 10000;
-	private final static long wait_time_for_1000_f = 2000000;
+	/**
+	 * How many iterations to wait until quitting. For every 1000 input points you have this many iterations
+	 */
+	private final static long wait_iter_for_1000_f = 200;
 	
 	// how much of the data should be used for testing instead of training
 	private final static double percentage_test = 25;
@@ -237,53 +238,44 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 		}
 		// start learning
 		saving = true;
-		final long waittime = (long) (wait_time_for_1000_f*frames/1000d);
 		new Thread() {
 			@Override
 			public void run() {
 				for (int i = 0; i < tsets.length; i++) {
 						skip = false;
 						int outputs = nets[i].getOutputNeurons().size();
+						int frames = training[i].size();
 						double accuracy = 0;
 						System.out.println("Learning network "+(i+1)+"/"+nets.length);					
-						nets[i].learnInNewThread(training[i]);
 						long elapsed = 0;
-						long last_max = 0;
 						double max_per = 0;
+						int max_iters = (int) wait_iter_for_1000_f*frames/1000;
+						if (max_iters < wait_iter_for_1000_f)
+							max_iters = (int) wait_iter_for_1000_f;
+						int total = 0;
 						while (!skip) {
-							elapsed+=testing_time;
-							try {
-								sleep(testing_time);
-							} catch (InterruptedException e) {}
-							nets[i].pauseLearning();
+							total++;
+							elapsed++;
+							propagations[i].doLearningEpoch(training[i]);
 							accuracy = testAccuracy(nets[i], testing[i]);
-							double err_n = 100-100*Math.abs(100d/outputs-accuracy)/(100d - 100d/outputs);
-							if (elapsed > min_trai_time && accuracy > max_per) {
+							if (accuracy > max_per) {
+								System.out.println("Max accuracy reached: "+String.format("%.2f", accuracy)+"% (on iteration "+total+"). Wait for improvement in the next "+max_iters+" iterations...");
 								max_per = accuracy;
-								last_max = elapsed;
-								nets[i].save(fname+"/nn"+i+"acc"+(int)accuracy+".nnet");
-								System.out.println("Network accuracy: "+String.format("%.4f", accuracy)+"% (stat err: "+String.format("%.4f", err_n)+"%), acc on training set "+testAccuracy(nets[i], training[i])+"%. Learning may stopped in "+String.format("%.1f",(waittime/1000d))+" s");
-							} else
-								System.out.println("Network accuracy: "+String.format("%.4f", accuracy)+"% (stat err: "+String.format("%.4f", err_n)+"%), acc on training set "+testAccuracy(nets[i], training[i])+"%");
-							nets[i].resumeLearning();
-							if (accuracy >= network_desired_error || elapsed-last_max > waittime) {
-								if (elapsed > min_trai_time) {
-									System.out.println("Network trained well! Accuracy "+String.format("%.4f", accuracy)+"% (stat err: "+String.format("%.4f", err_n)+"%)");
-									break;
-								} else
-									System.out.println("Network trained well, required minimum training time expires in "+String.format("%.1f", (min_trai_time-elapsed)/1000d)+" s");
+								nets[i].save(fname+"/nn"+i+".nnet");
+								elapsed = 0;
 							}
+							// if you tried enough without improvement
+							if (elapsed > max_iters)
+								break;
 						}
+						nets[i] = NeuralNetwork.load(fname+"/nn"+i+".nnet");
+						accuracy = testAccuracy(nets[i], testing[i]);
 						double err_n = 100-100*Math.abs(100d/outputs-accuracy)/(100d - 100d/outputs);
 						if (skip)
 							System.out.println("User stopped training. Skipping to next network if any.");
 						if (accuracy < network_desired_error)
-							System.out.println("Network trained, but not optimal. Accuracy "+String.format("%.4f", accuracy)+"% (stat err: "+String.format("%.4f", err_n)+"%)");
-						nets[i].stopLearning();
-						try {
-							sleep(500);
-						} catch (InterruptedException e) {}
-						nets[i].save(fname+"/nn"+i+".nnet");
+							System.out.println("Network trained. Accuracy "+String.format("%.2f", accuracy)+"% (stat err: "+String.format("%.2f", err_n)+"%)");
+						
 						testing[i].clear();
 						testing[i] = null;
 						training[i].clear();
