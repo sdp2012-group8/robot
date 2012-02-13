@@ -1,4 +1,6 @@
-package sdp.vision;
+package sdp.vision.visualinput;
+
+import java.util.logging.Logger;
 
 import au.edu.jcu.v4l4j.CaptureCallback;
 import au.edu.jcu.v4l4j.FrameGrabber;
@@ -19,6 +21,9 @@ public class CameraVisualInputProvider extends VisualInputProvider implements Ca
 	private VideoDevice videoDevice;
 	/** The device's frame grabber. */
 	private FrameGrabber frameGrabber;
+
+	/** The class' logger. */
+	private static final Logger LOGGER = Logger.getLogger("sdp.vision.CameraVisualInputProvider");
 	
 	
 	/**
@@ -38,7 +43,7 @@ public class CameraVisualInputProvider extends VisualInputProvider implements Ca
             frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, standard, channel, quality);
             frameGrabber.setCaptureCallback(this);
         } catch (V4L4JException e) {
-            System.err.println("Error setting up capture."); 	// TODO: Replace w/ logging.
+        	LOGGER.warning("Error setting up capture.");
             e.printStackTrace();            
             cleanup();
             return;
@@ -55,9 +60,9 @@ public class CameraVisualInputProvider extends VisualInputProvider implements Ca
 	public void startCapture() {
 		try {
 	        frameGrabber.startCapture();
-	        System.out.println("Starting capture at " + frameGrabber.getWidth() + "x" + frameGrabber.getHeight());
+	        LOGGER.info("Starting capture at " + frameGrabber.getWidth() + "x" + frameGrabber.getHeight());
 	    } catch (V4L4JException e) {
-	        System.err.println("Error starting the capture.");	// TODO: replace with logging.
+	        LOGGER.warning("Error starting the capture.");
 	        e.printStackTrace();
 	    }
 	}
@@ -85,7 +90,7 @@ public class CameraVisualInputProvider extends VisualInputProvider implements Ca
 	 */
 	@Override
 	public void exceptionReceived(V4L4JException e) {
-		System.err.println("Error occured during capture.");
+		LOGGER.warning("Error occured during capture.");
 		e.printStackTrace();
 	}
 
