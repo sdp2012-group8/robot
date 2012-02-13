@@ -15,6 +15,7 @@ public class AIVisualServoing extends AI {
 	// Ball and goal position
 	private double distance_to_ball = 0;
 	private double distance_to_goal = 0;
+
 	private Point2D.Double start_point; // Used to measure distance for dribble
 
 
@@ -86,6 +87,8 @@ public class AIVisualServoing extends AI {
 		}
 	}
 
+
+
 	/**
 	 * Mode to go towards the ball.
 	 * When it reaches the ball, transition into the goToGoal state.
@@ -108,14 +111,16 @@ public class AIVisualServoing extends AI {
 			forward_speed = -20;
 
 		// make turning faster
-		//turning_angle *= 2;
+
 		// normalize angles
 		if (turning_speed > MAX_TURNING_SPEED) turning_speed = MAX_TURNING_SPEED;
 		if (turning_speed < -MAX_TURNING_SPEED) turning_speed = -MAX_TURNING_SPEED;
+
 		// don't exceed speed limit
 		if (forward_speed > MAX_SPEED_CM_S) forward_speed = MAX_SPEED_CM_S;
 		if (forward_speed < -MAX_SPEED_CM_S) forward_speed = -MAX_SPEED_CM_S;
 		// send command
+
 		//forward_speed/=15;
 		System.out.println("forward_speed: " + forward_speed);
 		//turning_angle = turning_angle > 0 ? 70 : -70;
@@ -125,6 +130,7 @@ public class AIVisualServoing extends AI {
 		if (Math.abs(turning_speed) < TURNING_ACCURACY && distance_to_ball < 2+Robot.LENGTH_CM/2) {
 			setMode(mode.sit);
 			//setMode(mode.got_ball);
+
 		}
 
 	}
@@ -134,65 +140,9 @@ public class AIVisualServoing extends AI {
 	 * Aims and shoots the ball into the opposing goal. 
 	 * @throws IOException 
 	 */
-	public void alignToGoal() throws IOException{
 
-		System.out.println("I'm in ALIGN TO GOAL :O");
-
-		double angle_between = anglebetween(robot.getCoords(), enemy_goal.getCentre());
-		double turning_angle = angle_between - robot.getAngle();
-		byte forward_speed = 5;
-
-		//System.out.println("Turning angle: " + turning_angle + " Angle between:" + angle_between + " Robot get angle: " + robot.getAngle());
-		//System.out.println(robot.getCoords() + " " + worldState.getBallCoords());
-		// Keep the turning angle between -180 and 180
-		if (turning_angle > 180) turning_angle -= 360;
-		if (turning_angle < -180) turning_angle += 360;
-
-
-		if (distance_to_goal < Robot.LENGTH_CM) forward_speed = 0;
-
-		System.out.println(distance_to_goal);
-
-
-		//if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
-		//if (turning_angle < -128) turning_angle = -128;
-		// don't exceed speed limit
-		if (forward_speed > MAX_SPEED_CM_S) forward_speed = MAX_SPEED_CM_S;
-		if (forward_speed < -MAX_SPEED_CM_S) forward_speed = -MAX_SPEED_CM_S;
-
-		if (distance_to_ball > Robot.LENGTH_CM) {
-			setMode(mode.chase_ball);
-		} else if (turning_angle > TURNING_ACCURACY && (distance_to_goal > 1)){
-			mComm.sendMessage(opcode.operate, forward_speed, (byte)50);
-			System.out.println("Going to goal - Turning: " + turning_angle);
-		} 
-		else if( turning_angle < -TURNING_ACCURACY && (distance_to_goal > 1)){
-			mComm.sendMessage(opcode.operate, forward_speed, (byte)-50);
-			System.out.println("Going to goal - Turning: " + turning_angle);	
-		}
-		else if (distance_to_goal > 1) {
-			if (!(distance_to_goal < 100)) {
-				mComm.sendMessage(opcode.operate, (byte)60, (byte)0);
-			} else {
-				mComm.sendMessage(opcode.kick);
-			}
-
-			System.out.println("GOING FORWARD TO GOAL");
-
-		} else {
-			System.out.println("The old man the boat");
-			setMode(mode.chase_ball);
-		}
-
-
-	}
-
-	/**
-	 * Mode set if got ball.
-	 * Aims and shoots the ball into the opposing goal. 
-	 * @throws IOException 
-	 */
 	public void aimAndShoot() throws IOException{
+
 		//System.out.println("Attempting to score goal");
 
 		int can_we_shoot = isGoalVisible(enemy_robot, enemy_goal);
@@ -227,7 +177,6 @@ public class AIVisualServoing extends AI {
 			if (forward_speed > MAX_SPEED_CM_S) forward_speed = MAX_SPEED_CM_S;
 			if (forward_speed < -MAX_SPEED_CM_S) forward_speed = -MAX_SPEED_CM_S;
 
-
 			if (distance_to_ball > Robot.LENGTH_CM) {
 				setMode(mode.chase_ball);
 			} else if (turning_angle > TURNING_ACCURACY && (distance_to_goal > 1)){
@@ -240,7 +189,7 @@ public class AIVisualServoing extends AI {
 			} else  {
 				mComm.sendMessage(opcode.kick);
 
-				//System.out.println("The old man the boat");
+				//System.out.println("Kicked ball - Changing to chase_ball");
 				setMode(mode.chase_ball);
 			}
 
@@ -264,6 +213,13 @@ public class AIVisualServoing extends AI {
 
 
 	/**
+	 * Defend against enemy robot
+	 */
+	public void defend() {
+
+	}
+
+	/**
 	 * Move behind the ball before attempting to score
 	 */
 	public void navigateBehindBall() {
@@ -282,5 +238,65 @@ public class AIVisualServoing extends AI {
 	 */
 	public void penaltiesAttack() {
 		//TODO: Determine shoot path - Turn and shoot quickly.
+	}
+
+	/**
+	 * Unused
+	 * Mode set if got ball.
+	 * Aims and shoots the ball into the opposing goal. 
+	 */
+	public void alignToGoal(){
+
+		System.out.println("I'm in ALIGN TO GOAL :O");
+
+		double angle_between = anglebetween(robot.getCoords(), enemy_goal.getCentre());
+		double turning_angle = angle_between - robot.getAngle();
+		byte forward_speed = 5;
+
+		//System.out.println("Turning angle: " + turning_angle + " Angle between:" + angle_between + " Robot get angle: " + robot.getAngle());
+		//System.out.println(robot.getCoords() + " " + worldState.getBallCoords());
+		// Keep the turning angle between -180 and 180
+		if (turning_angle > 180) turning_angle -= 360;
+		if (turning_angle < -180) turning_angle += 360;
+
+
+		if (distance_to_goal < Robot.LENGTH_CM) forward_speed = 0;
+
+		System.out.println(distance_to_goal);
+
+
+		//if (turning_angle > 127) turning_angle = 127; // Needs to reduce the angle as the command can only accept -128 to 127
+		//if (turning_angle < -128) turning_angle = -128;
+		// don't exceed speed limit
+		if (forward_speed > MAX_SPEED_CM_S) forward_speed = MAX_SPEED_CM_S;
+		if (forward_speed < -MAX_SPEED_CM_S) forward_speed = -MAX_SPEED_CM_S;
+		try {
+			if (distance_to_ball > Robot.LENGTH_CM) {
+				setMode(mode.chase_ball);
+			} else if (turning_angle > TURNING_ACCURACY && (distance_to_goal > 1)){
+				mComm.sendMessage(opcode.operate, forward_speed, (byte)50);
+				System.out.println("Going to goal - Turning: " + turning_angle);
+			} 
+			else if( turning_angle < -TURNING_ACCURACY && (distance_to_goal > 1)){
+				mComm.sendMessage(opcode.operate, forward_speed, (byte)-50);
+				System.out.println("Going to goal - Turning: " + turning_angle);	
+			}
+			else if (distance_to_goal > 1) {
+				if (!(distance_to_goal < 100)) {
+					mComm.sendMessage(opcode.operate, (byte)60, (byte)0);
+				} else {
+					mComm.sendMessage(opcode.kick);
+				}
+
+				System.out.println("GOING FORWARD TO GOAL");
+
+			} else {
+				System.out.println("The old man the boat");
+				setMode(mode.chase_ball);
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
