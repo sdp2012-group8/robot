@@ -17,6 +17,11 @@ public final class Robot {
 	public static final double WIDTH_CM = 18;
 	public static final double WIDTH = WIDTH_CM/244d;
 	
+	public static final Vector2D local_front_left_CM = new Vector2D(LENGTH_CM / 2, WIDTH_CM / 2);
+	public static final Vector2D local_front_right_CM = new Vector2D(LENGTH_CM / 2, -WIDTH_CM / 2);
+	public static final Vector2D local_back_left_CM = new Vector2D(-LENGTH_CM / 2, WIDTH_CM / 2);
+	public static final Vector2D local_back_right_CM = new Vector2D(-LENGTH_CM / 2, -WIDTH_CM / 2);
+	
 
 	/** Coordinates of the robot's centre on the field. */
 	private Point2D.Double coords;

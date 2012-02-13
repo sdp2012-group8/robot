@@ -300,7 +300,7 @@ public class NeuralTrainer {
 					trainer.Save();
 			}
 		});
-		btnSave.setBounds(662, 405, 117, 25);
+		btnSave.setBounds(662, 369, 117, 25);
 		frame.getContentPane().add(btnSave);
 		
 		combo_AI = new JComboBox();
@@ -308,7 +308,7 @@ public class NeuralTrainer {
 		combo_AI.setBounds(662, 263, 117, 24);
 		frame.getContentPane().add(combo_AI);
 		
-		JButton btnStopLearning = new JButton("Stop lning");
+		JButton btnStopLearning = new JButton("Stop learning");
 		btnStopLearning.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (trainer == null)
@@ -319,7 +319,7 @@ public class NeuralTrainer {
 					System.out.println("You must have training data ready and the system must be learning in order to stop it.");
 			}
 		});
-		btnStopLearning.setBounds(662, 369, 117, 25);
+		btnStopLearning.setBounds(307, 410, 117, 25);
 		frame.getContentPane().add(btnStopLearning);
 		
 		JButton btnCamera = new JButton("Camera");
@@ -399,6 +399,15 @@ public class NeuralTrainer {
 			comboBox.addItem(AI.mode.values()[i]);
 		comboBox.setSelectedIndex(1);
 		frame.getContentPane().add(comboBox);
+		
+		JButton btnLoadTrainingSets = new JButton("Load training sets");
+		btnLoadTrainingSets.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				trainer.loadTSets();
+			}
+		});
+		btnLoadTrainingSets.setBounds(434, 411, 129, 23);
+		frame.getContentPane().add(btnLoadTrainingSets);
 		
 	}
 	
