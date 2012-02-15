@@ -1,5 +1,13 @@
 package sdp.vision.processing;
 
+import java.io.File;
+import java.util.logging.Logger;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import sdp.common.xml.XmlUtils;
+
 
 /**
  * Vision subsystem configuration container.
@@ -7,6 +15,9 @@ package sdp.vision.processing;
  * @author Gediminas Liktaras
  */
 public class ImageProcessorConfig {
+	
+	/** Class's logger. */
+	private static final Logger LOGGER = Logger.getLogger("sdp.vision.ImageProcessorConfig");
 	
 	/** Height of the incoming images. */
 	private int frameHeight = 480;	
@@ -830,6 +841,121 @@ public class ImageProcessorConfig {
 	 */
 	public void setShowStateData(boolean showStateData) {
 		this.showStateData = showStateData;
+	}
+	
+	
+	/**
+	 * Reads an image processor configuration from a file and returns it as
+	 * a ImageProcessorConfiguration instance.
+	 * 
+	 * @param filename Name of the file that contains the configuration.
+	 * @return An appropriate ImageProcessorConfiguration instance.
+	 */
+	public static ImageProcessorConfig loadConfiguration(String filename) {
+		File configFile = new File(filename);
+		if (!configFile.exists()) {
+			LOGGER.info("The given image processor configuration file does not exist.");
+			return null;
+		}
+				
+		Document doc = XmlUtils.openXmlDocument(configFile);		
+		ImageProcessorConfig config = new ImageProcessorConfig();
+		
+		Element rootElement = (Element)doc.getElementsByTagName("config").item(0);
+		
+		Element fieldElement = (Element)rootElement.getElementsByTagName("field").item(0);
+		config.setRawFieldLowX(XmlUtils.getChildDouble(fieldElement, "lowX"));
+		config.setRawFieldLowY(XmlUtils.getChildDouble(fieldElement, "lowY"));
+		config.setRawFieldHighX(XmlUtils.getChildDouble(fieldElement, "highX"));
+		config.setRawFieldHighY(XmlUtils.getChildDouble(fieldElement, "highY"));
+		
+		Element ballElement = (Element)rootElement.getElementsByTagName("ball").item(0);
+		config.setBallHueMinValue(XmlUtils.getChildInt(ballElement, "hueMin"));
+		config.setBallHueMaxValue(XmlUtils.getChildInt(ballElement, "hueMax"));
+		config.setBallSatMinValue(XmlUtils.getChildInt(ballElement, "satMin"));
+		config.setBallSatMaxValue(XmlUtils.getChildInt(ballElement, "satMax"));
+		config.setBallValMinValue(XmlUtils.getChildInt(ballElement, "valMin"));
+		config.setBallValMaxValue(XmlUtils.getChildInt(ballElement, "valMax"));
+		config.setBallSizeMinValue(XmlUtils.getChildInt(ballElement, "sizeMin"));
+		config.setBallSizeMaxValue(XmlUtils.getChildInt(ballElement, "sizeMax"));
+		
+		Element blueElement = (Element)rootElement.getElementsByTagName("blue").item(0);
+		config.setBlueHueMinValue(XmlUtils.getChildInt(blueElement, "hueMin"));
+		config.setBlueHueMaxValue(XmlUtils.getChildInt(blueElement, "hueMax"));
+		config.setBlueSatMinValue(XmlUtils.getChildInt(blueElement, "satMin"));
+		config.setBlueSatMaxValue(XmlUtils.getChildInt(blueElement, "satMax"));
+		config.setBlueValMinValue(XmlUtils.getChildInt(blueElement, "valMin"));
+		config.setBlueValMaxValue(XmlUtils.getChildInt(blueElement, "valMax"));
+		config.setBlueSizeMinValue(XmlUtils.getChildInt(blueElement, "sizeMin"));
+		config.setBlueSizeMaxValue(XmlUtils.getChildInt(blueElement, "sizeMax"));
+		
+		Element yellowElement = (Element)rootElement.getElementsByTagName("yellow").item(0);
+		config.setYellowHueMinValue(XmlUtils.getChildInt(yellowElement, "hueMin"));
+		config.setYellowHueMaxValue(XmlUtils.getChildInt(yellowElement, "hueMax"));
+		config.setYellowSatMinValue(XmlUtils.getChildInt(yellowElement, "satMin"));
+		config.setYellowSatMaxValue(XmlUtils.getChildInt(yellowElement, "satMax"));
+		config.setYellowValMinValue(XmlUtils.getChildInt(yellowElement, "valMin"));
+		config.setYellowValMaxValue(XmlUtils.getChildInt(yellowElement, "valMax"));
+		config.setYellowSizeMinValue(XmlUtils.getChildInt(yellowElement, "sizeMin"));
+		config.setYellowSizeMaxValue(XmlUtils.getChildInt(yellowElement, "sizeMax"));
+		
+		return config;
+	}
+	
+	
+	/**
+	 * Writes the given image processor configuration into an XML file.
+	 * 
+	 * @param config Configuration to output.
+	 * @param filename Output filename.
+	 */
+	public static void saveConfiguration(ImageProcessorConfig config, String filename) {
+		Document doc = XmlUtils.createBlankXmlDocument();
+		
+		Element rootElement = doc.createElement("config");
+		doc.appendChild(rootElement);
+		
+		Element fieldElement = doc.createElement("field");
+		XmlUtils.addChildDouble(doc, fieldElement, "lowX", config.getRawFieldLowX());
+		XmlUtils.addChildDouble(doc, fieldElement, "lowY", config.getRawFieldLowY());
+		XmlUtils.addChildDouble(doc, fieldElement, "highX", config.getRawFieldHighX());
+		XmlUtils.addChildDouble(doc, fieldElement, "highY", config.getRawFieldHighY());
+		rootElement.appendChild(fieldElement);
+		
+		Element ballElement = doc.createElement("ball");
+		XmlUtils.addChildInt(doc, ballElement, "hueMin", config.getBallHueMinValue());
+		XmlUtils.addChildInt(doc, ballElement, "hueMax", config.getBallHueMaxValue());
+		XmlUtils.addChildInt(doc, ballElement, "satMin", config.getBallSatMinValue());
+		XmlUtils.addChildInt(doc, ballElement, "satMax", config.getBallSatMaxValue());
+		XmlUtils.addChildInt(doc, ballElement, "valMin", config.getBallValMinValue());
+		XmlUtils.addChildInt(doc, ballElement, "valMax", config.getBallValMaxValue());
+		XmlUtils.addChildInt(doc, ballElement, "sizeMin", config.getBallSizeMinValue());
+		XmlUtils.addChildInt(doc, ballElement, "sizeMax", config.getBallSizeMaxValue());
+		rootElement.appendChild(ballElement);
+		
+		Element blueElement = doc.createElement("blue");
+		XmlUtils.addChildInt(doc, blueElement, "hueMin", config.getBlueHueMinValue());
+		XmlUtils.addChildInt(doc, blueElement, "hueMax", config.getBlueHueMaxValue());
+		XmlUtils.addChildInt(doc, blueElement, "satMin", config.getBlueSatMinValue());
+		XmlUtils.addChildInt(doc, blueElement, "satMax", config.getBlueSatMaxValue());
+		XmlUtils.addChildInt(doc, blueElement, "valMin", config.getBlueValMinValue());
+		XmlUtils.addChildInt(doc, blueElement, "valMax", config.getBlueValMaxValue());
+		XmlUtils.addChildInt(doc, blueElement, "sizeMin", config.getBlueSizeMinValue());
+		XmlUtils.addChildInt(doc, blueElement, "sizeMax", config.getBlueSizeMaxValue());
+		rootElement.appendChild(blueElement);
+		
+		Element yellowElement = doc.createElement("yellow");
+		XmlUtils.addChildInt(doc, yellowElement, "hueMin", config.getYellowHueMinValue());
+		XmlUtils.addChildInt(doc, yellowElement, "hueMax", config.getYellowHueMaxValue());
+		XmlUtils.addChildInt(doc, yellowElement, "satMin", config.getYellowSatMinValue());
+		XmlUtils.addChildInt(doc, yellowElement, "satMax", config.getYellowSatMaxValue());
+		XmlUtils.addChildInt(doc, yellowElement, "valMin", config.getYellowValMinValue());
+		XmlUtils.addChildInt(doc, yellowElement, "valMax", config.getYellowValMaxValue());
+		XmlUtils.addChildInt(doc, yellowElement, "sizeMin", config.getYellowSizeMinValue());
+		XmlUtils.addChildInt(doc, yellowElement, "sizeMax", config.getYellowSizeMaxValue());
+		rootElement.appendChild(yellowElement);
+		
+		XmlUtils.writeXmlDocument(doc, filename);
 	}
 
 }

@@ -25,7 +25,6 @@ import sdp.communicator.JComm;
 import sdp.gui.filefilters.XmlFileFilter;
 import sdp.vision.Vision;
 import sdp.vision.processing.ImageProcessorConfig;
-import sdp.vision.processing.ImageProcessorConfigIO;
 
 import java.util.logging.Logger;
 import javax.swing.JLabel;
@@ -184,7 +183,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		
 		if (retValue == JFileChooser.APPROVE_OPTION) {
 			String chosenFile = fileChooser.getSelectedFile().getAbsolutePath();
-			ImageProcessorConfig config = ImageProcessorConfigIO.loadConfiguration(chosenFile);
+			ImageProcessorConfig config = ImageProcessorConfig.loadConfiguration(chosenFile);
 			setGUIConfiguration(config);
 		}
 	}
@@ -255,7 +254,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		if (retValue == JFileChooser.APPROVE_OPTION) {
 			String chosenFile = fileChooser.getSelectedFile().getAbsolutePath();
 			ImageProcessorConfig config = getGUIConfiguration();
-			ImageProcessorConfigIO.saveConfiguration(config, chosenFile);
+			ImageProcessorConfig.saveConfiguration(config, chosenFile);
 		}
 	}
 	
