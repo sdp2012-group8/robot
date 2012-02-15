@@ -7,6 +7,10 @@ package sdp.common;
  *
  */
 public class NNetTools {
+	
+	public static enum move_modes {
+		forward_left, forward, forward_right, stop, backward_left, backward, backward_right, left, right 
+	}
 
 	/**
 	 * Generates input array for the AI
@@ -17,7 +21,7 @@ public class NNetTools {
 	 * @param id which network is receiving it
 	 * @return the input array
 	 */
-	public static double[] generateAIinput(WorldState worldState, boolean am_i_blue, boolean my_goal_left, int id) {
+	public static double[] generateAIinput(WorldState worldState, WorldState oldState, double dt, boolean am_i_blue, boolean my_goal_left, int id) {
 		Robot me = am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot();
 		Robot enemy = am_i_blue ? worldState.getYellowRobot() : worldState.getBlueRobot();
 		//Vector2D goal = new Vector2D(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM);
@@ -35,16 +39,17 @@ public class NNetTools {
 		switch (id) {
 		case 0:
 			return Tools.concat(new double[] {
-					AI_normalizeCoordinateTo1(rel_ball.getX(), Tools.PITCH_WIDTH_CM)
+					AI_normalizeCoordinateTo1(rel_ball.getLength(), Tools.PITCH_WIDTH_CM),
+					AI_normalizeAngleTo1(Vector2D.getDirection(rel_ball))
 					//AI_normalizeCoordinateTo1(rel_en.getX(), Tools.PITCH_WIDTH_CM),
 					//AI_normalizeCoordinateTo1(rel_coll.getX(), Tools.PITCH_WIDTH_CM)
-			}, getVisionMatrix(10, Tools.PITCH_WIDTH_CM, me, worldState, am_i_blue));
+			}, getVisionMatrix(10, Tools.PITCH_WIDTH_CM, 35, worldState, oldState, dt, am_i_blue));
 		case 1:
 			return Tools.concat(new double[] {
 					AI_normalizeAngleTo1(Vector2D.getDirection(rel_ball))
 					//AI_normalizeAngleTo1(Vector2D.getDirection(rel_en)),
 					//AI_normalizeAngleTo1(Vector2D.getDirection(rel_coll))
-			}, getVisionMatrix(10, Tools.PITCH_WIDTH_CM, me, worldState, am_i_blue));
+			}, getVisionMatrix(10, Tools.PITCH_WIDTH_CM, 35, worldState, oldState, dt, am_i_blue));
 		}
 		return null;		
 	}
@@ -55,25 +60,33 @@ public class NNetTools {
 	 * @param threshold
 	 * @return distances to nearest collision points in the direction, normalized to threshold
 	 */
-	private static double[] getVisionMatrix(int size, double threshold, Robot me, WorldState ws, boolean am_i_blue) {
+	private static double[] getVisionMatrix(int size, double threshold_length, double threshold_velocity, WorldState ws, WorldState old, double dt, boolean am_i_blue) {
 		if (!(size % 2 == 0 && (size/2) % 2 == 1)) {
 			System.out.println("Provide size number for visionMatrix like 6, 10, 14. See javadoc for info!");
 			return null;
 		}
-		final double[] ans = new double[size];
+		Robot oldme = am_i_blue ? old.getBlueRobot() : old.getYellowRobot();
+		Robot newme = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
+		final double[] vels = new double[size];
+		final double[] dists = new double[size];
 		final int behind = size/2;
 		final int infront = size - behind;
 		final double scope = Robot.WIDTH_CM/2;
 		int i = 0;
 		for (double y = -scope; y <= scope; y += 2d*scope/(behind-1)) {
-			ans[i] = AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, me, new Vector2D(0, 0), new Vector2D(Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold);
+			vels[i] = 
+					(AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, newme, new Vector2D(0, 0), new Vector2D(Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold_velocity) -
+					AI_normalizeCoordinateTo1(Tools.raytraceVector(old, oldme, new Vector2D(0, 0), new Vector2D(Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold_velocity))/dt;
+			dists[i] = AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, newme, new Vector2D(0, 0), new Vector2D(Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold_length);
 			i++;
 		}
 		for (double y = -scope; y <= scope; y += 2d*scope/(infront-1)) {
-			ans[i] = AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, me, new Vector2D(0, 0), new Vector2D(-Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold);
+			vels[i] = (AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, newme, new Vector2D(0, 0), new Vector2D(-Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold_velocity) -
+					AI_normalizeCoordinateTo1(Tools.raytraceVector(old, oldme, new Vector2D(0, 0), new Vector2D(-Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold_velocity))/dt;
+			dists[i] = AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, newme, new Vector2D(0, 0), new Vector2D(-Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold_length);
 			i++;
 		}
-		return ans;
+		return Tools.concat(vels, dists);
 	}
 	
 	/**
@@ -113,6 +126,10 @@ public class NNetTools {
 			ans[i] = i == current_id ? 1 : 0;
 		return ans;
 	}
+	
+	public static double[] generateOutput(move_modes mode) {
+		return generateOutput(mode.ordinal(), move_modes.values().length);
+	}
 
 	/**
 	 * What was the original condition
@@ -120,7 +137,7 @@ public class NNetTools {
 	 * @param output array with two outputs from neural network
 	 * @return the state of the original condition
 	 */
-	public static int recoverOutput(double[] output) {
+	public static int recoverOutputInt(double[] output) {
 		double max = 0;
 		double sum = 0;
 		int id = 0;
@@ -136,6 +153,66 @@ public class NNetTools {
 		if (sum == 0)
 			return -1;
 		return id;
+	}
+	
+	public static move_modes recoverOutputMode(double[] output) {
+		int id = recoverOutputInt(output);
+		return move_modes.values()[id];
+	}
+	
+	public static move_modes getMode(int desired_speed, int desired_turning) {
+		if (desired_speed > 0 && desired_turning > 0)
+			return move_modes.forward_right;
+		if (desired_speed > 0 && desired_turning == 0)
+			return move_modes.forward;
+		if (desired_speed > 0 && desired_turning < 0)
+			return move_modes.forward_left;
+		
+		if (desired_speed == 0 && desired_turning > 0)
+			return move_modes.right;
+		if (desired_speed == 0 && desired_turning == 0)
+			return move_modes.stop;
+		if (desired_speed == 0 && desired_turning < 0)
+			return move_modes.left;
+
+		if (desired_speed < 0 && desired_turning > 0)
+			return move_modes.backward_right;
+		if (desired_speed < 0 && desired_turning == 0)
+			return move_modes.backward;
+		if (desired_speed < 0 && desired_turning < 0)
+			return move_modes.backward_left;
+		
+		return null;
+	}
+	
+	public static int getDesiredSpeed(move_modes mode) {
+		switch (mode) {
+		case forward:
+		case forward_left:
+		case forward_right:
+			return 35;
+		case backward:
+		case backward_left:
+		case backward_right:
+			return -35;
+		default:
+			return 0;
+		}
+	}
+	
+	public static int getDesiredTurningSpeed(move_modes mode) {
+		switch (mode) {
+		case forward_right:
+		case backward_right:
+		case right:
+			return 90;
+		case forward_left:
+		case backward_left:
+		case left:
+			return -90;
+		default:
+			return 0;
+		}
 	}
 	
 	/**

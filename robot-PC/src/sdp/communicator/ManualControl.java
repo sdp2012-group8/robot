@@ -64,7 +64,7 @@ public class ManualControl {
 	
 	private Timer btn_W_pressed = null, btn_A_pressed = null, btn_S_pressed = null, btn_D_pressed = null, btn_SPACE_pressed = null, btn_ENTER_pressed = null;
 
-	private int currentspeed = 0;
+	private int current_speed = 0, current_turn_speed = 0;
 	private static final int max_speed = 35;
 	private static final int turn_speed = 90;
 	/**
@@ -151,10 +151,10 @@ public class ManualControl {
 					if (btn_W_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("W");
-						System.out.println("Sending W");
 						try {
-							mComm.sendMessage(opcode.operate, (byte) max_speed, (byte) 0);
-							currentspeed = max_speed;
+							current_speed = max_speed;
+							mComm.sendMessage(opcode.operate, (byte) current_speed, (byte) current_turn_speed);
+							System.out.println("Sending W");
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -169,9 +169,10 @@ public class ManualControl {
 					if (btn_A_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("A");
-						System.out.println("Sending A");
 						try {
-							mComm.sendMessage(opcode.operate, (byte) currentspeed, (byte) turn_speed);
+							current_turn_speed = turn_speed;
+							mComm.sendMessage(opcode.operate, (byte) current_speed, (byte) current_turn_speed);
+							System.out.println("Sending A");
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -186,10 +187,10 @@ public class ManualControl {
 					if (btn_S_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("S");
-						System.out.println("Sending S");
 						try {
-							mComm.sendMessage(opcode.operate, (byte) -max_speed, (byte) 0);
-							currentspeed = -max_speed;
+							current_speed = -max_speed;
+							mComm.sendMessage(opcode.operate, (byte) current_speed, (byte) current_turn_speed);
+							System.out.println("Sending S");
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -206,7 +207,8 @@ public class ManualControl {
 						lblWAS.setText("D");
 						System.out.println("Sending D");
 						try {
-							mComm.sendMessage(opcode.operate, (byte) currentspeed, (byte) -turn_speed);
+							current_turn_speed =  -turn_speed;
+							mComm.sendMessage(opcode.operate, (byte) current_speed, (byte)current_turn_speed);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -265,8 +267,8 @@ public class ManualControl {
 							lblWAS.setText(" ");
 							System.out.println("Stopping W");
 							try {
-								mComm.sendMessage(opcode.operate, (byte) 0, (byte) 0);
-								currentspeed = 0;
+								current_speed = 0;
+								mComm.sendMessage(opcode.operate, (byte) current_speed, (byte) current_turn_speed);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -289,7 +291,8 @@ public class ManualControl {
 							btn_A_pressed.cancel();
 							btn_A_pressed = null;
 							try {
-								mComm.sendMessage(opcode.operate, (byte) currentspeed, (byte) 0);
+								current_turn_speed = 0;
+								mComm.sendMessage(opcode.operate, (byte) current_speed, (byte) current_turn_speed);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -308,8 +311,8 @@ public class ManualControl {
 							lblWAS.setText(" ");
 							System.out.println("Stopping S");
 							try {
-								mComm.sendMessage(opcode.operate, (byte) 0, (byte) 0);
-								currentspeed = 0;
+								current_speed = 0;
+								mComm.sendMessage(opcode.operate, (byte) current_speed, (byte) current_turn_speed);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -332,7 +335,8 @@ public class ManualControl {
 							btn_D_pressed.cancel();
 							btn_D_pressed = null;
 							try {
-								mComm.sendMessage(opcode.operate, (byte) currentspeed, (byte) 0);
+								current_turn_speed = 0;
+								mComm.sendMessage(opcode.operate, (byte) current_speed, (byte) current_turn_speed);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
