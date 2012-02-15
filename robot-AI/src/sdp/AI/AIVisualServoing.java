@@ -20,6 +20,12 @@ public class AIVisualServoing extends AI {
 
 	public AIVisualServoing(Communicator Comm, WorldStateProvider Obs) {
 		super(Comm, Obs);
+		try {
+			mComm.sendMessage(opcode.rotate_kicker, (byte)10);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -67,23 +73,29 @@ public class AIVisualServoing extends AI {
 	 * @throws IOException 
 	 */
 	public void dribbleBall() throws IOException {
-		if (start_point == null) {
-			start_point = robot.getCoords();
-		}
-		double distance = Tools.getDistanceBetweenPoint(robot.getCoords(), start_point);
-		System.out.println("distance: " + distance);
+		//if (start_point != null && chaseBall()) {
+			if (start_point == null) {
+				start_point = robot.getCoords();
+			}
+			
+			double distance = Tools.getDistanceBetweenPoint(robot.getCoords(), start_point);
+			System.out.println("distance: " + distance);
 
-		if (distance < 20) {
-			//go forward
-			mComm.sendMessage(opcode.operate, (byte)20, (byte)0, (byte) 30);
-		} else if (distance > 30) {
-			mComm.sendMessage(opcode.operate, (byte)0, (byte)0, (byte) 70);
-			setMode(mode.sit);
-			start_point = null;
-		} else {
-			//stop
-			mComm.sendMessage(opcode.operate, (byte)0, (byte)0, (byte) 30);
-		}
+			if (distance < 50) {
+				//go forward
+				mComm.sendMessage(opcode.operate, (byte)40, (byte)0, (byte) 20);
+			} else if (distance > 80) {
+				mComm.sendMessage(opcode.kick);
+				mComm.sendMessage(opcode.operate, (byte)0, (byte)0, (byte) 70);
+				setMode(mode.sit);
+				start_point = null;
+			} else {
+				//stop
+				//mComm.sendMessage(opcode.operate, (byte)0, (byte)0, (byte) 20);
+			}
+		//}
+		
+		
 	}
 
 	/**
@@ -92,7 +104,7 @@ public class AIVisualServoing extends AI {
 	 * WARNING - Doesn't use and prediction to go towards the ball.
 	 * @throws IOException 
 	 */
-	public void chaseBall() throws IOException {
+	public boolean chaseBall() throws IOException {
 		// get direction from robot to ball
 		Vector2D dir = Vector2D.subtract(new Vector2D(worldState.getBallCoords()), new Vector2D(robot.getCoords()));
 		// Keep the turning angle between -180 and 180
@@ -124,8 +136,11 @@ public class AIVisualServoing extends AI {
 		// check whether to go into got_ball mode
 		if (Math.abs(turning_speed) < TURNING_ACCURACY && distance_to_ball < 2+Robot.LENGTH_CM/2) {
 			setMode(mode.sit);
+			return true;
 			//setMode(mode.got_ball);
 		}
+		
+		return false;
 
 	}
 
