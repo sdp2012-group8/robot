@@ -32,6 +32,15 @@ public class Utilities {
 
 	
 	/**
+	 * Convert java.awt.geom.Point2D to java.awt.Point.
+	 * @param pt
+	 * @return
+	 */
+	public static Point pointFromPoint2D(Point2D pt) {
+		return new Point((int)pt.getX(), (int)pt.getY());
+	}
+	
+	/**
      * Rotate point p2 around point p1 by the given angle in degrees.
      * 
      * @param origin Rotation point.

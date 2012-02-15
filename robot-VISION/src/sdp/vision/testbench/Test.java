@@ -166,11 +166,11 @@ public class Test extends Vision {
 		return (int) y;
 	}
 
-	public static void printMarginsOfError( IterativeWorldStateDifferenceAccumulator difference, ArrayList<WorldState> annotations){
+	public static void printMarginsOfError( RecognitionErrorAccumulator difference, ArrayList<WorldState> annotations){
 		//Error details are generated
-		String ballerror = "Average ball error is " + ((float)difference.averageBallError(annotations.size())) + " pixels.";
-		String blueerror = "Average blue robot error is " + ((float)difference.averageBlueError(annotations.size())) + " pixels.";
-		String yellowerror = "Average yellow robot error is " + ((float)difference.averageYellowError(annotations.size())) + " pixels.";
+		String ballerror = "Average ball error is " + ((float)difference.averageBallPosError()) + " pixels.";
+		String blueerror = "Average blue robot error is " + ((float)difference.averageBluePosError()) + " pixels.";
+		String yellowerror = "Average yellow robot error is " + ((float)difference.averageYellowPosError()) + " pixels.";
 
 		//And output to the terminal
 		System.out.println(ballerror);
@@ -196,7 +196,7 @@ public class Test extends Vision {
 			  out.append("\n");
 			  out.append(ballerror+"\n");
 			  index = 0;
-			  for (float error : difference.balllist){
+			  for (double error : difference.getBallPosErrors()){
 				  index++;
 				  out.append(index+": ");
 				  if (error > tolerance){
@@ -208,7 +208,7 @@ public class Test extends Vision {
 
 			  out.append(blueerror+"\n");
 			  index = 0;
-			  for (float error : difference.bluelist){
+			  for (double error : difference.getBluePosErrors()){
 				  index++;
 				  out.append(index+": ");
 				  if (error > tolerance){
@@ -220,7 +220,7 @@ public class Test extends Vision {
 
 			  out.append(yellowerror+"\n");
 			  index = 0;
-			  for (float error : difference.yellowlist){
+			  for (double error : difference.getYellowPosErrors()){
 				  index++;
 				  out.append(index+": ");
 				  if (error > tolerance){
@@ -263,7 +263,7 @@ public class Test extends Vision {
 		}
 
 		//Class that accumulates the difference between WorldStates is initialised.
-		IterativeWorldStateDifferenceAccumulator difference = new IterativeWorldStateDifferenceAccumulator();
+		RecognitionErrorAccumulator difference = new RecognitionErrorAccumulator(config);
 
 		//For each state documented in the XML
 		for (WorldState state : annotations){
@@ -289,7 +289,7 @@ public class Test extends Vision {
 			Thread.sleep(delay);
 
 			//Differences between the WorldStates are calculated
-			difference.iteration(state, visionimage);
+			difference.addRecord(state, visionimage);
 		}
 
 		//Closes display if was open

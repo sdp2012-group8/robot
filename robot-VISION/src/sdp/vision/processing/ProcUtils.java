@@ -5,6 +5,8 @@ import static com.googlecode.javacv.cpp.opencv_core.*;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 
+import sdp.common.Utilities;
+
 import com.googlecode.javacv.cpp.opencv_core.CvPoint;
 
 
@@ -67,7 +69,7 @@ public class ProcUtils {
 	 * 		region of interest.
 	 * @return Frame coordinates.
 	 */
-	public static Point normalToFrameCoordinates(ImageProcessorConfig config,
+	public static Point2D.Double normalToFrameCoordinates(ImageProcessorConfig config,
 			double x, double y, boolean withinROI) {
 		int scaleFactor = config.getFieldWidth();
 		
@@ -78,6 +80,22 @@ public class ProcUtils {
 			x += config.getFieldLowX();
 			y += config.getFieldLowY();
 		}
-		return new Point((int)x, (int)y);
+		return new Point2D.Double(x, y);
+	}
+	
+	/**
+	 * Convert normal coordinates to frame ones (in integers).
+	 * 
+	 * @param config Processor configuration to use as reference.
+	 * @param x X coordinate.
+	 * @param y Y coordinate.
+	 * @param withinROI Whether the given coordinates should be offset to the
+	 * 		region of interest.
+	 * @return Frame coordinates in integers.
+	 */
+	public static Point normalToFrameCoordinatesInt(ImageProcessorConfig config,
+			double x, double y, boolean withinROI) {
+		Point2D.Double frameCoords = normalToFrameCoordinates(config, x, y, withinROI);
+		return Utilities.pointFromPoint2D(frameCoords);
 	}
 }
