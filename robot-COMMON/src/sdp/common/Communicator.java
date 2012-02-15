@@ -36,6 +36,12 @@ public interface Communicator {
 	 */
 	public void sendMessage(opcode op, byte... args) throws IOException;
 	
+	/**
+	 * Registers a message listener
+	 * @param listener
+	 */
+	public void registerListener(MessageListener listener);
+	
 	
 	public void close();
 	

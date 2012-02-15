@@ -61,7 +61,7 @@ public class ManualControl {
 	public ManualControl() {
 		initialize();
 	}
-
+	
 	private Timer btn_W_pressed = null, btn_A_pressed = null, btn_S_pressed = null, btn_D_pressed = null, btn_SPACE_pressed = null, btn_ENTER_pressed = null;
 
 	private int currentspeed = 0;
@@ -87,7 +87,7 @@ public class ManualControl {
 			}
 		});
 		frmManualNxtCommand.getContentPane().setFocusable(true);
-
+		
 		final JButton btnKick = new JButton("KICK");
 		btnKick.setEnabled(false);
 		btnKick.addActionListener(new ActionListener() {
@@ -101,7 +101,7 @@ public class ManualControl {
 		});
 		btnKick.setBounds(12, 75, 117, 25);
 		frmManualNxtCommand.getContentPane().add(btnKick);
-
+		
 		final JButton btnMoveToWall = new JButton("Move to Wall");
 		btnMoveToWall.setEnabled(false);
 		btnMoveToWall.addActionListener(new ActionListener() {
@@ -115,7 +115,7 @@ public class ManualControl {
 		});
 		btnMoveToWall.setBounds(147, 75, 153, 25);
 		frmManualNxtCommand.getContentPane().add(btnMoveToWall);
-
+		
 		final JButton btn_control_on = new JButton("Joypad ON");
 		btn_control_on.setEnabled(false);
 		btn_control_on.addActionListener(new ActionListener() {
@@ -124,24 +124,24 @@ public class ManualControl {
 			}
 		});
 		btn_control_on.setBounds(12, 119, 117, 25);
-
+		
 		final JLabel lblWAS = new JLabel("W A S D Space Enter");
 		lblWAS.setBounds(147, 124, 268, 15);
 		frmManualNxtCommand.getContentPane().add(lblWAS);
-
+		
 		frmManualNxtCommand.getContentPane().addFocusListener(new FocusListener() {
-
+			
 			@Override
 			public void focusLost(FocusEvent arg0) {
 				btn_control_on.setEnabled(true);
 			}
-
+			
 			@Override
 			public void focusGained(FocusEvent arg0) {
 				btn_control_on.setEnabled(false);
 			}
 		});
-
+		
 		frmManualNxtCommand.getContentPane().addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent arg0) {
@@ -249,8 +249,8 @@ public class ManualControl {
 					break;
 				}
 			}
-
-
+			
+			
 			@Override
 			public void keyReleased(KeyEvent e) {
 				switch (e.getKeyCode()) {
@@ -273,7 +273,7 @@ public class ManualControl {
 							btn_W_pressed.cancel();
 							btn_W_pressed = null;
 						}
-
+						
 					}, 60);
 					break;
 				case KeyEvent.VK_LEFT:
@@ -294,7 +294,7 @@ public class ManualControl {
 								e.printStackTrace();
 							}
 						}
-
+						
 					}, 60);
 					break;
 				case KeyEvent.VK_DOWN:
@@ -316,7 +316,7 @@ public class ManualControl {
 							btn_S_pressed.cancel();
 							btn_S_pressed = null;
 						}
-
+						
 					}, 60);
 					break;
 				case KeyEvent.VK_RIGHT:
@@ -337,7 +337,7 @@ public class ManualControl {
 								e.printStackTrace();
 							}
 						}
-
+						
 					}, 60);
 					break;
 				case KeyEvent.VK_SPACE: 
@@ -352,7 +352,7 @@ public class ManualControl {
 							btn_SPACE_pressed.cancel();
 							btn_SPACE_pressed = null;
 						}
-
+						
 					}, 60);
 					break;
 				case KeyEvent.VK_ENTER:
@@ -367,7 +367,7 @@ public class ManualControl {
 							btn_ENTER_pressed.cancel();
 							btn_ENTER_pressed = null;
 						}
-
+						
 					}, 60);
 					break;
 				}
@@ -377,28 +377,28 @@ public class ManualControl {
 		frmManualNxtCommand.setBounds(100, 100, 450, 188);
 		frmManualNxtCommand.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmManualNxtCommand.getContentPane().setLayout(null);
-
+		
 		final JComboBox comboBox = new JComboBox();
 		final opcode[] ops = opcode.values();
 		for (int i = 0; i < ops.length; i++)
 			comboBox.addItem(ops[i]);
 		comboBox.setBounds(12, 9, 166, 24);
 		frmManualNxtCommand.getContentPane().add(comboBox);
-
+		
 		textField = new JTextField();
 		textField.setBounds(190, 12, 246, 19);
 		frmManualNxtCommand.getContentPane().add(textField);
 		textField.setColumns(10);
+		
 
-
-
+		
 		final JButton btnNewButton = new JButton("Send");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				opcode op = ops[comboBox.getSelectedIndex()];
 				if (textField.getText().trim().length() == 0) {
 					try {
-						mComm.sendMessage(op);
+					mComm.sendMessage(op);
 					} catch (Exception e) {
 						System.out.println("Can't send message");
 					} finally {
@@ -411,14 +411,12 @@ public class ManualControl {
 					try {
 						args[i] = (byte) (int) Integer.parseInt(sargs[i].trim());
 					} catch (Exception e) {
-						if (sargs[0] != ""){ //stop error message for commands with no args.
-							System.out.println("Error sending message. Cannot parse argument '"+sargs[i].trim()+"'");
-						}
+						System.out.println("Error sending message. Cannot parse argument '"+sargs[i].trim()+"'");
 						return;
 					}
 				}
 				try {
-					mComm.sendMessage(op, args);
+				mComm.sendMessage(op, args);
 				} catch (Exception e) {
 					System.out.println("Can't send message");
 				} finally {
@@ -429,36 +427,46 @@ public class ManualControl {
 		btnNewButton.setEnabled(false);
 		btnNewButton.setBounds(12, 38, 166, 25);
 		frmManualNxtCommand.getContentPane().add(btnNewButton);
-
+		
 		btnConnect = new JButton("Connect");
 		btnConnect.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				btnConnect.setText("Wait...");
 				btnConnect.setEnabled(false);
-				mComm = new JComm(new MessageListener() {
 
-					@Override
-					public void receiveMessage(opcode op, byte[] args, Communicator controler) {
-						System.out.println("New message "+op+" from BRICK");
+				boolean repeat = true;
+				while (repeat) {
+					try {
+						mComm = new JComm();
+						mComm.registerListener(new MessageListener() {
 
+							@Override
+							public void receiveMessage(opcode op, byte[] args, Communicator controler) {
+								System.out.println("New message "+op+" from BRICK");
+
+							}
+						});
+						repeat = false;
+					} catch (Exception e) {
+						System.out.println("Connection failed. Reattempting...");
 					}
-				});
+				}
 				btnConnect.setText("Ready!");
 				btnNewButton.setEnabled(true);
 				btnKick.setEnabled(true);
 				btnMoveToWall.setEnabled(true);
 				btn_control_on.setEnabled(!frmManualNxtCommand.getContentPane().hasFocus());
-
+				
 			}
 		});
 		btnConnect.setBounds(190, 38, 246, 25);
 		frmManualNxtCommand.getContentPane().add(btnConnect);
-
+		
 		frmManualNxtCommand.getContentPane().add(btn_control_on);
+		
 
-
-
-
+		
+		
 
 	}
 }

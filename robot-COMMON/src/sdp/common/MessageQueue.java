@@ -34,15 +34,18 @@ public class MessageQueue {
 	 */
 	public MessageQueue(Communicator com) {
 		mComm = com;
+		if (com == null)
+			LOGGER.info("TEST MODE: No Communicator supplied. Messages will be instead printed in LOGGER.");
 	}
 	
 	/**
 	 * Adds current message to the message queue.
-	 * @param delay delay in ms to wait after sending previous message
+	 * @param delay delay in s to wait after sending previous message
 	 * @param op the opcode of the message
 	 * @param args the arguments of the message
 	 */
-	public void addMessageToQueue(final long delay, final opcode op, final byte... args) {
+	public void addMessageToQueue(double delay_s, final opcode op, final byte... args) {
+		final long delay = (long) (delay_s*1000);
 		if (mLastMsg == null)
 			mLastMsg = new Date(System.currentTimeMillis()+delay);
 		else
@@ -54,7 +57,9 @@ public class MessageQueue {
 			@Override
 			public void run() {
 				try {
-					mComm.sendMessage(op, args);
+					if (mComm != null)
+						mComm.sendMessage(op, args);
+					LOGGER.info((mComm == null ? "TEST:" : "")+ op+" args"+getHumanReadableArgs(args)+"; delay "+(mLastMsg.getTime()-System.currentTimeMillis())+" ms");
 				} catch (IOException e) {
 					LOGGER.warning("Error sending message "+op+" from queue");
 					e.printStackTrace();
@@ -64,6 +69,7 @@ public class MessageQueue {
 					// if no more tasks left, kill timer so we might be able to free some memory
 					mTimer.cancel();
 					mTimer = null;
+					mLastMsg = null;
 				}
 			}
 		}, mLastMsg);
@@ -86,7 +92,9 @@ public class MessageQueue {
 	 */
 	public void close() {
 		cancelAllMessages();
-		mComm.close();
+		if (mComm != null) {
+			mComm.close();
+		}
 	}
 	
 	/**
@@ -94,6 +102,17 @@ public class MessageQueue {
 	 */
 	public int tasks_pending() {
 		return tasks_pending;
+	}
+	
+	private String getHumanReadableArgs(byte[] args) {
+		if (args.length == 0)
+			return "[∅]";
+		else if (args.length == 1)
+			return "["+args[0]+"]";
+		String ans = "["+args[0];
+		for (int i = 1; i < args.length; i++)
+			ans += ", "+args[i];
+		return ans+"]";
 	}
 
 }
