@@ -1,4 +1,4 @@
-package sdp.vision;
+package sdp.vision.testbench;
 
 import java.awt.Color;
 import java.awt.Graphics;

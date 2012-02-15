@@ -1,4 +1,4 @@
-package sdp.vision;
+package sdp.vision.testbench;
 
 import javax.swing.JFrame;
 import java.awt.image.BufferedImage;
@@ -15,7 +15,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import sdp.common.Robot;
 import sdp.common.WorldState;
-import sdp.vision.Viewer;
+import sdp.vision.Vision;
 import sdp.vision.processing.ImageProcessorConfig;
 import sdp.common.Utilities;
 
