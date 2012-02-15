@@ -134,7 +134,7 @@ public class AIVisualServoing extends AI {
 
 		mComm.sendMessage(opcode.operate, (byte) (forward_speed), (byte) (turning_speed));
 		// check whether to go into got_ball mode
-		if (Math.abs(turning_speed) < TURNING_ACCURACY && distance_to_ball < 5) {
+		if (Math.abs(turning_speed) < TURNING_ACCURACY && distance_to_ball < 2) {
 			setMode(mode.sit);
 			return true;
 			//setMode(mode.got_ball);
