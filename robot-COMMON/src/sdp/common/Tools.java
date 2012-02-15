@@ -570,6 +570,8 @@ public class Tools {
 		for (int i = 0; i < arrays.length; i++)
 			for (int j = 0; j < arrays[i].length; j++) {
 				ans[id] = arrays[i][j];
+				if (ans[id] == Double.NaN)
+					ans[id] = 0;
 				id++;
 			}
 		return ans;

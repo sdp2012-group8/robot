@@ -1,6 +1,9 @@
 package sdp.simulator.neural;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 import org.encog.engine.data.BasicEngineData;
 import org.encog.engine.data.EngineData;
@@ -15,6 +18,7 @@ import sdp.common.Tools;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.common.WorldStateProvider;
+import sdp.common.NNetTools.move_modes;
 import sdp.simulator.VBrick;
 
 /**
@@ -26,18 +30,19 @@ import sdp.simulator.VBrick;
 public class NeuralNetworkTrainingGenerator extends VBrick {
 
 	private NeuralNetwork[] nets = new NeuralNetwork[] {
-			new MultiLayerPerceptron(11, 5, 7, 3),
-			new MultiLayerPerceptron(11, 5, 7, 3)
+			new MultiLayerPerceptron(22, 100, move_modes.values().length)
 	};
-	
-	private final static double network_desired_error = 80;
 	
 	private String fname;
 	
 	/**
 	 * How many iterations to wait until quitting. For every 1000 input points you have this many iterations
 	 */
-	private final static long wait_iter_for_1000_f = 200;
+	private final static long wait_iter_for_1000_f = 100;
+	/**
+	 * Wait for this amount of epochs before doing anything
+	 */
+	private final static long skip_first_n = 5;
 	
 	// how much of the data should be used for testing instead of training
 	private final static double percentage_test = 25;
@@ -46,6 +51,8 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	private TrainingSet<SupervisedTrainingElement>[] tsets = new TrainingSet[nets.length];
 	
 	private BackPropagation[] propagations = new BackPropagation[nets.length];
+	
+	private long lastTime = 0;
 	
 	private WorldStateObserver mObs;
 	private boolean recording = false;
@@ -159,20 +166,17 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 							// outputs normalized to 1
 							//boolean
 							//is_it_kicking = is_kicking;
+							double dt =(System.currentTimeMillis()-lastTime)/1000d;
 							// create training set
-							int spd_test = desired_speed == 0 ? 1 : (desired_speed > 0 ? 2 : 0);
-							int trn_test = desired_turning_speed == 0 ? 1 : (desired_turning_speed > 0 ? 2 : 0);
 							tsets[0].addElement(new SupervisedTrainingElement(
-									NNetTools.generateAIinput(worldState, am_i_blue, my_goal_left, 0),
-									NNetTools.generateOutput(spd_test, 3)));
-							tsets[1].addElement(new SupervisedTrainingElement(
-									NNetTools.generateAIinput(worldState, am_i_blue, my_goal_left, 1),
-									NNetTools.generateOutput(trn_test, 3)));
+									NNetTools.generateAIinput(worldState, oldWorldState, dt, am_i_blue, my_goal_left, 0),
+									NNetTools.generateOutput(NNetTools.getMode(desired_speed, desired_turning_speed))));
 							frames++;
 							if (frames % 100 == 0)
 								System.out.println(frames+" frames recorded last - "+frames+" and "+desired_speed);
 						}
 						oldWorldState = worldState;
+						lastTime = System.currentTimeMillis();
 					}
 				}	
 				System.out.println("Recording stopped. Total of "+frames+" frames are ready for saving.");
@@ -183,14 +187,21 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	
 	@SuppressWarnings("unchecked")
 	public void loadTSets() {
+		// randomize networks
+		if (new File(fname+"/nn"+0+".nnet").exists()) {
+			System.out.println("Networks have been previously initialized! Delete the network files and restart! Aborting!");
+			return;
+		}
 		for (int i = 0; i < tsets.length; i++)
 			tsets[i] = TrainingSet.load(fname+"/ts"+i+".tset");
 		for (int i = 0; i < tsets.length; i++)
 			if (tsets[i] == null) {
-				System.out.println("Error loading training sets from file.");
+				System.out.println("Error loading training set "+i+" from file. Aborting.");
 				return;
-			}
-		System.out.println("Training sets loaded from file.");
+			} else
+				System.out.println("Set "+i+" ("+tsets[i].getInputSize()+"x"+tsets[i].getIdealSize()+")["+tsets[i].size()+"] loaded from file.");
+		frames = tsets[0].size();
+		System.out.println("Successfully done.");
 	}
 	
 	/**
@@ -236,33 +247,51 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 			tsets[i].clear();
 			tsets[i] = null;
 		}
+		
+		System.out.println("Training 0 size: "+training[0].size()+"; Test size: "+testing[0].size());
+
 		// start learning
 		saving = true;
 		new Thread() {
 			@Override
 			public void run() {
+				final OutputStreamWriter[] writers = new OutputStreamWriter[tsets.length];
+				for (int i = 0; i < writers.length; i++) {		
+					try {
+						FileOutputStream fos = new FileOutputStream(fname+"/acc_report"+i+".csv"); 
+						writers[i] = new OutputStreamWriter(fos, "UTF-8");
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
 				for (int i = 0; i < tsets.length; i++) {
 						skip = false;
 						int outputs = nets[i].getOutputNeurons().size();
 						int frames = training[i].size();
 						double accuracy = 0;
-						System.out.println("Learning network "+(i+1)+"/"+nets.length);					
+										
 						long elapsed = 0;
 						double max_per = 0;
 						int max_iters = (int) wait_iter_for_1000_f*frames/1000;
 						if (max_iters < wait_iter_for_1000_f)
 							max_iters = (int) wait_iter_for_1000_f;
+						System.out.println("Learning network "+(i+1)+"/"+nets.length+" max waiting time after max "+max_iters);	
 						int total = 0;
 						while (!skip) {
 							total++;
 							elapsed++;
 							propagations[i].doLearningEpoch(training[i]);
 							accuracy = testAccuracy(nets[i], testing[i]);
-							if (accuracy > max_per) {
-								System.out.println("Max accuracy reached: "+String.format("%.2f", accuracy)+"% (on iteration "+total+"). Wait for improvement in the next "+max_iters+" iterations...");
+							if (accuracy > max_per && total > skip_first_n) {
+								System.out.print(String.format("%.2f", accuracy)+"% ("+total+");");
 								max_per = accuracy;
 								nets[i].save(fname+"/nn"+i+".nnet");
 								elapsed = 0;
+							}
+							try {
+								writers[i].append(accuracy+"\n");
+							} catch (IOException e) {
+								e.printStackTrace();
 							}
 							// if you tried enough without improvement
 							if (elapsed > max_iters)
@@ -271,10 +300,10 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 						nets[i] = NeuralNetwork.load(fname+"/nn"+i+".nnet");
 						accuracy = testAccuracy(nets[i], testing[i]);
 						double err_n = 100-100*Math.abs(100d/outputs-accuracy)/(100d - 100d/outputs);
+						System.out.println();
 						if (skip)
 							System.out.println("User stopped training. Skipping to next network if any.");
-						if (accuracy < network_desired_error)
-							System.out.println("Network trained. Accuracy "+String.format("%.2f", accuracy)+"% (stat err: "+String.format("%.2f", err_n)+"%)");
+						System.out.println("Network trained. Accuracy "+String.format("%.2f", accuracy)+"% (stat err: "+String.format("%.2f", err_n)+"%)");
 						
 						testing[i].clear();
 						testing[i] = null;
@@ -283,6 +312,13 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 						System.out.println("Saved");
 					}
 				saving = false;
+				for (int i = 0; i < writers.length; i++)
+					try {
+						writers[i].flush();
+						writers[i].close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 			}
 		}.start();
 
@@ -299,8 +335,8 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 			net.setInput(input);
 			net.calculate();
 			double[] noutput = net.getOutput();
-			int out1 = NNetTools.recoverOutput(noutput);
-			int out2 = NNetTools.recoverOutput(output);
+			int out1 = NNetTools.recoverOutputInt(noutput);
+			int out2 = NNetTools.recoverOutputInt(output);
 			if (out1 != -1)
 				accuracy += out1  == out2 ? 100d/sisze : 0;
 		}
