@@ -37,12 +37,15 @@ public abstract class AI extends WorldStateProvider {
 
 	protected final static double ROBOT_ACC_CM_S_S = 69.8; // 1000 degrees/s/s
 	protected final static int MAX_SPEED_CM_S = 50; // 50 cm per second
+	protected final static int MAX_TURNING_SPEED = 70;
 
 	protected boolean my_goal_left = true;
 	private WorldStateObserver mObs;
 	private Thread mVisionThread;
 	private MessageQueue mQueue = null;
 	protected Communicator mComm = null;
+	
+	private WorldState old_ws = null;
 
 	Goal enemy_goal = new Goal(new Point2D.Double(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM));
 
@@ -56,6 +59,9 @@ public abstract class AI extends WorldStateProvider {
 	// don't use values less then 1!
 	private int filteredPositionAmount = 6;
 	private int filteredAngleAmount = 2;
+	
+	//flags
+	private boolean f_ball_on_field = true;
 
 	protected Robot robot;
 	protected Robot enemy_robot;
@@ -103,14 +109,17 @@ public abstract class AI extends WorldStateProvider {
 				while (!isInterrupted()) {
 					WorldState state = Tools.toCentimeters(mObs.getNextState());
 					// do low pass filtering
+					if (worldState != null)
+						old_ws = new WorldState(worldState.getBallCoords(), worldState.getBlueRobot(), worldState.getYellowRobot(), worldState.getWorldImage());
 					if (worldState == null)
 						worldState = state;
 					else
 						worldState = new WorldState(
-								lowPass(worldState.getBallCoords(), state.getBallCoords()),
+								lowPass(checkBall(state.getBallCoords()), worldState.getBallCoords()),
 								lowPass(worldState.getBlueRobot(), state.getBlueRobot()),
 								lowPass(worldState.getYellowRobot(), state.getYellowRobot()),
 								state.getWorldImage());
+
 					if (my_team_blue) {
 						robot = worldState.getBlueRobot();
 						enemy_robot = worldState.getYellowRobot();
@@ -118,13 +127,18 @@ public abstract class AI extends WorldStateProvider {
 						robot = worldState.getYellowRobot();
 						enemy_robot = worldState.getBlueRobot();
 					}
-						
+					
+					// check and set flags
+					if (worldState.getBallCoords() == new Point2D.Double(-1,-1)) {
+						f_ball_on_field = false;
+					}
+					
 					// pass coordinates to decision making logic
 
 					setChanged();
 					notifyObservers(worldState);
 					worldChanged();
-
+					
 				}
 			}
 		};
@@ -188,6 +202,18 @@ public abstract class AI extends WorldStateProvider {
 		return lowPass(old_value, new_value, filteredAngleAmount);
 	}
 
+	/**
+	 * Fix ball going offscreen
+	 * @param new_coords
+	 * @return
+	 */
+	private Point2D.Double checkBall(Point2D.Double new_coords) {
+		if (new_coords.getX() == -244d && new_coords.getY() == -244d)
+			return old_ws.getBallCoords();
+		else
+			return new_coords;
+	}
+	
 	/**
 	 * Low pass on position
 	 * @param old_value

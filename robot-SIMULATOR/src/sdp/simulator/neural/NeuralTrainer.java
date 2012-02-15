@@ -300,15 +300,16 @@ public class NeuralTrainer {
 					trainer.Save();
 			}
 		});
-		btnSave.setBounds(662, 405, 117, 25);
+		btnSave.setBounds(662, 369, 117, 25);
 		frame.getContentPane().add(btnSave);
 		
 		combo_AI = new JComboBox();
 		combo_AI.setModel(new DefaultComboBoxModel(new String[] {"VisualServoing", "NeuralNetwork"}));
 		combo_AI.setBounds(662, 263, 117, 24);
+		combo_AI.setSelectedIndex(1);
 		frame.getContentPane().add(combo_AI);
 		
-		JButton btnStopLearning = new JButton("Stop lning");
+		JButton btnStopLearning = new JButton("Stop learning");
 		btnStopLearning.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (trainer == null)
@@ -319,7 +320,7 @@ public class NeuralTrainer {
 					System.out.println("You must have training data ready and the system must be learning in order to stop it.");
 			}
 		});
-		btnStopLearning.setBounds(662, 369, 117, 25);
+		btnStopLearning.setBounds(307, 410, 117, 25);
 		frame.getContentPane().add(btnStopLearning);
 		
 		JButton btnCamera = new JButton("Camera");
@@ -399,6 +400,15 @@ public class NeuralTrainer {
 			comboBox.addItem(AI.mode.values()[i]);
 		comboBox.setSelectedIndex(1);
 		frame.getContentPane().add(comboBox);
+		
+		JButton btnLoadTrainingSets = new JButton("Load training sets");
+		btnLoadTrainingSets.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				trainer.loadTSets();
+			}
+		});
+		btnLoadTrainingSets.setBounds(434, 411, 129, 23);
+		frame.getContentPane().add(btnLoadTrainingSets);
 		
 	}
 	
@@ -561,6 +571,7 @@ public class NeuralTrainer {
 				System.out.println("ERROR: CURRENT SPEED OVERFLOW!!! = "+speed);
 			if (turn_speed > 128 || turn_speed < -127)
 				System.out.println("ERROR: TURN SPEED OVERFLOW!!! = "+turn_speed);
+			
 			mComm.sendMessage(opcode.operate, (byte) speed, (byte) turn_speed);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -591,8 +602,8 @@ public class NeuralTrainer {
 					ballpos = new Vector2D(
 							(7.5 + r.nextDouble()*(Tools.PITCH_WIDTH_CM-30))/Tools.PITCH_WIDTH_CM,
 							(7.5 + r.nextDouble()*(Tools.PITCH_HEIGHT_CM-30))/Tools.PITCH_WIDTH_CM);
-					if (Vector2D.subtract(robot1, ballpos).getLength() > 35/Tools.PITCH_WIDTH_CM &&
-							Vector2D.subtract(robot1, ballpos).getLength() > 35/Tools.PITCH_WIDTH_CM &&
+					if (Vector2D.subtract(robot1, ballpos).getLength() > 45/Tools.PITCH_WIDTH_CM &&
+							Vector2D.subtract(robot1, ballpos).getLength() > 45/Tools.PITCH_WIDTH_CM &&
 							mSim.isInsideRobot(ballpos.getX()/Tools.PITCH_WIDTH_CM, ballpos.getY()/Tools.PITCH_WIDTH_CM) == -1)
 						break;
 				}

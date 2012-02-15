@@ -20,6 +20,11 @@ public final class Robot {
 	/** Width of the robot's top plate in normalised coordinates. */
 	public static final double WIDTH = WIDTH_CM / 244d;
 	
+	public static final Vector2D local_front_left_CM = new Vector2D(LENGTH_CM / 2, WIDTH_CM / 2);
+	public static final Vector2D local_front_right_CM = new Vector2D(LENGTH_CM / 2, -WIDTH_CM / 2);
+	public static final Vector2D local_back_left_CM = new Vector2D(-LENGTH_CM / 2, WIDTH_CM / 2);
+	public static final Vector2D local_back_right_CM = new Vector2D(-LENGTH_CM / 2, -WIDTH_CM / 2);
+	
 
 	/** Coordinates of the robot's centre on the field. */
 	private Point2D.Double coords;
@@ -69,23 +74,22 @@ public final class Robot {
 	 * @param cm Are coordinates in cm?
 	 */
 	public final void setCoords(Point2D.Double coords, double angle, boolean cm) {
-		double angle_rad = Math.toDegrees(angle);
 		this.coords = coords;
 		this.angle = angle;
-		
+		//System.out.println("Robot init angle: " + angle);
 		double length = cm ? LENGTH_CM : LENGTH;
 		double width = cm ? WIDTH_CM : WIDTH;
 		
-		frontLeftPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, width / 2), angle_rad);
+		frontLeftPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, width / 2), angle);
 		Utilities.translatePoint(frontLeftPoint, coords);
 		
-		frontRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, -width / 2), angle_rad);
+		frontRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, -width / 2), angle);
 		Utilities.translatePoint(frontRightPoint, coords);
 		
-		backLeftPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, width / 2), angle_rad);
+		backLeftPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, width / 2), angle);
 		Utilities.translatePoint(backLeftPoint, coords);
 		
-		backRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, -width / 2), angle_rad);
+		backRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, -width / 2), angle);
 		Utilities.translatePoint(backRightPoint, coords);
 	}
 	

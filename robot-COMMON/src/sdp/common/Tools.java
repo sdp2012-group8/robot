@@ -306,14 +306,16 @@ public class Tools {
 	public static Vector2D getNearestCollisionPointFromMyPerspective(Robot me, Point2D.Double my_pos, WorldState worldState, boolean am_i_blue) {
 		return getLocalVector(me, Vector2D.add(new Vector2D(my_pos), Tools.getNearestCollisionPoint(worldState, am_i_blue, new Vector2D(my_pos))));
 	}
+
 	
 	/**
 	 * Starting from origin in the given direction, find the first point of collision in the scene
 	 * @param origin the start of the vector
 	 * @param direction size doesn't matter, only the angle is relevant
+	 * @param ignore_blue true to ignore blue robot, false to ignore yellow, null to include both
 	 * @return a {@link Vector2D} in the same direction as direction but with greater length (distance from origin to the nearest collision point, raytraced along direction's direction)
 	 */
-	public static Vector2D raytraceVector(WorldState ws, Vector2D origin, Vector2D direction) {
+	public static Vector2D raytraceVector(WorldState ws, Vector2D origin, Vector2D direction, Boolean ignore_blue) {
 		Vector2D near;
 		Vector2D temp = vectorLineIntersection(origin, direction, new Vector2D(0, 0), new Vector2D(PITCH_WIDTH_CM, 0));
 		near = temp;
@@ -328,6 +330,8 @@ public class Tools {
 			near = temp;
 		// collision with a Robot
 		for (int i = 0; i <= 1; i++) {
+			if (ignore_blue != null && ((ignore_blue ? 0 : 1) == i))
+				continue;
 			Robot robot = i == 0 ? ws.getBlueRobot() : ws.getYellowRobot();
 			temp = vectorLineIntersection(origin, direction, new Vector2D(robot.getFrontLeft()), new Vector2D(robot.getFrontRight()));
 			if (temp != null && (near == null || temp.getLength() < near.getLength()))
@@ -348,7 +352,6 @@ public class Tools {
 				Vector2D.change_length(direction, PITCH_WIDTH_CM);
 	}
 	
-	
 	/**
 	 * Raytrace vector with relation to a robot
 	 * @param ws
@@ -358,9 +361,23 @@ public class Tools {
 	 * @return same output as {@link #raytraceVector(WorldState, Vector2D, Vector2D)} - in table coordinates
 	 */
 	public static Vector2D raytraceVector(WorldState ws, Robot robot, Vector2D local_origin, Vector2D local_direction) {
+		return raytraceVector(ws, robot, local_origin, local_direction, null);
+	}
+	
+	
+	/**
+	 * Raytrace vector with relation to a robot
+	 * @param ws
+	 * @param robot
+	 * @param local_origin In robot's coordinate system. Make sure it is outside robot to avoid false readings!
+	 * @param local_direction In robot's coordinate system
+	 * @param am_i_blue if true, ignores blue if false ignores yellow. To include all robots, use {@link #raytraceVector(WorldState, Robot, Vector2D, Vector2D)}
+	 * @return same output as {@link #raytraceVector(WorldState, Vector2D, Vector2D)} - in table coordinates
+	 */
+	public static Vector2D raytraceVector(WorldState ws, Robot robot, Vector2D local_origin, Vector2D local_direction,  Boolean am_i_blue) {
 		Vector2D origin = Tools.getGlobalVector(robot, local_origin);
 		Vector2D direction = Vector2D.subtract(origin, Tools.getGlobalVector(robot, local_direction));
-		return raytraceVector(ws, origin, direction);
+		return raytraceVector(ws, origin, direction, am_i_blue);
 	}
 	
 	/**
@@ -415,13 +432,13 @@ public class Tools {
 	 */
 	public static String printArray(Object[] array) {
 		if (array == null || array.length == 0)
-			return "[\tEMPTY\t]";
+			return "[EMPTY]";
 		if (array.length == 1)
-			return "[\t"+array[0]+"\t]";
+			return "["+array[0]+"]";
 		String ans = "["+array[0];
 		for (int i = 1; i < array.length; i++)
 			ans=ans+"\t"+array[i];
-		return ans+"\t]";
+		return ans+"]";
 	}
 	
 	/**
@@ -537,5 +554,26 @@ public class Tools {
 		double yi = ((c.y-d.y)*(a.x*b.y-a.y*b.x)-(a.y-b.y)*(c.x*d.y-c.y*d.x))/D;
 
 		return new Point2D.Double(xi,yi);
+	}
+	
+	/**
+	 * Join given arrays into one in the given order
+	 * @param arrays
+	 * @return
+	 */
+	public static double[] concat(double[]...arrays) {
+		int sum = 0;
+		for (int i = 0; i < arrays.length; i++)
+			sum += arrays[i].length;
+		double[] ans = new double[sum];
+		int id = 0;
+		for (int i = 0; i < arrays.length; i++)
+			for (int j = 0; j < arrays[i].length; j++) {
+				ans[id] = arrays[i][j];
+				if (ans[id] == Double.NaN)
+					ans[id] = 0;
+				id++;
+			}
+		return ans;
 	}
 }

@@ -203,16 +203,16 @@ public class SimTesterGUI {
 		frmAlphaTeamSimulator.getContentPane().add(btnConnect);
 		
 		
-		final JComboBox comboBox = new JComboBox();
-		comboBox.setBounds(662, 342, 117, 24);
+		final JComboBox comboAI = new JComboBox();
+		comboAI.setBounds(662, 342, 117, 24);
 		for (int i = 0; i < AI.mode.values().length; i++)
-			comboBox.addItem(AI.mode.values()[i]);
-		frmAlphaTeamSimulator.getContentPane().add(comboBox);
+			comboAI.addItem(AI.mode.values()[i]);
+		frmAlphaTeamSimulator.getContentPane().add(comboAI);
 		
 		JButton btnChaseBall = new JButton("Change State");
 		btnChaseBall.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				mAI.setMode(mode.values()[comboBox.getSelectedIndex()]);
+				mAI.setMode(mode.values()[comboAI.getSelectedIndex()]);
 			}
 		});
 		btnChaseBall.setBounds(662, 378, 117, 25);

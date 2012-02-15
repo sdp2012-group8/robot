@@ -190,8 +190,13 @@ public class Brick {
 				case kick:
 					Motor.B.setSpeed(Motor.B.getMaxSpeed());
 					Motor.B.setAcceleration(100000);
+					Motor.B.rotate(10);
+					try {
+						Thread.sleep(10);
+					} catch (InterruptedException e) {
+					}
 					Motor.B.rotate(-80);
-					Motor.B.rotate(80);
+					Motor.B.rotate(70);
 					Motor.B.stop();
 >>>>>>> b96687b875cf2d04bb4f5823a5b6b7b6fd42ea74
 					break;
@@ -225,6 +230,28 @@ public class Brick {
 >>>>>>> b96687b875cf2d04bb4f5823a5b6b7b6fd42ea74
 					break;
 
+				case rotate_kicker_stop:
+					if (args.length > 0) {
+						Motor.B.setSpeed(slowest);
+						Motor.B.setAcceleration(100000);
+						Motor.B.rotate(args[0]);
+					}
+					Motor.B.stop();
+					break;
+					
+				case rotate_kicker_lock:
+					if (args.length > 0) {
+						Motor.B.setSpeed(slowest);
+						Motor.B.setAcceleration(100000);
+						Motor.B.rotate(args[0]);
+					}
+					Motor.B.lock(100);
+					break;
+					
+				case float_motor:
+					Motor.B.flt();
+					break;	
+					
 				case move_to_wall:
 					UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
 					sens.continuous();
@@ -262,7 +289,7 @@ public class Brick {
 						// to degrees per second for the motor
 						float conv_angle = 0;
 						if (args.length > 1) conv_angle = args[1]*ROBOTR/WHEELR;
-						float speed_angle = (args[0]*10)/(0.017453292519943295f*WHEELR); // Radius*Pi*Angle/180
+						float speed_angle = args[0]/(0.017453292519943295f*WHEELR); // Radius*Pi*Angle/180
 						// set desired speed
 						speed_a = speed_angle+conv_angle;
 						speed_c = speed_angle-conv_angle;
@@ -273,7 +300,7 @@ public class Brick {
 						// check if we need to start motors or turn their direction
 						if (args.length > 2) {
 							//change acceleration
-							acceleration = args[2]*10;
+							acceleration = args[2];
 							acc = (int) (acceleration/(0.017453292519943295*WHEELR));
 							turn_acceleration = acc*WHEELR/ROBOTR;
 						}
