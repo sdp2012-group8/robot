@@ -9,7 +9,7 @@ import sdp.vision.processing.ImageProcessorConfig;
 
 import sdp.common.WorldState;
 
-public class Viewer extends Panel{
+public class TestBenchViewer extends Panel{
 	/**
 	 * 
 	 */
@@ -17,7 +17,7 @@ public class Viewer extends Panel{
 	BufferedImage image;
 	WorldState manstate, visstate;
 	ImageProcessorConfig config = new ImageProcessorConfig();
-	public Viewer(BufferedImage animage, WorldState astate, WorldState bstate){
+	public TestBenchViewer(BufferedImage animage, WorldState astate, WorldState bstate){
 		image = animage;
 		manstate = astate;
 		visstate = bstate;

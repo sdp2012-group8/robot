@@ -19,7 +19,7 @@ import sdp.vision.Vision;
 import sdp.vision.processing.ImageProcessorConfig;
 import sdp.common.Utilities;
 
-public class Test extends Vision {
+public class TestBench extends Vision {
 	//Configuration used to convert between relative coordinates and Pixel-Range coordinates
 	static ImageProcessorConfig config = new ImageProcessorConfig();
 	static ArrayList<String> filelist = new ArrayList<String>();
@@ -241,20 +241,20 @@ public class Test extends Vision {
 	public static void main(String[] args) throws InterruptedException{
 
 		//Test constructor for methods
-		Test test =new Test();
+		TestBench test =new TestBench();
 
 		//delay in ms between slides being shown.
-		int delay = 0;
+		int delay = 1000;
 
 		//if visual output should be shown when iterating
-		boolean visoutput = false;
+		boolean visoutput = true;
 
 		//The xml file (currently hard coded location) is parsed by the above voodoo and stored in an ArrayList<WorldState>
 		ArrayList<WorldState> annotations = getWorldStateFromDocument(getDocumentFromXML("xml/imagedata.xml"));
 
 		//Init display if showing output
 		JFrame frame = null;
-		Viewer base = new Viewer(null, null, null);
+		TestBenchViewer base = new TestBenchViewer(null, null, null);
 		if (visoutput){
 			frame = new JFrame("Image Display");
 			frame.setSize(640,480);
