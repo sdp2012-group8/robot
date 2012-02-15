@@ -112,7 +112,7 @@ public class AIVisualServoing extends AI {
 		// calculates speed formula:
 		// speed_when_robot_next_to_ball+(distance_to_ball/max_distance)*speed_when_over_max_distance
 		// every distance between 0 and max_distance will be mapped between speed_when_robot_next_to_ball and speed_when_over_max_distance
-		double forward_speed = 0+(distance_to_ball/40)*25;
+		double forward_speed = 5+(distance_to_ball/40)*25;
 
 		System.out.println("I'm in chase ball :), turning speed : " + turning_speed);
 		// do the backwards turn

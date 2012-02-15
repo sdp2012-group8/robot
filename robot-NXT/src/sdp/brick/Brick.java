@@ -6,10 +6,9 @@ import sdp.common.Communicator;
 import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 
-<<<<<<< HEAD
+
 import lejos.nxt.Battery;
-=======
->>>>>>> b96687b875cf2d04bb4f5823a5b6b7b6fd42ea74
+
 import lejos.nxt.LCD;
 import lejos.nxt.Motor;
 import lejos.nxt.NXT;
@@ -44,7 +43,7 @@ public class Brick {
 			// for joypad
 			private float speed_a = 0;
 			private float speed_c = 0;
-			
+
 			// for conversions
 			private int acc = 1000; // acc in degrees/s/s
 			private double acceleration = acc*0.017453292519943295*WHEELR;//69.8;
@@ -54,8 +53,6 @@ public class Brick {
 
 			public static final float ROBOTR = 7.1F;
 			public static final float WHEELR = 4F;
-			int lastCountA = 0;
-			int lastCountC = 0;
 			float slowest = Motor.A.getMaxSpeed() > Motor.B.getMaxSpeed() ? Motor.B.getMaxSpeed()-10 : Motor.A.getMaxSpeed()-10;
 
 			/**
@@ -88,157 +85,24 @@ public class Brick {
 					NXT.shutDown();
 					break;
 
-				case move:
-<<<<<<< HEAD
-					try {
-						max = Battery.getVoltage()*100;
-						Motor.A.setSpeed(max+args[2]);
-						Motor.C.setSpeed(max+args[3]);
-=======
-					if (args.length > 0) {					
-						Motor.A.setSpeed(slowest);
-						Motor.C.setSpeed(slowest);
->>>>>>> b96687b875cf2d04bb4f5823a5b6b7b6fd42ea74
-						Motor.A.setAcceleration(args[1]*100);
-						Motor.C.setAcceleration(args[1]*100);
-						Motor.A.forward();
-						Motor.C.forward();
-<<<<<<< HEAD
-					} catch (Exception e){
-						LCD.drawString("Command Error: Check Args", 2, 2);
-					}
-					try {
-						Thread.sleep(args[0]*1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-=======
-						try {
-							Thread.sleep(args[0]*500);
-							LCD.drawString("M-A: " + (Motor.A.getTachoCount()-lastCountA), 2, 3);
-							LCD.drawString("M-C: " + (Motor.C.getTachoCount()-lastCountC), 2, 4);
-							lastCountA = Motor.A.getTachoCount();
-							lastCountC = Motor.C.getTachoCount();
-							Thread.sleep(args[0]*500);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-						Motor.A.setSpeed(0);
-						Motor.C.setSpeed(0);
-						Motor.C.stop();
-						Motor.A.stop();
->>>>>>> b96687b875cf2d04bb4f5823a5b6b7b6fd42ea74
-					}
-					break;
-
-				case moveback:
-<<<<<<< HEAD
-					try {
-						max = Battery.getVoltage()*100;
-						Motor.A.setSpeed(max);
-						Motor.C.setSpeed(max);
-						Motor.A.setAcceleration(args[1]*100);
-						Motor.C.setAcceleration(args[1]*100);
-						Motor.A.backward();
-						Motor.C.backward();
-					} catch (Exception e){
-						LCD.drawString("Command Error: Check Args", 2, 2);
-					}
-					try {
-						Thread.sleep(args[0]*1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-=======
-					if (args.length > 0) {
-						Motor.A.setSpeed(slowest);
-						Motor.C.setSpeed(slowest);
-						Motor.A.backward();
-						Motor.C.backward();
-
-						try {
-							Thread.sleep(args[0]*1000);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-						Motor.C.setSpeed(0);
-						Motor.A.setSpeed(0);
-						Motor.C.stop();
-						Motor.A.stop();
->>>>>>> b96687b875cf2d04bb4f5823a5b6b7b6fd42ea74
-					}
-					break;
-<<<<<<< HEAD
-					
-				case moveangle:
-					
-						Motor.A.rotate(args[0], true);
-						Motor.C.rotate(args[0], true);
-					try {
-						Thread.sleep(args[0]*1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					break;	
 				case kick:
-						max = Battery.getVoltage()*100;
-						Motor.B.setSpeed(max);
-						Motor.B.setAcceleration(100000);
-						Motor.B.rotate(-70);
-						Motor.B.rotate(70);
-						Motor.B.stop();
-=======
-
-				case kick:
-					Motor.B.setSpeed(Motor.B.getMaxSpeed());
+					max = Battery.getVoltage()*100;
+					Motor.B.setSpeed(max);
 					Motor.B.setAcceleration(100000);
-					Motor.B.rotate(10);
-					try {
-						Thread.sleep(10);
-					} catch (InterruptedException e) {
-					}
-					Motor.B.rotate(-80);
+					Motor.B.rotate(-70);
 					Motor.B.rotate(70);
 					Motor.B.stop();
->>>>>>> b96687b875cf2d04bb4f5823a5b6b7b6fd42ea74
-					break;
-
-				case turn:
-					if (args.length > 0) {
-						int a =(int) ((args[0]*ROBOTR)/WHEELR);
-						Motor.A.setSpeed(360);
-						Motor.C.setSpeed(360);
-						Motor.A.rotate(a, true);
-						Motor.C.rotate(-a, true);
-					}
 
 					break;
 
 				case rotate_kicker:
-<<<<<<< HEAD
-						max = Battery.getVoltage()*100;
-						Motor.B.setSpeed(max);
-						Motor.B.setAcceleration(100000);
-						Motor.B.rotate(args[0]);
-					break;
-				default:
-					LCD.drawString("Unknown Command", 2, 2);
-=======
 					if (args.length > 0) {
 						Motor.B.setSpeed(slowest);
 						Motor.B.setAcceleration(100000);
 						Motor.B.rotate(args[0]);
 					}
->>>>>>> b96687b875cf2d04bb4f5823a5b6b7b6fd42ea74
 					break;
 
-				case rotate_kicker_stop:
-					if (args.length > 0) {
-						Motor.B.setSpeed(slowest);
-						Motor.B.setAcceleration(100000);
-						Motor.B.rotate(args[0]);
-					}
-					Motor.B.stop();
-					break;
-					
 				case rotate_kicker_lock:
 					if (args.length > 0) {
 						Motor.B.setSpeed(slowest);
@@ -247,11 +111,11 @@ public class Brick {
 					}
 					Motor.B.lock(100);
 					break;
-					
+
 				case float_motor:
 					Motor.B.flt();
 					break;	
-					
+
 				case move_to_wall:
 					UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
 					sens.continuous();
@@ -296,7 +160,7 @@ public class Brick {
 						// change speed according to turning
 						Motor.A.setSpeed(Math.abs(speed_a));
 						Motor.C.setSpeed(Math.abs(speed_c));
-						
+
 						// check if we need to start motors or turn their direction
 						if (args.length > 2) {
 							//change acceleration
