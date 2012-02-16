@@ -316,6 +316,8 @@ public class Tools {
 	 * @return a {@link Vector2D} in the same direction as direction but with greater length (distance from origin to the nearest collision point, raytraced along direction's direction)
 	 */
 	public static Vector2D raytraceVector(WorldState ws, Vector2D origin, Vector2D direction, Boolean ignore_blue) {
+		if (origin.getX() <= 0 || origin.getY() <= 0 || origin.getX() >= PITCH_WIDTH_CM || origin.getY() >= PITCH_HEIGHT_CM)
+			return Vector2D.ZERO();
 		Vector2D near;
 		Vector2D temp = vectorLineIntersection(origin, direction, new Vector2D(0, 0), new Vector2D(PITCH_WIDTH_CM, 0));
 		near = temp;

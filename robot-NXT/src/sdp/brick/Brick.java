@@ -1,6 +1,7 @@
 package sdp.brick;
 
 import java.io.File;
+import java.util.Collection;
 
 import sdp.common.Communicator;
 import sdp.common.MessageListener;
@@ -24,9 +25,15 @@ import lejos.nxt.UltrasonicSensor;
  */
 public class Brick {
 
+	private static final int coll_threshold = 30; // cm
+	private static final int back_speed = -10; // cm per sec
+	private static final int angle_threshold = 5; // degrees per sec
+	private static final int turning_boost = 20; // degrees per sec
 
 
 	private static Communicator mCont;
+	private static UltrasonicSensor sens;
+	private static boolean collision = false;
 
 	/**
 	 * The entry point of the program
@@ -34,6 +41,16 @@ public class Brick {
 	 */
 	public static void main(String[] args) {
 		// connect with PC and start receiving messages
+		sens = new UltrasonicSensor(SensorPort.S1);
+		sens.continuous();
+		new Thread() {
+			public void run() {
+				while (true) {
+					int dist = sens.getDistance();
+					collision = dist < coll_threshold;
+				}
+			};
+		}.start();
 		mCont = new BComm();
 		mCont.registerListener(new MessageListener() {
 
@@ -80,6 +97,7 @@ public class Brick {
 				case exit:
 					mCont.close();
 					Sound.setVolume(def_vol);
+					sens.off();
 					NXT.shutDown();
 					break;
 
@@ -182,8 +200,6 @@ public class Brick {
 					break;	
 					
 				case move_to_wall:
-					UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
-					sens.continuous();
 					Motor.A.setSpeed(slowest);
 					Motor.C.setSpeed(slowest);
 					Motor.A.setAcceleration(1000);
@@ -204,7 +220,7 @@ public class Brick {
 					Motor.C.setSpeed(0);
 					Motor.C.stop();
 					Motor.A.stop();
-					sens.off();
+					
 					break;
 
 				case operate:
@@ -212,6 +228,11 @@ public class Brick {
 					// args[1] - turning speed in degrees per second around centre of robot
 					// args[2] - acceleration in cm/s/s
 					if (args.length > 0) {
+						// collision detection
+						if (collision && Math.abs(args[1]) >= angle_threshold) {
+							args[0] = back_speed;
+							args[1] += args[1] > 0 ? turning_boost : -turning_boost;
+						}
 						float old_a = speed_a;
 						float old_c = speed_c;
 						// convert the degrees per second around robot

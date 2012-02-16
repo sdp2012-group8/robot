@@ -1,7 +1,6 @@
 package sdp.AI;
 
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,8 +35,8 @@ public abstract class AI extends WorldStateProvider {
 	protected final static double TURNING_ACCURACY = 10;
 
 	protected final static double ROBOT_ACC_CM_S_S = 69.8; // 1000 degrees/s/s
-	protected final static int MAX_SPEED_CM_S = 50; // 50 cm per second
-	protected final static int MAX_TURNING_SPEED = 70;
+	protected final static int MAX_SPEED_CM_S = 30; // 50 cm per second
+	protected final static int MAX_TURNING_SPEED = 50;
 
 	protected boolean my_goal_left = true;
 	private WorldStateObserver mObs;

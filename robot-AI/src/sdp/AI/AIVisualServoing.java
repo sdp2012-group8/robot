@@ -34,7 +34,6 @@ public class AIVisualServoing extends AI {
 	 */
 	protected synchronized void worldChanged() {
 		// worldState is now in centimeters!!!
-
 		distance_to_ball = Tools.getDistanceBetweenPoint(Tools.getGlobalVector(robot, new Vector2D(Robot.LENGTH_CM/2, 0)), worldState.getBallCoords());
 		distance_to_goal = Tools.getDistanceBetweenPoint(robot.getCoords(), enemy_goal.getCentre());
 		try {
@@ -132,12 +131,10 @@ public class AIVisualServoing extends AI {
 		System.out.println("forward_speed: " + forward_speed);
 		//turning_angle = turning_angle > 0 ? 70 : -70;
 		// make a virtual sensor at Robot.length/2 pointing at 1,0
-		double collision_dist = Tools.raytraceVector(worldState, robot, new Vector2D(Robot.LENGTH_CM/2,0), new Vector2D(1,0), am_i_blue).getLength();
-		if (collision_dist < Robot.LENGTH_CM)
-			forward_speed = 0;
+		//double collision_dist = Tools.raytraceVector(worldState, robot, new Vector2D(Robot.LENGTH_CM/2,0), new Vector2D(1,0), am_i_blue).getLength();
 		mComm.sendMessage(opcode.operate, (byte) (forward_speed), (byte) (turning_speed));
 		// check whether to go into got_ball mode
-		if (Math.abs(turning_speed) < TURNING_ACCURACY && distance_to_ball < 2+Robot.LENGTH_CM/2) {
+		if (Math.abs(turning_speed) < TURNING_ACCURACY && distance_to_ball < 2) {
 			setMode(mode.sit);
 			return true;
 			//setMode(mode.got_ball);
