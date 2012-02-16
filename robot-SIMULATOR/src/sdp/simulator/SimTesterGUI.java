@@ -52,8 +52,12 @@ public class SimTesterGUI {
 	private WorldState lastWS = null;
 	
 	private AI mAI;
+	 //will be used for the opponent(yellow) robot
+	private AI opponentAI;
+	
 	private Simulator mSim;
 	private Communicator mComm;
+	private Communicator opponentComm; 	//will be used for the opponent(yellow) robot
 	private boolean drag_ball = false;
 	private int drag_robot = -1;
 	private JPanel panel;
@@ -99,7 +103,7 @@ public class SimTesterGUI {
 	private void initialize() {
 		frmAlphaTeamSimulator = new JFrame();
 		frmAlphaTeamSimulator.setTitle("Alpha Team Simulator and AI tester");
-		frmAlphaTeamSimulator.setBounds(100, 100, 817, 447);
+		frmAlphaTeamSimulator.setBounds(100,100,817,480);
 		frmAlphaTeamSimulator.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmAlphaTeamSimulator.getContentPane().setLayout(null);
 		
@@ -203,20 +207,20 @@ public class SimTesterGUI {
 		frmAlphaTeamSimulator.getContentPane().add(btnConnect);
 		
 		
-		final JComboBox comboAI = new JComboBox();
-		comboAI.setBounds(662, 342, 117, 24);
+		final JComboBox comboYellowAI = new JComboBox();
+		comboYellowAI.setBounds(662, 379, 117, 24);
 		for (int i = 0; i < AI.mode.values().length; i++)
-			comboAI.addItem(AI.mode.values()[i]);
-		frmAlphaTeamSimulator.getContentPane().add(comboAI);
+			comboYellowAI.addItem(AI.mode.values()[i]);
+		frmAlphaTeamSimulator.getContentPane().add(comboYellowAI);
 		
-		JButton btnChaseBall = new JButton("Change State");
-		btnChaseBall.addActionListener(new ActionListener() {
+		JButton btnChangeYellowAI = new JButton("Change Yellow AI");
+		btnChangeYellowAI.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				mAI.setMode(mode.values()[comboAI.getSelectedIndex()]);
+				opponentAI.setMode(mode.values()[comboYellowAI.getSelectedIndex()]);
 			}
 		});
-		btnChaseBall.setBounds(662, 378, 117, 25);
-		frmAlphaTeamSimulator.getContentPane().add(btnChaseBall);
+		btnChangeYellowAI.setBounds(663, 412, 136, 25);
+		frmAlphaTeamSimulator.getContentPane().add(btnChangeYellowAI);
 		
 		JButton btnResetField = new JButton("Reset field");
 		btnResetField.addActionListener(new ActionListener() {
@@ -274,6 +278,21 @@ public class SimTesterGUI {
 		btnCamera.setBounds(662, 267, 117, 25);
 		frmAlphaTeamSimulator.getContentPane().add(btnCamera);
 		
+		final JComboBox comboBlueAI = new JComboBox();
+		comboBlueAI.setBounds(662, 299, 117, 27);
+		for (int i = 0; i < AI.mode.values().length; i++)
+			comboBlueAI.addItem(AI.mode.values()[i]);
+		frmAlphaTeamSimulator.getContentPane().add(comboBlueAI);
+		
+		JButton btnChangeBlueAI = new JButton("Change Blue AI");
+		btnChangeBlueAI.setBounds(662, 338, 137, 29);
+		btnChangeBlueAI.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				mAI.setMode(mode.values()[comboBlueAI.getSelectedIndex()]);
+			}
+		});
+		frmAlphaTeamSimulator.getContentPane().add(btnChangeBlueAI);
+		
 		// key listener
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
 			
@@ -310,22 +329,31 @@ public class SimTesterGUI {
 	
 	private void Connect(boolean blue_selected, boolean my_door_right) {
 		mComm = new VBrick();
+		opponentComm = new VBrick();
 		mSim = new Simulator();
 
 		final WorldStateObserver obs = new WorldStateObserver(mSim);
-		VBrick bot = new VBrick();
+		
 		blue_placement = blue_selected ? (my_door_right ? placement_left : placement_right) : (my_door_right ? placement_right : placement_left);
 		yellow_placement = blue_placement == placement_left ? placement_right : placement_left;
-		mSim.registerBlue(blue_selected ? (VBrick) mComm : bot,
+	
+		mSim.registerBlue(blue_selected ? (VBrick) mComm : (VBrick) opponentComm,
 				blue_placement,
 				Simulator.pitch_height_cm/2,
 				blue_placement == placement_left ? 180: 0);
-		mSim.registerYellow(blue_selected ? bot : (VBrick) mComm,
+		mSim.registerYellow(blue_selected ? (VBrick) opponentComm : (VBrick) mComm,
 				yellow_placement,
 				Simulator.pitch_height_cm/2,
 				yellow_placement == placement_left ? 180 : 0);
-		mAI = new AIVisualServoing(bot, mSim);
-		mAI.start(!blue_selected, my_door_right);
+		
+
+		mAI = new AIVisualServoing(mComm, mSim);
+		mAI.start(blue_selected, my_door_right);
+		
+		opponentAI = new AIVisualServoing(opponentComm, mSim);
+		opponentAI.start(!blue_selected, !my_door_right);
+
+		
 		new Thread() {
 			public void run() {
 				while (true) {

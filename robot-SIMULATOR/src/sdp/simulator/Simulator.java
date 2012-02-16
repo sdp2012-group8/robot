@@ -791,7 +791,6 @@ public class Simulator extends WorldStateProvider {
 								}
 							}
 				
-				//
 				
 			}
 		// notify that we have change
