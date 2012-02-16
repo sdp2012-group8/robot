@@ -19,6 +19,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import sdp.common.Utilities;
+
 
 /**
  * A collection of methods for managing XML DOM trees.
@@ -143,7 +145,8 @@ public class XmlUtils {
 	 * @return Child's text contents.
 	 */
 	public static String getChildText(Element elem, String childName) {
-		return elem.getElementsByTagName(childName).item(0).getTextContent();
+		String content = elem.getElementsByTagName(childName).item(0).getTextContent();
+		return Utilities.stripString(content);
 	}
 	
 	

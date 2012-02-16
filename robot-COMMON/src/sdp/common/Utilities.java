@@ -109,4 +109,36 @@ public class Utilities {
     		return ((value >= lower) && (value <= upper));
     	}
     }
+    
+    
+    /**
+     * Strip a string from whitespace.
+     * 
+     * Adapted from http://www.java2s.com/Code/Java/Data-Type/stripstring.htm.
+     * 
+     * @param string String to strip.
+     * @return Stripped string.
+     */
+    public static String stripString(String string) {
+    	if ((string == null) || (string.length() == 0)) {
+    		return string;
+    	}
+    	        
+        int start = 0;
+        while((start < string.length()) && Character.isWhitespace(string.charAt(start))) {
+            start++;
+        }
+        
+        int end = string.length();
+        while((end > start) && Character.isWhitespace(string.charAt(end - 1))) {
+            end--;
+        }
+        
+        if (start == end) {
+        	return "";
+        } else {
+        	return string.substring(start, end);
+        }
+    }
+    
 }

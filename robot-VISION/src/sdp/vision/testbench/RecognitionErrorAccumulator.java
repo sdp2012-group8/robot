@@ -1,6 +1,9 @@
 package sdp.vision.testbench;
 
 import java.awt.geom.Point2D;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 import sdp.common.WorldState;
@@ -22,6 +25,9 @@ import sdp.vision.processing.ProcUtils;
  */
 public class RecognitionErrorAccumulator {
 	
+	/** Maximum recognition error in pixels, before marking a measurement inaccurate. */
+	private static final double POS_ERROR_TOLERANCE = 20.0;
+	
 	/** Sum of all ball position errors. */
 	private double totalBallPosError = 0.0;	
 	/** Sum of all blue robot position errors. */
@@ -36,6 +42,8 @@ public class RecognitionErrorAccumulator {
 	/** The number of valid yellow robot records accumulated. */
 	private int validYellowRecordCount = 0;
 
+	/** A list with accumulated test names. */
+	private ArrayList<String> testNames = new ArrayList<String>();
 	/** A list with accumulated ball position errors. */
 	private ArrayList<Double> ballPosErrors = new ArrayList<Double>();
 	/** A list with accumulated blue robot position errors. */
@@ -43,27 +51,24 @@ public class RecognitionErrorAccumulator {
 	/** A list with accumulated yellow robot position errors. */
 	private ArrayList<Double> yellowPosErrors = new ArrayList<Double>();
 	
-	/** Image processor configuration to use. */
-	private ImageProcessorConfig config;
-	
 	
 	/**
 	 * Create a new recognition error accumulator.
 	 * 
 	 * @param config Image processor configuration to use.
 	 */
-	public RecognitionErrorAccumulator(ImageProcessorConfig config) {
-		this.config = config;
-	}
+	public RecognitionErrorAccumulator() { }
 	
 	
 	/**
 	 * Add a recognition error entry.
 	 * 
-	 * @param expected Expected world state.
-	 * @param actual Actual world state, as produced by the vision system.
+	 * @param expected Expected world state *in frame coordinates*.
+	 * @param actual Actual world state *in frame coordinates*.
 	 */
-	public void addRecord(WorldState expected, WorldState actual) {
+	public void addRecord(String testName, WorldState expected, WorldState actual) {
+		testNames.add(testName);
+		
 		double ballError = computePositionError(expected.getBallCoords(),
 				actual.getBallCoords());
 		ballPosErrors.add(ballError);
@@ -72,9 +77,13 @@ public class RecognitionErrorAccumulator {
 			++validBallRecordCount;
 		}
 		
+		System.err.println(expected.getBlueRobot().getCoords().x + " "
+				+ actual.getBlueRobot().getCoords().x + " - "
+				+ expected.getBlueRobot().getCoords().y + " "
+				+ actual.getBlueRobot().getCoords().y);
 		double blueError = computePositionError(expected.getBlueRobot().getCoords(),
 				actual.getBlueRobot().getCoords());
-		ballPosErrors.add(blueError);
+		bluePosErrors.add(blueError);
 		if (blueError >= 0.0) {
 			totalBluePosError += blueError;
 			++validBlueRecordCount;
@@ -82,7 +91,7 @@ public class RecognitionErrorAccumulator {
 		
 		double yellowError = computePositionError(expected.getYellowRobot().getCoords(),
 				actual.getYellowRobot().getCoords());
-		ballPosErrors.add(yellowError);
+		yellowPosErrors.add(yellowError);
 		if (yellowError >= 0.0) {
 			totalYellowPosError += yellowError;
 			++validBallRecordCount;
@@ -111,10 +120,8 @@ public class RecognitionErrorAccumulator {
 		if (validFlag > 0) {
 			double xDiff = Math.abs(expectedPos.x - actualPos.x);
 			double yDiff = Math.abs(expectedPos.y - actualPos.y);
-			//Point2D.Double pixelError = ProcUtils.normalToFrameCoordinates(config, xDiff, yDiff, true);
-			Point2D.Double pixelError = new Point2D.Double(xDiff, yDiff);
 			
-			return Math.sqrt(pixelError.x * pixelError.x + pixelError.y * pixelError.y);
+			return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
 		} else {
 			return -1.0;
 		}
@@ -122,30 +129,12 @@ public class RecognitionErrorAccumulator {
 	
 	
 	/**
-	 * Get the list with ball position errors.
+	 * Get the number of records in the accumulator.
 	 * 
-	 * @return The list with ball position errors.
+	 * @return The number of records in the accumulator.
 	 */
-	public ArrayList<Double> getBallPosErrors() {
-		return ballPosErrors;
-	}
-
-	/**
-	 * Get the list with blue robot position errors.
-	 * 
-	 * @return The list with blue robot position errors.
-	 */
-	public ArrayList<Double> getBluePosErrors() {
-		return bluePosErrors;
-	}
-
-	/**
-	 * Get the list with the yellow robot position errors.
-	 * 
-	 * @return The list with the yellow robot position errors.
-	 */
-	public ArrayList<Double> getYellowPosErrors() {
-		return yellowPosErrors;
+	public int getTotalRecordCount() {
+		return testNames.size();
 	}
 	
 	
@@ -241,6 +230,64 @@ public class RecognitionErrorAccumulator {
 			return totalYellowPosError / validYellowRecordCount;
 		} else {
 			return -1.0;
+		}
+	}
+	
+	
+	/**
+	 * Print all accumulated metrics into the specified output stream.
+	 * 
+	 * @param out Output stream to dump to.
+	 */
+	public void dumpMetrics(PrintStream out) {
+		out.format("=== TEST SUMMARY\n");
+		out.format("\n");
+		out.format("Number of tests: %d\n", testNames.size());
+		out.format("Accuracy error tolerance: %.4f pixels.\n", POS_ERROR_TOLERANCE);
+		out.format("\n");
+		out.format("Measurement classification (invalid/inaccurate/ok):\n");
+		out.format("  Ball position: %d/%d/%d\n", getInvalidBallRecordCount(),
+				0, getValidBallRecordCount());
+		out.format("  Blue robot position: %d/%d/%d\n", getInvalidBlueRecordCount(),
+				0, getValidBlueRecordCount());
+		out.format("  Yellow robot position: %d/%d/%d\n", getInvalidYellowRecordCount(),
+				0, getValidYellowRecordCount());
+		out.format("\n");
+		out.format("Average ball position error: %.4f pixels.\n",
+				averageBallPosError());
+		out.format("Average blue robot position error: %.4f pixels.\n",
+				averageBluePosError());
+		out.format("Average yellow robot position error: %.4f pixels.\n",
+				averageYellowPosError());
+		
+		out.format("\n");
+		out.format("\n");
+		out.format("=== INDIVIDUAL TEST DATA\n");
+		for (int i = 0; i < testNames.size(); ++i) {
+			out.format("\n");
+			out.format("Test image: %s\n", testNames.get(i));
+			out.format("  Ball position error: %.4f pixels - %s\n",
+					ballPosErrors.get(i), posErrorMessage(ballPosErrors.get(i)));
+			out.format("  Blue robot position error: %.4f pixels - %s\n",
+					bluePosErrors.get(i), posErrorMessage(bluePosErrors.get(i)));
+			out.format("  Yellow robot position error: %.4f pixels - %s\n",
+					yellowPosErrors.get(i), posErrorMessage(yellowPosErrors.get(i)));
+		}
+	}
+	
+	/**
+	 * Get an appropriate message for a position measurement error.
+	 * 
+	 * @param error Position measure error.
+	 * @return A message for dumping.
+	 */
+	private String posErrorMessage(double error) {
+		if (error < 0.0) {
+			return "INVALID";
+		} else if (error > POS_ERROR_TOLERANCE) {
+			return "INACCURATE";
+		} else {
+			return "OK";
 		}
 	}
 

@@ -5,7 +5,9 @@ import static com.googlecode.javacv.cpp.opencv_core.*;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 
+import sdp.common.Robot;
 import sdp.common.Utilities;
+import sdp.common.WorldState;
 
 import com.googlecode.javacv.cpp.opencv_core.CvPoint;
 
@@ -71,7 +73,7 @@ public class ProcUtils {
 	 */
 	public static Point2D.Double normalToFrameCoordinates(ImageProcessorConfig config,
 			double x, double y, boolean withinROI) {
-		int scaleFactor = config.getFieldWidth();
+		double scaleFactor = config.getFieldWidth();
 		
 		x *= scaleFactor;
 		y *= scaleFactor;
@@ -97,5 +99,31 @@ public class ProcUtils {
 			double x, double y, boolean withinROI) {
 		Point2D.Double frameCoords = normalToFrameCoordinates(config, x, y, withinROI);
 		return Utilities.pointFromPoint2D(frameCoords);
+	}
+	
+	
+	/**
+	 * Convert world state with normalised coordinates to a world state with
+	 * corresponding frame coordinates.
+	 * 
+	 * @param config Processor configuration to use as reference.
+	 * @param state State to process.
+	 * @return World state in frame coordinates.
+	 */
+	public static WorldState stateToFrameCoordinates(ImageProcessorConfig config,
+			WorldState state) {
+		Point2D.Double ballPos = ProcUtils.normalToFrameCoordinates(config,
+				state.getBallCoords().x, state.getBallCoords().y, false);
+		Point2D.Double bluePos = ProcUtils.normalToFrameCoordinates(config,
+				state.getBlueRobot().getCoords().x,
+				state.getBlueRobot().getCoords().y,	false);
+		Point2D.Double yellowPos = ProcUtils.normalToFrameCoordinates(config,
+				state.getYellowRobot().getCoords().x,
+				state.getYellowRobot().getCoords().y, false);
+		
+		return new WorldState(ballPos,
+				new Robot(bluePos, state.getBlueRobot().getAngle()),
+				new Robot(yellowPos, state.getYellowRobot().getAngle()),
+				state.getWorldImage());
 	}
 }
