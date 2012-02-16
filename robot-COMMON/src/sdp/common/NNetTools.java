@@ -38,18 +38,21 @@ public class NNetTools {
 		// if you change something here, don't forget to change number of inputs in trainer
 		switch (id) {
 		case 0:
-			return Tools.concat(new double[] {
+			return /*Tools.concat(*/new double[] {
 					AI_normalizeCoordinateTo1(rel_ball.getLength(), Tools.PITCH_WIDTH_CM),
-					AI_normalizeAngleTo1(Vector2D.getDirection(rel_ball))
+					AI_normalizeAngleTo1(Vector2D.getDirection(rel_ball)),
+					AI_normalizeCoordinateTo1(rel_en.getLength(), Tools.PITCH_WIDTH_CM),
+					AI_normalizeAngleTo1(Vector2D.getDirection(rel_en)),
+					AI_normalizeCoordinateTo1(Tools.raytraceVector(worldState, me, new Vector2D(0,0), new Vector2D(-Robot.WIDTH_CM/2,-Robot.WIDTH_CM/2), am_i_blue).getLength(), 60),
+					AI_normalizeCoordinateTo1(Tools.raytraceVector(worldState, me, new Vector2D(0,0), new Vector2D(-Robot.WIDTH_CM/2,Robot.WIDTH_CM/2), am_i_blue).getLength(), 60),
+					AI_normalizeCoordinateTo1(Tools.raytraceVector(worldState, me, new Vector2D(0,0), new Vector2D(Robot.WIDTH_CM/2,-Robot.WIDTH_CM/2), am_i_blue).getLength(), 60),
+					AI_normalizeCoordinateTo1(Tools.raytraceVector(worldState, me, new Vector2D(0,0), new Vector2D(Robot.WIDTH_CM/2,Robot.WIDTH_CM/2), am_i_blue).getLength(), 60),
+					AI_normalizeCoordinateTo1(Tools.raytraceVector(worldState, me, new Vector2D(0,0), new Vector2D(1,0), am_i_blue).getLength(), 60),
+					AI_normalizeCoordinateTo1(Tools.raytraceVector(worldState, me, new Vector2D(0,0), new Vector2D(-1,0), am_i_blue).getLength(), 60)
+					//AI_normalizeAngleTo1(Vector2D.getDirection(rel_ball))
 					//AI_normalizeCoordinateTo1(rel_en.getX(), Tools.PITCH_WIDTH_CM),
 					//AI_normalizeCoordinateTo1(rel_coll.getX(), Tools.PITCH_WIDTH_CM)
-			}, getVisionMatrix(10, Tools.PITCH_WIDTH_CM, 35, worldState, oldState, dt, am_i_blue));
-		case 1:
-			return Tools.concat(new double[] {
-					AI_normalizeAngleTo1(Vector2D.getDirection(rel_ball))
-					//AI_normalizeAngleTo1(Vector2D.getDirection(rel_en)),
-					//AI_normalizeAngleTo1(Vector2D.getDirection(rel_coll))
-			}, getVisionMatrix(10, Tools.PITCH_WIDTH_CM, 35, worldState, oldState, dt, am_i_blue));
+			};//, getVisionMatrix(20, Tools.PITCH_WIDTH_CM, 35, worldState, oldState, dt, am_i_blue));
 		}
 		return null;		
 	}
@@ -61,29 +64,16 @@ public class NNetTools {
 	 * @return distances to nearest collision points in the direction, normalized to threshold
 	 */
 	private static double[] getVisionMatrix(int size, double threshold_length, double threshold_velocity, WorldState ws, WorldState old, double dt, boolean am_i_blue) {
-		if (!(size % 2 == 0 && (size/2) % 2 == 1)) {
-			System.out.println("Provide size number for visionMatrix like 6, 10, 14. See javadoc for info!");
-			return null;
-		}
 		Robot oldme = am_i_blue ? old.getBlueRobot() : old.getYellowRobot();
 		Robot newme = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
 		final double[] vels = new double[size];
 		final double[] dists = new double[size];
-		final int behind = size/2;
-		final int infront = size - behind;
-		final double scope = Robot.WIDTH_CM/2;
 		int i = 0;
-		for (double y = -scope; y <= scope; y += 2d*scope/(behind-1)) {
+		for (double angle = -Math.PI; angle < Math.PI; angle += 2*Math.PI/size) {
 			vels[i] = 
-					(AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, newme, new Vector2D(0, 0), new Vector2D(Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold_velocity) -
-					AI_normalizeCoordinateTo1(Tools.raytraceVector(old, oldme, new Vector2D(0, 0), new Vector2D(Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold_velocity))/dt;
-			dists[i] = AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, newme, new Vector2D(0, 0), new Vector2D(Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold_length);
-			i++;
-		}
-		for (double y = -scope; y <= scope; y += 2d*scope/(infront-1)) {
-			vels[i] = (AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, newme, new Vector2D(0, 0), new Vector2D(-Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold_velocity) -
-					AI_normalizeCoordinateTo1(Tools.raytraceVector(old, oldme, new Vector2D(0, 0), new Vector2D(-Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold_velocity))/dt;
-			dists[i] = AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, newme, new Vector2D(0, 0), new Vector2D(-Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold_length);
+					(AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, newme, new Vector2D(0, 0), new Vector2D(Math.cos(angle), Math.sin(angle)), am_i_blue).getLength(), threshold_velocity) -
+					AI_normalizeCoordinateTo1(Tools.raytraceVector(old, oldme, new Vector2D(0, 0), new Vector2D(Math.cos(angle), Math.sin(angle)), am_i_blue).getLength(), threshold_velocity))/dt;
+			dists[i] = AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, newme, new Vector2D(0, 0), new Vector2D(Math.cos(angle), Math.sin(angle)), am_i_blue).getLength(), threshold_length);
 			i++;
 		}
 		return Tools.concat(vels, dists);

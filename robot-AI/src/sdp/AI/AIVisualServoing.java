@@ -124,7 +124,10 @@ public class AIVisualServoing extends AI {
 		//forward_speed/=15;
 		System.out.println("forward_speed: " + forward_speed);
 		//turning_angle = turning_angle > 0 ? 70 : -70;
-
+		// make a virtual sensor at Robot.length/2 pointing at 1,0
+		double collision_dist = Tools.raytraceVector(worldState, robot, new Vector2D(Robot.LENGTH_CM/2,0), new Vector2D(1,0), am_i_blue).getLength();
+		if (collision_dist < Robot.LENGTH_CM)
+			forward_speed = 0;
 		mComm.sendMessage(opcode.operate, (byte) (forward_speed), (byte) (turning_speed));
 		// check whether to go into got_ball mode
 		if (Math.abs(turning_speed) < TURNING_ACCURACY && distance_to_ball < 2+Robot.LENGTH_CM/2) {

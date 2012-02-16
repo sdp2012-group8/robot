@@ -30,7 +30,7 @@ import sdp.simulator.VBrick;
 public class NeuralNetworkTrainingGenerator extends VBrick {
 
 	private NeuralNetwork[] nets = new NeuralNetwork[] {
-			new MultiLayerPerceptron(22, 100, move_modes.values().length)
+			new MultiLayerPerceptron(10, 21, move_modes.values().length)
 	};
 	
 	private String fname;
@@ -38,7 +38,7 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	/**
 	 * How many iterations to wait until quitting. For every 1000 input points you have this many iterations
 	 */
-	private final static long wait_iter_for_1000_f = 100;
+	private final static long wait_iter_for_1000_f = 400;
 	/**
 	 * Wait for this amount of epochs before doing anything
 	 */

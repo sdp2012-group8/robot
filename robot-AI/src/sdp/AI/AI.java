@@ -66,6 +66,8 @@ public abstract class AI extends WorldStateProvider {
 	protected Robot robot;
 	protected Robot enemy_robot;
 
+	protected boolean am_i_blue;
+
 	/**
 	 * Initialise the AI
 	 * 
@@ -102,6 +104,7 @@ public abstract class AI extends WorldStateProvider {
 	 */
 	public void start(final boolean my_team_blue, final boolean my_goal_left) {
 		this.my_goal_left = my_goal_left;
+		this.am_i_blue = my_team_blue;
 		enemy_goal = new Goal(new Point2D.Double(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM));
 		mVisionThread = new Thread() {
 			@Override
@@ -235,9 +238,11 @@ public abstract class AI extends WorldStateProvider {
 	 * @return a new robot with low_pass
 	 */
 	private Robot lowPass(Robot old_value, Robot new_value) {
-		return new Robot(
+		Robot a = new Robot(
 				lowPass(old_value.getCoords(), new_value.getCoords()),
 				lowPass(old_value.getAngle(), new_value.getAngle()));
+		a.setCoords(true);
+		return a;
 	}
 
 	

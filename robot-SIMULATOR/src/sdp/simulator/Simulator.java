@@ -935,12 +935,8 @@ public class Simulator extends WorldStateProvider {
 //								robot.getBackRight()));
 				Vector2D local_origin = new Vector2D(Robot.LENGTH_CM/2+2,0);
 				drawVector(Tools.getGlobalVector(robot, local_origin),  Tools.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0)), true);
-				for (double y = -9; y <= 9; y += 2d*9/4) {
-					drawVector(Tools.getGlobalVector(robot, new Vector2D(0, 0)),  Tools.raytraceVector(state_cm, robot, new Vector2D(0, 0), new Vector2D(Robot.WIDTH_CM, y), am_i_blue), true);
-				}
-				for (double y = -9; y <= 9; y += 2d*9/4) {
-					drawVector(Tools.getGlobalVector(robot, new Vector2D(0, 0)),  Tools.raytraceVector(state_cm, robot, new Vector2D(0, 0), new Vector2D(-Robot.WIDTH_CM, y), am_i_blue), true);
-				}
+				drawVector(Tools.getGlobalVector(robot, new Vector2D(0,0)),  Tools.raytraceVector(state_cm, robot, new Vector2D(0,0), new Vector2D(-Robot.WIDTH_CM/2,Robot.WIDTH_CM/2), true), true);
+				drawVector(Tools.getGlobalVector(robot, new Vector2D(0,0)),  Tools.raytraceVector(state_cm, robot, new Vector2D(0,0), new Vector2D(Robot.WIDTH_CM/2,Robot.WIDTH_CM/2), true), true);
 			}
 		}
 		// draw ball
