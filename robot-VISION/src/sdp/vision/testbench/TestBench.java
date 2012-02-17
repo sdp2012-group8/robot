@@ -62,7 +62,7 @@ public class TestBench {
 		for (VisionTestCase test : tests) {
 			WorldState actualState_norm = vision.extractWorldState(Utilities.deepBufferedImageCopy(test.getImage()));
 			WorldState actualState_frame = ProcUtils.stateToFrameCoordinates(config, actualState_norm);
-
+			
 			errorAcc.addRecord(test.getImageFilename(), test.getExpectedState(), actualState_frame);
 		}
 
@@ -97,15 +97,15 @@ public class TestBench {
 			Point2D.Double ball = new Point2D.Double(ballX, ballY);
 			
 			Element blueElem = (Element) locDataElem.getElementsByTagName("bluerobot").item(0);
-			double blueX = XmlUtils.getChildDouble(ballElem, "x");
-			double blueY = XmlUtils.getChildDouble(ballElem, "y");
+			double blueX = XmlUtils.getChildDouble(blueElem, "x");
+			double blueY = XmlUtils.getChildDouble(blueElem, "y");
 			double blueAngle = XmlUtils.getChildDouble(blueElem, "angle");
 			Point2D.Double bluePos = new Point2D.Double(blueX, blueY);
 			Robot blueRobot = new Robot(bluePos, blueAngle);
 			
 			Element yellowElem = (Element) locDataElem.getElementsByTagName("yellowrobot").item(0);
-			double yellowX = XmlUtils.getChildDouble(ballElem, "x");
-			double yellowY = XmlUtils.getChildDouble(ballElem, "y");
+			double yellowX = XmlUtils.getChildDouble(yellowElem, "x");
+			double yellowY = XmlUtils.getChildDouble(yellowElem, "y");
 			double yellowAngle = XmlUtils.getChildDouble(yellowElem, "angle");
 			Point2D.Double yellowPos = new Point2D.Double(yellowX, yellowY);
 			Robot yellowRobot = new Robot(yellowPos, yellowAngle);

@@ -1,14 +1,10 @@
 package sdp.vision.testbench;
 
 import java.awt.geom.Point2D;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
 import sdp.common.WorldState;
-import sdp.vision.processing.ImageProcessorConfig;
-import sdp.vision.processing.ProcUtils;
 
 
 /**
@@ -77,10 +73,6 @@ public class RecognitionErrorAccumulator {
 			++validBallRecordCount;
 		}
 		
-		System.err.println(expected.getBlueRobot().getCoords().x + " "
-				+ actual.getBlueRobot().getCoords().x + " - "
-				+ expected.getBlueRobot().getCoords().y + " "
-				+ actual.getBlueRobot().getCoords().y);
 		double blueError = computePositionError(expected.getBlueRobot().getCoords(),
 				actual.getBlueRobot().getCoords());
 		bluePosErrors.add(blueError);
@@ -243,9 +235,9 @@ public class RecognitionErrorAccumulator {
 		out.format("=== TEST SUMMARY\n");
 		out.format("\n");
 		out.format("Number of tests: %d\n", testNames.size());
-		out.format("Accuracy error tolerance: %.4f pixels.\n", POS_ERROR_TOLERANCE);
+		out.format("Position accuracy error tolerance: %.4f pixels.\n", POS_ERROR_TOLERANCE);
 		out.format("\n");
-		out.format("Measurement classification (invalid/inaccurate/ok):\n");
+		out.format("Measurement stats (invalid/inaccurate/ok):\n");
 		out.format("  Ball position: %d/%d/%d\n", getInvalidBallRecordCount(),
 				0, getValidBallRecordCount());
 		out.format("  Blue robot position: %d/%d/%d\n", getInvalidBlueRecordCount(),
