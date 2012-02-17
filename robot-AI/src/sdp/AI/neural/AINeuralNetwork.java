@@ -20,8 +20,8 @@ public class AINeuralNetwork extends AI {
 	private NeuralNetwork[] nets = new NeuralNetwork[network_count];
 	private long oldTime = 0;
 
-	public AINeuralNetwork(Communicator Comm, WorldStateProvider Obs, String fname) {
-		super(Comm);
+	public AINeuralNetwork(Communicator comm, String fname) {
+		super(comm);
 		for (int i = 0; i < nets.length; i++)
 			nets[i] = NeuralNetwork.load(fname+"/nn"+i+".nnet");
 	}

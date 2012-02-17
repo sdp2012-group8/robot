@@ -9,6 +9,11 @@ import sdp.common.Tools;
 import sdp.common.Vector2D;
 import sdp.common.Communicator.opcode;
 
+/**
+ * Sends a new command every frame that overwrites the old one.
+ * @author michael
+ *
+ */
 public class AIVisualServoing extends AI {
 
 	public AIVisualServoing(Communicator comm) {

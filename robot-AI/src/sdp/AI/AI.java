@@ -10,8 +10,8 @@ import sdp.common.WorldState;
 
 /**
  * 
- * This is the AI class that will take decisions.
- * 
+ * This is the AI superclass.
+ * All AI should extend this class.
  * @author Martin Marinov
  *
  */

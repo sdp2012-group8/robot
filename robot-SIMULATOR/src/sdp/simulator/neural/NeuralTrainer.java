@@ -436,7 +436,7 @@ public class NeuralTrainer {
 			mAI = new AIMaster(mComm, mSim, AIMode.visual_servoing);
 			break;
 		case 1:
-			mAI = new AINeuralNetwork(mComm, mSim, dtrpnhomemartinmarinov.getText());
+			mAI = new AIMaster(mComm, mSim, AIMode.neural_network);
 			break;
 		}
 		
