@@ -15,8 +15,10 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.JTabbedPane;
 
 import sdp.AI.AI;
+import sdp.AI.AIMaster;
 import sdp.AI.AIVisualServoing;
-import sdp.AI.AI.mode;
+import sdp.AI.AIWorldState;
+import sdp.AI.AIWorldState.mode;
 import sdp.common.Communicator;
 import sdp.common.FPSCounter;
 import sdp.common.WorldState;
@@ -70,7 +72,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JFileChooser fileChooser;
 	
 	/** Active AI subsystem instance. */
-	private AI aiInstance = null;
+	private AIMaster aiInstance = null;
 	/** Flag that indicates whether the robot is running. */
 	private boolean robotRunning = false;
 	
@@ -152,7 +154,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			}
 		}
 		
-		aiInstance = new AIVisualServoing(com, vision);
+		aiInstance = new AIMaster(com, vision, AIMaster.AIMode.visual_servoing);
 		aiInstance.start(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected());
 		
 		WorldStateObserver aiObserver = new WorldStateObserver(aiInstance);
@@ -1000,8 +1002,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		
 		final JComboBox comboAI = new JComboBox();
 		comboAI.setBounds(662, 342, 117, 24);
-		for (int i = 0; i < AI.mode.values().length; i++)
-			comboAI.addItem(AI.mode.values()[i]);
+		for (int i = 0; i < mode.values().length; i++)
+			comboAI.addItem(mode.values()[i]);
 		robotSettingPanel.add(comboAI);
 		
 		JButton btnChaseBall = new JButton("Change State");

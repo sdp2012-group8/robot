@@ -17,7 +17,9 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import sdp.AI.AI;
-import sdp.AI.AI.mode;
+import sdp.AI.AIMaster;
+import sdp.AI.AIMaster.AIMode;
+import sdp.AI.AIWorldState.mode;
 import sdp.AI.neural.AINeuralNetwork;
 import sdp.AI.AIVisualServoing;
 import sdp.common.Communicator;
@@ -56,7 +58,7 @@ public class NeuralTrainer {
 	
 	private WorldState lastWS = null;
 	
-	private AI mAI;
+	private AIMaster mAI;
 	private Simulator mSim;
 	private Communicator mComm;
 	private boolean drag_ball = false;
@@ -396,8 +398,8 @@ public class NeuralTrainer {
 			}
 		});
 		comboBox.setBounds(662, 156, 117, 24);
-		for (int i = 0; i < AI.mode.values().length; i++)
-			comboBox.addItem(AI.mode.values()[i]);
+		for (int i = 0; i < mode.values().length; i++)
+			comboBox.addItem(mode.values()[i]);
 		comboBox.setSelectedIndex(1);
 		frame.getContentPane().add(comboBox);
 		
@@ -431,7 +433,7 @@ public class NeuralTrainer {
 				yellow_placement == placement_left ? 180 : 0);
 		switch (combo_AI.getSelectedIndex()) {
 		case 0:
-			mAI = new AIVisualServoing(mComm, mSim);
+			mAI = new AIMaster(mComm, mSim, AIMode.visual_servoing);
 			break;
 		case 1:
 			mAI = new AINeuralNetwork(mComm, mSim, dtrpnhomemartinmarinov.getText());

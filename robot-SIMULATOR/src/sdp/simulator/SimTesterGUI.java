@@ -14,9 +14,8 @@ import java.awt.event.MouseMotionListener;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import sdp.AI.AI;
-import sdp.AI.AI.mode;
-import sdp.AI.AIVisualServoing;
+import sdp.AI.AIMaster;
+import sdp.AI.AIWorldState.mode;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.Tools;
@@ -51,9 +50,9 @@ public class SimTesterGUI {
 	
 	private WorldState lastWS = null;
 	
-	private AI mAI;
+	private AIMaster mAI;
 	 //will be used for the opponent(yellow) robot
-	private AI opponentAI;
+	private AIMaster opponentAI;
 	
 	private Simulator mSim;
 	private Communicator mComm;
@@ -209,8 +208,8 @@ public class SimTesterGUI {
 		
 		final JComboBox comboYellowAI = new JComboBox();
 		comboYellowAI.setBounds(662, 379, 117, 24);
-		for (int i = 0; i < AI.mode.values().length; i++)
-			comboYellowAI.addItem(AI.mode.values()[i]);
+		for (int i = 0; i < mode.values().length; i++)
+			comboYellowAI.addItem(mode.values()[i]);
 		frmAlphaTeamSimulator.getContentPane().add(comboYellowAI);
 		
 		JButton btnChangeYellowAI = new JButton("Change Yellow AI");
@@ -280,8 +279,8 @@ public class SimTesterGUI {
 		
 		final JComboBox comboBlueAI = new JComboBox();
 		comboBlueAI.setBounds(662, 299, 117, 27);
-		for (int i = 0; i < AI.mode.values().length; i++)
-			comboBlueAI.addItem(AI.mode.values()[i]);
+		for (int i = 0; i < mode.values().length; i++)
+			comboBlueAI.addItem(mode.values()[i]);
 		frmAlphaTeamSimulator.getContentPane().add(comboBlueAI);
 		
 		JButton btnChangeBlueAI = new JButton("Change Blue AI");
@@ -347,10 +346,10 @@ public class SimTesterGUI {
 				yellow_placement == placement_left ? 180 : 0);
 		
 
-		mAI = new AIVisualServoing(mComm, mSim);
+		mAI = new AIMaster(mComm, mSim, AIMaster.AIMode.visual_servoing);
 		mAI.start(blue_selected, my_door_right);
 		
-		opponentAI = new AIVisualServoing(opponentComm, mSim);
+		opponentAI = new AIMaster(opponentComm, mSim, AIMaster.AIMode.visual_servoing);
 		opponentAI.start(!blue_selected, !my_door_right);
 
 		
