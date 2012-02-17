@@ -57,7 +57,7 @@ public class TestBench {
 		vision.setConfiguration(config);
 		
 		ArrayList<VisionTestCase> tests = readTestCases(testSpec);
-		RecognitionErrorAccumulator errorAcc = new RecognitionErrorAccumulator();
+		VisionSystemErrorAccumulator errorAcc = new VisionSystemErrorAccumulator();
 		
 		for (VisionTestCase test : tests) {
 			WorldState actualState_norm = vision.extractWorldState(Utilities.deepBufferedImageCopy(test.getImage()));
