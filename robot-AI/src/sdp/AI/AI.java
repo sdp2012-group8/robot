@@ -18,7 +18,7 @@ import sdp.common.Communicator.opcode;
 public abstract class AI {
 	
 	// robot constants
-	protected final static double TURNING_ACCURACY = 10;
+	protected final static double TURNING_ACCURACY = 2;
 
 	protected final static double ROBOT_ACC_CM_S_S = 69.8; // 1000 degrees/s/s
 	protected final static int MAX_SPEED_CM_S = 30; // 50 cm per second
@@ -76,11 +76,22 @@ public abstract class AI {
 	protected double anglebetween(Point2D.Double A, Point2D.Double B) {
 		return (180*Math.atan2(-B.getY()+A.getY(), B.getX()-A.getX()))/Math.PI;
 	}
+	
+	/**
+	 * Updates the held ai_world_state of the AI.
+	 * @param ai_world_state
+	 */
 	protected void update(AIWorldState ai_world_state) {
 		if (this.ai_world_state != null) {
 			this.old_ai_world_state = this.ai_world_state;
 		}
 		this.ai_world_state = ai_world_state;
+	}
+	
+	public static byte normaliseSpeed(byte speed) {
+		if (speed > MAX_SPEED_CM_S) speed = MAX_SPEED_CM_S;
+		if (speed < -MAX_SPEED_CM_S) speed = -MAX_SPEED_CM_S;
+		return speed;
 	}
 
 }

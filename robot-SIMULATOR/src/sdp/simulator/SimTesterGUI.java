@@ -421,9 +421,9 @@ public class SimTesterGUI {
 					mComm.sendMessage(opcode.kick);
 				return;
 			}
-			if (speed > 128 || speed < -127)
+			if (speed > 127 || speed < -128)
 				System.out.println("ERROR: CURRENT SPEED OVERFLOW!!! = "+speed);
-			if (turn_speed > 128 || turn_speed < -127)
+			if (turn_speed > 127 || turn_speed < -128)
 				System.out.println("ERROR: TURN SPEED OVERFLOW!!! = "+turn_speed);
 			mComm.sendMessage(opcode.operate, (byte) speed, (byte) turn_speed);
 		} catch (IOException e) {

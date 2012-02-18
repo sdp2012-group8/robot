@@ -102,7 +102,7 @@ public class NNetTools {
 	 * @return mapped between -1 and 1 wrt width of pitch
 	 */
 	private static double AI_normalizeAngleTo1(double angle) {
-		return (Tools.normalizeAngle(angle))/180d;
+		return (Utilities.normaliseAngle(angle))/180d;
 	}
 	
 	/**

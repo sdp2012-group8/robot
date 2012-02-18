@@ -40,7 +40,6 @@ public class AIMaster extends AIListener {
 	 * The methods called are in all types of the AI.
 	 */
 	protected synchronized void worldChanged() {
-		// worldState is now in centimeters!!!
 		ai.update(ai_world_state);
 		try {
 			switch (ai_world_state.getMode()) {
