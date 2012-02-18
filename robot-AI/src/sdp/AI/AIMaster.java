@@ -2,6 +2,7 @@ package sdp.AI;
 
 import java.io.IOException;
 
+import sdp.AI.AIWorldState.mode;
 import sdp.AI.neural.AINeuralNetwork;
 import sdp.common.Communicator;
 import sdp.common.WorldStateProvider;
@@ -39,7 +40,6 @@ public class AIMaster extends AIListener {
 	 * The methods called are in all types of the AI.
 	 */
 	protected synchronized void worldChanged() {
-		// worldState is now in centimeters!!!
 		ai.update(ai_world_state);
 		try {
 			switch (ai_world_state.getMode()) {
@@ -52,8 +52,10 @@ public class AIMaster extends AIListener {
 				break;
 
 			case sit:
-				ai.sit();
-				break;
+				if (ai.old_ai_world_state == null || ai.old_ai_world_state.getMode() != mode.sit) {
+					ai.sit();
+				}
+				break;				
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

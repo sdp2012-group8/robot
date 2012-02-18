@@ -93,7 +93,7 @@ public class NNetTools {
 		double target_start_angle = Vector2D.getDirection(rel_target_start);
 		Vector2D rel_target_end = Tools.getLocalVector(me, target_end);
 		double target_end_angle = Vector2D.getDirection(rel_target_end);
-		if (Tools.normalizeAngle(target_start_angle - target_end_angle) > 0) {
+		if (Utilities.normaliseAngle(target_start_angle - target_end_angle) > 0) {
 			double temp = target_start_angle;
 			target_start_angle = target_end_angle;
 			target_end_angle = temp;
@@ -103,7 +103,7 @@ public class NNetTools {
 		for (int i = 0; i < ans.length; i++) {
 			double sec_start_ang = sector_angle*i;
 			double sec_end_ang = sector_angle*(i+1);
-			boolean target_inside = ! (Tools.normalizeAngle(sec_start_ang-target_end_angle) >= 0 || Tools.normalizeAngle(sec_end_ang-target_start_angle) < 0); 
+			boolean target_inside = ! (Utilities.normaliseAngle(sec_start_ang-target_end_angle) >= 0 || Utilities.normaliseAngle(sec_end_ang-target_start_angle) < 0); 
 			ans[i] = target_inside ? 1 : -1;
 		}
 		return ans;
@@ -146,7 +146,7 @@ public class NNetTools {
 	 * @return mapped between -1 and 1 wrt width of pitch
 	 */
 	private static double AI_normalizeAngleTo1(double angle) {
-		return (Tools.normalizeAngle(angle))/180d;
+		return (Utilities.normaliseAngle(angle))/180d;
 	}
 	
 	/**

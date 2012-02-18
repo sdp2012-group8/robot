@@ -21,6 +21,7 @@ import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.Robot;
 import sdp.common.Tools;
+import sdp.common.Utilities;
 import sdp.common.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
@@ -440,7 +441,7 @@ public class NeuralTrainer {
 						Vector2D d = new Vector2D(
 								(-my.getCoords().getX()+mouse_scaled_x)*Simulator.PITCH_WIDTH_CM,
 								(-my.getCoords().getY()+mouse_scaled_y)*Simulator.PITCH_WIDTH_CM);
-						double angle = Tools.normalizeAngle(-my.getAngle()+Vector2D.getDirection(d));
+						double angle = Utilities.normaliseAngle(-my.getAngle()+Vector2D.getDirection(d));
 						double speed = (d.getLength()/200)*3*max_speed;
 						if (speed < 0)
 							speed = 0;

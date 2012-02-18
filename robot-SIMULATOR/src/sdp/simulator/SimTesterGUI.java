@@ -394,17 +394,18 @@ public class SimTesterGUI {
 	 * @param pressed true if pressed, false if released
 	 */
 	private void keyAction(final int key_id, final boolean pressed) {
+		if (mAI.getMode()!= mode.sit) mAI.setMode(mode.sit);
 		try {
 			switch (key_id) {
 			case KeyEvent.VK_UP:
 			case KeyEvent.VK_W:
 				speed = pressed ? max_speed : 0;
-				turn_speed = 0;
+				//turn_speed = 0;
 				break;
 			case KeyEvent.VK_DOWN:
 			case KeyEvent.VK_S:
 				speed = pressed ? -max_speed : 0;
-				turn_speed = 0;
+				//turn_speed = 0;
 				break;
 			case KeyEvent.VK_LEFT:
 			case KeyEvent.VK_A:
@@ -415,13 +416,14 @@ public class SimTesterGUI {
 				turn_speed = pressed ? -max_turn_speed : 0;
 				break;
 			case KeyEvent.VK_ENTER:
+			case KeyEvent.VK_E:
 				if (pressed)
 					mComm.sendMessage(opcode.kick);
 				return;
 			}
-			if (speed > 128 || speed < -127)
+			if (speed > 127 || speed < -128)
 				System.out.println("ERROR: CURRENT SPEED OVERFLOW!!! = "+speed);
-			if (turn_speed > 128 || turn_speed < -127)
+			if (turn_speed > 127 || turn_speed < -128)
 				System.out.println("ERROR: TURN SPEED OVERFLOW!!! = "+turn_speed);
 			mComm.sendMessage(opcode.operate, (byte) speed, (byte) turn_speed);
 		} catch (IOException e) {

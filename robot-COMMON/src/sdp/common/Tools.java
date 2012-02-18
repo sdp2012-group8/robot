@@ -81,20 +81,6 @@ public class Tools {
 	}
 
 	/**
-	 * Normalizes the given angle
-	 * @param initial given angle in degrees
-	 * @return normalized angle between -Pi and Pi
-	 */
-	public static double normalizeAngle(double initial) {
-		initial = initial % 360;
-		if (initial > 180)
-			initial -= 360;
-		if (initial < -180)
-			initial += 360;
-		return initial;
-	}
-
-	/**
 	 * Calculates distance between two points.
 	 * @param p1 start point
 	 * @param p2 end point
@@ -278,7 +264,7 @@ public class Tools {
 	 * @return
 	 */
 	public static double getTurningAngle(Robot me, Vector2D point) {
-		return Tools.normalizeAngle(-me.getAngle()+Vector2D.getDirection(new Vector2D(-me.getCoords().getX()+point.getX(), -me.getCoords().getY()+point.getY())));
+		return Utilities.normaliseAngle(-me.getAngle()+Vector2D.getDirection(new Vector2D(-me.getCoords().getX()+point.getX(), -me.getCoords().getY()+point.getY())));
 	}
 	
 	/**
@@ -465,97 +451,6 @@ public class Tools {
 		for (int i = 0; i < ans.length; i++)
 			ans[i] = array[i];
 		return printArray(ans);
-	}
-	
-	/**
-	 * Calculates the angle BAC
-	 * @param A
-	 * @param B
-	 * @param C
-	 * @return angle BAC
-	 */
-	public static double getAngle(Point2D.Double A, Point2D.Double B, Point2D.Double C) {
-		double angle = 0d;
-		double AB = getDistanceBetweenPoint(A,B);
-		double AC = getDistanceBetweenPoint(A,C);
-		double BC = getDistanceBetweenPoint(B,C);
-		
-		angle = Math.acos((AC*AC + AB*AB - BC*BC)/(2*AC*AB));
-		
-		return angle;
-	}
-	
-
-	public static Point2D.Double pointSubtract(Point2D.Double a, Point2D.Double  b) {
-		return new Point2D.Double(a.x-b.x, a.y-b.y);
-	}
-
-	public static Point3D crossProduct(Point2D.Double a, Point2D.Double b) {
-		return crossProduct(new Point3D(a.x,a.y,0), new Point3D(b.x,b.y,0));
-	}
-
-	public static Point3D crossProduct(Point3D a, Point3D b) {
-		return new Point3D(a.y*b.z - a.z*b.y, a.x*b.z - a.z*b.x, a.x*b.y - a.y*b.x);
-	}
-
-	public static double dotProduct(Point3D a, Point3D b) {
-		return a.x*b.x + a.y*b.y + a.z*b.z;
-	}
-
-	public static boolean sameSide(Point2D.Double p1, Point2D.Double p2, Point2D.Double a, Point2D.Double b){
-		Point3D cp1 = crossProduct(pointSubtract(b,a), pointSubtract(p1,a));
-		Point3D cp2 = crossProduct(pointSubtract(b,a), pointSubtract(p2,a));
-		if (dotProduct(cp1, cp2) >= 0) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
-	/**
-	 * Determines if a robot is in the way of the path AB
-	 * @param A First point of line
-	 * @param B Second point of line
-	 * @param robot Robot to test against
-	 * @return returns true if the path is clear
-	 */
-	public static boolean isPathClear(Point2D.Double A, Point2D.Double B, Robot robot) {
-		boolean diagonal1 = Tools.sameSide(robot.getBackLeft(), robot.getFrontRight(), A, B);
-		boolean diagonal2 = Tools.sameSide(robot.getFrontLeft(), robot.getBackRight(), A, B);
-		return (diagonal1 && diagonal2);
-	}
-
-	/**
-	 * Calculates if a point p is within the triangle abc
-	 * @param p Point in triangle
-	 * @param a
-	 * @param b
-	 * @param c
-	 * @return returns true if point is in triangle, false otherwise
-	 */
-	public static boolean pointInTriangle(Point2D.Double p, Point2D.Double a, Point2D.Double b, Point2D.Double c) {
-		if (sameSide(p,a, b,c) && sameSide(p,b, a,c) && sameSide(p,c, a,b)) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	/**
-	 * Calculates the point of intersection between two lines given 4 points
-	 * @param a
-	 * @param b
-	 * @param c
-	 * @param d
-	 * @return Returns the point of intersection or null if none exist
-	 */
-	public static Point2D.Double intersection(Point2D.Double a, Point2D.Double b, Point2D.Double c, Point2D.Double d) {
-		double D = (a.x-b.x)*(c.y-d.y) - (a.y-b.y)*(c.x-d.x);
-		if (D == 0) return null;
-		double xi = ((c.x-d.x)*(a.x*b.y-a.y*b.x)-(a.x-b.x)*(c.x*d.y-c.y*d.x))/D;
-		double yi = ((c.y-d.y)*(a.x*b.y-a.y*b.x)-(a.y-b.y)*(c.x*d.y-c.y*d.x))/D;
-
-		return new Point2D.Double(xi,yi);
 	}
 	
 	/**
