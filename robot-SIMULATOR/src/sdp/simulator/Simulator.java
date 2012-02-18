@@ -646,7 +646,8 @@ public class Simulator extends WorldStateProvider {
 		// ball collision with walls
 		if (future_ball.getX() - ball_radius < 0) {
 			// collision with left wall
-			if (Math.abs(future_ball.getY() - pitch_height_cm / 2) <= goal_size) {
+			if (Math.abs(future_ball.getY() - pitch_height_cm / 2) <= goal_size/2){
+					//goal_size) {
 				if (ball.getX() > -5)
 					score_left++;
 				ball = new Vector2D(-20, pitch_height_cm / 2);
@@ -658,7 +659,8 @@ public class Simulator extends WorldStateProvider {
 			}
 		} else if (future_ball.getX() + ball_radius > pitch_width_cm) {
 			// collision with right wall
-			if (Math.abs(future_ball.getY() - pitch_height_cm / 2) <= goal_size) {
+			if (Math.abs(future_ball.getY() - pitch_height_cm / 2) <= goal_size/2){
+					//goal_size) {
 				if (ball.getX() < pitch_width_cm + 5)
 					score_right++;
 				ball = new Vector2D(pitch_width_cm + 20, pitch_height_cm / 2);
