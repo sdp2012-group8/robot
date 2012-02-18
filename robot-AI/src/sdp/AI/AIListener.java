@@ -1,19 +1,10 @@
 package sdp.AI;
 
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-import sdp.common.Communicator;
-import sdp.common.Goal;
-import sdp.common.MessageQueue;
 import sdp.common.Tools;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.common.Robot;
-import sdp.common.Communicator.opcode;
 import sdp.common.WorldStateProvider;
 
 /**
@@ -69,8 +60,7 @@ public abstract class AIListener extends WorldStateProvider {
 						world_state = state;
 						ai_world_state = new AIWorldState(world_state, my_team_blue, my_goal_left);
 					} else {
-						world_state = new WorldState(
-								lowPass(checkBall(state.getBallCoords(), world_state.getBallCoords()), world_state.getBallCoords()),
+						world_state = new WorldState(checkBall(state.getBallCoords(), world_state.getBallCoords()),
 								lowPass(world_state.getBlueRobot(), state.getBlueRobot()),
 								lowPass(world_state.getYellowRobot(), state.getYellowRobot()),
 								state.getWorldImage());

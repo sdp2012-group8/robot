@@ -25,6 +25,7 @@ public abstract class AI {
 	protected final static int MAX_TURNING_SPEED = 50;
 
 	protected AIWorldState ai_world_state= null;
+	protected AIWorldState old_ai_world_state = null;
 	private MessageQueue mQueue = null;
 	protected Communicator mComm = null;
 	
@@ -76,6 +77,9 @@ public abstract class AI {
 		return (180*Math.atan2(-B.getY()+A.getY(), B.getX()-A.getX()))/Math.PI;
 	}
 	protected void update(AIWorldState ai_world_state) {
+		if (this.ai_world_state != null) {
+			this.old_ai_world_state = this.ai_world_state;
+		}
 		this.ai_world_state = ai_world_state;
 	}
 

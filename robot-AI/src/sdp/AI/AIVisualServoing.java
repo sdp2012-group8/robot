@@ -76,7 +76,10 @@ public class AIVisualServoing extends AI {
 
 		int can_we_shoot = ai_world_state.isGoalVisible(ai_world_state.getEnemyRobot(), ai_world_state.getEnemyGoal());
 
-		if (can_we_shoot > 0) {
+		if (can_we_shoot == -1) {
+			//Something went wrong
+			System.out.println("poopy");
+		} else if (can_we_shoot > 0) {
 			// We can see the goal
 			System.out.println("We can shoot");
 			Point2D.Double target = null;

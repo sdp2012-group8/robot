@@ -2,6 +2,7 @@ package sdp.AI;
 
 import java.io.IOException;
 
+import sdp.AI.AIWorldState.mode;
 import sdp.AI.neural.AINeuralNetwork;
 import sdp.common.Communicator;
 import sdp.common.WorldStateProvider;
@@ -52,8 +53,10 @@ public class AIMaster extends AIListener {
 				break;
 
 			case sit:
-				ai.sit();
-				break;
+				if (ai.old_ai_world_state == null || ai.old_ai_world_state.getMode() != mode.sit) {
+					ai.sit();
+				}
+				break;				
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -57,8 +57,8 @@ public class AIWorldState extends WorldState {
 			robot = getBlueRobot();
 			enemy_robot = getYellowRobot();
 		} else {
-			robot = getYellowRobot();
-			enemy_robot = getBlueRobot();
+			robot = (getYellowRobot());
+			enemy_robot = (getBlueRobot());
 		}
 		
 		distance_to_ball = Tools.getDistanceBetweenPoint(Tools.getGlobalVector(robot, new Vector2D(Robot.LENGTH_CM/2, 0)), getBallCoords());
@@ -123,6 +123,8 @@ public class AIWorldState extends WorldState {
 	 */
 	public int isGoalVisible(Robot enemy_robot, Goal enemy_goal) {
 		
+		if (getBallCoords().x < enemy_robot.getCoords().x) return 2;
+		
 		enemy_robot.setCoords(true); //need to convert robot coords to cm
 		
 		//System.out.println("goal.top: " + enemy_goal.getTop() + "  goal.bottom: " + enemy_goal.getBottom() + "  robot.left: " + enemy_robot.getFrontLeft() + "  robot.right: " + enemy_robot.getFrontRight());
@@ -148,9 +150,9 @@ public class AIWorldState extends WorldState {
 		
 		// The value in the top two that isn't already in points[] is the one we want.
 		if (e_robot_points.get(0) == points[0] || e_robot_points.get(0) == points[1]) {
-			points[2] = e_robot_points.get(0);
-		} else {
 			points[2] = e_robot_points.get(1);
+		} else {
+			points[2] = e_robot_points.get(0);
 		}
 		
 		Point2D.Double top;
@@ -158,24 +160,31 @@ public class AIWorldState extends WorldState {
 		
 		// Find top point by checking if two of the points are on the same side of the
 		// line between the third point and the top of the goal
-		if (Tools.sameSide(points[1], points[2], enemy_goal.getTop(), points[0])) {
-			top = points[0];
-		} else {
+		if (Tools.sameSide(points[0], points[1], enemy_goal.getTop(), points[2])) {
 			top = points[2];
+		} else {
+			top = points[1];
 		}
 		
 		// Find bottom Point
-		if (Tools.sameSide(points[0], points[2], enemy_goal.getTop(), points[1])) {
-			bottom = points[1];
-		} else {
+		if (Tools.sameSide(points[0], points[1], enemy_goal.getBottom(), points[2])) {
 			bottom = points[2];
+		} else {
+			bottom = points[0];
 		}
+		
+//		System.out.println("points =  0: " + points[0] + " 1: " +points[1] + " 2: " + points[2]);
+//		System.out.println("top: " + top + " bottom" + bottom);
+//		System.out.println("goal top: " + enemy_goal.getTop() + " goal bottom" + enemy_goal.getBottom());
 		
 		// Finds the intersection of the lines from the top and bottom of the goals to the robot corners.
 		Point2D.Double intersection = Tools.intersection(enemy_goal.getTop(), top, enemy_goal.getBottom(), bottom);
+		System.out.println("ball: " + getBallCoords() + " top: " + top + " bottom: " + bottom + " intersection: " + intersection);
+		
 		if ((intersection == null)) {
 			return -1;
 		} else if (Tools.pointInTriangle(getBallCoords(), top, bottom, intersection)) {
+			System.out.println("ball: " + getBallCoords() + " top: " + top + " bottom: " + bottom + " intersection: " + intersection);
 			return 0;
 		}
 		
@@ -187,7 +196,6 @@ public class AIWorldState extends WorldState {
 		} else if (Tools.isPathClear(getBallCoords(), enemy_goal.getBottom(), enemy_robot)) {
 			return 3;
 		}
-		
 		return -1; //should never be reached
 	}
 
