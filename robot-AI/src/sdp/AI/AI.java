@@ -6,7 +6,6 @@ import java.io.IOException;
 import sdp.common.Communicator;
 import sdp.common.MessageQueue;
 import sdp.common.Communicator.opcode;
-import sdp.common.WorldState;
 
 /**
  * 
