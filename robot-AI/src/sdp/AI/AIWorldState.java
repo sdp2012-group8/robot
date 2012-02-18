@@ -55,10 +55,10 @@ public class AIWorldState extends WorldState {
 		//update variables
 		if (my_team_blue) {
 			robot = getBlueRobot();
-			enemy_robot = (getYellowRobot());
+			enemy_robot = getYellowRobot();
 		} else {
-			robot = (getYellowRobot());
-			enemy_robot = (getBlueRobot());
+			robot = getYellowRobot();
+			enemy_robot = getBlueRobot();
 		}
 		
 		distance_to_ball = Tools.getDistanceBetweenPoint(Tools.getGlobalVector(robot, new Vector2D(Robot.LENGTH_CM/2, 0)), getBallCoords());

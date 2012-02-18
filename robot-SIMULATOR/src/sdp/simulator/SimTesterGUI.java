@@ -43,8 +43,8 @@ import javax.swing.DefaultComboBoxModel;
  */
 public class SimTesterGUI {
 
-	private static final double placement_right = 20; // in cm
-	private static final double placement_left = Simulator.pitch_width_cm - placement_right; // in cm
+	private static final double PLACEMENT_LEFT = 20; // in cm
+	private static final double PLACEMENT_RIGHT = Simulator.PITCH_WIDTH_CM - PLACEMENT_LEFT; // in cm
 	
 	private JFrame frmAlphaTeamSimulator;
 	
@@ -110,11 +110,11 @@ public class SimTesterGUI {
 		combo_team.setModel(new DefaultComboBoxModel(new String[] {"ME = Blue", "ME = Yellow"}));
 		combo_team.setBounds(662, 47, 117, 24);
 		frmAlphaTeamSimulator.getContentPane().add(combo_team);
-		
-		final JComboBox combo_goal = new JComboBox();
-		combo_goal.setModel(new DefaultComboBoxModel(new String[] {"ME : AI", "AI : ME"}));
-		combo_goal.setBounds(662, 83, 117, 24);
-		frmAlphaTeamSimulator.getContentPane().add(combo_goal);
+//		
+//		final JComboBox combo_goal = new JComboBox();
+//		combo_goal.setModel(new DefaultComboBoxModel(new String[] {"ME : AI", "AI : ME"}));
+//		combo_goal.setBounds(662, 83, 117, 24);
+//		frmAlphaTeamSimulator.getContentPane().add(combo_goal);
 		
 		panel = new JPanel() {
 			private static final long serialVersionUID = 8430961287318430359L;
@@ -198,7 +198,8 @@ public class SimTesterGUI {
 			public void actionPerformed(ActionEvent arg0) {
 				btnConnect.setText("Wait...");
 				btnConnect.setEnabled(false);
-				Connect(combo_team.getSelectedIndex() == 0, combo_goal.getSelectedIndex() != 0);
+				//Connect(combo_team.getSelectedIndex() == 0, combo_goal.getSelectedIndex() == 0);
+				Connect(combo_team.getSelectedIndex() == 0, true);
 				btnConnect.setText("Ready!");
 			}
 		});
@@ -333,17 +334,32 @@ public class SimTesterGUI {
 
 		final WorldStateObserver obs = new WorldStateObserver(mSim);
 		
-		blue_placement = blue_selected ? (my_goal_left ? placement_left : placement_right) : (my_goal_left ? placement_right : placement_left);
-		yellow_placement = blue_placement == placement_left ? placement_right : placement_left;
-	
+		if (blue_selected) {
+			if (my_goal_left) {
+				blue_placement = PLACEMENT_LEFT;
+				yellow_placement = PLACEMENT_RIGHT;
+			} else {
+				blue_placement = PLACEMENT_RIGHT;
+				yellow_placement = PLACEMENT_LEFT;
+			}
+		} else {
+			if (my_goal_left) {
+				blue_placement = PLACEMENT_RIGHT;
+				yellow_placement = PLACEMENT_LEFT;
+			} else {
+				blue_placement = PLACEMENT_LEFT;
+				yellow_placement = PLACEMENT_RIGHT;
+			}
+		}
+		
 		mSim.registerBlue(blue_selected ? (VBrick) mComm : (VBrick) opponentComm,
 				blue_placement,
-				Simulator.pitch_height_cm/2,
-				blue_placement == placement_left ? 180: 0);
+				Simulator.PITCH_HEIGHT_CM/2,
+				blue_placement == PLACEMENT_LEFT ? 0 : 180);
 		mSim.registerYellow(blue_selected ? (VBrick) opponentComm : (VBrick) mComm,
 				yellow_placement,
-				Simulator.pitch_height_cm/2,
-				yellow_placement == placement_left ? 180 : 0);
+				Simulator.PITCH_HEIGHT_CM/2,
+				yellow_placement == PLACEMENT_LEFT ? 0 : 180);
 		
 
 		mAI = new AIMaster(mComm, mSim, AIMaster.AIMode.visual_servoing);
@@ -368,8 +384,8 @@ public class SimTesterGUI {
 	 */
 	private void resetField() {
 		mSim.putBallAt();
-		mSim.putAt(blue_placement/Simulator.pitch_width_cm, Simulator.pitch_height_cm/(2*Simulator.pitch_width_cm), 0, blue_placement == placement_left ? 180: 0);
-		mSim.putAt(yellow_placement/Simulator.pitch_width_cm, Simulator.pitch_height_cm/(2*Simulator.pitch_width_cm), 1, yellow_placement == placement_left ? 180: 0);
+		mSim.putAt(blue_placement/Simulator.PITCH_WIDTH_CM, Simulator.PITCH_HEIGHT_CM/(2*Simulator.PITCH_WIDTH_CM), 0, blue_placement == PLACEMENT_LEFT ?  0 : 180);
+		mSim.putAt(yellow_placement/Simulator.PITCH_WIDTH_CM, Simulator.PITCH_HEIGHT_CM/(2*Simulator.PITCH_WIDTH_CM), 1, yellow_placement == PLACEMENT_LEFT ?  0 : 180);
 	}
 	
 	/**

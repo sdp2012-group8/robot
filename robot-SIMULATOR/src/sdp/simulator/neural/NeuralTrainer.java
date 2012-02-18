@@ -52,7 +52,7 @@ import javax.swing.JEditorPane;
 public class NeuralTrainer {
 
 	private static final double placement_right = 20; // in cm
-	private static final double placement_left = Simulator.pitch_width_cm - placement_right; // in cme
+	private static final double placement_left = Simulator.PITCH_WIDTH_CM - placement_right; // in cme
 	
 	JFrame frame;
 	
@@ -425,11 +425,11 @@ public class NeuralTrainer {
 		yellow_placement = blue_placement == placement_left ? placement_right : placement_left;
 		mSim.registerBlue(blue_selected ? (VBrick) mComm : bot,
 				blue_placement,
-				Simulator.pitch_height_cm/2,
+				Simulator.PITCH_HEIGHT_CM/2,
 				blue_placement == placement_left ? 180: 0);
 		mSim.registerYellow(blue_selected ? bot : (VBrick) mComm,
 				yellow_placement,
-				Simulator.pitch_height_cm/2,
+				Simulator.PITCH_HEIGHT_CM/2,
 				yellow_placement == placement_left ? 180 : 0);
 		switch (combo_AI.getSelectedIndex()) {
 		case 0:
@@ -449,8 +449,8 @@ public class NeuralTrainer {
 					if (chckbxMouseControl.isSelected() && mComm != null) {
 						Robot my = blue_selected ? lastWS.getBlueRobot() : lastWS.getYellowRobot();
 						Vector2D d = new Vector2D(
-								(-my.getCoords().getX()+mouse_scaled_x)*Simulator.pitch_width_cm,
-								(-my.getCoords().getY()+mouse_scaled_y)*Simulator.pitch_width_cm);
+								(-my.getCoords().getX()+mouse_scaled_x)*Simulator.PITCH_WIDTH_CM,
+								(-my.getCoords().getY()+mouse_scaled_y)*Simulator.PITCH_WIDTH_CM);
 						double angle = Tools.normalizeAngle(-my.getAngle()+Vector2D.getDirection(d));
 						double speed = (d.getLength()/200)*3*max_speed;
 						if (speed < 0)
@@ -482,8 +482,8 @@ public class NeuralTrainer {
 	 */
 	private void resetField() {
 		mSim.putBallAt();
-		mSim.putAt(blue_placement/Simulator.pitch_width_cm, Simulator.pitch_height_cm/(2*Simulator.pitch_width_cm), 0, blue_placement == placement_left ? 180: 0);
-		mSim.putAt(yellow_placement/Simulator.pitch_width_cm, Simulator.pitch_height_cm/(2*Simulator.pitch_width_cm), 1, yellow_placement == placement_left ? 180: 0);
+		mSim.putAt(blue_placement/Simulator.PITCH_WIDTH_CM, Simulator.PITCH_HEIGHT_CM/(2*Simulator.PITCH_WIDTH_CM), 0, blue_placement == placement_left ? 180: 0);
+		mSim.putAt(yellow_placement/Simulator.PITCH_WIDTH_CM, Simulator.PITCH_HEIGHT_CM/(2*Simulator.PITCH_WIDTH_CM), 1, yellow_placement == placement_left ? 180: 0);
 	}
 	
 	
