@@ -3,6 +3,7 @@ package sdp.AI;
 import java.io.IOException;
 import java.awt.geom.Point2D;
 
+import sdp.AI.AIWorldState.mode;
 import sdp.common.Communicator;
 import sdp.common.Robot;
 import sdp.common.Tools;
@@ -35,7 +36,7 @@ public class AIVisualServoing extends AI {
 		// calculates speed formula:
 		// speed_when_robot_next_to_ball+(distance_to_ball/max_distance)*speed_when_over_max_distance
 		// every distance between 0 and max_distance will be mapped between speed_when_robot_next_to_ball and speed_when_over_max_distance
-		double forward_speed = 0+(ai_world_state.getDistanceToBall()/40)*25;
+		double forward_speed = 5+(ai_world_state.getDistanceToBall()/40)*25;
 
 		System.out.println("I'm in chase ball :), turning speed : " + turning_speed);
 		// do the backwards turn
@@ -59,8 +60,8 @@ public class AIVisualServoing extends AI {
 		mComm.sendMessage(opcode.operate, (byte) (forward_speed), (byte) (turning_speed));
 		// check whether to go into got_ball mode
 		if (Math.abs(turning_speed) < TURNING_ACCURACY && ai_world_state.getDistanceToBall() < 2) {
-			ai_world_state.setMode(AIWorldState.mode.sit);
-			//setMode(mode.got_ball);
+			//ai_world_state.setMode(mode.sit);
+			ai_world_state.setMode(mode.got_ball);
 		}
 
 	}
@@ -106,8 +107,8 @@ public class AIVisualServoing extends AI {
 			if (forward_speed < -MAX_SPEED_CM_S) forward_speed = -MAX_SPEED_CM_S;
 
 
-			if (ai_world_state.getDistanceToGoal() > Robot.LENGTH_CM) {
-				ai_world_state.setMode(AIWorldState.mode.chase_ball);
+			if (ai_world_state.getDistanceToBall() > Robot.LENGTH_CM) {
+				ai_world_state.setMode(mode.chase_ball);
 			} else if (turning_angle > TURNING_ACCURACY && (ai_world_state.getDistanceToGoal() > 1)){
 				mComm.sendMessage(opcode.operate, forward_speed, (byte)20);
 				//System.out.println("Going to goal - Turning: " + turning_angle);
