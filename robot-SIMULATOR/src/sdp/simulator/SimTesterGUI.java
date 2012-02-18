@@ -326,14 +326,14 @@ public class SimTesterGUI {
 		});
 	}
 	
-	private void Connect(boolean blue_selected, boolean my_door_right) {
+	private void Connect(boolean blue_selected, boolean my_goal_left) {
 		mComm = new VBrick();
 		opponentComm = new VBrick();
 		mSim = new Simulator();
 
 		final WorldStateObserver obs = new WorldStateObserver(mSim);
 		
-		blue_placement = blue_selected ? (my_door_right ? placement_left : placement_right) : (my_door_right ? placement_right : placement_left);
+		blue_placement = blue_selected ? (my_goal_left ? placement_left : placement_right) : (my_goal_left ? placement_right : placement_left);
 		yellow_placement = blue_placement == placement_left ? placement_right : placement_left;
 	
 		mSim.registerBlue(blue_selected ? (VBrick) mComm : (VBrick) opponentComm,
@@ -347,10 +347,10 @@ public class SimTesterGUI {
 		
 
 		mAI = new AIMaster(mComm, mSim, AIMaster.AIMode.visual_servoing);
-		mAI.start(blue_selected, my_door_right);
+		mAI.start(blue_selected, my_goal_left);
 		
 		opponentAI = new AIMaster(opponentComm, mSim, AIMaster.AIMode.visual_servoing);
-		opponentAI.start(!blue_selected, !my_door_right);
+		opponentAI.start(!blue_selected, !my_goal_left);
 
 		
 		new Thread() {
