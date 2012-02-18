@@ -218,4 +218,8 @@ public class AIWorldState extends WorldState {
 	public boolean getMyGoalLeft() {
 		return my_goal_left;
 	}
+	
+	public boolean getMyTeamBlue() {
+		return my_team_blue;
+	}
 }

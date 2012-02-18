@@ -30,7 +30,7 @@ import sdp.simulator.VBrick;
 public class NeuralNetworkTrainingGenerator extends VBrick {
 
 	private NeuralNetwork[] nets = new NeuralNetwork[] {
-			new MultiLayerPerceptron(10, 21, move_modes.values().length)
+			new MultiLayerPerceptron(22, 45, move_modes.values().length)
 	};
 	
 	private String fname;
@@ -168,9 +168,11 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 							//is_it_kicking = is_kicking;
 							double dt =(System.currentTimeMillis()-lastTime)/1000d;
 							// create training set
+							double[] out = NNetTools.generateOutput(NNetTools.getMode(desired_speed, desired_turning_speed));
+							if (out != null)
 							tsets[0].addElement(new SupervisedTrainingElement(
 									NNetTools.generateAIinput(worldState, oldWorldState, dt, am_i_blue, my_goal_left, 0),
-									NNetTools.generateOutput(NNetTools.getMode(desired_speed, desired_turning_speed))));
+									out));
 							frames++;
 							if (frames % 100 == 0)
 								System.out.println(frames+" frames recorded last - "+frames+" and "+desired_speed);

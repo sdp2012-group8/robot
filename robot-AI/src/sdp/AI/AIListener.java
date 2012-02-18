@@ -1,19 +1,11 @@
 package sdp.AI;
 
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
-import sdp.common.Communicator;
-import sdp.common.Goal;
-import sdp.common.MessageQueue;
 import sdp.common.Tools;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.common.Robot;
-import sdp.common.Communicator.opcode;
 import sdp.common.WorldStateProvider;
 
 /**
@@ -118,6 +110,8 @@ public abstract class AIListener extends WorldStateProvider {
 	 * @return a filtered value
 	 */
 	private double lowPass(double old_value, double new_value, int amount) {
+		if (Double.isNaN(new_value) || Double.isInfinite(new_value))
+			return old_value;
 		return (old_value+new_value*amount)/((double) (amount+1));
 	}
 

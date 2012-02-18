@@ -9,7 +9,8 @@ package sdp.common;
 public class NNetTools {
 	
 	public static enum move_modes {
-		forward_left, forward, forward_right, stop, backward_left, backward, backward_right, left, right 
+		forward_left, forward_right,  backward_left, backward_right, forward, backward
+		//stop,  left, right 
 	}
 
 	/**
@@ -22,61 +23,104 @@ public class NNetTools {
 	 * @return the input array
 	 */
 	public static double[] generateAIinput(WorldState worldState, WorldState oldState, double dt, boolean am_i_blue, boolean my_goal_left, int id) {
-		Robot me = am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot();
-		Robot enemy = am_i_blue ? worldState.getYellowRobot() : worldState.getBlueRobot();
-		//Vector2D goal = new Vector2D(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM);
-		// get coordinates relative to table
-		Vector2D my_coords = new Vector2D(me.getCoords());
-		Vector2D en_coords = new Vector2D(enemy.getCoords());
+		// getTargetDirection(worldState, am_i_blue, 10, new Vector2D(0, Tools.PITCH_HEIGHT_CM/2d - 60/2), new Vector2D(0, Tools.PITCH_HEIGHT_CM/2d + 60/2)) for left goal
+		// ball getTargetDirection(worldState, am_i_blue, 50, ball, ball))
+		
 		Vector2D ball = new Vector2D(worldState.getBallCoords());
-		Vector2D nearest = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getCoords());
-		// rel coords
-		Vector2D rel_ball = Tools.getLocalVector(me, ball);
-		//Vector2D rel_goal = Tools.getLocalVector(me, goal);
-		Vector2D rel_coll = Tools.getLocalVector(me, Vector2D.add(my_coords, nearest));
-		Vector2D rel_en = Tools.getLocalVector(me, en_coords);
-		// if you change something here, don't forget to change number of inputs in trainer
+		Vector2D ball_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
+		ball_rel.setX(ball_rel.getX()-Robot.LENGTH_CM/2);
 		switch (id) {
 		case 0:
-			return /*Tools.concat(*/new double[] {
-					AI_normalizeCoordinateTo1(rel_ball.getLength(), Tools.PITCH_WIDTH_CM),
-					AI_normalizeAngleTo1(Vector2D.getDirection(rel_ball)),
-					AI_normalizeCoordinateTo1(rel_en.getLength(), Tools.PITCH_WIDTH_CM),
-					AI_normalizeAngleTo1(Vector2D.getDirection(rel_en)),
-					AI_normalizeCoordinateTo1(Tools.raytraceVector(worldState, me, new Vector2D(0,0), new Vector2D(-Robot.WIDTH_CM/2,-Robot.WIDTH_CM/2), am_i_blue).getLength(), 60),
-					AI_normalizeCoordinateTo1(Tools.raytraceVector(worldState, me, new Vector2D(0,0), new Vector2D(-Robot.WIDTH_CM/2,Robot.WIDTH_CM/2), am_i_blue).getLength(), 60),
-					AI_normalizeCoordinateTo1(Tools.raytraceVector(worldState, me, new Vector2D(0,0), new Vector2D(Robot.WIDTH_CM/2,-Robot.WIDTH_CM/2), am_i_blue).getLength(), 60),
-					AI_normalizeCoordinateTo1(Tools.raytraceVector(worldState, me, new Vector2D(0,0), new Vector2D(Robot.WIDTH_CM/2,Robot.WIDTH_CM/2), am_i_blue).getLength(), 60),
-					AI_normalizeCoordinateTo1(Tools.raytraceVector(worldState, me, new Vector2D(0,0), new Vector2D(1,0), am_i_blue).getLength(), 60),
-					AI_normalizeCoordinateTo1(Tools.raytraceVector(worldState, me, new Vector2D(0,0), new Vector2D(-1,0), am_i_blue).getLength(), 60)
-					//AI_normalizeAngleTo1(Vector2D.getDirection(rel_ball))
-					//AI_normalizeCoordinateTo1(rel_en.getX(), Tools.PITCH_WIDTH_CM),
-					//AI_normalizeCoordinateTo1(rel_coll.getX(), Tools.PITCH_WIDTH_CM)
-			};//, getVisionMatrix(20, Tools.PITCH_WIDTH_CM, 35, worldState, oldState, dt, am_i_blue));
+			return Tools.concat(
+					// TODO! Tweaking those parameters
+					getAvailableSectors(worldState, am_i_blue, 20, 30, 30),
+					new double[] {
+						AI_normalizeAngleTo1(Vector2D.getDirection(ball_rel)),
+						AI_normalizeCoordinateTo1(ball_rel.getLength(), Tools.PITCH_WIDTH_CM)
+					});
 		}
 		return null;		
 	}
 	
 	/**
-	 * Generates series of vectors around the front and back of the robot
-	 * @param size the elements in array. Front and back must have odd sizes so a value of 10 would mean 5 in front and 5 in back.
-	 * @param threshold
-	 * @return distances to nearest collision points in the direction, normalized to threshold
+	 * Gets the available sectors. Sectors are the space where the robot can go without encountering obstacles. This is done by a "scanning"
+	 * sensor that rotates around the robot at a small angle. If it detects an object it sets the current sector that the sensor is pointing at
+	 * to be unavailable and goes to the next sector until it reaches the beginning.
+	 * @param ws current worldState
+	 * @param am_i_blue true when my robot is blue, false if it is yellow
+	 * @param sec_count number of sectors
+	 * @param scan_count number of scans
+	 * @param sensor_threshold the threshold at which the sensor triggers
+	 * @return a array containing -1 to 1 for every sector: whether it is available or it is blocked by an object
 	 */
-	private static double[] getVisionMatrix(int size, double threshold_length, double threshold_velocity, WorldState ws, WorldState old, double dt, boolean am_i_blue) {
-		Robot oldme = am_i_blue ? old.getBlueRobot() : old.getYellowRobot();
-		Robot newme = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
-		final double[] vels = new double[size];
-		final double[] dists = new double[size];
-		int i = 0;
-		for (double angle = -Math.PI; angle < Math.PI; angle += 2*Math.PI/size) {
-			vels[i] = 
-					(AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, newme, new Vector2D(0, 0), new Vector2D(Math.cos(angle), Math.sin(angle)), am_i_blue).getLength(), threshold_velocity) -
-					AI_normalizeCoordinateTo1(Tools.raytraceVector(old, oldme, new Vector2D(0, 0), new Vector2D(Math.cos(angle), Math.sin(angle)), am_i_blue).getLength(), threshold_velocity))/dt;
-			dists[i] = AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, newme, new Vector2D(0, 0), new Vector2D(Math.cos(angle), Math.sin(angle)), am_i_blue).getLength(), threshold_length);
-			i++;
+	public static double[] getAvailableSectors(WorldState ws, boolean am_i_blue, int sec_count, int scan_count, double sensor_threshold) {
+		Robot me = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
+		int sector_angle = 360/sec_count;
+		double scan_angle = 360d/scan_count;
+		Vector2D zero = Vector2D.ZERO();
+		int sector_id = 0;
+		double[] ans = new double[sec_count];
+		// set all sectors available
+		for (int i = 0; i < ans.length; i++)
+			ans[i] = -1;
+		for (double angle = 0; angle < 360; angle+=scan_angle) {
+			sector_id = ((int) angle) /  sector_angle;
+			if (sector_id >= sec_count)
+				break;
+			double ang_rad = angle*Math.PI/180d;
+			double dist = Tools.raytraceVector(ws, me, zero, new Vector2D(Math.cos(ang_rad), Math.sin(ang_rad)), am_i_blue).getLength();
+			if (dist < sensor_threshold) {
+				ans[sector_id] = 1;//AI_normalizeDistanceTo1(dist, sensor_threshold);
+				// skip to next sector
+				angle = (sector_id+1)*sector_angle-scan_angle;
+			}
 		}
-		return Tools.concat(vels, dists);
+		return ans;
+	}
+	
+	/**
+	 * 
+	 * @param ws current worldState
+	 * @param am_i_blue true when my robot is blue, false if it is yellow
+	 * @param sec_count number of sectors
+	 * @param target_start start of target line in table coordinates
+	 * @param target_end end of target line in table coordinates
+	 * @return a array containing -1 to 1 for every sector: whether there is a target in given sector
+	 */
+	public static double[] getTargetDirection(WorldState ws, boolean am_i_blue, int sec_count, Vector2D target_start, Vector2D target_end) {
+		Robot me = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
+		Vector2D rel_target_start = Tools.getLocalVector(me, target_start);
+		double target_start_angle = Vector2D.getDirection(rel_target_start);
+		Vector2D rel_target_end = Tools.getLocalVector(me, target_end);
+		double target_end_angle = Vector2D.getDirection(rel_target_end);
+		if (Tools.normalizeAngle(target_start_angle - target_end_angle) > 0) {
+			double temp = target_start_angle;
+			target_start_angle = target_end_angle;
+			target_end_angle = temp;
+		}
+		double sector_angle = 360d/sec_count;
+		double[] ans = new double[sec_count];
+		for (int i = 0; i < ans.length; i++) {
+			double sec_start_ang = sector_angle*i;
+			double sec_end_ang = sector_angle*(i+1);
+			boolean target_inside = ! (Tools.normalizeAngle(sec_start_ang-target_end_angle) >= 0 || Tools.normalizeAngle(sec_end_ang-target_start_angle) < 0); 
+			ans[i] = target_inside ? 1 : -1;
+		}
+		return ans;
+	}
+	
+	/**
+	 * Converts dist within the scale -1 to 1 taking account threshold
+	 * @param dist
+	 * @param threshold
+	 * @return if dist >= threshold returns -1, if dist = 0 returns 1, otherwise returns between -1 and 1
+	 */
+	private static double AI_normalizeDistanceTo1(double dist, double threshold) {
+		if (dist >= threshold)
+			return -1;
+		double frac = dist/threshold;
+		double dis = 1-frac*2;
+		return dis;
 	}
 	
 	/**
@@ -118,6 +162,8 @@ public class NNetTools {
 	}
 	
 	public static double[] generateOutput(move_modes mode) {
+		if (mode == null)
+			return null;
 		return generateOutput(mode.ordinal(), move_modes.values().length);
 	}
 
@@ -159,11 +205,11 @@ public class NNetTools {
 			return move_modes.forward_left;
 		
 		if (desired_speed == 0 && desired_turning > 0)
-			return move_modes.right;
+			return null;//move_modes.right;
 		if (desired_speed == 0 && desired_turning == 0)
-			return move_modes.stop;
+			return null;//move_modes.stop;
 		if (desired_speed == 0 && desired_turning < 0)
-			return move_modes.left;
+			return null;//move_modes.left;
 
 		if (desired_speed < 0 && desired_turning > 0)
 			return move_modes.backward_right;
@@ -194,11 +240,11 @@ public class NNetTools {
 		switch (mode) {
 		case forward_right:
 		case backward_right:
-		case right:
+		//case right:
 			return 90;
 		case forward_left:
 		case backward_left:
-		case left:
+		//case left:
 			return -90;
 		default:
 			return 0;

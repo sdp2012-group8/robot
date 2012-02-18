@@ -922,22 +922,8 @@ public class Simulator extends WorldStateProvider {
 				boolean am_i_blue = i == 0;
 				robot = am_i_blue ? state_cm.getBlueRobot() : state_cm
 						.getYellowRobot();
-//				drawVector(new Vector2D(robot.getFrontLeft()),
-//						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
-//								robot.getFrontLeft()));
-//				drawVector(new Vector2D(robot.getFrontRight()),
-//						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
-//								robot.getFrontRight()));
-//				drawVector(new Vector2D(robot.getBackLeft()),
-//						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
-//								robot.getBackLeft()));
-//				drawVector(new Vector2D(robot.getBackRight()),
-//						Tools.getNearestCollisionPoint(state_cm, am_i_blue,
-//								robot.getBackRight()));
 				Vector2D local_origin = new Vector2D(Robot.LENGTH_CM/2+2,0);
 				drawVector(Tools.getGlobalVector(robot, local_origin),  Tools.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0)), true);
-				drawVector(Tools.getGlobalVector(robot, new Vector2D(0,0)),  Tools.raytraceVector(state_cm, robot, new Vector2D(0,0), new Vector2D(-Robot.WIDTH_CM/2,Robot.WIDTH_CM/2), true), true);
-				drawVector(Tools.getGlobalVector(robot, new Vector2D(0,0)),  Tools.raytraceVector(state_cm, robot, new Vector2D(0,0), new Vector2D(Robot.WIDTH_CM/2,Robot.WIDTH_CM/2), true), true);
 			}
 		}
 		// draw ball

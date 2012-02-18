@@ -280,7 +280,7 @@ public class Tools {
 	public static double getTurningAngle(Robot me, Vector2D point) {
 		return Tools.normalizeAngle(-me.getAngle()+Vector2D.getDirection(new Vector2D(-me.getCoords().getX()+point.getX(), -me.getCoords().getY()+point.getY())));
 	}
-
+	
 	/**
 	 * Transforms a vector from table coordinates to robot coordinates
 	 * @param me

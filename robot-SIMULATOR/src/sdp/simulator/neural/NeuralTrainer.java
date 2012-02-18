@@ -6,8 +6,6 @@ import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -16,12 +14,9 @@ import java.awt.event.MouseMotionListener;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import sdp.AI.AI;
 import sdp.AI.AIMaster;
 import sdp.AI.AIMaster.AIMode;
 import sdp.AI.AIWorldState.mode;
-import sdp.AI.neural.AINeuralNetwork;
-import sdp.AI.AIVisualServoing;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.Robot;
@@ -67,7 +62,6 @@ public class NeuralTrainer {
 	private JCheckBox chckbxMouseControl;
 	private JComboBox combo_AI;
 	private JComboBox comboBox;
-	private JEditorPane dtrpnhomemartinmarinov;
 
 	private static final int max_speed = 35;
 	private static final int max_turn_speed = 90;
@@ -273,11 +267,6 @@ public class NeuralTrainer {
 		btnResetField.setBounds(662, 119, 117, 25);
 		frame.getContentPane().add(btnResetField);
 		
-		dtrpnhomemartinmarinov = new JEditorPane();
-		dtrpnhomemartinmarinov.setText("data");
-		dtrpnhomemartinmarinov.setBounds(662, 298, 117, 24);
-		frame.getContentPane().add(dtrpnhomemartinmarinov);
-		
 		final JButton btnNewButton = new JButton("Record");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -417,7 +406,7 @@ public class NeuralTrainer {
 	private void Connect() {
 		
 		mSim = new Simulator();
-		trainer = new NeuralNetworkTrainingGenerator(mSim, dtrpnhomemartinmarinov.getText());
+		trainer = new NeuralNetworkTrainingGenerator(mSim, "data");
 		mComm = (Communicator) trainer;
 		final WorldStateObserver obs = new WorldStateObserver(mSim);
 		VBrick bot = new VBrick();
@@ -501,8 +490,8 @@ public class NeuralTrainer {
 			switch (key_id) {
 			case KeyEvent.VK_UP:
 			case KeyEvent.VK_W:
-
-				speed = pressed ? max_speed : 0;
+				if (pressed)
+					speed = max_speed;
 				if (pressed) {
 					if (original == null)
 						original = mAI.getMode();
@@ -512,7 +501,8 @@ public class NeuralTrainer {
 				break;
 			case KeyEvent.VK_DOWN:
 			case KeyEvent.VK_S:
-				speed = pressed ? -max_speed : 0;
+				if (pressed)
+					speed = -max_speed;
 				if (pressed) {
 					if (original == null)
 						original = mAI.getMode();
@@ -559,7 +549,19 @@ public class NeuralTrainer {
 					mAI.setMode(original);
 					original = null;
 				}
-				return;
+				break;
+			case KeyEvent.VK_SHIFT:
+				if (pressed) {
+					if (pressed)
+						speed = 0;
+				}
+				if (pressed) {
+					if (original == null)
+						original = mAI.getMode();
+					mAI.setMode(mode.sit);
+					trainer.Resume();
+				}
+				break;
 			case KeyEvent.VK_SPACE:
 				if (pressed)
 					RandomizeField();
