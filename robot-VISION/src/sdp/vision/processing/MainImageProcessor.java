@@ -78,7 +78,8 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 * @param frame Frame to preprocess.
 	 */
 	private BufferedImage preprocessFrame(BufferedImage frame) {
-		IplImage frame_ipl = IplImage.createFrom(frame);		
+		IplImage frame_ipl = IplImage.createFrom(frame);
+		frame_ipl = undistortImage(frame_ipl);
 		cvSetImageROI(frame_ipl, getCurrentROI());		
 		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, 5);
 		return frame_ipl.getBufferedImage();
