@@ -1,15 +1,12 @@
 package sdp.brick;
 
 import java.io.File;
+import java.util.Collection;
 
 import sdp.common.Communicator;
 import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 
-<<<<<<< HEAD
-import lejos.nxt.Battery;
-=======
->>>>>>> b96687b875cf2d04bb4f5823a5b6b7b6fd42ea74
 import lejos.nxt.LCD;
 import lejos.nxt.Motor;
 import lejos.nxt.NXT;
@@ -28,9 +25,15 @@ import lejos.nxt.UltrasonicSensor;
  */
 public class Brick {
 
+	private static final int coll_threshold = 30; // cm
+	private static final int back_speed = -10; // cm per sec
+	private static final int angle_threshold = 5; // degrees per sec
+	private static final int turning_boost = 20; // degrees per sec
 
 
 	private static Communicator mCont;
+	private static UltrasonicSensor sens;
+	private static boolean collision = false;
 
 	/**
 	 * The entry point of the program
@@ -38,6 +41,16 @@ public class Brick {
 	 */
 	public static void main(String[] args) {
 		// connect with PC and start receiving messages
+		sens = new UltrasonicSensor(SensorPort.S1);
+		sens.continuous();
+		new Thread() {
+			public void run() {
+				while (true) {
+					int dist = sens.getDistance();
+					collision = dist < coll_threshold;
+				}
+			};
+		}.start();
 		mCont = new BComm();
 		mCont.registerListener(new MessageListener() {
 
@@ -65,7 +78,6 @@ public class Brick {
 			public void receiveMessage(opcode op, byte[] args, Communicator controller) {
 				final int def_vol = Sound.getVolume();
 				// to send messages back to PC, use mCont.sendMessage
-				float max;
 				switch (op) {
 
 				case checkTouch:
@@ -85,33 +97,18 @@ public class Brick {
 				case exit:
 					mCont.close();
 					Sound.setVolume(def_vol);
+					sens.off();
 					NXT.shutDown();
 					break;
 
 				case move:
-<<<<<<< HEAD
-					try {
-						max = Battery.getVoltage()*100;
-						Motor.A.setSpeed(max+args[2]);
-						Motor.C.setSpeed(max+args[3]);
-=======
 					if (args.length > 0) {					
 						Motor.A.setSpeed(slowest);
 						Motor.C.setSpeed(slowest);
->>>>>>> b96687b875cf2d04bb4f5823a5b6b7b6fd42ea74
 						Motor.A.setAcceleration(args[1]*100);
 						Motor.C.setAcceleration(args[1]*100);
 						Motor.A.forward();
 						Motor.C.forward();
-<<<<<<< HEAD
-					} catch (Exception e){
-						LCD.drawString("Command Error: Check Args", 2, 2);
-					}
-					try {
-						Thread.sleep(args[0]*1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-=======
 						try {
 							Thread.sleep(args[0]*500);
 							LCD.drawString("M-A: " + (Motor.A.getTachoCount()-lastCountA), 2, 3);
@@ -126,28 +123,10 @@ public class Brick {
 						Motor.C.setSpeed(0);
 						Motor.C.stop();
 						Motor.A.stop();
->>>>>>> b96687b875cf2d04bb4f5823a5b6b7b6fd42ea74
 					}
 					break;
 
 				case moveback:
-<<<<<<< HEAD
-					try {
-						max = Battery.getVoltage()*100;
-						Motor.A.setSpeed(max);
-						Motor.C.setSpeed(max);
-						Motor.A.setAcceleration(args[1]*100);
-						Motor.C.setAcceleration(args[1]*100);
-						Motor.A.backward();
-						Motor.C.backward();
-					} catch (Exception e){
-						LCD.drawString("Command Error: Check Args", 2, 2);
-					}
-					try {
-						Thread.sleep(args[0]*1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-=======
 					if (args.length > 0) {
 						Motor.A.setSpeed(slowest);
 						Motor.C.setSpeed(slowest);
@@ -163,29 +142,8 @@ public class Brick {
 						Motor.A.setSpeed(0);
 						Motor.C.stop();
 						Motor.A.stop();
->>>>>>> b96687b875cf2d04bb4f5823a5b6b7b6fd42ea74
 					}
 					break;
-<<<<<<< HEAD
-					
-				case moveangle:
-					
-						Motor.A.rotate(args[0], true);
-						Motor.C.rotate(args[0], true);
-					try {
-						Thread.sleep(args[0]*1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					break;	
-				case kick:
-						max = Battery.getVoltage()*100;
-						Motor.B.setSpeed(max);
-						Motor.B.setAcceleration(100000);
-						Motor.B.rotate(-70);
-						Motor.B.rotate(70);
-						Motor.B.stop();
-=======
 
 				case kick:
 					Motor.B.setSpeed(Motor.B.getMaxSpeed());
@@ -198,7 +156,6 @@ public class Brick {
 					Motor.B.rotate(-80);
 					Motor.B.rotate(70);
 					Motor.B.stop();
->>>>>>> b96687b875cf2d04bb4f5823a5b6b7b6fd42ea74
 					break;
 
 				case turn:
@@ -213,21 +170,11 @@ public class Brick {
 					break;
 
 				case rotate_kicker:
-<<<<<<< HEAD
-						max = Battery.getVoltage()*100;
-						Motor.B.setSpeed(max);
-						Motor.B.setAcceleration(100000);
-						Motor.B.rotate(args[0]);
-					break;
-				default:
-					LCD.drawString("Unknown Command", 2, 2);
-=======
 					if (args.length > 0) {
 						Motor.B.setSpeed(slowest);
 						Motor.B.setAcceleration(100000);
 						Motor.B.rotate(args[0]);
 					}
->>>>>>> b96687b875cf2d04bb4f5823a5b6b7b6fd42ea74
 					break;
 
 				case rotate_kicker_stop:
@@ -253,8 +200,6 @@ public class Brick {
 					break;	
 					
 				case move_to_wall:
-					UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
-					sens.continuous();
 					Motor.A.setSpeed(slowest);
 					Motor.C.setSpeed(slowest);
 					Motor.A.setAcceleration(1000);
@@ -275,7 +220,7 @@ public class Brick {
 					Motor.C.setSpeed(0);
 					Motor.C.stop();
 					Motor.A.stop();
-					sens.off();
+					
 					break;
 
 				case operate:
@@ -283,6 +228,11 @@ public class Brick {
 					// args[1] - turning speed in degrees per second around centre of robot
 					// args[2] - acceleration in cm/s/s
 					if (args.length > 0) {
+						// collision detection
+						if (collision && Math.abs(args[1]) >= angle_threshold) {
+							args[0] = back_speed;
+							args[1] += args[1] > 0 ? turning_boost : -turning_boost;
+						}
 						float old_a = speed_a;
 						float old_c = speed_c;
 						// convert the degrees per second around robot
