@@ -43,7 +43,7 @@ public abstract class BaseImageProcessor {
 	 * 
 	 * @return The current image processor configuration.
 	 */
-	public final ImageProcessorConfig getConfiguration() {
+	public final synchronized ImageProcessorConfig getConfiguration() {
 		return config;
 	}
 
@@ -52,7 +52,7 @@ public abstract class BaseImageProcessor {
 	 * 
 	 * @param config The new configuration.
 	 */
-	public final void setConfiguration(ImageProcessorConfig config) {
+	public final synchronized void setConfiguration(ImageProcessorConfig config) {
 		this.config = config;
 	}
 	
@@ -63,26 +63,22 @@ public abstract class BaseImageProcessor {
 	 * @param image Image to undistort.
 	 * @return Undistorted image.
 	 */
-	protected IplImage undistortImage(IplImage image) {
+	protected synchronized IplImage undistortImage(IplImage image) {
 		IplImage newImage = IplImage.create(image.cvSize(), image.depth(), image.nChannels());
 		
 		CvMat intristic = CvMat.create(3, 3);
 		intristic.put(
-			    8.6980146658682384e+02, 0, 3.7426130495414304e+02,
-			    0, 8.7340754327613899e+02, 2.8428760615670581e+02,
-			    0, 0, 1);
-//		intristic.put(
-//    8.48981055e+03, 0, 3.08300323e+02, 0, 9.37250000e+03, 2.44421371e+02, 0,
-//    0, 1);
-		
-		CvMat dist = CvMat.create(1, 4);
+				config.getUndistort_cx(), 0.0, config.getUndistort_fx(),
+				0.0, config.getUndistort_cy(), config.getUndistort_fy(),
+				0.0, 0.0, 1.0
+		);
+
+		CvMat dist = CvMat.create(1, 5);
 		dist.put(
-			    -3.1740235091903346e-01, -8.6157434640872499e-02, 9.2026812110876845e-03,
-			    4.4950266773574115e-03);
-//		dist.put(
-//			    -4.53893204e+01, 1.41253042e-00, -1.08707204e-01, -3.45645750e-01
-//				);
-		
+				config.getUndistort_k1(), config.getUndistort_k2(),
+				config.getUndistort_p1(), config.getUndistort_p2()
+		);
+
 		cvUndistort2(image, newImage, intristic, dist);
 		
 		intristic.deallocate();

@@ -39,6 +39,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import javax.swing.JCheckBox;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 
 /**
@@ -237,6 +239,15 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		yellowValMaxSpinner.setValue(new Integer(config.getYellowValMaxValue()));
 		yellowSizeMaxSpinner.setValue(new Integer(config.getYellowSizeMaxValue()));
 		
+		cxTextfield.setText(Double.toString(config.getUndistort_cx()));
+		cyTextfield.setText(Double.toString(config.getUndistort_cy()));
+		fxTextfield.setText(Double.toString(config.getUndistort_fx()));
+		fyTextfield.setText(Double.toString(config.getUndistort_fy()));
+		k1Textfield.setText(Double.toString(config.getUndistort_k1()));
+		k2Textfield.setText(Double.toString(config.getUndistort_k2()));
+		p1Textfield.setText(Double.toString(config.getUndistort_p1()));
+		p2Textfield.setText(Double.toString(config.getUndistort_p2()));
+		
 		showWorldCheckbox.setSelected(config.isShowWorld());
 		showThreshCheckbox.setSelected(config.isShowThresholds());
 		showContoursCheckbox.setSelected(config.isShowContours());
@@ -310,6 +321,31 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		config.setYellowSatMaxValue(((Integer)yellowSatMaxSpinner.getValue()).intValue());
 		config.setYellowValMaxValue(((Integer)yellowValMaxSpinner.getValue()).intValue());
 		config.setYellowSizeMaxValue(((Integer)yellowSizeMaxSpinner.getValue()).intValue());
+		
+		try {
+			config.setUndistort_cx(Double.valueOf(cxTextfield.getText()));
+		} catch (NumberFormatException e) {	}
+		try {
+			config.setUndistort_cy(Double.valueOf(cyTextfield.getText()));
+		} catch (NumberFormatException e) { }
+		try {
+			config.setUndistort_fx(Double.valueOf(fxTextfield.getText()));
+		} catch (NumberFormatException e) { }
+		try {
+			config.setUndistort_fy(Double.valueOf(fyTextfield.getText()));
+		} catch (NumberFormatException e) { }
+		try {
+			config.setUndistort_k1(Double.valueOf(k1Textfield.getText()));
+		} catch (NumberFormatException e) { }
+		try {
+			config.setUndistort_k2(Double.valueOf(k2Textfield.getText()));
+		} catch (NumberFormatException e) { }
+		try {
+			config.setUndistort_p1(Double.valueOf(p1Textfield.getText()));
+		} catch (NumberFormatException e) { }
+		try {
+			config.setUndistort_p2(Double.valueOf(p2Textfield.getText()));
+		} catch (NumberFormatException e) { }
 		
 		config.setShowWorld(showWorldCheckbox.isSelected());
 		config.setShowThresholds(showThreshCheckbox.isSelected());
@@ -402,10 +438,10 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		robotControlTabbedPanel.setEnabledAt(0, true);
 		visionSettingPanel.setAlignmentY(Component.TOP_ALIGNMENT);
 		GridBagLayout gbl_visionSettingPanel = new GridBagLayout();
-		gbl_visionSettingPanel.columnWidths = new int[]{200, 200, 0};
-		gbl_visionSettingPanel.rowHeights = new int[]{15, 0, 0, 0, 0};
-		gbl_visionSettingPanel.columnWeights = new double[]{1.0, 0.0, Double.MIN_VALUE};
-		gbl_visionSettingPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_visionSettingPanel.columnWidths = new int[]{200, 200, 0, 0};
+		gbl_visionSettingPanel.rowHeights = new int[]{15, 0, 0, 0, 0, 0};
+		gbl_visionSettingPanel.columnWeights = new double[]{0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_visionSettingPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		visionSettingPanel.setLayout(gbl_visionSettingPanel);
 		
 		generalSettingPanel = new JPanel();
@@ -497,10 +533,10 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		ballThreshPanel = new JPanel();
 		ballThreshPanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Ball settings", TitledBorder.CENTER, TitledBorder.TOP, null, new Color(51, 51, 51)));
 		GridBagConstraints gbc_ballThreshPanel = new GridBagConstraints();
-		gbc_ballThreshPanel.insets = new Insets(0, 0, 5, 0);
+		gbc_ballThreshPanel.insets = new Insets(0, 0, 5, 5);
 		gbc_ballThreshPanel.fill = GridBagConstraints.BOTH;
 		gbc_ballThreshPanel.gridx = 1;
-		gbc_ballThreshPanel.gridy = 0;
+		gbc_ballThreshPanel.gridy = 1;
 		visionSettingPanel.add(ballThreshPanel, gbc_ballThreshPanel);
 		GridBagLayout gbl_ballThreshPanel = new GridBagLayout();
 		gbl_ballThreshPanel.columnWidths = new int[]{0, 0, 0, 0, 0, 0};
@@ -613,13 +649,190 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_ballSizeMaxSpinner.gridy = 3;
 		ballThreshPanel.add(ballSizeMaxSpinner, gbc_ballSizeMaxSpinner);
 		
+		undistortionPanel = new JPanel();
+		undistortionPanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Undistortion Coefficients", TitledBorder.CENTER, TitledBorder.TOP, null, null));
+		GridBagConstraints gbc_undistortionPanel = new GridBagConstraints();
+		gbc_undistortionPanel.gridheight = 2;
+		gbc_undistortionPanel.insets = new Insets(0, 0, 5, 5);
+		gbc_undistortionPanel.fill = GridBagConstraints.BOTH;
+		gbc_undistortionPanel.gridx = 0;
+		gbc_undistortionPanel.gridy = 2;
+		visionSettingPanel.add(undistortionPanel, gbc_undistortionPanel);
+		GridBagLayout gbl_undistortionPanel = new GridBagLayout();
+		gbl_undistortionPanel.columnWidths = new int[]{0, 0, 100, 0, 0};
+		gbl_undistortionPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_undistortionPanel.columnWeights = new double[]{1.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_undistortionPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		undistortionPanel.setLayout(gbl_undistortionPanel);
+		
+		intristicLabel = new JLabel("Intristic");
+		GridBagConstraints gbc_intristicLabel = new GridBagConstraints();
+		gbc_intristicLabel.gridwidth = 2;
+		gbc_intristicLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_intristicLabel.gridx = 1;
+		gbc_intristicLabel.gridy = 0;
+		undistortionPanel.add(intristicLabel, gbc_intristicLabel);
+		
+		fxLabel = new JLabel("f_x");
+		fxLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+		GridBagConstraints gbc_fxLabel = new GridBagConstraints();
+		gbc_fxLabel.anchor = GridBagConstraints.EAST;
+		gbc_fxLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_fxLabel.gridx = 1;
+		gbc_fxLabel.gridy = 1;
+		undistortionPanel.add(fxLabel, gbc_fxLabel);
+		
+		fxTextfield = new JTextField();
+		GridBagConstraints gbc_fxTextfield = new GridBagConstraints();
+		gbc_fxTextfield.insets = new Insets(0, 0, 5, 5);
+		gbc_fxTextfield.fill = GridBagConstraints.HORIZONTAL;
+		gbc_fxTextfield.gridx = 2;
+		gbc_fxTextfield.gridy = 1;
+		undistortionPanel.add(fxTextfield, gbc_fxTextfield);
+		fxTextfield.setColumns(10);
+		
+		fyLabel = new JLabel("f_y");
+		fyLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+		GridBagConstraints gbc_fyLabel = new GridBagConstraints();
+		gbc_fyLabel.anchor = GridBagConstraints.EAST;
+		gbc_fyLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_fyLabel.gridx = 1;
+		gbc_fyLabel.gridy = 2;
+		undistortionPanel.add(fyLabel, gbc_fyLabel);
+		
+		fyTextfield = new JTextField();
+		GridBagConstraints gbc_fyTextfield = new GridBagConstraints();
+		gbc_fyTextfield.insets = new Insets(0, 0, 5, 5);
+		gbc_fyTextfield.fill = GridBagConstraints.HORIZONTAL;
+		gbc_fyTextfield.gridx = 2;
+		gbc_fyTextfield.gridy = 2;
+		undistortionPanel.add(fyTextfield, gbc_fyTextfield);
+		fyTextfield.setColumns(10);
+		
+		cxLabel = new JLabel("c_x");
+		cxLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+		GridBagConstraints gbc_cxLabel = new GridBagConstraints();
+		gbc_cxLabel.anchor = GridBagConstraints.EAST;
+		gbc_cxLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_cxLabel.gridx = 1;
+		gbc_cxLabel.gridy = 3;
+		undistortionPanel.add(cxLabel, gbc_cxLabel);
+		
+		cxTextfield = new JTextField();
+		GridBagConstraints gbc_cxTextfield = new GridBagConstraints();
+		gbc_cxTextfield.insets = new Insets(0, 0, 5, 5);
+		gbc_cxTextfield.fill = GridBagConstraints.HORIZONTAL;
+		gbc_cxTextfield.gridx = 2;
+		gbc_cxTextfield.gridy = 3;
+		undistortionPanel.add(cxTextfield, gbc_cxTextfield);
+		cxTextfield.setColumns(10);
+		
+		cyLabel = new JLabel("c_y");
+		cyLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+		GridBagConstraints gbc_cyLabel = new GridBagConstraints();
+		gbc_cyLabel.anchor = GridBagConstraints.EAST;
+		gbc_cyLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_cyLabel.gridx = 1;
+		gbc_cyLabel.gridy = 4;
+		undistortionPanel.add(cyLabel, gbc_cyLabel);
+		
+		cyTextfield = new JTextField();
+		GridBagConstraints gbc_cyTextfield = new GridBagConstraints();
+		gbc_cyTextfield.insets = new Insets(0, 0, 5, 5);
+		gbc_cyTextfield.fill = GridBagConstraints.HORIZONTAL;
+		gbc_cyTextfield.gridx = 2;
+		gbc_cyTextfield.gridy = 4;
+		undistortionPanel.add(cyTextfield, gbc_cyTextfield);
+		cyTextfield.setColumns(10);
+		
+		distortionLabel = new JLabel("Distortion");
+		distortionLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		GridBagConstraints gbc_distortionLabel = new GridBagConstraints();
+		gbc_distortionLabel.gridwidth = 2;
+		gbc_distortionLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_distortionLabel.gridx = 1;
+		gbc_distortionLabel.gridy = 5;
+		undistortionPanel.add(distortionLabel, gbc_distortionLabel);
+		
+		k1Label = new JLabel("k_1");
+		k1Label.setHorizontalAlignment(SwingConstants.RIGHT);
+		GridBagConstraints gbc_k1Label = new GridBagConstraints();
+		gbc_k1Label.anchor = GridBagConstraints.EAST;
+		gbc_k1Label.insets = new Insets(0, 0, 5, 5);
+		gbc_k1Label.gridx = 1;
+		gbc_k1Label.gridy = 6;
+		undistortionPanel.add(k1Label, gbc_k1Label);
+		
+		k1Textfield = new JTextField();
+		GridBagConstraints gbc_k1Textfield = new GridBagConstraints();
+		gbc_k1Textfield.insets = new Insets(0, 0, 5, 5);
+		gbc_k1Textfield.fill = GridBagConstraints.HORIZONTAL;
+		gbc_k1Textfield.gridx = 2;
+		gbc_k1Textfield.gridy = 6;
+		undistortionPanel.add(k1Textfield, gbc_k1Textfield);
+		k1Textfield.setColumns(10);
+		
+		k2Label = new JLabel("k_2");
+		k2Label.setHorizontalAlignment(SwingConstants.RIGHT);
+		GridBagConstraints gbc_k2Label = new GridBagConstraints();
+		gbc_k2Label.anchor = GridBagConstraints.EAST;
+		gbc_k2Label.insets = new Insets(0, 0, 5, 5);
+		gbc_k2Label.gridx = 1;
+		gbc_k2Label.gridy = 7;
+		undistortionPanel.add(k2Label, gbc_k2Label);
+		
+		k2Textfield = new JTextField();
+		GridBagConstraints gbc_k2Textfield = new GridBagConstraints();
+		gbc_k2Textfield.insets = new Insets(0, 0, 5, 5);
+		gbc_k2Textfield.fill = GridBagConstraints.HORIZONTAL;
+		gbc_k2Textfield.gridx = 2;
+		gbc_k2Textfield.gridy = 7;
+		undistortionPanel.add(k2Textfield, gbc_k2Textfield);
+		k2Textfield.setColumns(10);
+		
+		p1Label = new JLabel("p_1");
+		p1Label.setHorizontalAlignment(SwingConstants.RIGHT);
+		GridBagConstraints gbc_p1Label = new GridBagConstraints();
+		gbc_p1Label.anchor = GridBagConstraints.EAST;
+		gbc_p1Label.insets = new Insets(0, 0, 5, 5);
+		gbc_p1Label.gridx = 1;
+		gbc_p1Label.gridy = 8;
+		undistortionPanel.add(p1Label, gbc_p1Label);
+		
+		p1Textfield = new JTextField();
+		GridBagConstraints gbc_p1Textfield = new GridBagConstraints();
+		gbc_p1Textfield.insets = new Insets(0, 0, 5, 5);
+		gbc_p1Textfield.fill = GridBagConstraints.HORIZONTAL;
+		gbc_p1Textfield.gridx = 2;
+		gbc_p1Textfield.gridy = 8;
+		undistortionPanel.add(p1Textfield, gbc_p1Textfield);
+		p1Textfield.setColumns(10);
+		
+		p2Label = new JLabel("p_2");
+		p2Label.setHorizontalAlignment(SwingConstants.RIGHT);
+		GridBagConstraints gbc_p2Label = new GridBagConstraints();
+		gbc_p2Label.anchor = GridBagConstraints.EAST;
+		gbc_p2Label.insets = new Insets(0, 0, 0, 5);
+		gbc_p2Label.gridx = 1;
+		gbc_p2Label.gridy = 9;
+		undistortionPanel.add(p2Label, gbc_p2Label);
+		
+		p2Textfield = new JTextField();
+		GridBagConstraints gbc_p2Textfield = new GridBagConstraints();
+		gbc_p2Textfield.insets = new Insets(0, 0, 0, 5);
+		gbc_p2Textfield.fill = GridBagConstraints.HORIZONTAL;
+		gbc_p2Textfield.gridx = 2;
+		gbc_p2Textfield.gridy = 9;
+		undistortionPanel.add(p2Textfield, gbc_p2Textfield);
+		p2Textfield.setColumns(10);
+		
 		blueThreshPanel = new JPanel();
 		blueThreshPanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Blue T settings", TitledBorder.CENTER, TitledBorder.TOP, null, new Color(51, 51, 51)));
 		GridBagConstraints gbc_blueThreshPanel = new GridBagConstraints();
-		gbc_blueThreshPanel.insets = new Insets(0, 0, 5, 0);
+		gbc_blueThreshPanel.insets = new Insets(0, 0, 5, 5);
 		gbc_blueThreshPanel.fill = GridBagConstraints.BOTH;
 		gbc_blueThreshPanel.gridx = 1;
-		gbc_blueThreshPanel.gridy = 1;
+		gbc_blueThreshPanel.gridy = 2;
 		visionSettingPanel.add(blueThreshPanel, gbc_blueThreshPanel);
 		GridBagLayout gbl_blueThreshPanel = new GridBagLayout();
 		gbl_blueThreshPanel.columnWidths = new int[]{0, 0, 0, 0, 0, 0};
@@ -737,8 +950,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		GridBagConstraints gbc_fieldWallPanel = new GridBagConstraints();
 		gbc_fieldWallPanel.insets = new Insets(0, 0, 5, 5);
 		gbc_fieldWallPanel.fill = GridBagConstraints.BOTH;
-		gbc_fieldWallPanel.gridx = 0;
-		gbc_fieldWallPanel.gridy = 2;
+		gbc_fieldWallPanel.gridx = 1;
+		gbc_fieldWallPanel.gridy = 0;
 		visionSettingPanel.add(fieldWallPanel, gbc_fieldWallPanel);
 		GridBagLayout gbl_fieldWallPanel = new GridBagLayout();
 		gbl_fieldWallPanel.columnWidths = new int[]{0, 50, 60, 50, 0, 0};
@@ -794,10 +1007,10 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		yellowThreshPanel = new JPanel();
 		yellowThreshPanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Yellow T settings", TitledBorder.CENTER, TitledBorder.TOP, null, new Color(51, 51, 51)));
 		GridBagConstraints gbc_yellowThreshPanel = new GridBagConstraints();
-		gbc_yellowThreshPanel.insets = new Insets(0, 0, 5, 0);
+		gbc_yellowThreshPanel.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowThreshPanel.fill = GridBagConstraints.BOTH;
 		gbc_yellowThreshPanel.gridx = 1;
-		gbc_yellowThreshPanel.gridy = 2;
+		gbc_yellowThreshPanel.gridy = 3;
 		visionSettingPanel.add(yellowThreshPanel, gbc_yellowThreshPanel);
 		GridBagLayout gbl_yellowThreshPanel = new GridBagLayout();
 		gbl_yellowThreshPanel.columnWidths = new int[]{0, 28, 0, 28, 0, 0};
@@ -1071,5 +1284,24 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JCheckBox robotDebugModeCheckbox;
 	private JCheckBox showStateDataCheckbox;
 	private JCheckBox showWorldCheckbox;
+	private JPanel undistortionPanel;
+	private JLabel fxLabel;
+	private JLabel fyLabel;
+	private JLabel cxLabel;
+	private JLabel cyLabel;
+	private JLabel k1Label;
+	private JLabel k2Label;
+	private JLabel p1Label;
+	private JLabel p2Label;
+	private JTextField fxTextfield;
+	private JTextField fyTextfield;
+	private JTextField cxTextfield;
+	private JTextField cyTextfield;
+	private JTextField k1Textfield;
+	private JTextField k2Textfield;
+	private JTextField p1Textfield;
+	private JTextField p2Textfield;
+	private JLabel intristicLabel;
+	private JLabel distortionLabel;
 	
 }
