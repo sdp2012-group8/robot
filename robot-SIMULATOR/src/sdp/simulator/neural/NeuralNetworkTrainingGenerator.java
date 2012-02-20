@@ -13,6 +13,9 @@ import org.neuroph.core.learning.TrainingSet;
 import org.neuroph.nnet.MultiLayerPerceptron;
 import org.neuroph.nnet.learning.BackPropagation;
 
+import sdp.AI.AIMaster;
+import sdp.AI.AIWorldState.mode;
+import sdp.AI.neural.AINeuralNetwork;
 import sdp.common.NNetTools;
 import sdp.common.Tools;
 import sdp.common.WorldState;
@@ -30,7 +33,7 @@ import sdp.simulator.VBrick;
 public class NeuralNetworkTrainingGenerator extends VBrick {
 
 	private NeuralNetwork[] nets = new NeuralNetwork[] {
-			new MultiLayerPerceptron(20, 41, move_modes.values().length)
+			new MultiLayerPerceptron(16, 33, move_modes.values().length)
 	};
 	
 	private String fname;
@@ -65,6 +68,8 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	private boolean saving = false;
 
 	private boolean skip = false;
+	
+	private AIMaster mAi;
 
 	/**
 	 * Initialize neural network
@@ -72,7 +77,7 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	 * @param dir the name of dir to store trainings
 	 */
 	public NeuralNetworkTrainingGenerator(WorldStateProvider provider, String dir) {
-		this.fname = dir;
+		fname = dir;
 		boolean allfine = true;
 		try {
 			for (int i = 0; i < tsets.length; i++) {
@@ -104,6 +109,10 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 			System.out.println("Networks loaded from file.");
 	}
 
+	public void registerAI(AIMaster ai) {
+		mAi =  ai;
+	}
+	
 	/**
 	 * Is recording?
 	 * @return
@@ -161,7 +170,7 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 			public void run() {
 				while (recording) {
 					WorldState worldState = Tools.toCentimeters(mObs.getNextState());
-					if (!pause) {
+					if (!pause && mAi.getMode() == mode.sit) {
 						if (oldWorldState != null && Tools.delta(oldWorldState, worldState) > 0.1) {
 							// outputs normalized to 1
 							//boolean

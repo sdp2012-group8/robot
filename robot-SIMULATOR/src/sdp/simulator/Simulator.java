@@ -6,7 +6,6 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
-import sdp.common.NNetTools;
 import sdp.common.Robot;
 import sdp.common.Tools;
 import sdp.common.Vector2D;
@@ -925,7 +924,6 @@ public class Simulator extends WorldStateProvider {
 						.getYellowRobot();
 				Vector2D local_origin = new Vector2D(Robot.LENGTH_CM/2+2,0);
 				drawVector(Tools.getGlobalVector(robot, local_origin),  Tools.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0)), true);
-				
 //				drawVector(new Vector2D(robot.getCoords()),  NNetTools.getSector(state_cm, i == 0, 60, 30, 20), true);
 //				drawVector(new Vector2D(robot.getCoords()),  NNetTools.getSector(state_cm, i == 0, 30, -30, 20), true);
 //				drawVector(new Vector2D(robot.getCoords()),  NNetTools.getSector(state_cm, i == 0, -30, -60, 20), true);

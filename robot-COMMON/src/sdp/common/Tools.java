@@ -369,6 +369,22 @@ public class Tools {
 	}
 	
 	/**
+	 * Whether there is direct visibility from a point of the pitch to another one.
+	 * @param ws
+	 * @param robot
+	 * @param startPt
+	 * @param endPt
+	 * @return
+	 */
+	public static boolean visibility(WorldState ws, Vector2D endPt, boolean am_i_blue) {
+		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
+		Vector2D startPt = new Vector2D(robot.getCoords());
+		Vector2D dir =  Vector2D.subtract(endPt, startPt);
+		Vector2D ray = raytraceVector(ws, startPt, dir, am_i_blue);
+		return ray.getLength() >= dir.getLength();
+	}
+	
+	/**
 	 * Return the intersection of a vector in the given direction, originating from origin.
 	 * @param origin
 	 * @param direction

@@ -23,33 +23,30 @@ public class NNetTools {
 	 * @return the input array
 	 */
 	public static double[] generateAIinput(WorldState worldState, WorldState oldState, double dt, boolean am_i_blue, boolean my_goal_left, int id) {
-		Vector2D ball_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), new Vector2D(worldState.getBallCoords()));
+		Vector2D ball = new Vector2D(worldState.getBallCoords());
+		Vector2D ball_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
 		switch (id) {
 		case 0:
 			return 
 					new double[] {
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 75, 110, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 45, 75, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 30, 45, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 20, 30, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 10, 20, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -10, 10, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -20, -10, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -30, -20, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -45, -30, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -75, -45, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -110, -75, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 70, 90, 20), Tools.PITCH_WIDTH_CM),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 50, 70, 20), Tools.PITCH_WIDTH_CM),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 30, 50, 20), Tools.PITCH_WIDTH_CM),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 10, 30, 20), Tools.PITCH_WIDTH_CM),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -10, 10, 20), Tools.PITCH_WIDTH_CM),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -30, -10, 20), Tools.PITCH_WIDTH_CM),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -50, -30, 20), Tools.PITCH_WIDTH_CM),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -70, -50, 20), Tools.PITCH_WIDTH_CM),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -90, -70, 20), Tools.PITCH_WIDTH_CM),
 
 					
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 180-60, 180-80, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 180-40, 180-60, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 180-20, 180-40, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -180+20, 180-20, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -180+40, -180+20, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -180+60, -180+40, 20), 60),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -180+80, -180+60, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 180-90, 180-50, 20), Tools.PITCH_WIDTH_CM),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 180-50, 180-20, 20), Tools.PITCH_WIDTH_CM),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -180+20, 180-20, 20), Tools.PITCH_WIDTH_CM),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -180+50, -180+20, 20), Tools.PITCH_WIDTH_CM),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -180+90, -180+50, 20), Tools.PITCH_WIDTH_CM),
 					
-					AI_normalizeDistanceTo1(ball_rel, 60),
+					Tools.visibility(worldState, ball, am_i_blue) ? 1 : -1,
 					AI_normalizeAngleTo1(Vector2D.getDirection(ball_rel))
 					};
 		}

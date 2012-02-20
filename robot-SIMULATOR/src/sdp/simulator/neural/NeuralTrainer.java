@@ -429,6 +429,7 @@ public class NeuralTrainer {
 			mAI = new AIMaster(mComm, mSim, AIMode.neural_network);
 			break;
 		}
+		trainer.registerAI(mAI);
 		
 		mAI.start(blue_selected, my_door_right);
 		new Thread() {

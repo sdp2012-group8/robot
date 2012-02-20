@@ -2,7 +2,6 @@ package sdp.common;
 
 import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
