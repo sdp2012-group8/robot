@@ -23,104 +23,78 @@ public class NNetTools {
 	 * @return the input array
 	 */
 	public static double[] generateAIinput(WorldState worldState, WorldState oldState, double dt, boolean am_i_blue, boolean my_goal_left, int id) {
-		// getTargetDirection(worldState, am_i_blue, 10, new Vector2D(0, Tools.PITCH_HEIGHT_CM/2d - 60/2), new Vector2D(0, Tools.PITCH_HEIGHT_CM/2d + 60/2)) for left goal
-		// ball getTargetDirection(worldState, am_i_blue, 50, ball, ball))
-		
-		Vector2D ball = new Vector2D(worldState.getBallCoords());
-		Vector2D ball_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
-		ball_rel.setX(ball_rel.getX()-Robot.LENGTH_CM/2);
+		Vector2D ball_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), new Vector2D(worldState.getBallCoords()));
 		switch (id) {
 		case 0:
-			return Tools.concat(
-					// TODO! Tweaking those parameters
-					getAvailableSectors(worldState, am_i_blue, 20, 30, 30),
+			return 
 					new double[] {
-						AI_normalizeAngleTo1(Vector2D.getDirection(ball_rel)),
-						AI_normalizeCoordinateTo1(ball_rel.getLength(), Tools.PITCH_WIDTH_CM)
-					});
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 75, 110, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 45, 75, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 30, 45, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 20, 30, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 10, 20, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -10, 10, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -20, -10, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -30, -20, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -45, -30, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -75, -45, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -110, -75, 20), 60),
+
+					
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 180-60, 180-80, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 180-40, 180-60, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 180-20, 180-40, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -180+20, 180-20, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -180+40, -180+20, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -180+60, -180+40, 20), 60),
+					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -180+80, -180+60, 20), 60),
+					
+					AI_normalizeDistanceTo1(ball_rel, 60),
+					AI_normalizeAngleTo1(Vector2D.getDirection(ball_rel))
+					};
 		}
 		return null;		
 	}
 	
 	/**
-	 * Gets the available sectors. Sectors are the space where the robot can go without encountering obstacles. This is done by a "scanning"
-	 * sensor that rotates around the robot at a small angle. If it detects an object it sets the current sector that the sensor is pointing at
-	 * to be unavailable and goes to the next sector until it reaches the beginning.
-	 * @param ws current worldState
-	 * @param am_i_blue true when my robot is blue, false if it is yellow
-	 * @param sec_count number of sectors
-	 * @param scan_count number of scans
-	 * @param sensor_threshold the threshold at which the sensor triggers
-	 * @return a array containing -1 to 1 for every sector: whether it is available or it is blocked by an object
+	 * Sweeps a scanning vector sensor between the given angles and returns the distance to the closest object. Angles are wrt to the current robot
+	 * where angle 0 means forward, 180 or -180 means backwards, 90 means left, -90 means right of robot. <br/>
+	 * The result could be interpreted as: <i>the distance to nearest obstacle in the specified region about the current robot</i>
+	 * @param ws current world state
+	 * @param am_i_blue true if my robot is blue, false if it is yellow
+	 * @param start_angle the starting angle of the segment (the smallest arc will be selected)
+	 * @param end_angle the ending angle of the segment (the smallest arc will be selected)
+	 * @param scan_count how many parts the sector should be devided for scanning
+	 * @return the vector distance to the closest collision point a.k.a. the minimum distance determined by the scanning vector which swept the sector scan_count times.
 	 */
-	public static double[] getAvailableSectors(WorldState ws, boolean am_i_blue, int sec_count, int scan_count, double sensor_threshold) {
-		Robot me = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
-		int sector_angle = 360/sec_count;
-		double scan_angle = 360d/scan_count;
-		Vector2D zero = Vector2D.ZERO();
-		int sector_id = 0;
-		double[] ans = new double[sec_count];
-		// set all sectors available
-		for (int i = 0; i < ans.length; i++)
-			ans[i] = -1;
-		for (double angle = 0; angle < 360; angle+=scan_angle) {
-			sector_id = ((int) angle) /  sector_angle;
-			if (sector_id >= sec_count)
-				break;
-			double ang_rad = angle*Math.PI/180d;
-			double dist = Tools.raytraceVector(ws, me, zero, new Vector2D(Math.cos(ang_rad), Math.sin(ang_rad)), am_i_blue).getLength();
-			if (dist < sensor_threshold) {
-				ans[sector_id] = 1;//AI_normalizeDistanceTo1(dist, sensor_threshold);
-				// skip to next sector
-				angle = (sector_id+1)*sector_angle-scan_angle;
+	public static Vector2D getSector(WorldState ws, boolean am_i_blue, double start_angle, double end_angle, int scan_count) {
+		start_angle = Utilities.normaliseAngle(start_angle);
+		end_angle = Utilities.normaliseAngle(end_angle);
+		final Robot me = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
+		final Vector2D zero = Vector2D.ZERO();
+		Double min_dist = null;
+		Vector2D min_vec = null;
+		final double sector_angle = Utilities.normaliseAngle(end_angle-start_angle);
+		final double scan_angle = sector_angle/scan_count;
+		for (double angle = start_angle; Utilities.normaliseAngle(end_angle-angle) * sector_angle >= 0; angle+=scan_angle) {
+			final double ang_rad = angle*Math.PI/180d;
+			final Vector2D distV = Tools.raytraceVector(ws, me, zero, new Vector2D(-Math.cos(ang_rad), Math.sin(ang_rad)), am_i_blue);
+			final double dist = distV.getLength();
+			if (min_dist == null || dist < min_dist) {
+				min_dist = dist;
+				min_vec = distV;
 			}
 		}
-		return ans;
+		return min_vec;
 	}
 	
-	/**
-	 * 
-	 * @param ws current worldState
-	 * @param am_i_blue true when my robot is blue, false if it is yellow
-	 * @param sec_count number of sectors
-	 * @param target_start start of target line in table coordinates
-	 * @param target_end end of target line in table coordinates
-	 * @return a array containing -1 to 1 for every sector: whether there is a target in given sector
-	 */
-	public static double[] getTargetDirection(WorldState ws, boolean am_i_blue, int sec_count, Vector2D target_start, Vector2D target_end) {
-		Robot me = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
-		Vector2D rel_target_start = Tools.getLocalVector(me, target_start);
-		double target_start_angle = Vector2D.getDirection(rel_target_start);
-		Vector2D rel_target_end = Tools.getLocalVector(me, target_end);
-		double target_end_angle = Vector2D.getDirection(rel_target_end);
-		if (Utilities.normaliseAngle(target_start_angle - target_end_angle) > 0) {
-			double temp = target_start_angle;
-			target_start_angle = target_end_angle;
-			target_end_angle = temp;
-		}
-		double sector_angle = 360d/sec_count;
-		double[] ans = new double[sec_count];
-		for (int i = 0; i < ans.length; i++) {
-			double sec_start_ang = sector_angle*i;
-			double sec_end_ang = sector_angle*(i+1);
-			boolean target_inside = ! (Utilities.normaliseAngle(sec_start_ang-target_end_angle) >= 0 || Utilities.normaliseAngle(sec_end_ang-target_start_angle) < 0); 
-			ans[i] = target_inside ? 1 : -1;
-		}
-		return ans;
-	}
 	
-	/**
-	 * Converts dist within the scale -1 to 1 taking account threshold
-	 * @param dist
-	 * @param threshold
-	 * @return if dist >= threshold returns -1, if dist = 0 returns 1, otherwise returns between -1 and 1
-	 */
-	private static double AI_normalizeDistanceTo1(double dist, double threshold) {
-		if (dist >= threshold)
-			return -1;
-		double frac = dist/threshold;
-		double dis = 1-frac*2;
-		return dis;
+
+	private static double AI_normalizeDistanceTo1(Vector2D vec, double threshold) {
+		double distance = vec.getLength();
+		if (distance > threshold)
+			return 1;
+		return -1+2*distance/threshold;
 	}
 	
 	/**
@@ -146,6 +120,10 @@ public class NNetTools {
 	 * @return mapped between -1 and 1 wrt width of pitch
 	 */
 	private static double AI_normalizeAngleTo1(double angle) {
+//		angle = Utilities.normaliseAngle(angle);
+//		if (Math.abs(angle) < 10)
+//			return 0;
+//		return angle < 0 ? -1 : 1;
 		return (Utilities.normaliseAngle(angle))/180d;
 	}
 	

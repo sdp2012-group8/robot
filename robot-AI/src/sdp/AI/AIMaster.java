@@ -52,9 +52,9 @@ public class AIMaster extends AIListener {
 				break;
 
 			case sit:
-				if (ai.old_ai_world_state == null || ai.old_ai_world_state.getMode() != mode.sit) {
+				//if (ai.old_ai_world_state == null || ai.old_ai_world_state.getMode() != mode.sit) {
 					ai.sit();
-				}
+				//}
 				break;				
 			}
 		} catch (IOException e) {
