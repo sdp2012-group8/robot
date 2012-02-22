@@ -33,7 +33,7 @@ import sdp.simulator.VBrick;
 public class NeuralNetworkTrainingGenerator extends VBrick {
 
 	private NeuralNetwork[] nets = new NeuralNetwork[] {
-			new MultiLayerPerceptron(16, 33, move_modes.values().length)
+			new MultiLayerPerceptron(44, 89, move_modes.values().length)
 	};
 	
 	private String fname;
