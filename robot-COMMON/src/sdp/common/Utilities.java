@@ -213,5 +213,17 @@ public class Utilities {
 		return angle;
 	}
     
+	/**
+	 * converts the angle to a byte
+	 * @param angle
+	 * @return
+	 */
+	public static double angleToByte(double angle){
+		if (angle > 127)
+			angle = 127;
+		if (angle < -128)
+			angle = -128;
+		return angle;
+	}
 
 }
