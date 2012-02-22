@@ -27,30 +27,36 @@ public class NNetTools {
 		Vector2D ball_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
 		switch (id) {
 		case 0:
-			return 
-					new double[] {
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 70, 90, 20), Tools.PITCH_WIDTH_CM),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 50, 70, 20), Tools.PITCH_WIDTH_CM),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 30, 50, 20), Tools.PITCH_WIDTH_CM),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 10, 30, 20), Tools.PITCH_WIDTH_CM),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -10, 10, 20), Tools.PITCH_WIDTH_CM),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -30, -10, 20), Tools.PITCH_WIDTH_CM),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -50, -30, 20), Tools.PITCH_WIDTH_CM),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -70, -50, 20), Tools.PITCH_WIDTH_CM),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -90, -70, 20), Tools.PITCH_WIDTH_CM),
-
-					
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 180-90, 180-50, 20), Tools.PITCH_WIDTH_CM),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, 180-50, 180-20, 20), Tools.PITCH_WIDTH_CM),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -180+20, 180-20, 20), Tools.PITCH_WIDTH_CM),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -180+50, -180+20, 20), Tools.PITCH_WIDTH_CM),
-					AI_normalizeDistanceTo1(getSector(worldState, am_i_blue, -180+90, -180+50, 20), Tools.PITCH_WIDTH_CM),
-					
-					Tools.visibility(worldState, ball, am_i_blue) ? 1 : -1,
-					AI_normalizeAngleTo1(Vector2D.getDirection(ball_rel))
-					};
+			return Tools.concat(
+					getSectors(worldState, am_i_blue, 5, 22),
+					getTargetInSectors(ball_rel, 22)
+					);
 		}
 		return null;		
+	}
+	
+	private static double[] getSectors(WorldState ws, boolean am_i_blue, int scan_count, int sector_count) {
+		if (sector_count % 2 != 0 || (sector_count / 2) % 2 == 0) {
+			System.out.println("Sectors must be even number which halves should be odd!");
+			return null;
+		}
+		double[] ans = new double[sector_count];
+		double sec_angle = 360d/sector_count;
+		for (int i = 0; i < sector_count; i++)
+			ans[i] = AI_normalizeDistanceTo1(getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count), Tools.PITCH_WIDTH_CM);
+		return ans;
+	}
+	
+	private static double[] getTargetInSectors(Vector2D relative, int sector_count) {
+		if (sector_count % 2 != 0 || (sector_count / 2) % 2 == 0) {
+			System.out.println("Sectors must be even number which halves should be odd!");
+			return null;
+		}
+		double[] ans = new double[sector_count];
+		double sec_angle = 360d/sector_count;
+		for (int i = 0; i < sector_count; i++)
+			ans[i] = AI_normalizeDistanceTo1(targetInSector(relative, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle)), Tools.PITCH_WIDTH_CM);
+		return ans;
 	}
 	
 	/**
@@ -85,9 +91,18 @@ public class NNetTools {
 		return min_vec;
 	}
 	
+	public static Vector2D targetInSector(Vector2D relative, double start_angle, double end_angle) {
+		double ang = Vector2D.getDirection(relative);
+		if (Utilities.normaliseAngle(end_angle - start_angle) < 0) {
+			double temp = start_angle;
+			start_angle = end_angle;
+			end_angle = temp;
+		}
+		return Utilities.normaliseAngle(ang - start_angle) >= 0 && Utilities.normaliseAngle(ang - end_angle) < 0 ? relative : new Vector2D(5*Tools.PITCH_WIDTH_CM, 0);
+	}
 	
 
-	private static double AI_normalizeDistanceTo1(Vector2D vec, double threshold) {
+	public static double AI_normalizeDistanceTo1(Vector2D vec, double threshold) {
 		double distance = vec.getLength();
 		if (distance > threshold)
 			return 1;
