@@ -54,6 +54,28 @@ public class Brick {
 				}
 			};
 		}.start();
+		final Thread kicker_retractor = new Thread() {
+			public void run() {
+				while (true) {
+					if (!kickSensor.isPressed()) {
+						Motor.B.setSpeed(Motor.B.getMaxSpeed());
+						Motor.B.setAcceleration(10000);
+						Motor.B.backward();
+					}
+					while (!kickSensor.isPressed()) {
+						try {
+							Thread.sleep(10);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+					try {
+						wait(1000);
+					} catch (InterruptedException e) {}
+				}
+			};
+		};
+		kicker_retractor.start();
 		mCont = new BComm();
 		mCont.registerListener(new MessageListener() {
 
@@ -150,16 +172,14 @@ public class Brick {
 
 				case kick:
 					Motor.B.setSpeed(Motor.B.getMaxSpeed());
-					Motor.B.setAcceleration(6000);
+					Motor.B.setAcceleration(10000);
 					Motor.B.backward();
-					while(!kickSensor.isPressed()) {
-						try {
-							Thread.sleep(10);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+					try {
+						Thread.sleep(10);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
 					}
-					Motor.B.stop();
+					kicker_retractor.interrupt();
 					break;
 
 				case turn:
