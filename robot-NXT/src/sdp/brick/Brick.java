@@ -34,6 +34,8 @@ public class Brick {
 	private static Communicator mCont;
 	private static UltrasonicSensor sens;
 	private static boolean collision = false;
+	
+	private static TouchSensor kickSensor;
 
 	/**
 	 * The entry point of the program
@@ -43,6 +45,7 @@ public class Brick {
 		// connect with PC and start receiving messages
 		sens = new UltrasonicSensor(SensorPort.S1);
 		sens.continuous();
+		kickSensor = new TouchSensor(SensorPort.S2);
 		new Thread() {
 			public void run() {
 				while (true) {
@@ -147,14 +150,15 @@ public class Brick {
 
 				case kick:
 					Motor.B.setSpeed(Motor.B.getMaxSpeed());
-					Motor.B.setAcceleration(100000);
-					Motor.B.rotate(10);
-					try {
-						Thread.sleep(10);
-					} catch (InterruptedException e) {
+					Motor.B.setAcceleration(6000);
+					Motor.B.backward();
+					while(!kickSensor.isPressed()) {
+						try {
+							Thread.sleep(10);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
 					}
-					Motor.B.rotate(-80);
-					Motor.B.rotate(70);
 					Motor.B.stop();
 					break;
 

@@ -56,7 +56,6 @@ public class AIVisualServoing extends AI {
 			//ai_world_state.setMode(mode.sit);
 			ai_world_state.setMode(mode.got_ball);
 		}
-
 	}
 
 	/**
@@ -123,8 +122,6 @@ public class AIVisualServoing extends AI {
 			}
 		}
 	}
-
-
 
 	/**
 	 * Move behind the ball before attempting to score
