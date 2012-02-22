@@ -29,6 +29,8 @@ public class Brick {
 	private static final int back_speed = -10; // cm per sec
 	private static final int angle_threshold = 5; // degrees per sec
 	private static final int turning_boost = 20; // degrees per sec
+	
+	private static boolean is_on = true;
 
 
 	private static Communicator mCont;
@@ -48,20 +50,23 @@ public class Brick {
 		kickSensor = new TouchSensor(SensorPort.S2);
 		new Thread() {
 			public void run() {
-				while (true) {
+				while (is_on) {
 					int dist = sens.getDistance();
 					collision = dist < coll_threshold;
 				}
+				sens.off();
 			};
 		}.start();
 		final Thread kicker_retractor = new Thread() {
 			public void run() {
-				while (true) {
-					if (!kickSensor.isPressed()) {
+				while (is_on) {
+					boolean initial = kickSensor.isPressed();
+					if (!initial) {
 						Motor.B.setSpeed(Motor.B.getMaxSpeed());
 						Motor.B.setAcceleration(10000);
 						Motor.B.backward();
 					}
+					
 					while (!kickSensor.isPressed()) {
 						try {
 							Thread.sleep(10);
@@ -69,8 +74,10 @@ public class Brick {
 							e.printStackTrace();
 						}
 					}
+					if (!initial)
+						Motor.B.stop();
 					try {
-						wait(1000);
+							Thread.sleep(100);						
 					} catch (InterruptedException e) {}
 				}
 			};
@@ -108,7 +115,7 @@ public class Brick {
 				case checkTouch:
 					TouchSensor tsens = new TouchSensor(SensorPort.S2);
 					TouchSensor tsens2 = new TouchSensor(SensorPort.S3);
-					while(true) {
+					while(is_on) {
 						int i = 0;
 						if (tsens.isPressed() || tsens2.isPressed()){
 							LCD.drawString("tSensor is true", 2, 4);
@@ -122,7 +129,10 @@ public class Brick {
 				case exit:
 					mCont.close();
 					Sound.setVolume(def_vol);
-					sens.off();
+					is_on = false;
+					try {
+						Thread.sleep(200);
+					} catch (Exception e) {}
 					NXT.shutDown();
 					break;
 
@@ -174,12 +184,6 @@ public class Brick {
 					Motor.B.setSpeed(Motor.B.getMaxSpeed());
 					Motor.B.setAcceleration(10000);
 					Motor.B.backward();
-					try {
-						Thread.sleep(10);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					kicker_retractor.interrupt();
 					break;
 
 				case turn:

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
@@ -28,6 +29,8 @@ public class JComm implements sdp.common.Communicator {
 	private static final int max_retries = 6; // how many times to try connecting to brick before quitting
 	private static final String friendly_name = "Ball-E";
 	private static final String mac_of_brick = "00:16:53:0A:5C:22";
+	
+	private static byte[] old_operate = null;
 	
 	private final static Logger LOGGER = Logger.getLogger(JComm.class .getName());
 
@@ -121,6 +124,11 @@ public class JComm implements sdp.common.Communicator {
 	 */
 	@Override
 	public void sendMessage(opcode op, byte... args) throws IOException {
+		if (op == opcode.operate)
+			if (old_operate != null && Arrays.equals(old_operate, args))
+				return;
+			else
+				old_operate = args;
 		// send a message to device
 		os.write(op.ordinal()); // write opcode
 		os.write(args.length); // write number of args
