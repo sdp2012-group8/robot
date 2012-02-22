@@ -492,8 +492,7 @@ public class NeuralTrainer {
 			switch (key_id) {
 			case KeyEvent.VK_UP:
 			case KeyEvent.VK_W:
-				if (pressed)
-					speed = max_speed;
+				speed = pressed ? max_speed : 0;
 				if (pressed) {
 					if (original == null)
 						original = mAI.getMode();
@@ -503,8 +502,7 @@ public class NeuralTrainer {
 				break;
 			case KeyEvent.VK_DOWN:
 			case KeyEvent.VK_S:
-				if (pressed)
-					speed = -max_speed;
+				speed = pressed ? -max_speed : 0;
 				if (pressed) {
 					if (original == null)
 						original = mAI.getMode();

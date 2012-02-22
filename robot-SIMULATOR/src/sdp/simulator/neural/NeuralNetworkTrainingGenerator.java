@@ -17,10 +17,13 @@ import sdp.AI.AIMaster;
 import sdp.AI.AIWorldState.mode;
 import sdp.AI.neural.AINeuralNetwork;
 import sdp.common.NNetTools;
+import sdp.common.Robot;
 import sdp.common.Tools;
+import sdp.common.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.common.WorldStateProvider;
+import sdp.common.NNetTools.got_ball_modes;
 import sdp.common.NNetTools.move_modes;
 import sdp.simulator.VBrick;
 
@@ -33,7 +36,8 @@ import sdp.simulator.VBrick;
 public class NeuralNetworkTrainingGenerator extends VBrick {
 
 	private NeuralNetwork[] nets = new NeuralNetwork[] {
-			new MultiLayerPerceptron(44, 89, move_modes.values().length)
+			new MultiLayerPerceptron(45, 91, move_modes.values().length),
+			new MultiLayerPerceptron(45, 91, got_ball_modes.values().length)
 	};
 	
 	private String fname;
@@ -63,7 +67,7 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	
 	private boolean pause = false;
 
-	private int frames;
+	private int[] frames = new int[nets.length];
 	
 	private boolean saving = false;
 
@@ -155,10 +159,11 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 			System.out.println("Please wait until training is done!");
 			return;
 		}
-		frames = 0;
+		
 		recording = true;
 		// reset training states
 		for (int i = 0; i < tsets.length; i++) {
+			frames[i] = 0;
 			if (tsets[i] != null) {
 				tsets[i].clear();
 				tsets[i] = null;
@@ -177,24 +182,50 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 							//is_it_kicking = is_kicking;
 							double dt =(System.currentTimeMillis()-lastTime)/1000d;
 							// create training set
-							double[] out = NNetTools.generateOutput(NNetTools.getMode(desired_speed, desired_turning_speed));
-							if (out != null)
-							tsets[0].addElement(new SupervisedTrainingElement(
-									NNetTools.generateAIinput(worldState, oldWorldState, dt, am_i_blue, my_goal_left, 0),
-									out));
-							frames++;
-							if (frames % 100 == 0)
-								System.out.println(frames+" frames recorded last - "+frames+" and "+desired_speed);
+							double[] out = null, in = null; 
+							switch (getAiMode(worldState, am_i_blue)) {
+							case chase_ball:
+								out = NNetTools.generateOutput(NNetTools.getMoveMode(desired_speed, desired_turning_speed));
+								in = NNetTools.generateAIinput(worldState, oldWorldState, dt, am_i_blue, my_goal_left, 0);
+								if (in != null && out != null) {
+									tsets[0].addElement(new SupervisedTrainingElement(in, out));
+									frames[0]++;
+									if (frames[0] % 100 == 0)
+										System.out.println(frames[0]+" frames for Chase Ball");
+								}
+
+								break;
+							case got_ball:
+								out = NNetTools.generateOutput(NNetTools.getGotBallMode(desired_speed, desired_turning_speed, is_kicking));
+								in = NNetTools.generateAIinput(worldState, oldWorldState, dt, am_i_blue, my_goal_left, 1);
+								if (in != null && out != null) {
+									tsets[1].addElement(new SupervisedTrainingElement(in, out));
+									frames[1]++;
+									if (frames[1] % 100 == 0)
+										System.out.println(frames[1]+" frames for Got Ball");
+								}
+								
+								break;
+							}
+							
+
 						}
 						oldWorldState = worldState;
 						lastTime = System.currentTimeMillis();
 					}
 				}	
-				System.out.println("Recording stopped. Total of "+frames+" frames are ready for saving.");
+				for (int i = 0; i < frames.length; i++)
+					System.out.println("Recording stopped. Total of "+frames[i]+" frames are ready for saving for network id "+i+".");
 			};
 		}.start();
 	}
 
+	private mode getAiMode(WorldState ws, boolean am_i_blue) {
+		Vector2D ball = new Vector2D(ws.getBallCoords());
+		Vector2D ball_rel = Tools.getLocalVector(am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(), ball);
+		ball_rel.setX(ball_rel.getX()-Robot.LENGTH_CM/2);
+		return ball_rel.getLength() < AINeuralNetwork.got_ball_dist ? mode.got_ball : mode.chase_ball;
+	}
 	
 	@SuppressWarnings("unchecked")
 	public void loadTSets() {
@@ -205,13 +236,14 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 		}
 		for (int i = 0; i < tsets.length; i++)
 			tsets[i] = TrainingSet.load(fname+"/ts"+i+".tset");
-		for (int i = 0; i < tsets.length; i++)
+		for (int i = 0; i < tsets.length; i++) {
 			if (tsets[i] == null) {
 				System.out.println("Error loading training set "+i+" from file. Aborting.");
 				return;
 			} else
 				System.out.println("Set "+i+" ("+tsets[i].getInputSize()+"x"+tsets[i].getIdealSize()+")["+tsets[i].size()+"] loaded from file.");
-		frames = tsets[0].size();
+			frames[i] = tsets[i].size();
+		}
 		System.out.println("Successfully done.");
 	}
 	
@@ -234,7 +266,7 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 	 * Save the network
 	 */
 	public void Save() {
-		double testing_last = frames*percentage_test/100d;
+		
 		System.out.println("Preparing sets...");
 		// split training arrays into testing and training
 		@SuppressWarnings("unchecked")
@@ -242,6 +274,7 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 		@SuppressWarnings("unchecked")
 		final TrainingSet<SupervisedTrainingElement>[] testing = new TrainingSet[nets.length];
 		for (int i = 0; i < training.length; i++) {
+			double testing_last = frames[i]*percentage_test/100d;
 			training[i] = new TrainingSet<SupervisedTrainingElement>(nets[i].getInputNeurons().size(), nets[i].getOutputNeurons().size());
 			testing[i] = new TrainingSet<SupervisedTrainingElement>(nets[i].getInputNeurons().size(), nets[i].getOutputNeurons().size());
 			int size = tsets[i].size();

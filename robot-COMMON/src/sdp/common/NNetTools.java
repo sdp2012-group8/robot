@@ -1,5 +1,7 @@
 package sdp.common;
 
+import java.awt.geom.Point2D;
+
 /**
  * Neural network shared tools
  * 
@@ -10,7 +12,10 @@ public class NNetTools {
 	
 	public static enum move_modes {
 		forward_left, forward_right,  backward_left, backward_right, forward, backward
-		//stop,  left, right 
+	}
+	
+	public static enum got_ball_modes {
+		forward_left, forward_right,  left, right, kick
 	}
 
 	/**
@@ -23,13 +28,27 @@ public class NNetTools {
 	 * @return the input array
 	 */
 	public static double[] generateAIinput(WorldState worldState, WorldState oldState, double dt, boolean am_i_blue, boolean my_goal_left, int id) {
-		Vector2D ball = new Vector2D(worldState.getBallCoords());
-		Vector2D ball_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
 		switch (id) {
 		case 0:
+			Vector2D ball = new Vector2D(worldState.getBallCoords());
+			Vector2D ball_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
+			double reach = Tools.reachability(worldState, ball, am_i_blue) ? 1 : -1;
 			return Tools.concat(
 					getSectors(worldState, am_i_blue, 5, 22),
-					getTargetInSectors(ball_rel, 22)
+					getTargetInSectors(ball_rel, 22),
+					new double[] {
+						reach
+					}
+					);
+		case 1:
+			Vector2D goal = my_goal_left ? new Vector2D(Tools.PITCH_WIDTH_CM , Tools.GOAL_Y_CM ) : new Vector2D(0 , Tools.GOAL_Y_CM );
+			Vector2D goal_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), goal);
+			return Tools.concat(
+					getSectors(worldState, am_i_blue, 5, 22),
+					getTargetInSectors(goal_rel, 22),
+					new double[] {
+						Tools.visibility(worldState, goal, am_i_blue) ? 1 : -1
+					}
 					);
 		}
 		return null;		
@@ -156,6 +175,12 @@ public class NNetTools {
 			return null;
 		return generateOutput(mode.ordinal(), move_modes.values().length);
 	}
+	
+	public static double[] generateOutput(got_ball_modes mode) {
+		if (mode == null)
+			return null;
+		return generateOutput(mode.ordinal(), got_ball_modes.values().length);
+	}
 
 	/**
 	 * What was the original condition
@@ -181,12 +206,17 @@ public class NNetTools {
 		return id;
 	}
 	
-	public static move_modes recoverOutputMode(double[] output) {
+	public static move_modes recoverMoveOutputMode(double[] output) {
 		int id = recoverOutputInt(output);
 		return move_modes.values()[id];
 	}
 	
-	public static move_modes getMode(int desired_speed, int desired_turning) {
+	public static got_ball_modes recoverGotBallOutputMode(double[] output) {
+		int id = recoverOutputInt(output);
+		return got_ball_modes.values()[id];
+	}
+	
+	public static move_modes getMoveMode(int desired_speed, int desired_turning) {
 		if (desired_speed > 0 && desired_turning > 0)
 			return move_modes.forward_right;
 		if (desired_speed > 0 && desired_turning == 0)
@@ -208,6 +238,33 @@ public class NNetTools {
 		if (desired_speed < 0 && desired_turning < 0)
 			return move_modes.backward_left;
 		
+		return null;
+	}
+	
+	public static got_ball_modes getGotBallMode(int desired_speed, int desired_turning, boolean is_kicking) {
+		if (desired_speed > 0 && desired_turning > 0)
+			return got_ball_modes.forward_right;
+		if (desired_speed > 0 && desired_turning == 0)
+			return null; //got_ball_modes.forward;
+		if (desired_speed > 0 && desired_turning < 0)
+			return got_ball_modes.forward_left;
+		
+		if (desired_speed == 0 && desired_turning > 0)
+			return got_ball_modes.right;
+		if (desired_speed == 0 && desired_turning == 0)
+			return null; //got_ball_modes.stop;
+		if (desired_speed == 0 && desired_turning < 0)
+			return got_ball_modes.left;
+
+		if (desired_speed < 0 && desired_turning > 0)
+			return null; //got_ball_modes.backward_right;
+		if (desired_speed < 0 && desired_turning == 0)
+			return null; //got_ball_modes.backward;
+		if (desired_speed < 0 && desired_turning < 0)
+			return null;//got_ball_modes.backward_left;
+		
+		if (is_kicking)
+			return got_ball_modes.kick;
 		return null;
 	}
 	
@@ -239,6 +296,35 @@ public class NNetTools {
 		default:
 			return 0;
 		}
+	}
+	
+	public static int getDesiredSpeed(got_ball_modes mode) {
+		switch (mode) {
+		case forward_left:
+		case forward_right:
+			return 35;
+		default:
+			return 0;
+		}
+	}
+	
+	public static int getDesiredTurningSpeed(got_ball_modes mode) {
+		switch (mode) {
+		case forward_right:
+		case right:
+		//case right:
+			return 90;
+		case forward_left:
+		case left:
+		//case left:
+			return -90;
+		default:
+			return 0;
+		}
+	}
+	
+	public static boolean getKicking(got_ball_modes mode) {
+		return mode == got_ball_modes.kick;
 	}
 	
 	/**
