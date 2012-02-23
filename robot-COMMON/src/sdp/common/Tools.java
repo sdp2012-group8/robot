@@ -384,6 +384,36 @@ public class Tools {
 		return ray.getLength() >= dir.getLength();
 	}
 	
+	
+	/**
+	 * Whether you could reach this point if you turn into its direction and go into straight line.
+	 * @param ws
+	 * @param robot
+	 * @param startPt
+	 * @param endPt
+	 * @return
+	 */
+	public static boolean reachability(WorldState ws, Vector2D endPt, boolean am_i_blue) {
+		if (!visibility(ws, endPt, am_i_blue))
+			return false;
+		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
+		Vector2D startPt = new Vector2D(robot.getCoords());
+		Vector2D dir =  Vector2D.subtract(endPt, startPt);
+		double dir_l = dir.getLength();
+		double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
+		final double length = Robot.LENGTH_CM/2;
+		double cos = Math.cos(angle)*length;
+		double sin = Math.sin(angle)*length;
+		Vector2D left = new Vector2D(cos, sin);
+		Vector2D right = new Vector2D(-cos, -sin);
+
+		Vector2D ray_left = Tools.raytraceVector(ws, Vector2D.add(startPt, left), dir, am_i_blue);
+		if (ray_left.getLength() < dir_l)
+			return false;
+		Vector2D ray_right = Tools.raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue);
+		return ray_right.getLength() >= dir_l;
+	}
+	
 	/**
 	 * Return the intersection of a vector in the given direction, originating from origin.
 	 * @param origin
