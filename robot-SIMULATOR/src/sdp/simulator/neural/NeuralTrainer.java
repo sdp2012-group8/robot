@@ -6,8 +6,6 @@ import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -16,14 +14,14 @@ import java.awt.event.MouseMotionListener;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import sdp.AI.AI;
-import sdp.AI.AI.mode;
-import sdp.AI.neural.AINeuralNetwork;
-import sdp.AI.AIVisualServoing;
+import sdp.AI.AIMaster;
+import sdp.AI.AIMaster.AIMode;
+import sdp.AI.AIWorldState.mode;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.Robot;
 import sdp.common.Tools;
+import sdp.common.Utilities;
 import sdp.common.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
@@ -50,13 +48,13 @@ import javax.swing.JEditorPane;
 public class NeuralTrainer {
 
 	private static final double placement_right = 20; // in cm
-	private static final double placement_left = Simulator.pitch_width_cm - placement_right; // in cme
+	private static final double placement_left = Simulator.PITCH_WIDTH_CM - placement_right; // in cme
 	
 	JFrame frame;
 	
 	private WorldState lastWS = null;
 	
-	private AI mAI;
+	private AIMaster mAI;
 	private Simulator mSim;
 	private Communicator mComm;
 	private boolean drag_ball = false;
@@ -65,7 +63,6 @@ public class NeuralTrainer {
 	private JCheckBox chckbxMouseControl;
 	private JComboBox combo_AI;
 	private JComboBox comboBox;
-	private JEditorPane dtrpnhomemartinmarinov;
 
 	private static final int max_speed = 35;
 	private static final int max_turn_speed = 90;
@@ -271,11 +268,6 @@ public class NeuralTrainer {
 		btnResetField.setBounds(662, 119, 117, 25);
 		frame.getContentPane().add(btnResetField);
 		
-		dtrpnhomemartinmarinov = new JEditorPane();
-		dtrpnhomemartinmarinov.setText("data");
-		dtrpnhomemartinmarinov.setBounds(662, 298, 117, 24);
-		frame.getContentPane().add(dtrpnhomemartinmarinov);
-		
 		final JButton btnNewButton = new JButton("Record");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -306,6 +298,7 @@ public class NeuralTrainer {
 		combo_AI = new JComboBox();
 		combo_AI.setModel(new DefaultComboBoxModel(new String[] {"VisualServoing", "NeuralNetwork"}));
 		combo_AI.setBounds(662, 263, 117, 24);
+		combo_AI.setSelectedIndex(1);
 		frame.getContentPane().add(combo_AI);
 		
 		JButton btnStopLearning = new JButton("Stop learning");
@@ -395,8 +388,8 @@ public class NeuralTrainer {
 			}
 		});
 		comboBox.setBounds(662, 156, 117, 24);
-		for (int i = 0; i < AI.mode.values().length; i++)
-			comboBox.addItem(AI.mode.values()[i]);
+		for (int i = 0; i < mode.values().length; i++)
+			comboBox.addItem(mode.values()[i]);
 		comboBox.setSelectedIndex(1);
 		frame.getContentPane().add(comboBox);
 		
@@ -414,7 +407,7 @@ public class NeuralTrainer {
 	private void Connect() {
 		
 		mSim = new Simulator();
-		trainer = new NeuralNetworkTrainingGenerator(mSim, dtrpnhomemartinmarinov.getText());
+		trainer = new NeuralNetworkTrainingGenerator(mSim, "data");
 		mComm = (Communicator) trainer;
 		final WorldStateObserver obs = new WorldStateObserver(mSim);
 		VBrick bot = new VBrick();
@@ -422,20 +415,21 @@ public class NeuralTrainer {
 		yellow_placement = blue_placement == placement_left ? placement_right : placement_left;
 		mSim.registerBlue(blue_selected ? (VBrick) mComm : bot,
 				blue_placement,
-				Simulator.pitch_height_cm/2,
+				Simulator.PITCH_HEIGHT_CM/2,
 				blue_placement == placement_left ? 180: 0);
 		mSim.registerYellow(blue_selected ? bot : (VBrick) mComm,
 				yellow_placement,
-				Simulator.pitch_height_cm/2,
+				Simulator.PITCH_HEIGHT_CM/2,
 				yellow_placement == placement_left ? 180 : 0);
 		switch (combo_AI.getSelectedIndex()) {
 		case 0:
-			mAI = new AIVisualServoing(mComm, mSim);
+			mAI = new AIMaster(mComm, mSim, AIMode.visual_servoing);
 			break;
 		case 1:
-			mAI = new AINeuralNetwork(mComm, mSim, dtrpnhomemartinmarinov.getText());
+			mAI = new AIMaster(mComm, mSim, AIMode.neural_network);
 			break;
 		}
+		trainer.registerAI(mAI);
 		
 		mAI.start(blue_selected, my_door_right);
 		new Thread() {
@@ -446,9 +440,9 @@ public class NeuralTrainer {
 					if (chckbxMouseControl.isSelected() && mComm != null) {
 						Robot my = blue_selected ? lastWS.getBlueRobot() : lastWS.getYellowRobot();
 						Vector2D d = new Vector2D(
-								(-my.getCoords().getX()+mouse_scaled_x)*Simulator.pitch_width_cm,
-								(-my.getCoords().getY()+mouse_scaled_y)*Simulator.pitch_width_cm);
-						double angle = Tools.normalizeAngle(-my.getAngle()+Vector2D.getDirection(d));
+								(-my.getCoords().getX()+mouse_scaled_x)*Simulator.PITCH_WIDTH_CM,
+								(-my.getCoords().getY()+mouse_scaled_y)*Simulator.PITCH_WIDTH_CM);
+						double angle = Utilities.normaliseAngle(-my.getAngle()+Vector2D.getDirection(d));
 						double speed = (d.getLength()/200)*3*max_speed;
 						if (speed < 0)
 							speed = 0;
@@ -479,8 +473,8 @@ public class NeuralTrainer {
 	 */
 	private void resetField() {
 		mSim.putBallAt();
-		mSim.putAt(blue_placement/Simulator.pitch_width_cm, Simulator.pitch_height_cm/(2*Simulator.pitch_width_cm), 0, blue_placement == placement_left ? 180: 0);
-		mSim.putAt(yellow_placement/Simulator.pitch_width_cm, Simulator.pitch_height_cm/(2*Simulator.pitch_width_cm), 1, yellow_placement == placement_left ? 180: 0);
+		mSim.putAt(blue_placement/Simulator.PITCH_WIDTH_CM, Simulator.PITCH_HEIGHT_CM/(2*Simulator.PITCH_WIDTH_CM), 0, blue_placement == placement_left ? 180: 0);
+		mSim.putAt(yellow_placement/Simulator.PITCH_WIDTH_CM, Simulator.PITCH_HEIGHT_CM/(2*Simulator.PITCH_WIDTH_CM), 1, yellow_placement == placement_left ? 180: 0);
 	}
 	
 	
@@ -498,8 +492,8 @@ public class NeuralTrainer {
 			switch (key_id) {
 			case KeyEvent.VK_UP:
 			case KeyEvent.VK_W:
-
-				speed = pressed ? max_speed : 0;
+				if (pressed)
+					speed = max_speed;
 				if (pressed) {
 					if (original == null)
 						original = mAI.getMode();
@@ -509,7 +503,8 @@ public class NeuralTrainer {
 				break;
 			case KeyEvent.VK_DOWN:
 			case KeyEvent.VK_S:
-				speed = pressed ? -max_speed : 0;
+				if (pressed)
+					speed = -max_speed;
 				if (pressed) {
 					if (original == null)
 						original = mAI.getMode();
@@ -556,7 +551,19 @@ public class NeuralTrainer {
 					mAI.setMode(original);
 					original = null;
 				}
-				return;
+				break;
+			case KeyEvent.VK_SHIFT:
+				if (pressed) {
+					if (pressed)
+						speed = 0;
+				}
+				if (pressed) {
+					if (original == null)
+						original = mAI.getMode();
+					mAI.setMode(mode.sit);
+					trainer.Resume();
+				}
+				break;
 			case KeyEvent.VK_SPACE:
 				if (pressed)
 					RandomizeField();
@@ -570,6 +577,7 @@ public class NeuralTrainer {
 				System.out.println("ERROR: CURRENT SPEED OVERFLOW!!! = "+speed);
 			if (turn_speed > 128 || turn_speed < -127)
 				System.out.println("ERROR: TURN SPEED OVERFLOW!!! = "+turn_speed);
+			
 			mComm.sendMessage(opcode.operate, (byte) speed, (byte) turn_speed);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -600,8 +608,8 @@ public class NeuralTrainer {
 					ballpos = new Vector2D(
 							(7.5 + r.nextDouble()*(Tools.PITCH_WIDTH_CM-30))/Tools.PITCH_WIDTH_CM,
 							(7.5 + r.nextDouble()*(Tools.PITCH_HEIGHT_CM-30))/Tools.PITCH_WIDTH_CM);
-					if (Vector2D.subtract(robot1, ballpos).getLength() > 35/Tools.PITCH_WIDTH_CM &&
-							Vector2D.subtract(robot1, ballpos).getLength() > 35/Tools.PITCH_WIDTH_CM &&
+					if (Vector2D.subtract(robot1, ballpos).getLength() > 45/Tools.PITCH_WIDTH_CM &&
+							Vector2D.subtract(robot1, ballpos).getLength() > 45/Tools.PITCH_WIDTH_CM &&
 							mSim.isInsideRobot(ballpos.getX()/Tools.PITCH_WIDTH_CM, ballpos.getY()/Tools.PITCH_WIDTH_CM) == -1)
 						break;
 				}

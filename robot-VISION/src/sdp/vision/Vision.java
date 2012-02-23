@@ -4,6 +4,10 @@ import java.awt.image.BufferedImage;
 
 import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
+import sdp.vision.processing.ImageProcessorConfig;
+import sdp.vision.processing.MainImageProcessor;
+import sdp.vision.processing.BaseImageProcessor;
+import sdp.vision.visualinput.VisualInputCallback;
 
 
 /**
@@ -16,19 +20,15 @@ import sdp.common.WorldStateProvider;
  */
 public class Vision extends WorldStateProvider implements VisualInputCallback {
 	
-	/** Old image processor. TO BE REMOVED. */
-	OldImageProcessor oldImageProcessor;
-	
 	/** Image processor. */
-	ImageProcessor imageProcessor;
+	BaseImageProcessor imageProcessor;
 	
 	
 	/**
 	 * The main constructor.
 	 */
 	public Vision() {
-		oldImageProcessor = new OldImageProcessor();
-		imageProcessor = new ImageProcessor();
+		imageProcessor = new MainImageProcessor();
 	}
 	
 	
@@ -37,7 +37,7 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	 * 
 	 * @return The image processor's configuration.
 	 */
-	public ImageProcessorConfiguration getConfiguration() {
+	public ImageProcessorConfig getConfiguration() {
 		return imageProcessor.getConfiguration();
 	}
 	
@@ -46,21 +46,23 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	 * 
 	 * @param config The new image processor's configuration.
 	 */
-	public void setConfiguration(ImageProcessorConfiguration config) {
+	public void setConfiguration(ImageProcessorConfig config) {
 		imageProcessor.setConfiguration(config);
 	}
 	
+	
+	public WorldState worldImageData(BufferedImage frame){
+		WorldState nextState = imageProcessor.extractWorldState(frame);
+		return nextState;
+	
+	}
 
 	/* (non-Javadoc)
 	 * @see sdp.vision.VisualInputCallback#nextFrame(java.awt.image.BufferedImage)
-	 */
+	 */	
 	@Override
 	public void nextFrame(BufferedImage frame) {
-//		oldImageProcessor.process(frame);
-//		WorldState state = oldImageProcessor.worldState;
-		
 		WorldState nextState = imageProcessor.extractWorldState(frame);
-		
 		setChanged();
 		notifyObservers(nextState);
 	}

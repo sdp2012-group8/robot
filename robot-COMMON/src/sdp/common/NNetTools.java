@@ -7,6 +7,11 @@ package sdp.common;
  *
  */
 public class NNetTools {
+	
+	public static enum move_modes {
+		forward_left, forward_right,  backward_left, backward_right, forward, backward
+		//stop,  left, right 
+	}
 
 	/**
 	 * Generates input array for the AI
@@ -17,63 +22,91 @@ public class NNetTools {
 	 * @param id which network is receiving it
 	 * @return the input array
 	 */
-	public static double[] generateAIinput(WorldState worldState, boolean am_i_blue, boolean my_goal_left, int id) {
-		Robot me = am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot();
-		Robot enemy = am_i_blue ? worldState.getYellowRobot() : worldState.getBlueRobot();
-		//Vector2D goal = new Vector2D(my_goal_left ? Tools.PITCH_WIDTH_CM : 0, Tools.GOAL_Y_CM);
-		// get coordinates relative to table
-		Vector2D my_coords = new Vector2D(me.getCoords());
-		Vector2D en_coords = new Vector2D(enemy.getCoords());
+	public static double[] generateAIinput(WorldState worldState, WorldState oldState, double dt, boolean am_i_blue, boolean my_goal_left, int id) {
 		Vector2D ball = new Vector2D(worldState.getBallCoords());
-		Vector2D nearest = Tools.getNearestCollisionPoint(worldState, am_i_blue, me.getCoords());
-		// rel coords
-		Vector2D rel_ball = Tools.getLocalVector(me, ball);
-		//Vector2D rel_goal = Tools.getLocalVector(me, goal);
-		Vector2D rel_coll = Tools.getLocalVector(me, Vector2D.add(my_coords, nearest));
-		Vector2D rel_en = Tools.getLocalVector(me, en_coords);
-		// if you change something here, don't forget to change number of inputs in trainer
+		Vector2D ball_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
 		switch (id) {
 		case 0:
-			return Tools.concat(new double[] {
-					AI_normalizeCoordinateTo1(rel_ball.getX(), Tools.PITCH_WIDTH_CM)
-					//AI_normalizeCoordinateTo1(rel_en.getX(), Tools.PITCH_WIDTH_CM),
-					//AI_normalizeCoordinateTo1(rel_coll.getX(), Tools.PITCH_WIDTH_CM)
-			}, getVisionMatrix(10, Tools.PITCH_WIDTH_CM, me, worldState, am_i_blue));
-		case 1:
-			return Tools.concat(new double[] {
-					AI_normalizeAngleTo1(Vector2D.getDirection(rel_ball))
-					//AI_normalizeAngleTo1(Vector2D.getDirection(rel_en)),
-					//AI_normalizeAngleTo1(Vector2D.getDirection(rel_coll))
-			}, getVisionMatrix(10, Tools.PITCH_WIDTH_CM, me, worldState, am_i_blue));
+			return Tools.concat(
+					getSectors(worldState, am_i_blue, 5, 22),
+					getTargetInSectors(ball_rel, 22)
+					);
 		}
 		return null;		
 	}
 	
-	/**
-	 * Generates series of vectors around the front and back of the robot
-	 * @param size the elements in array. Front and back must have odd sizes so a value of 10 would mean 5 in front and 5 in back.
-	 * @param threshold
-	 * @return distances to nearest collision points in the direction, normalized to threshold
-	 */
-	private static double[] getVisionMatrix(int size, double threshold, Robot me, WorldState ws, boolean am_i_blue) {
-		if (!(size % 2 == 0 && (size/2) % 2 == 1)) {
-			System.out.println("Provide size number for visionMatrix like 6, 10, 14. See javadoc for info!");
+	private static double[] getSectors(WorldState ws, boolean am_i_blue, int scan_count, int sector_count) {
+		if (sector_count % 2 != 0 || (sector_count / 2) % 2 == 0) {
+			System.out.println("Sectors must be even number which halves should be odd!");
 			return null;
 		}
-		final double[] ans = new double[size];
-		final int behind = size/2;
-		final int infront = size - behind;
-		final double scope = Robot.WIDTH_CM/2;
-		int i = 0;
-		for (double y = -scope; y <= scope; y += 2d*scope/(behind-1)) {
-			ans[i] = AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, me, new Vector2D(0, 0), new Vector2D(Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold);
-			i++;
-		}
-		for (double y = -scope; y <= scope; y += 2d*scope/(infront-1)) {
-			ans[i] = AI_normalizeCoordinateTo1(Tools.raytraceVector(ws, me, new Vector2D(0, 0), new Vector2D(-Robot.WIDTH_CM, y), am_i_blue).getLength(), threshold);
-			i++;
-		}
+		double[] ans = new double[sector_count];
+		double sec_angle = 360d/sector_count;
+		for (int i = 0; i < sector_count; i++)
+			ans[i] = AI_normalizeDistanceTo1(getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count), Tools.PITCH_WIDTH_CM);
 		return ans;
+	}
+	
+	private static double[] getTargetInSectors(Vector2D relative, int sector_count) {
+		if (sector_count % 2 != 0 || (sector_count / 2) % 2 == 0) {
+			System.out.println("Sectors must be even number which halves should be odd!");
+			return null;
+		}
+		double[] ans = new double[sector_count];
+		double sec_angle = 360d/sector_count;
+		for (int i = 0; i < sector_count; i++)
+			ans[i] = AI_normalizeDistanceTo1(targetInSector(relative, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle)), Tools.PITCH_WIDTH_CM);
+		return ans;
+	}
+	
+	/**
+	 * Sweeps a scanning vector sensor between the given angles and returns the distance to the closest object. Angles are wrt to the current robot
+	 * where angle 0 means forward, 180 or -180 means backwards, 90 means left, -90 means right of robot. <br/>
+	 * The result could be interpreted as: <i>the distance to nearest obstacle in the specified region about the current robot</i>
+	 * @param ws current world state
+	 * @param am_i_blue true if my robot is blue, false if it is yellow
+	 * @param start_angle the starting angle of the segment (the smallest arc will be selected)
+	 * @param end_angle the ending angle of the segment (the smallest arc will be selected)
+	 * @param scan_count how many parts the sector should be devided for scanning
+	 * @return the vector distance to the closest collision point a.k.a. the minimum distance determined by the scanning vector which swept the sector scan_count times.
+	 */
+	public static Vector2D getSector(WorldState ws, boolean am_i_blue, double start_angle, double end_angle, int scan_count) {
+		start_angle = Utilities.normaliseAngle(start_angle);
+		end_angle = Utilities.normaliseAngle(end_angle);
+		final Robot me = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
+		final Vector2D zero = Vector2D.ZERO();
+		Double min_dist = null;
+		Vector2D min_vec = null;
+		final double sector_angle = Utilities.normaliseAngle(end_angle-start_angle);
+		final double scan_angle = sector_angle/scan_count;
+		for (double angle = start_angle; Utilities.normaliseAngle(end_angle-angle) * sector_angle >= 0; angle+=scan_angle) {
+			final double ang_rad = angle*Math.PI/180d;
+			final Vector2D distV = Tools.raytraceVector(ws, me, zero, new Vector2D(-Math.cos(ang_rad), Math.sin(ang_rad)), am_i_blue);
+			final double dist = distV.getLength();
+			if (min_dist == null || dist < min_dist) {
+				min_dist = dist;
+				min_vec = distV;
+			}
+		}
+		return min_vec;
+	}
+	
+	public static Vector2D targetInSector(Vector2D relative, double start_angle, double end_angle) {
+		double ang = Vector2D.getDirection(relative);
+		if (Utilities.normaliseAngle(end_angle - start_angle) < 0) {
+			double temp = start_angle;
+			start_angle = end_angle;
+			end_angle = temp;
+		}
+		return Utilities.normaliseAngle(ang - start_angle) >= 0 && Utilities.normaliseAngle(ang - end_angle) < 0 ? relative : new Vector2D(5*Tools.PITCH_WIDTH_CM, 0);
+	}
+	
+
+	public static double AI_normalizeDistanceTo1(Vector2D vec, double threshold) {
+		double distance = vec.getLength();
+		if (distance > threshold)
+			return 1;
+		return -1+2*distance/threshold;
 	}
 	
 	/**
@@ -99,7 +132,11 @@ public class NNetTools {
 	 * @return mapped between -1 and 1 wrt width of pitch
 	 */
 	private static double AI_normalizeAngleTo1(double angle) {
-		return (Tools.normalizeAngle(angle))/180d;
+//		angle = Utilities.normaliseAngle(angle);
+//		if (Math.abs(angle) < 10)
+//			return 0;
+//		return angle < 0 ? -1 : 1;
+		return (Utilities.normaliseAngle(angle))/180d;
 	}
 	
 	/**
@@ -113,6 +150,12 @@ public class NNetTools {
 			ans[i] = i == current_id ? 1 : 0;
 		return ans;
 	}
+	
+	public static double[] generateOutput(move_modes mode) {
+		if (mode == null)
+			return null;
+		return generateOutput(mode.ordinal(), move_modes.values().length);
+	}
 
 	/**
 	 * What was the original condition
@@ -120,7 +163,7 @@ public class NNetTools {
 	 * @param output array with two outputs from neural network
 	 * @return the state of the original condition
 	 */
-	public static int recoverOutput(double[] output) {
+	public static int recoverOutputInt(double[] output) {
 		double max = 0;
 		double sum = 0;
 		int id = 0;
@@ -136,6 +179,66 @@ public class NNetTools {
 		if (sum == 0)
 			return -1;
 		return id;
+	}
+	
+	public static move_modes recoverOutputMode(double[] output) {
+		int id = recoverOutputInt(output);
+		return move_modes.values()[id];
+	}
+	
+	public static move_modes getMode(int desired_speed, int desired_turning) {
+		if (desired_speed > 0 && desired_turning > 0)
+			return move_modes.forward_right;
+		if (desired_speed > 0 && desired_turning == 0)
+			return move_modes.forward;
+		if (desired_speed > 0 && desired_turning < 0)
+			return move_modes.forward_left;
+		
+		if (desired_speed == 0 && desired_turning > 0)
+			return null;//move_modes.right;
+		if (desired_speed == 0 && desired_turning == 0)
+			return null;//move_modes.stop;
+		if (desired_speed == 0 && desired_turning < 0)
+			return null;//move_modes.left;
+
+		if (desired_speed < 0 && desired_turning > 0)
+			return move_modes.backward_right;
+		if (desired_speed < 0 && desired_turning == 0)
+			return move_modes.backward;
+		if (desired_speed < 0 && desired_turning < 0)
+			return move_modes.backward_left;
+		
+		return null;
+	}
+	
+	public static int getDesiredSpeed(move_modes mode) {
+		switch (mode) {
+		case forward:
+		case forward_left:
+		case forward_right:
+			return 35;
+		case backward:
+		case backward_left:
+		case backward_right:
+			return -35;
+		default:
+			return 0;
+		}
+	}
+	
+	public static int getDesiredTurningSpeed(move_modes mode) {
+		switch (mode) {
+		case forward_right:
+		case backward_right:
+		//case right:
+			return 90;
+		case forward_left:
+		case backward_left:
+		//case left:
+			return -90;
+		default:
+			return 0;
+		}
 	}
 	
 	/**

@@ -1,12 +1,13 @@
-package sdp.vision;
+package sdp.vision.visualinput;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 
-
+import sdp.common.Utilities;
 
 
 /**
@@ -15,6 +16,9 @@ import javax.imageio.ImageIO;
  * @author Gediminas Liktaras
  */
 public class ImageVisualInputProvider extends VisualInputProvider implements Runnable {
+	
+	/** The class' logger. */
+	private static final Logger LOGGER = Logger.getLogger("sdp.vision.ImageVisualInputProvider");
 	
 	/** A list of images to present to the application. */
 	private BufferedImage images[];
@@ -41,7 +45,7 @@ public class ImageVisualInputProvider extends VisualInputProvider implements Run
 				images[i] = ImageIO.read(new File(filenames[i]));
 			}
 		} catch(IOException e) {
-			System.err.println("Could not read image files.");
+			LOGGER.warning("Could not read image files.");
 			e.printStackTrace();
 		}
 		
@@ -58,7 +62,7 @@ public class ImageVisualInputProvider extends VisualInputProvider implements Run
 	@Override
 	public void run() {
 		while (!Thread.interrupted()) {
-			sendNextFrame(images[nextImageIndex]);			
+			sendNextFrame(Utilities.deepBufferedImageCopy(images[nextImageIndex]));
 			nextImageIndex = (nextImageIndex + 1) % images.length;
 			
 			try {

@@ -1,6 +1,7 @@
 package sdp.brick;
 
 import java.io.File;
+import java.util.Collection;
 
 import sdp.common.Communicator;
 import sdp.common.MessageListener;
@@ -24,9 +25,19 @@ import lejos.nxt.UltrasonicSensor;
  */
 public class Brick {
 
+	private static final int coll_threshold = 30; // cm
+	private static final int back_speed = -10; // cm per sec
+	private static final int angle_threshold = 5; // degrees per sec
+	private static final int turning_boost = 20; // degrees per sec
+	
+	private static boolean is_on = true;
 
 
 	private static Communicator mCont;
+	private static UltrasonicSensor sens;
+	private static boolean collision = false;
+	
+	private static TouchSensor kickSensor;
 
 	/**
 	 * The entry point of the program
@@ -34,6 +45,44 @@ public class Brick {
 	 */
 	public static void main(String[] args) {
 		// connect with PC and start receiving messages
+		sens = new UltrasonicSensor(SensorPort.S1);
+		sens.continuous();
+		kickSensor = new TouchSensor(SensorPort.S2);
+		new Thread() {
+			public void run() {
+				while (is_on) {
+					int dist = sens.getDistance();
+					collision = dist < coll_threshold;
+				}
+				sens.off();
+			};
+		}.start();
+		final Thread kicker_retractor = new Thread() {
+			public void run() {
+				while (is_on) {
+					boolean initial = kickSensor.isPressed();
+					if (!initial) {
+						Motor.B.setSpeed(Motor.B.getMaxSpeed());
+						Motor.B.setAcceleration(10000);
+						Motor.B.backward();
+					}
+					
+					while (!kickSensor.isPressed()) {
+						try {
+							Thread.sleep(10);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+					if (!initial)
+						Motor.B.stop();
+					try {
+							Thread.sleep(100);						
+					} catch (InterruptedException e) {}
+				}
+			};
+		};
+		kicker_retractor.start();
 		mCont = new BComm();
 		mCont.registerListener(new MessageListener() {
 
@@ -66,7 +115,7 @@ public class Brick {
 				case checkTouch:
 					TouchSensor tsens = new TouchSensor(SensorPort.S2);
 					TouchSensor tsens2 = new TouchSensor(SensorPort.S3);
-					while(true) {
+					while(is_on) {
 						int i = 0;
 						if (tsens.isPressed() || tsens2.isPressed()){
 							LCD.drawString("tSensor is true", 2, 4);
@@ -80,6 +129,10 @@ public class Brick {
 				case exit:
 					mCont.close();
 					Sound.setVolume(def_vol);
+					is_on = false;
+					try {
+						Thread.sleep(200);
+					} catch (Exception e) {}
 					NXT.shutDown();
 					break;
 
@@ -129,10 +182,8 @@ public class Brick {
 
 				case kick:
 					Motor.B.setSpeed(Motor.B.getMaxSpeed());
-					Motor.B.setAcceleration(100000);
-					Motor.B.rotate(-80);
-					Motor.B.rotate(80);
-					Motor.B.stop();
+					Motor.B.setAcceleration(10000);
+					Motor.B.backward();
 					break;
 
 				case turn:
@@ -154,9 +205,29 @@ public class Brick {
 					}
 					break;
 
+				case rotate_kicker_stop:
+					if (args.length > 0) {
+						Motor.B.setSpeed(slowest);
+						Motor.B.setAcceleration(100000);
+						Motor.B.rotate(args[0]);
+					}
+					Motor.B.stop();
+					break;
+					
+				case rotate_kicker_lock:
+					if (args.length > 0) {
+						Motor.B.setSpeed(slowest);
+						Motor.B.setAcceleration(100000);
+						Motor.B.rotate(args[0]);
+					}
+					Motor.B.lock(100);
+					break;
+					
+				case float_motor:
+					Motor.B.flt();
+					break;	
+					
 				case move_to_wall:
-					UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
-					sens.continuous();
 					Motor.A.setSpeed(slowest);
 					Motor.C.setSpeed(slowest);
 					Motor.A.setAcceleration(1000);
@@ -177,7 +248,7 @@ public class Brick {
 					Motor.C.setSpeed(0);
 					Motor.C.stop();
 					Motor.A.stop();
-					sens.off();
+					
 					break;
 
 				case operate:
@@ -185,13 +256,18 @@ public class Brick {
 					// args[1] - turning speed in degrees per second around centre of robot
 					// args[2] - acceleration in cm/s/s
 					if (args.length > 0) {
+						// collision detection
+						if (collision && Math.abs(args[1]) >= angle_threshold) {
+							args[0] = back_speed;
+							args[1] += args[1] > 0 ? turning_boost : -turning_boost;
+						}
 						float old_a = speed_a;
 						float old_c = speed_c;
 						// convert the degrees per second around robot
 						// to degrees per second for the motor
 						float conv_angle = 0;
 						if (args.length > 1) conv_angle = args[1]*ROBOTR/WHEELR;
-						float speed_angle = (args[0]*10)/(0.017453292519943295f*WHEELR); // Radius*Pi*Angle/180
+						float speed_angle = args[0]/(0.017453292519943295f*WHEELR); // Radius*Pi*Angle/180
 						// set desired speed
 						speed_a = speed_angle+conv_angle;
 						speed_c = speed_angle-conv_angle;
@@ -202,7 +278,7 @@ public class Brick {
 						// check if we need to start motors or turn their direction
 						if (args.length > 2) {
 							//change acceleration
-							acceleration = args[2]*10;
+							acceleration = args[2];
 							acc = (int) (acceleration/(0.017453292519943295*WHEELR));
 							turn_acceleration = acc*WHEELR/ROBOTR;
 						}
