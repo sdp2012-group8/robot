@@ -3,6 +3,8 @@ package sdp.communicator;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.logging.Logger;
 
 import lejos.pc.comm.NXTComm;
@@ -23,13 +25,14 @@ import sdp.common.MessageListener;
 public class JComm implements sdp.common.Communicator {
 	
 	// password and mac settings
-	private static final String friendly_name = "ELIMIN8";
+	private static final int max_retries = 6; // how many times to try connecting to brick before quitting
+	private static final String friendly_name = "Ball-E";
 	private static final String mac_of_brick = "00:16:53:0A:5C:22";
 	
 	private final static Logger LOGGER = Logger.getLogger(JComm.class .getName());
 
 	// variables
-	private MessageListener mListener;
+	private ArrayList<MessageListener> mListener = new ArrayList<MessageListener>();
 	private NXTComm mComm;
 	private OutputStream os;
     private InputStream is;
@@ -40,8 +43,7 @@ public class JComm implements sdp.common.Communicator {
 	 * @param listener the listener that will receive updates from the robot
 	 * @throws NXTCommException if a connection cannot be established
 	 */
-	public JComm(MessageListener listener) {
-		this.mListener = listener;
+	public JComm() throws IOException {
 		try {
 		mComm = NXTCommFactory.createNXTComm(NXTCommFactory.BLUETOOTH);
 		} catch (Exception e) {
@@ -50,17 +52,21 @@ public class JComm implements sdp.common.Communicator {
 		NXTInfo info = new NXTInfo(NXTCommFactory.BLUETOOTH,friendly_name, mac_of_brick);
 		LOGGER.info("Openning connection...");
 		boolean repeat = true;
-		while (repeat) {
+		int tries = 0;
+		while (repeat && tries < max_retries) {
+			tries++;
 			try {
 				mComm.open(info);
 				repeat = false;
 			} catch (Exception e) {
-				LOGGER.warning("Cannot establish connection. Is device on? Retry in 4 s.");
+				LOGGER.warning("Cannot establish connection. Is device on? Retry in 4 s. ("+(max_retries-tries)+" attempts left)");
 				try {
 					Thread.sleep(4000);
 				} catch (InterruptedException e1) {}
 			}
 		}
+		if (repeat)
+			throw new IOException("Cannot connect to brick!");
 		LOGGER.info("Getting output stream...");
 		os = mComm.getOutputStream();
 		LOGGER.info("Getting input stream...");
@@ -102,7 +108,10 @@ public class JComm implements sdp.common.Communicator {
 		for (int i = 0; i < length; i++) {
 			args[i] = (byte) is.read();
 		}
-		mListener.receiveMessage(op, args, JComm.this);
+		// notify all listeners
+		Iterator<MessageListener> ml = mListener.iterator();
+		while (ml.hasNext())
+			ml.next().receiveMessage(op, args, JComm.this);
 	}
 
 	/**
@@ -134,6 +143,16 @@ public class JComm implements sdp.common.Communicator {
 			e.printStackTrace();
 		}
 
+	}
+ 
+	/**
+	 * Registers listeners
+	 */
+	@Override
+	public void registerListener(MessageListener listener) {
+		if (!mListener.contains(listener))
+			mListener.add(listener);
+		
 	}
 
 }

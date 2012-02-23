@@ -3,17 +3,17 @@ package sdp.vision.examples;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
-import sdp.vision.CameraVisualInputProvider;
-import sdp.vision.ImageVisualInputProvider;
 import sdp.vision.Vision;
-import sdp.vision.VisualInputProvider;
+import sdp.vision.visualinput.CameraVisualInputProvider;
+import sdp.vision.visualinput.ImageVisualInputProvider;
+import sdp.vision.visualinput.VisualInputProvider;
 
 
 /**
  * This class is an example of how to connect to the vision system and
  * receive world state updates from it in asynchronous fashion.
  * 
- * As you can see, the whole setup takes X steps:
+ * As you can see, the whole setup takes 6 steps:
  * 
  * 1) Create a Vision instance.
  * 2) Create a VisualInputProvider instance.
@@ -39,7 +39,7 @@ public class VisionUsageExample implements Runnable {
 	private WorldStateObserver visionObserver;
 	
 	/** Whether to use camera or offline inputs. */
-	private static final boolean USE_CAMERA = false;
+	private static final boolean USE_CAMERA = true;
 	
 	
 	/**
