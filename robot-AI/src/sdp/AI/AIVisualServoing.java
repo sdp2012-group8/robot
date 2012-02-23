@@ -39,33 +39,31 @@ public class AIVisualServoing extends AI {
 		// calculates speed formula:
 		// speed_when_robot_next_to_ball+(distance_to_ball/max_distance)*speed_when_over_max_distance
 		// every distance between 0 and max_distance will be mapped between speed_when_robot_next_to_ball and speed_when_over_max_distance
-		byte forward_speed = (byte) (10+(ai_world_state.getDistanceToBall()/40)*25);
+		byte forward_speed = (byte) Utilities.normaliseToByte((10+(ai_world_state.getDistanceToBall()/40)*25));
 
 		System.out.println("I'm in chase ball :), turning speed : " + turning_angle);
 		// do the backwards turn
 		if (turning_angle > 90 || turning_angle < -90)
 			forward_speed = 0; //-20;
 
-		turning_angle = Utilities.angleToByte(turning_angle);
+		turning_angle = Utilities.normaliseToByte(turning_angle);
 		
 		forward_speed = normaliseSpeed(forward_speed);
 		turning_angle = Utilities.normaliseAngle(turning_angle);
 		
 		// make a virtual sensor at Robot.length/2 pointing at 1,0
 		//double collision_dist = Tools.raytraceVector(worldState, robot, new Vector2D(Robot.LENGTH_CM/2,0), new Vector2D(1,0), am_i_blue).getLength();
-		mComm.sendMessage(opcode.operate, forward_speed, (byte) (turning_angle));
-		// check whether to go into got_ball mode
-		
+		mComm.sendMessage(opcode.operate, forward_speed, (byte) (turning_angle));		
 		
 		//check if the ball is very close to the sides of the robot and move back 
-		final Robot robot = ai_world_state.getRobot();
-		
+		final Robot robot = ai_world_state.getRobot();			
+		//might cause problems when very close to walls 
 		if (Math.toDegrees(Utilities.getAngle(ai_world_state.getBallCoords(), robot.getFrontLeft(), robot.getBackLeft())) > 170
 				|| Math.toDegrees(Utilities.getAngle( ai_world_state.getBallCoords(), robot.getFrontRight(),robot.getBackRight())) > 170){
 			mComm.sendMessage(opcode.operate, (byte) -30, (byte) 0);
 		}
 		
-		
+		// check whether to go into got_ball mode
 		if (Math.abs(turning_angle) < TURNING_ACCURACY && ai_world_state.getDistanceToBall() < 2) {
 			//ai_world_state.setMode(mode.sit);
 			ai_world_state.setMode(mode.got_ball);

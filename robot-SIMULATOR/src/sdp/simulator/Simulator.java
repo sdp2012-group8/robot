@@ -764,9 +764,6 @@ public class Simulator extends WorldStateProvider {
 									Vector2D distance2 = Vector2D.add(
 											positions[j], backAwayDistance2);
 									
-										
-									System.out.println("collision");
-									System.out.println("distance "+Vector2D.subtract(distance1, distance2).getLength());
 									
 									//if the future positions of the robots are still inside the pitch,
 									//set the positions, else the robots remain in the same place
