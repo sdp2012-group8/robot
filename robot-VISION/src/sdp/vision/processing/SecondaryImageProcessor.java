@@ -357,7 +357,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 				yellow_robot_image[x][y] = (byte) (clean_y < 0 ? 0 : (clean_y > 255 ? 255 : clean_y));
 				blue_robot_image[x][y] =  (byte) (clean_b < 0 ? 0 : (clean_b > 255 ? 255 : clean_b));
 				ball_image[x][y] = (byte) (clean_r < 0 ? 0 : (clean_r > 255 ? 255 : clean_r));
-				setPixel(x, y,dy, dy,dy);
+				//setPixel(x, y,dy, dy,dy);
 			}
 	}
 	
