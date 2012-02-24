@@ -16,6 +16,20 @@ import sdp.common.Robot;
 import sdp.common.Tools;
 import sdp.common.WorldState;
 
+/**
+ * Secondary image processor. Built with assumption that it should not need callibration.
+ * 
+ * It finds the average pixel color and uses that to determine the most - far yellow, blue and red outliers.
+ * 
+ * It then applies thresholding based on standard deviation outliers.
+ * 
+ * The angle is done by tracing the contour of the shape about the centre of mass and using gaussian smooth
+ * to smooth data and find the furthest point which is regarded as the desired direction.
+ * 
+ * 
+ * @author Martin Marinov
+ *
+ */
 public class SecondaryImageProcessor extends BaseImageProcessor {
 	
 	private static enum rgb {
@@ -32,6 +46,8 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 					yellow_pos = new Point2D.Double(0, 0),
 					blue_pos  = new Point2D.Double(0, 0),
 					ball_pos = new Point2D.Double(0, 0);
+	private final double[] smoothed_bucket = new double[angular_acc],
+						bucket = new double[angular_acc];
 	
 	private WorldState state;
 	private Graphics2D graph;
@@ -41,19 +57,40 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	
 	// what coefficient of the maximum value in an image is sufficient for regarding it as valid
 	private static final double threshold_ratio = 0.4;
+	
+	// standard deviation filter. Filter out points more than this amount of sigmas from the st dev
+	private static final double sigma = 2;
+	
+	// maximum empty pixels in a feature for angle detection purposes
+	private static final int robot_max_radius = 100;
+	
 	// angular accuracy. This is the number of iterations that would be done around the robot. To get the
 	// accuracy at which an angle could be detected, just divide 360 by this number
 	private static final int angular_acc = 360;
-	// gaussian smoothing applied to angles. smooting amount in pixels distance
-	private static final double[] gauss_smooth = new double[]
-			{0.00038771/0.47442968, 0.01330373/0.47442968, 0.11098164/0.47442968, 0.22508352/0.47442968, 0.11098164/0.47442968, 0.01330373/0.47442968, 0.00038771/0.47442968};
-	private static final int gauss_count = gauss_smooth.length/2;
-	// standard deviation filter. Filter out points more than this amount of sigmas from the st dev
-	private static final double sigma = 2;
+	
+	// gaussian filtering for angle
+	private static final int gauss_count = 100; // this is the number of points that would be affected by smoothing. Must be even.
+	private static final double gauss_amount = 10; // the smoothing factor
+	private static final double[] gauss_filter_matrix = new double[gauss_count*2+1]; // the matrix that would be filled in with values
+	
+
 	
 	private long frame_count = 0;
 	
 	private long oldtime = -1;
+	
+	public SecondaryImageProcessor() {
+		super();
+		// generate gaussian filter
+		double sum = 0;
+		for (int x = -gauss_count; x <= gauss_count; x++) {
+			gauss_filter_matrix[x+gauss_count] = Math.exp(-x*x/(2*gauss_amount*gauss_amount))/gauss_amount;
+			sum += gauss_filter_matrix[x+gauss_count];
+		}
+		// normalize to 1
+		for (int i = 0; i < gauss_filter_matrix.length; i++)
+			gauss_filter_matrix[i] = gauss_filter_matrix[i]/sum;
+	}
 	
 	@Override
 	public synchronized WorldState extractWorldState(BufferedImage frame) {
@@ -153,15 +190,18 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			final double ang_rad = robot.getAngle() * Math.PI / 180d;
 			final double shift_x = 0.01 * Math.cos(ang_rad);
 			final double shift_y = -0.01 * Math.sin(ang_rad);
-			graph.setColor(Color.white);
+			graph.setColor(Color.black);
 
-			final double dir_x = 0.04*Math.cos(robot.getAngle()*Math.PI/180d);
-			final double dir_y = -0.04*Math.sin(robot.getAngle()*Math.PI/180d);
+			final double dir_x = 0.04*Math.cos(ang_rad);
+			final double dir_y = -0.04*Math.sin(ang_rad);
 			graph.drawLine(
 					(int)((robot.getCoords().getX()-shift_x)*width+start_x),
 					(int)((robot.getCoords().getY()-shift_y)*height_coeff+start_y),
 					(int)((robot.getCoords().getX()+dir_x-shift_x)*width+start_x),
 					(int)((robot.getCoords().getY()+dir_y-shift_y)*height_coeff+start_y));
+			final int rob_cx = (int)(robot.getCoords().getX()*width+start_x),
+					  rob_cy = (int)(robot.getCoords().getY()*height_coeff+start_y);
+			graph.fillOval(rob_cx - 5, rob_cy - 5, 10, 10);
 		}
 		// draw bounding box
 		graph.setColor(Color.white);
@@ -179,7 +219,6 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		if (center.x == -1 && center.y == -1)
 			return 0;
 		// bucket may be used for smoothing, this is not a priority now
-		double[] bucket = new double[angular_acc];
 		final double rot_ang_rad = 2*Math.PI/angular_acc,
 				cos = Math.cos(rot_ang_rad),
 				sin = Math.sin(rot_ang_rad);
@@ -192,6 +231,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			int sector_width = 0;
 			int oldx = (int) center.x, oldy = (int) center.y;
 			// start going radially onwards from the center
+			int count = 0;
 			for (int px_id = 1; ; px_id++) {
 				int x = (int) (center.x+vx * px_id);
 				int y = (int) (center.y+vy * px_id);
@@ -202,8 +242,12 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 						sector_width++;
 						oldx = x;
 						oldy = y;
-					} else
-						break;
+						count = 0;
+					} else {
+						count++;
+						if (count > robot_max_radius)
+							break;
+					}
 				} else
 				  break;
 			}
@@ -211,23 +255,41 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			bucket[i] = sector_width;
 		}
 		// gaussian smoothing
-		double[] smoothed_bucket = new double[bucket.length];
 		double max = 0;
 		int max_id = -1;
 		for (int i = 0; i < bucket.length; i++) {
-			for (int j = 0; j < gauss_smooth.length; j++) {
+			smoothed_bucket[i] = 0;
+			for (int j = 0; j < gauss_filter_matrix.length; j++) {
 				int bucket_id = i+j-gauss_count-1;
 				if (bucket_id >= bucket.length)
 					bucket_id = bucket_id - bucket.length;
 				if (bucket_id < 0)
 					bucket_id = bucket.length + bucket_id;
-				smoothed_bucket[i] += bucket[bucket_id]*gauss_smooth[j];
+				smoothed_bucket[i] += bucket[bucket_id]*gauss_filter_matrix[j];
 			}
 			if (smoothed_bucket[i] > max) {
 				max = smoothed_bucket[i];
 				max_id = i;
 			}
-		}	
+		}
+		if (config.isShowContours()) {
+			// debugging
+			vx = 1d;
+			vy = 0d;
+			for (int i = 0; i < angular_acc; i++) {
+				// rotate the unit vector one rot_ang_rad more
+				vx = vx * cos - vy * sin;
+				vy = vy * cos + vx * sin;
+				int x = (int) (center.x+vx * bucket[i]);
+				int y = (int) (center.y+vy * bucket[i]);
+				graph.setColor(Color.black);
+				graph.fillOval(x-2, y-2, 4, 4);
+				x = (int) (center.x+vx * smoothed_bucket[i]);
+				y = (int) (center.y+vy * smoothed_bucket[i]);
+				graph.setColor(Color.white);
+				graph.fillOval(x-2, y-2, 4, 4);
+			}
+		}
 		return Tools.normalizeAngle(-max_id*rot_ang_rad*180/Math.PI);
 	}
 	
