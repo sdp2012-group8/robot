@@ -30,6 +30,12 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	public Vision() {
 		imageProcessor = new MainImageProcessor();
 	}
+	/**
+	 * Create a vision with custom image processor
+	 */
+	public Vision(BaseImageProcessor processor) {
+		imageProcessor = processor;
+	}
 	
 	
 	/**
