@@ -37,7 +37,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	}
 	
 	private int start_x = 0, stop_x = 0, start_y = 0, stop_y = 0, height = 0, width = 0, pixels_count = 0, im_width = 0;
-	private int avg_r = 0, avg_y = 0, avg_b = 0, avg_g = 0;
+	private int avg_r = 0, avg_b = 0, avg_g = 0;
 	private byte[] pixels = null;
 	private byte[][] yellow_robot_image = null,
 					 blue_robot_image = null,
@@ -55,11 +55,10 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	// how often to take average
 	private static final int take_average_every = 1;
 	
-	// what coefficient of the maximum value in an image is sufficient for regarding it as valid
-	private static final double threshold_ratio = 0.4;
-	
 	// standard deviation filter. Filter out points more than this amount of sigmas from the st dev
-	private static final double sigma = 2;
+	private static final double color_sigma = 10;
+	private static final double robot_sigma = 2;
+	private static final double ball_sigma = 1;
 	
 	// maximum empty pixels in a feature for angle detection purposes
 	private static final int robot_max_radius = 100;
@@ -69,11 +68,16 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private static final int angular_acc = 360;
 	
 	// gaussian filtering for angle
-	private static final int gauss_count = 100; // this is the number of points that would be affected by smoothing. Must be even.
-	private static final double gauss_amount = 10; // the smoothing factor
+	private static final int gauss_count = 10; // this is the number of points that would be affected by smoothing. Must be even.
+	private static final double gauss_amount = 20; // the smoothing factor
 	private static final double[] gauss_filter_matrix = new double[gauss_count*2+1]; // the matrix that would be filled in with values
 	
-
+	// the radius above which standard deviation is meaningless
+	private double robot_radius = 0;
+	private double ball_radius = 0;
+	
+	// when to quit trying to optimize error and assume the object is not on the field
+	private static int max_attempts_before_quitting = 15;
 	
 	private long frame_count = 0;
 	
@@ -114,10 +118,12 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		if (frame_count % take_average_every == 0)
 			average();
 		doThresholding();
-		normalize(blue_robot_image, blue_pos);
-		normalize(yellow_robot_image, yellow_pos);
-		
-		normalize(ball_image, ball_pos);
+		stDevColorFilter(blue_robot_image, blue_pos);
+		optimizeStDev(blue_robot_image, blue_pos, robot_sigma, robot_radius);
+		stDevColorFilter(yellow_robot_image, yellow_pos);
+		optimizeStDev(yellow_robot_image, yellow_pos, robot_sigma, robot_radius);
+		stDevColorFilter(ball_image, ball_pos);
+		optimizeStDev(ball_image, ball_pos, ball_sigma, ball_radius);
 		
 		state = new WorldState(convertTo1(ball_pos),
 				new Robot(convertTo1(blue_pos), getAngle(blue_robot_image, blue_pos)),
@@ -126,7 +132,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		
 		// drawing part
 		if (!config.isShowWorld()) {
-			graph.setColor(new Color(10, 80, 0));
+			graph.setColor(new Color(avg_r, avg_g, avg_b));
 			graph.fillRect(start_x, start_y, width, height);	
 		}
 		
@@ -149,6 +155,22 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		
 		graph.dispose();
 		return state;
+	}
+	
+	private void optimizeStDev(byte[][] channel, Point2D.Double pos, double sigma, double required_st_dev) {
+		if (pos.x == -1 && pos.y == -1)
+			return;
+		int attempt = 0;
+		while (stDevLengthFilter(channel, pos, sigma)*sigma > required_st_dev)  {	
+			if (pos.x == -1 && pos.y == -1)
+				return;
+			if (attempt > max_attempts_before_quitting) {
+				pos.x = -1;
+				pos.y = -1;
+				return;
+			}
+			attempt++;
+		};
 	}
 	
 	private void drawThings() {
@@ -298,38 +320,44 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	 * It is based on the average color of the table.
 	 */
 	private void doThresholding() {
-		final int mdy = avg_y > 128 ? avg_y : 255 - avg_y,
-				mdb = avg_b > 128 ? avg_b : 255 - avg_b,
-				mdr = avg_r > 128 ? avg_r : 255 - avg_r,
-				mdg = avg_g > 128 ? avg_g : 255 - avg_g;
+		final int
+				mdb = 255 - avg_b,
+				mdr = 255 - avg_r,
+				mdg = 255 - avg_g;
 		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
 				// calculate red, green, blue and yellowness of the pixel at x y
 				final int
 						re = getPixel(x,y, rgb.red),
 						gr = getPixel(x,y, rgb.green),
-						ye = (gr+re)/2,
 						bl = getPixel(x,y, rgb.blue);
 				// get the positive diviation from the avarage values
 				int		dr = 255*(re-avg_r)/mdr,
-						dy = 255*(ye-avg_y)/mdy,
 						db = 255*(bl-avg_b)/mdb,
 						dg = 255*(gr-avg_g)/mdg;
 				// isolate only the positive values
 				if (dr < 0) dr = 0;
-				if (dy < 0) dy = 0;
+				else if (dr > 255) dr = 255;
 				if (db < 0) db = 0;
+				else if (db > 255) db = 255;
 				if (dg < 0) dg = 0;
-				// remove pollutants; green pollutes all colours
+				else if (dg > 255) dg = 255;
+				double diff_coeff = (255-Math.abs(dr-dg))/255d;
+				double int_coeff = ((dr+dg)/2d - db/3)/255d;
+				int dy = (int) (255*diff_coeff*int_coeff);
+				if (dy < 0) dy = 0;
+				else if (dy > 255) dy = 255;
+				// remove pollutants
 				final int
 					// red is poluted by yellow as well
-					clean_r = dr - dy - dg,
-					clean_y = dy - dg,
-					clean_b = db - dg;
+					clean_r = dr - dy -dg - db,
+					clean_b = db - dg - dr, //
+					clean_y = dy;
 				// normalize and buffer
 				yellow_robot_image[x][y] = (byte) (clean_y < 0 ? 0 : (clean_y > 255 ? 255 : clean_y));
 				blue_robot_image[x][y] =  (byte) (clean_b < 0 ? 0 : (clean_b > 255 ? 255 : clean_b));
 				ball_image[x][y] = (byte) (clean_r < 0 ? 0 : (clean_r > 255 ? 255 : clean_r));
+				setPixel(x, y,dy, dy,dy);
 			}
 	}
 	
@@ -337,21 +365,24 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	 * Normalizes the array between 0 and 255 according to {@link #threshold_ratio}
 	 * 
 	 * @param array the input array
-	 * @param centre_out for returning the geometrical centre
+	 * @param centre_out for returning the rough geometrical centre
 	 */
-	private void normalize(byte[][] array, Point2D.Double centre_out) {
+	private void stDevColorFilter(byte[][] array, Point2D.Double centre_out) {
 		
 		// find global average for rough thresholding
-		double avg = 0;
+		double sum = 0;
+	    double sq_sum = 0;
 		int max = 0;
 		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
 				int value = array[x][y] & 0xFF;
-				avg += value / (double) pixels_count;
+				sum += value;
+			    sq_sum += value*value;
 				if (value > max)
 					max = value;
 			}
-		final double threshold = (max - avg)*threshold_ratio;
+		final double col_mean = sum / pixels_count;
+	    final double col_st_dev = Math.sqrt(sq_sum / pixels_count - col_mean * col_mean);
 		
 		// apply thresholding and find rough centre
 		double cx = 0, cy = 0;
@@ -360,7 +391,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
 				int value = array[x][y] & 0xFF;
-				if (value - avg > threshold) {
+				if (Math.abs(value - col_mean) > color_sigma*col_st_dev) {
 					pt_count++;
 					cx += x;
 					cy += y;
@@ -374,46 +405,63 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		} else {
 			centre_out.x = -1;
 			centre_out.y = -1;
-			return;
 		}
-		
-		// calculate standard deviation
+	}
+	
+	/**
+	 * Filters positions of particles which have been already thresholded
+	 * 
+	 * @param array
+	 * @param centre_out
+	 * @param sigma
+	 * @return current standard deviation
+	 */
+	private double stDevLengthFilter(byte[][] array, Point2D.Double centre_out, double sigma) {
+		// calculate standard deviation in length
 		double sum = 0;
-	    double sq_sum = 0;
+		double sq_sum = 0;
+		int pt_count = 0;
 		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
 				int value = array[x][y] & 0xFF;
 				if (value != 0) {
 					final double
-						dist_x = x - centre_out.x,
-						dist_y = y - centre_out.y,
-						dist_sq = dist_x*dist_x + dist_y*dist_y;
+					dist_x = x - centre_out.x,
+					dist_y = y - centre_out.y,
+					dist_sq = dist_x*dist_x + dist_y*dist_y;
 					sum += Math.sqrt(dist_sq);
-				    sq_sum += dist_sq;
+					sq_sum += dist_sq;
+					pt_count++;
 				}
 			}
-		
-		final double mean = sum / pt_count;
-	    final double st_dev = Math.sqrt(sq_sum / pt_count - mean * mean);
-	    
 
-	    // filter data based on st dev and recalculate center
-		cx = 0;
-		cy = 0;
+		double mean = sum / pt_count;
+		double st_dev = Math.sqrt(sq_sum / pt_count - mean * mean);
+
+
+		// filter data based on st dev and recalculate center
+		double cx = 0;
+		double cy = 0;
+		sum = 0;
+		sq_sum = 0;
 		pt_count = 0;
-	    for (int y = start_y; y <= stop_y; y++)
+		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
 				int value = array[x][y] & 0xFF;
 				if (value != 0) {
 					final double
-						dist_x = x - centre_out.x,
-						dist_y = y - centre_out.y,
-						dist = Math.sqrt(dist_x*dist_x + dist_y*dist_y);
+					dist_x = x - centre_out.x,
+					dist_y = y - centre_out.y,
+					dist_sq = dist_x*dist_x + dist_y*dist_y,
+					dist = Math.sqrt(dist_sq);
 					if (Math.abs(dist - mean) >= sigma*st_dev) {
 						// disregard point if it is too far away
 						array[x][y] = 0;
 						continue;
 					}
+					;
+					sum += dist;
+					sq_sum += dist_sq;
 					pt_count++;
 					cx += x;
 					cy += y;
@@ -426,6 +474,9 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			centre_out.x = -1;
 			centre_out.y = -1;
 		}
+		mean = sum / pt_count;
+		st_dev = Math.sqrt(sq_sum / pt_count - mean * mean);
+		return st_dev;
 	}
 	
 	/**
@@ -463,7 +514,6 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			}
 		avg_r = (int) ar;
 		avg_g = (int) ag;
-		avg_y = (int) ((ag+ar)/2d);
 		avg_b = (int) ab;
 		
 	}
@@ -479,6 +529,8 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		height = config.getFieldHeight();
 		stop_y = start_y+height;
 		pixels_count = width * height;
+		robot_radius = width * Robot.LENGTH;
+		ball_radius = 10 * width / Tools.PITCH_WIDTH_CM;
 	}
 	
 	/**
@@ -535,63 +587,4 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		return new Point2D.Double((global.x-start_x)/width, ((global.y-start_y)/height)*Tools.PITCH_HEIGHT_CM/Tools.PITCH_WIDTH_CM);
 	}
 
-	
-//	// HELPERS
-//	
-//	/**
-//	 * Gets the red pixel given a color
-//	 * 
-//	 * @param color in RGB format
-//	 * @return red component
-//	 */
-//	private static final int getRed(final int color) {
-//		return (color >> 16) & 0xFF;
-//	}
-//	
-//	/**
-//	 * Gets the red pixel given a color
-//	 * 
-//	 * @param color in RGB format
-//	 * @return red component
-//	 */
-//	private static final int getGreen(final int color) {
-//		return (color >> 8) & 0xFF;
-//	}
-//	
-//	/**
-//	 * Gets the red pixel given a color
-//	 * 
-//	 * @param color in RGB format
-//	 * @return red component
-//	 */
-//	private static final int getBlue(final int color) {
-//		return color & 0xFF;
-//	}
-//	
-//	/**
-//	 * Converts r g b value to RGB integer color
-//	 * 
-//	 * @param r between 0 and 255
-//	 * @param g between 0 and 255
-//	 * @param b between 0 and 255
-//	 * @return color in RGB format
-//	 */
-//	private static final int getColor(int r, int g, int b) {
-//		if (r < 0)
-//			r = 0;
-//		if (r > 255)
-//			r = 255;
-//		if (g < 0)
-//			g = 0;
-//		if (g > 255)
-//			g = 255;
-//		if (b < 0)
-//			b = 0;
-//		if (b > 255)
-//			b = 255;
-//		int ans = r;
-//		ans = (ans << 8) + g;
-//		ans = (ans << 8) + b;
-//		return ans;
-//	}
 }
