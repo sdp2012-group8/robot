@@ -56,9 +56,9 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private static final int take_average_every = 1;
 
 	// standard deviation filter. Filter out points more than this amount of sigmas from the st dev
-	private static final double blue_color_sigma = 6;
+	private static final double blue_color_sigma = 10;
 	private static final double red_color_sigma = 10;
-	private static final double yellow_color_sigma = 7;
+	private static final double yellow_color_sigma = 6;
 	private static final double robot_sigma = 2;
 	private static final double ball_sigma = 1;
 
@@ -127,7 +127,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	@Override
 	public synchronized WorldState extractWorldState(BufferedImage frame) {
 		getCurrentROI();
-		//frame = preprocessFrame(frame);
+		frame = preprocessFrame(frame);
 		final boolean graph_needed = config.isShowBoundingBoxes() || config.isShowContours() || config.isShowStateData() || !config.isShowWorld();
 		if (graph_needed)
 			graph = frame.createGraphics();
@@ -584,7 +584,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		height = config.getFieldHeight();
 		stop_y = start_y+height;
 		pixels_count = width * height;
-		robot_radius = width * Robot.LENGTH / 5;
+		robot_radius = width * Robot.LENGTH / 4;
 		ball_radius = 3 * width / Tools.PITCH_WIDTH_CM;
 	}
 
