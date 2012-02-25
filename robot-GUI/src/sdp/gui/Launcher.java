@@ -283,12 +283,17 @@ public class Launcher extends JFrame implements Runnable {
 	 */
 	private ImageVisualInputProvider createImageInputProvider() {
 		String filenames[] = {
-				"../robot-VISION/data/testImages/pitch2-1.png",
-				"../robot-VISION/data/testImages/pitch2-2.png",
-				"../robot-VISION/data/testImages/pitch2-3.png",
+				"../robot-VISION/data/testImages/1.png",
+				"../robot-VISION/data/testImages/2.png",
+				"../robot-VISION/data/testImages/3.png",
+				"../robot-VISION/data/testImages/4.png",
+				"../robot-VISION/data/testImages/5.png",
 				"../robot-VISION/data/testImages/pitch.png",
 				"../robot-VISION/data/testImages/pitch1-2.png",
-				"../robot-VISION/data/testImages/pitch1-3.png"
+				"../robot-VISION/data/testImages/pitch1-3.png",
+				"../robot-VISION/data/testImages/pitch2-1.png",
+				"../robot-VISION/data/testImages/pitch2-2.png",
+				"../robot-VISION/data/testImages/pitch2-3.png"
 		};
 		int fps = ((Integer)testFpsSpinner.getValue()).intValue();
 		return new ImageVisualInputProvider(filenames, fps);
