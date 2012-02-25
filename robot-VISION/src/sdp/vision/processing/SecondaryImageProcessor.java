@@ -7,6 +7,9 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 
+import static com.googlecode.javacv.cpp.opencv_core.*;
+import static com.googlecode.javacv.cpp.opencv_imgproc.*;
+
 
 import sdp.common.Robot;
 import sdp.common.Tools;
@@ -54,7 +57,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	// standard deviation filter. Filter out points more than this amount of sigmas from the st dev
 	private static final double blue_color_sigma = 6;
 	private static final double red_color_sigma = 10;
-	private static final double yellow_color_sigma = 5.5;
+	private static final double yellow_color_sigma = 7;
 	private static final double robot_sigma = 2;
 	private static final double ball_sigma = 1;
 
@@ -121,7 +124,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	}
 
 	@Override
-	public synchronized WorldState extractWorldState(final BufferedImage frame) {
+	public synchronized WorldState extractWorldState(BufferedImage frame) {
 		getCurrentROI();
 		//frame = preprocessFrame(frame);
 		final boolean graph_needed = config.isShowBoundingBoxes() || config.isShowContours() || config.isShowStateData() || !config.isShowWorld();
@@ -141,7 +144,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		} else
 			pixels = ((DataBufferByte) frame.getRaster().getDataBuffer()).getData();
 
-		gaussianSmooth();
+		//gaussianSmooth();
 
 		if (frame_count % take_average_every == 0)
 			average();
@@ -156,6 +159,17 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 
 		stDevColorFilter(ball_image, ball_pos, red_color_sigma);
 		optimizeStDev(ball_image, ball_pos, ball_sigma, ball_radius);
+		
+		// some manual fixing
+		if (yellow_pos.x != -1 && yellow_pos.y != -1) {
+			final double dx = yellow_pos.x - blue_pos.x,
+					dy = yellow_pos.y - blue_pos.y,
+					r2 = dx*dx+dy*dy;
+			if (r2 < (Robot.LENGTH * Robot.LENGTH * width * width) / 4) {
+				yellow_pos.x = -1;
+				yellow_pos.y = -1;
+			}
+		}
 
 		state = new WorldState(convertTo1(ball_pos),
 				new Robot(convertTo1(blue_pos), getAngle(blue_robot_image, blue_pos)),
@@ -296,7 +310,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 				if (x >= 0 && y >= 0 && y < channel[0].length && x < channel.length) {
 					final int value = channel[x][y] & 0xFF;
 					if (value != 0) {
-						sector_width ++;// value < 200 ? 200/255d : value/255d;
+						sector_width += count+1;// value < 200 ? 200/255d : value/255d;
 						oldx = x;
 						oldy = y;
 						count = 0;
@@ -379,7 +393,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 				else if (dg > 255) dg = 255;
 				final double abs = dr-dg;
 				final double diff_coeff = (255-(abs > 0 ? abs : -abs))/255d;
-				final double int_coeff = ((dr+dg)/2d - db/3)/255d;
+				final double int_coeff = ((dr+dg)/2d)/255d;
 				int dy = (int) (255*diff_coeff*int_coeff);
 				if (dy < 0) dy = 0;
 				else if (dy > 255) dy = 255;
@@ -388,12 +402,12 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 				// red is poluted by yellow as well
 				clean_r = dr - dy -dg - db,
 				clean_b = db - dg - dr, //
-				clean_y = dy;
+				clean_y = dy - dg/2 - dr/4;
 				// normalize and buffer
 				yellow_robot_image[x][y] = (byte) (clean_y < 0 ? 0 : (clean_y > 255 ? 255 : clean_y));
 				blue_robot_image[x][y] =  (byte) (clean_b < 0 ? 0 : (clean_b > 255 ? 255 : clean_b));
 				ball_image[x][y] = (byte) (clean_r < 0 ? 0 : (clean_r > 255 ? 255 : clean_r));
-				//setPixel(x, y,dy, dy,dy);
+				//setPixel(x, y,clean_y, clean_y,clean_y);
 			}
 	}
 
@@ -526,7 +540,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private final void drawArray(final byte[][] channel, final int r, final int g, final int b) {
 		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
-				final double coeff = (channel[x][y] & 0xFF) / 255d;
+				final double coeff = channel[x][y] != 0 ? 1 : 0;//(channel[x][y] & 0xFF) / 255d;
 				final int nr = (int) (r*coeff),
 						ng = (int) (g*coeff),
 						nb = (int) (b*coeff);
@@ -611,21 +625,23 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		pixels[id] = (byte) b;
 	}
 
-	//	/**
-	//	 * Preprocess the frame for world state extraction.
-	//	 * 
-	//	 * @param frame Frame to preprocess.
-	//	 */
-	//	private BufferedImage preprocessFrame(BufferedImage frame) {
-	//		IplImage frame_ipl = IplImage.createFrom(frame);
-	//		frame_ipl = undistortImage(frame_ipl);	
-	//		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, 5);
-	//		return frame_ipl.getBufferedImage();
-	//	}
+	/**
+	 * Preprocess the frame for world state extraction.
+	 * 
+	 * @param frame Frame to preprocess.
+	 */
+	@SuppressWarnings("unused")
+	private BufferedImage preprocessFrame(BufferedImage frame) {
+		IplImage frame_ipl = IplImage.createFrom(frame);
+		frame_ipl = undistortImage(frame_ipl);	
+		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, 5);
+		return frame_ipl.getBufferedImage();
+	}
 
 	/**
 	 * Does gaussian smooth to the frame
 	 */
+	@SuppressWarnings("unused")
 	private final void gaussianSmooth() {
 		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
