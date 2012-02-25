@@ -46,7 +46,9 @@ public class AIVisualServoing extends AI {
 		if (turning_angle > 90 || turning_angle < -90)
 			forward_speed = 0; //-20;
 
+
 		turning_angle = Utilities.normaliseToByte(turning_angle);
+
 		
 		forward_speed = normaliseSpeed(forward_speed);
 		turning_angle = Utilities.normaliseAngle(turning_angle);

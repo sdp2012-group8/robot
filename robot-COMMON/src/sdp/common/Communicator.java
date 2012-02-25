@@ -23,7 +23,6 @@ public interface Communicator {
 				 // turning speed of robot in degrees per second
 		play_sound // no arguments
 		, rotate_kicker_stop,rotate_kicker_lock, float_motor
-		
 	}
 	
 	/**

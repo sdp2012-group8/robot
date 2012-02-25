@@ -30,6 +30,12 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	public Vision() {
 		imageProcessor = new MainImageProcessor();
 	}
+	/**
+	 * Create a vision with custom image processor
+	 */
+	public Vision(BaseImageProcessor processor) {
+		imageProcessor = processor;
+	}
 	
 	
 	/**
@@ -51,10 +57,14 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	}
 	
 	
-	public WorldState worldImageData(BufferedImage frame){
-		WorldState nextState = imageProcessor.extractWorldState(frame);
-		return nextState;
-	
+	/**
+	 * A convenience function to get the world state out of an image.
+	 * 
+	 * @param frame Image to process.
+	 * @return World state, contained within the image.
+	 */
+	public WorldState extractWorldState(BufferedImage frame){
+		return imageProcessor.extractWorldState(frame);	
 	}
 
 	/* (non-Javadoc)
@@ -62,7 +72,7 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	 */	
 	@Override
 	public void nextFrame(BufferedImage frame) {
-		WorldState nextState = imageProcessor.extractWorldState(frame);
+		WorldState nextState = extractWorldState(frame);
 		setChanged();
 		notifyObservers(nextState);
 	}

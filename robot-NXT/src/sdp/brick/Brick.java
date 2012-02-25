@@ -1,7 +1,6 @@
 package sdp.brick;
 
 import java.io.File;
-import java.util.Collection;
 
 import sdp.common.Communicator;
 import sdp.common.MessageListener;
@@ -29,9 +28,7 @@ public class Brick {
 	private static final int back_speed = -10; // cm per sec
 	private static final int angle_threshold = 5; // degrees per sec
 	private static final int turning_boost = 20; // degrees per sec
-	
 	private static boolean is_on = true;
-
 
 	private static Communicator mCont;
 	private static UltrasonicSensor sens;
@@ -133,6 +130,7 @@ public class Brick {
 					try {
 						Thread.sleep(200);
 					} catch (Exception e) {}
+					sens.off();
 					NXT.shutDown();
 					break;
 

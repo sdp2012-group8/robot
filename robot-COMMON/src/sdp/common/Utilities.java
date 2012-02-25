@@ -30,6 +30,15 @@ public class Utilities {
 
 	
 	/**
+	 * Convert java.awt.geom.Point2D to java.awt.Point.
+	 * @param pt
+	 * @return
+	 */
+	public static Point pointFromPoint2D(Point2D pt) {
+		return new Point((int)pt.getX(), (int)pt.getY());
+	}
+	
+	/**
      * Rotate point p2 around point p1 by the given angle in degrees.
      * 
      * @param origin Rotation point.
@@ -226,4 +235,35 @@ public class Utilities {
 		return angle;
 	}
 
+    
+    /**
+     * Strip a string from whitespace.
+     * 
+     * Adapted from http://www.java2s.com/Code/Java/Data-Type/stripstring.htm.
+     * 
+     * @param string String to strip.
+     * @return Stripped string.
+     */
+    public static String stripString(String string) {
+    	if ((string == null) || (string.length() == 0)) {
+    		return string;
+    	}
+    	        
+        int start = 0;
+        while((start < string.length()) && Character.isWhitespace(string.charAt(start))) {
+            start++;
+        }
+        
+        int end = string.length();
+        while((end > start) && Character.isWhitespace(string.charAt(end - 1))) {
+            end--;
+        }
+        
+        if (start == end) {
+        	return "";
+        } else {
+        	return string.substring(start, end);
+        }
+    }
+    
 }
