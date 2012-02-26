@@ -97,11 +97,22 @@ public class AIVisualServoing extends AI {
 			mComm.sendMessage(opcode.operate, (byte) -30, (byte) 0);
 		}
 
+		if ( ((ai_world_state.getRobot().getBackRight().x < ai_world_state.getEnemyGoal().getCentre().x ) 
+				&& (ai_world_state.getRobot().getBackRight().x > ai_world_state.getBallCoords().x)
+					&& ai_world_state.getMyGoalLeft())
+						|| ((ai_world_state.getRobot().getBackRight().x > ai_world_state.getEnemyGoal().getCentre().x)
+							&& (ai_world_state.getRobot().getBackRight().x < ai_world_state.getBallCoords().x))
+						 		&& !ai_world_state.getMyGoalLeft()){
+			System.out.println("I'm between goal and ball");
+			navigateBehindBall();
+		}
+		
 		// check whether to go into got_ball mode
 		if (Math.abs(turning_angle) < TURNING_ACCURACY && ai_world_state.getDistanceToBall() < 10) {
-			ai_world_state.setMode(mode.sit);
-			//ai_world_state.setMode(mode.got_ball);
+			//ai_world_state.setMode(mode.sit);
+			ai_world_state.setMode(mode.got_ball);
 		}
+		
 	}
 
 	/**
@@ -152,7 +163,7 @@ public class AIVisualServoing extends AI {
 					mComm.sendMessage(opcode.operate, forward_speed, (byte)-20);
 					//System.out.println("Going to goal - Turning: " + turning_angle);	
 				} else  {
-					//mComm.sendMessage(opcode.kick);
+					mComm.sendMessage(opcode.kick);
 					//ai_world_state.setMode(AIWorldState.mode.chase_ball);
 				}
 
@@ -174,8 +185,20 @@ public class AIVisualServoing extends AI {
 	/**
 	 * Move behind the ball before attempting to score
 	 */
-	public void navigateBehindBall() {
-
+	public void navigateBehindBall() throws IOException {
+		//TODO: Whenever we are between the enemy goal and the ball, get the ball and re-orientate ourselves towards the enemy goal
+		System.out.println("In navigateBehindBall");
+		
+		Vector2D dir = Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(ai_world_state.getRobot().getCoords()));
+		byte forward_speed = (byte) Utilities.normaliseToByte((15+(ai_world_state.getDistanceToBall()/40)*25));
+		double turning_angle = Utilities.normaliseAngle(-ai_world_state.getRobot().getAngle() + Vector2D.getDirection(dir));
+		
+		
+		while(ai_world_state.getRobot().getBackRight().x < (ai_world_state.getBallCoords().x + 15)){
+			mComm.sendMessage(opcode.operate, forward_speed, (byte) Utilities.normaliseToByte(Utilities.normaliseAngle(turning_angle)));
+		}
+		
+		ai_world_state.setMode(mode.chase_ball);
 	}
 
 	/**

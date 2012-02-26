@@ -55,7 +55,8 @@ public class AIMaster extends AIListener {
 				//if (ai.old_ai_world_state == null || ai.old_ai_world_state.getMode() != mode.sit) {
 					ai.sit();
 				//}
-				break;				
+				break;
+		
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
