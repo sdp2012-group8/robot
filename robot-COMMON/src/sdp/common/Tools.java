@@ -519,4 +519,62 @@ public class Tools {
 			}
 		return ans;
 	}
+
+	/**
+	 * Sweeps a scanning vector sensor between the given angles and returns the distance to the closest object. Angles are wrt to the current robot
+	 * where angle 0 means forward, 180 or -180 means backwards, 90 means left, -90 means right of robot. <br/>
+	 * The result could be interpreted as: <i>the distance to nearest obstacle in the specified region about the current robot</i>
+	 * @param ws current world state
+	 * @param am_i_blue true if my robot is blue, false if it is yellow
+	 * @param start_angle the starting angle of the segment (the smallest arc will be selected)
+	 * @param end_angle the ending angle of the segment (the smallest arc will be selected)
+	 * @param scan_count how many parts the sector should be devided for scanning
+	 * @return the vector distance to the closest collision point a.k.a. the minimum distance determined by the scanning vector which swept the sector scan_count times.
+	 */
+	public static Vector2D getSector(WorldState ws, boolean am_i_blue, double start_angle, double end_angle, int scan_count) {
+		start_angle = Utilities.normaliseAngle(start_angle);
+		end_angle = Utilities.normaliseAngle(end_angle);
+		final Robot me = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
+		final Vector2D zero = Vector2D.ZERO();
+		Double min_dist = null;
+		Vector2D min_vec = null;
+		final double sector_angle = Utilities.normaliseAngle(end_angle-start_angle);
+		final double scan_angle = sector_angle/scan_count;
+		for (double angle = start_angle; Utilities.normaliseAngle(end_angle-angle) * sector_angle >= 0; angle+=scan_angle) {
+			final double ang_rad = angle*Math.PI/180d;
+			final Vector2D distV = raytraceVector(ws, me, zero, new Vector2D(-Math.cos(ang_rad), Math.sin(ang_rad)), am_i_blue);
+			final double dist = distV.getLength();
+			if (min_dist == null || dist < min_dist) {
+				min_dist = dist;
+				min_vec = distV;
+			}
+		}
+		return min_vec;
+	}
+
+	public static double[] getSectors(WorldState ws, boolean am_i_blue, int scan_count, int sector_count, boolean normalize_to_1) {
+		if (sector_count % 2 != 0 || (sector_count / 2) % 2 == 0) {
+			System.out.println("Sectors must be even number which halves should be odd!");
+			return null;
+		}
+		double[] ans = new double[sector_count];
+		double sec_angle = 360d/sector_count;
+		for (int i = 0; i < sector_count; i++)
+			ans[i] = normalize_to_1 ?
+					NNetTools.AI_normalizeDistanceTo1(getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count), PITCH_WIDTH_CM) :
+					getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count).getLength();
+		return ans;
+	}
+
+	static double[] getTargetInSectors(Vector2D relative, int sector_count) {
+		if (sector_count % 2 != 0 || (sector_count / 2) % 2 == 0) {
+			System.out.println("Sectors must be even number which halves should be odd!");
+			return null;
+		}
+		double[] ans = new double[sector_count];
+		double sec_angle = 360d/sector_count;
+		for (int i = 0; i < sector_count; i++)
+			ans[i] = NNetTools.AI_normalizeDistanceTo1(NNetTools.targetInSector(relative, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle)), PITCH_WIDTH_CM);
+		return ans;
+	}
 }

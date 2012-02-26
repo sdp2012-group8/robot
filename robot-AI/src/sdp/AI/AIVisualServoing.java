@@ -15,12 +15,117 @@ import sdp.common.Communicator.opcode;
  *
  */
 public class AIVisualServoing extends AI {
+	
+	private final static int coll_secs_count = 22;
+	private final static double sec_angle = 360d/coll_secs_count;
+	private final static int coll_start = 30;
 
 	public AIVisualServoing(Communicator comm) {
 		super(comm);
 	}
 
 
+	public void avoidObstacle() {
+		Vector2D ball_rel = Tools.getLocalVector(ai_world_state.getRobot(), new Vector2D(ai_world_state.getBallCoords()));
+		double ball_dir = Vector2D.getDirection(ball_rel);
+		double ball_dist = ball_rel.getLength();
+		double[] sectors = Tools.getSectors(ai_world_state, ai_world_state.getMyTeamBlue(), 5, coll_secs_count, false);
+		// sectors[0] starts at at -90
+		double min_diff = 999;
+		double turning_angle = 999;
+		double dist = 0;
+		for (int i = 0; i < sectors.length; i++) {
+			if (sectors[i] > ball_dist) {
+				double ang = ((-90+i*sec_angle)+(-90+(i+1)*sec_angle))/2;
+				double diff = Utilities.normaliseAngle(ang-ball_dir);
+				if (Math.abs(diff) < Math.abs(min_diff)) {
+					min_diff = diff;
+					turning_angle = Utilities.normaliseAngle(ang);
+					dist = sectors[i];
+				}
+			}
+		}
+		
+		if (turning_angle == 999) {
+			double max = 0;
+			for (int i = 0; i < sectors.length; i++) {
+					if (sectors[i] > max) {
+						max = sectors[i];
+						double ang = ((-90+i*sec_angle)+(-90+(i+1)*sec_angle))/2;
+						turning_angle = Utilities.normaliseAngle(ang);
+						dist = sectors[i];
+					}
+			}
+		}
+		
+		double turn_ang_more = Math.toDegrees(Math.atan2(Robot.LENGTH/2, dist));
+		
+		turning_angle += turning_angle > 0 ? turn_ang_more : -turn_ang_more;
+		
+		byte forward_speed = 0;
+		if (turning_angle > 90 || turning_angle < -90)
+			forward_speed = -35;
+		else if (Math.abs(turning_angle) < 90)
+			forward_speed = 35;
+
+		
+		double for_dist = sectors[coll_secs_count/4];//getMin(sectors, coll_secs_count/8, 3*coll_secs_count/8);//sectors[coll_secs_count/4];
+		double back_dist = sectors[3*coll_secs_count/4];//getMin(sectors, 5*coll_secs_count/8, 7*coll_secs_count/8);//sectors[3*coll_secs_count/4];
+		if (for_dist < coll_start) {
+			if (forward_speed >= 0) {
+				double speed_coeff = -1+for_dist/coll_start;
+				if (speed_coeff > 0)
+					speed_coeff = 0;
+				if (speed_coeff < -1)
+					speed_coeff = -1;
+				forward_speed *= speed_coeff;
+			}
+		} else if (back_dist < coll_start) {
+			if (forward_speed <= 0) {
+				double speed_coeff = -1+back_dist/coll_start;
+				if (speed_coeff > 0)
+					speed_coeff = 0;
+				if (speed_coeff < -1)
+					speed_coeff = -1;
+				forward_speed *= speed_coeff;
+			}
+		}
+		
+		//System.out.println("Forward collision "+sectors[coll_secs_count/4 + 1]+" back collision "+sectors[3*coll_secs_count/4 + 1]);
+		
+		
+		turning_angle = Utilities.normaliseToByte(turning_angle);
+		
+		//System.out.println("Turning angle "+turning_angle); 
+
+		forward_speed = normaliseSpeed(forward_speed);
+		turning_angle = Utilities.normaliseAngle(turning_angle);
+
+		// make a virtual sensor at Robot.length/2 pointing at 1,0
+		//double collision_dist = Tools.raytraceVector(worldState, robot, new Vector2D(Robot.LENGTH_CM/2,0), new Vector2D(1,0), am_i_blue).getLength();
+		try {
+			mComm.sendMessage(opcode.operate, forward_speed, (byte) (turning_angle));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Find the smallest element in the array from start to end inclusive
+	 * 
+	 * @param array
+	 * @param start
+	 * @param end
+	 * @return
+	 */
+	private static final double getMin(double[] array, int start, int end) {
+		double min = 9999;
+		for (int i = start; i <= end; i++)
+			if (array[i] < min)
+				min = array[i];
+		return min;
+	}
+	
 	/**
 	 * Mode to go towards the ball.
 	 * When it reaches the ball, transition into the goToGoal state.
@@ -28,6 +133,11 @@ public class AIVisualServoing extends AI {
 	 * @throws IOException 
 	 */
 	public void chaseBall() throws IOException {
+		if (!Tools.reachability(ai_world_state, new Vector2D(ai_world_state.getBallCoords()), ai_world_state.getMyTeamBlue())) {
+			// if ball is not directly reachable
+			avoidObstacle();
+			return;
+		}
 		// get direction from robot to ball
 		Vector2D dir = Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(ai_world_state.getRobot().getCoords()));
 		// Keep the turning angle between -180 and 180
