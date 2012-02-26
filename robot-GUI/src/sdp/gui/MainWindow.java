@@ -379,12 +379,12 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 				setNewVisionConfiguration();
 			}
 			
-			System.out.println(String.format(
-					"NEXT STATE: Ball at (%.4f, %.4f), Blue at (%.4f, %.4f, %.4f), Yellow at (%.4f, %.4f, %.4f).",
-					state.getBallCoords().x, state.getBallCoords().y,
-					state.getBlueRobot().getCoords().x, state.getBlueRobot().getCoords().y, 
-					state.getBlueRobot().getAngle(), state.getYellowRobot().getCoords().x, 
-					state.getYellowRobot().getCoords().y, state.getYellowRobot().getAngle()));
+//			System.out.println(String.format(
+//					"NEXT STATE: Ball at (%.4f, %.4f), Blue at (%.4f, %.4f, %.4f), Yellow at (%.4f, %.4f, %.4f).",
+//					state.getBallCoords().x, state.getBallCoords().y,
+//					state.getBlueRobot().getCoords().x, state.getBlueRobot().getCoords().y, 
+//					state.getBlueRobot().getAngle(), state.getYellowRobot().getCoords().x, 
+//					state.getYellowRobot().getCoords().y, state.getYellowRobot().getAngle()));
 		}
 	}
 	

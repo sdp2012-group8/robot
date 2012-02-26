@@ -49,17 +49,20 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			bucket = new double[angular_acc];
 
 	private WorldState state;
+	private WorldState oldstate = null; 
 	private Graphics2D graph;
 
 	// how often to take average
 	private static final int take_average_every = 1;
 
 	// standard deviation filter. Filter out points more than this amount of sigmas from the st dev
-	private static final double blue_color_sigma = 6;
-	private static final double red_color_sigma = 10;
-	private static final double yellow_color_sigma = 7;
-	private static final double robot_sigma = 2;
-	private static final double ball_sigma = 1;
+	private static final double blue_color_sigma = 8;
+	private static final double red_color_sigma = 12;
+	private static final double yellow_color_sigma = 10;
+	
+	private static final double area_T_cm = 56.32; // cm*cm
+	private static final double area_ball_cm = 20; // cm*cm
+	private static double area_T_px, area_ball_px;
 
 	// maximum empty pixels in a feature for angle detection purposes
 	private static final int robot_max_radius = 100;
@@ -74,7 +77,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 
 	// gaussian filtering for angle
 	private static final int gauss_count = 20; // this is the number of points that would be affected by smoothing. Must be even.
-	private static final double gauss_amount = 30; // the smoothing factor
+	private static final double gauss_amount = 50; // the smoothing factor
 	private static final double[] gauss_filter_matrix = new double[gauss_count*2+1]; // the matrix that would be filled in with values
 
 	// gaussian smooth for image
@@ -82,13 +85,20 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private static final double gauss_img_amount = 3;
 	private static final int gauss_img_matrix_size = gauss_img_count*2+1;
 	private static final double[][] gauss_img_filter = new double[gauss_img_matrix_size][gauss_img_matrix_size];
-
-	// the radius above which standard deviation is meaningless
-	private double robot_radius = 0;
-	private double ball_radius = 0;
-
-	// when to quit trying to optimize error and assume the object is not on the field
-	private static int max_attempts_before_quitting = 3;
+	
+	// pixel value constants for calculating blob area
+	private static final int PXV_BELOW_THRESHOLD = 0;
+	private static final int PXV_ABOVE_THRESHOLD = 1;
+	private static final int PXV_BEING_CHECKED = 2;
+	private static final int PXV_VALID_THRESHOLD = 255;
+	private static final int PXV_AREA_INVALID_RATIO = 50;
+	private static int area_so_far = 0;
+	private static byte area_value = 0;
+	
+	// low pass filter
+	
+	private static double filteredPositionAmount = 0.8;
+	private static double filteredAngleAmount = 0.8;
 
 	private long frame_count = 0;
 
@@ -124,7 +134,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	}
 
 	@Override
-	public synchronized WorldState extractWorldState(BufferedImage frame) {
+	public synchronized WorldState extractWorldState(final BufferedImage frame) {
 		getCurrentROI();
 		//frame = preprocessFrame(frame);
 		final boolean graph_needed = config.isShowBoundingBoxes() || config.isShowContours() || config.isShowStateData() || !config.isShowWorld();
@@ -144,21 +154,22 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		} else
 			pixels = ((DataBufferByte) frame.getRaster().getDataBuffer()).getData();
 
-		//gaussianSmooth();
+		gaussianSmooth();
 
 		if (frame_count % take_average_every == 0)
 			average();
 
 		doThresholding();
 
-		stDevColorFilter(blue_robot_image, blue_pos, blue_color_sigma);
-		optimizeStDev(blue_robot_image, blue_pos, robot_sigma, robot_radius);
+		stDevColorFilter(blue_robot_image, blue_color_sigma);
+		filterByArea(blue_robot_image, area_T_px, blue_pos);
 
-		stDevColorFilter(yellow_robot_image, yellow_pos, yellow_color_sigma);
-		optimizeStDev(yellow_robot_image, yellow_pos, robot_sigma, robot_radius);
+		stDevColorFilter(yellow_robot_image, yellow_color_sigma);
+		//drawArray(yellow_robot_image, 255, 255, 0);
+		filterByArea(yellow_robot_image, area_T_px, yellow_pos);
 
-		stDevColorFilter(ball_image, ball_pos, red_color_sigma);
-		optimizeStDev(ball_image, ball_pos, ball_sigma, ball_radius);
+		stDevColorFilter(ball_image, red_color_sigma);
+		filterByArea(ball_image, area_ball_px, ball_pos);
 		
 		// some manual fixing
 		if (yellow_pos.x != -1 && yellow_pos.y != -1) {
@@ -171,10 +182,20 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			}
 		}
 
+		
 		state = new WorldState(convertTo1(ball_pos),
 				new Robot(convertTo1(blue_pos), getAngle(blue_robot_image, blue_pos)),
 				new Robot(convertTo1(yellow_pos), getAngle(yellow_robot_image, yellow_pos)),
 				frame);
+		
+		if (oldstate != null) {	
+			state = new WorldState(
+					lowPass(oldstate.getBallCoords(), state.getBallCoords()),
+					lowPass(oldstate.getBlueRobot(),state.getBlueRobot()),
+					lowPass(oldstate.getYellowRobot(), state.getYellowRobot()),
+					frame);
+		}
+		oldstate = state;
 
 		// drawing part
 		if (!config.isShowWorld()) {
@@ -206,21 +227,103 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			graph.dispose();
 		return state;
 	}
-
-	private final void optimizeStDev(final byte[][] channel, final Point2D.Double pos, final double sigma, final double required_st_dev) {
-		if (pos.x == -1 && pos.y == -1)
-			return;
-		int attempt = 0;
-		while (stDevLengthFilter(channel, pos, sigma)*sigma > required_st_dev)  {	
-			if (pos.x == -1 && pos.y == -1)
-				return;
-			if (attempt > max_attempts_before_quitting) {
-				pos.x = -1;
-				pos.y = -1;
-				return;
+	
+	private final void filterByArea(final byte[][] channel, final double area_px, final Point2D.Double center) {
+		int biggest_area = 0;
+		// find areas of all blobs
+		for (int y = start_y; y <= stop_y; y++)
+			for (int x = start_x; x <= stop_x; x++) {
+				 final double value = channel[x][y] & 0xFF;
+				 if (value == PXV_ABOVE_THRESHOLD) {
+					 area_so_far = 1;
+					 channel[x][y] = PXV_BEING_CHECKED;
+					 recursePixelSize(channel, x, y);
+					 int area_temp = (int) (255*Math.abs(area_so_far - area_px)/area_px);
+					 if (area_temp > 255)
+						 area_temp = 255;
+					 area_value = (byte) (255 - area_temp);
+					 if ((area_value & 0xFF) < PXV_AREA_INVALID_RATIO)
+						 area_value = PXV_BELOW_THRESHOLD;
+					 if ((area_value & 0xFF) > biggest_area) {
+						 biggest_area = area_value & 0xFF;
+					 }
+					 setArea(channel);
+				 }
 			}
-			attempt++;
+		// get the com of the blob with biggest area
+		if (biggest_area < PXV_AREA_INVALID_RATIO || biggest_area == 0) {
+			// there is no blob on screen
+			center.x = -1;
+			center.y = -1;
+		} else {
+			double cx = 0;
+			double cy = 0;
+			int px_count = 0;
+			for (int y = start_y; y <= stop_y; y++)
+				for (int x = start_x; x <= stop_x; x++)
+					if ((channel[x][y] & 0xFF) == biggest_area) {
+						cx += x;
+						cy += y;
+						px_count++;
+						channel[x][y] = (byte) PXV_VALID_THRESHOLD;
+					} else
+						channel[x][y] = 0;
+			center.x = cx/px_count;
+			center.y = cy/px_count;
 		}
+	}
+	
+	private final void recursePixelSize(final byte[][] channel, final int x, final int y) {
+		final int xm1 = x-1,
+				  xp1 = x+1,
+				  ym1 = y-1,
+				  yp1 = y+1;
+		final boolean
+				  xm1_in_range = (xm1 >= start_x && xm1 <= stop_x),
+				  xp1_in_range = (xp1 >= start_x && xp1 <= stop_x),
+				  ym1_in_range = (ym1 >= start_y && ym1 <= stop_y),
+				  yp1_in_range = (yp1 >= start_y && yp1 <= stop_y),
+				  left = xm1_in_range && (channel[xm1][y] & 0xFF) == PXV_ABOVE_THRESHOLD,
+				  right = xp1_in_range && (channel[xp1][y] & 0xFF) == PXV_ABOVE_THRESHOLD,
+				  above = yp1_in_range && (channel[x][yp1] & 0xFF) == PXV_ABOVE_THRESHOLD,
+				  below = ym1_in_range && (channel[x][ym1] & 0xFF) == PXV_ABOVE_THRESHOLD;
+		
+		// flip surrounding bits
+		if (left) {
+			channel[xm1][y] = PXV_BEING_CHECKED;
+			area_so_far ++;
+		}
+		if (right) {
+			channel[xp1][y] = PXV_BEING_CHECKED;
+			area_so_far ++;
+		}
+		if (above) {
+			channel[x][yp1] = PXV_BEING_CHECKED;
+			area_so_far ++;
+		}
+		if (below) {
+			channel[x][ym1] = PXV_BEING_CHECKED;
+			area_so_far ++;
+		}
+		
+		// recurse
+		if (left)
+			recursePixelSize(channel, xm1, y);
+		if (right)
+			recursePixelSize(channel, xp1, y);
+		if (above)
+			recursePixelSize(channel, x, yp1);
+		if (below)
+			recursePixelSize(channel, x, ym1);
+	}
+	
+	private final void setArea(final byte[][] channel) {
+		
+		for (int y = start_y; y <= stop_y; y++)
+			for (int x = start_x; x <= stop_x; x++) {
+				if ((channel[x][y] & 0xFF) == PXV_BEING_CHECKED)
+					channel[x][y] = area_value;
+			}
 	}
 
 	private final void drawThings() {
@@ -309,7 +412,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 					continue;
 				if (x >= 0 && y >= 0 && y < channel[0].length && x < channel.length) {
 					final int value = channel[x][y] & 0xFF;
-					if (value != 0) {
+					if (value == PXV_VALID_THRESHOLD) {
 						sector_width += count+1;// value < 200 ? 200/255d : value/255d;
 						oldx = x;
 						oldy = y;
@@ -402,12 +505,12 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 				// red is poluted by yellow as well
 				clean_r = dr - dy -dg - db,
 				clean_b = db - dg - dr, //
-				clean_y = dy - dg/2 - dr/4;
+				clean_y = dy - dg/5 - dr/6;
 				// normalize and buffer
 				yellow_robot_image[x][y] = (byte) (clean_y < 0 ? 0 : (clean_y > 255 ? 255 : clean_y));
 				blue_robot_image[x][y] =  (byte) (clean_b < 0 ? 0 : (clean_b > 255 ? 255 : clean_b));
 				ball_image[x][y] = (byte) (clean_r < 0 ? 0 : (clean_r > 255 ? 255 : clean_r));
-				//setPixel(x, y,clean_y, clean_y,clean_y);
+				setPixel(x, y, clean_y, clean_y, clean_y);
 			}
 	}
 
@@ -415,9 +518,8 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	 * Normalizes the array between 0 and 255 according to {@link #threshold_ratio}
 	 * 
 	 * @param array the input array
-	 * @param centre_out for returning the rough geometrical centre
 	 */
-	private final void stDevColorFilter(final byte[][] array, final Point2D.Double centre_out, final double color_sigma) {
+	private final void stDevColorFilter(final byte[][] array, final double color_sigma) {
 
 		// find global average for rough thresholding
 		double sum = 0;
@@ -435,98 +537,16 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		final double col_st_dev = Math.sqrt(sq_sum / pixels_count - col_mean * col_mean);
 
 		// apply thresholding and find rough centre
-		double cx = 0, cy = 0;
-		int pt_count = 0;
 
 		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
 				final int value = array[x][y] & 0xFF;
 				final double abs = value - col_mean;
 				if ((abs > 0 ? abs : -abs) > color_sigma*col_st_dev) {
-					pt_count++;
-					cx += x;
-					cy += y;
+					array[x][y] = PXV_ABOVE_THRESHOLD;
 				} else
-					array[x][y] = 0;
+					array[x][y] = PXV_BELOW_THRESHOLD;
 			}
-		if (pt_count != 0) {
-			centre_out.x = cx / pt_count;
-			centre_out.y = cy / pt_count;
-		} else {
-			centre_out.x = -1;
-			centre_out.y = -1;
-		}
-	}
-
-	/**
-	 * Filters positions of particles which have been already thresholded
-	 * 
-	 * @param array
-	 * @param centre_out
-	 * @param sigma
-	 * @return current standard deviation
-	 */
-	private final double stDevLengthFilter(final byte[][] array, final Point2D.Double centre_out, final double sigma) {
-		// calculate standard deviation in length
-		double sum = 0;
-		double sq_sum = 0;
-		int pt_count = 0;
-		for (int y = start_y; y <= stop_y; y++)
-			for (int x = start_x; x <= stop_x; x++) {
-				final int value = array[x][y] & 0xFF;
-				if (value != 0) {
-					final double
-					dist_x = x - centre_out.x,
-					dist_y = y - centre_out.y,
-					dist_sq = dist_x*dist_x + dist_y*dist_y;
-					sum += Math.sqrt(dist_sq);
-					sq_sum += dist_sq;
-					pt_count++;
-				}
-			}
-
-		double mean = sum / pt_count;
-		double st_dev = Math.sqrt(sq_sum / pt_count - mean * mean);
-
-
-		// filter data based on st dev and recalculate center
-		double cx = 0;
-		double cy = 0;
-		sum = 0;
-		sq_sum = 0;
-		pt_count = 0;
-		for (int y = start_y; y <= stop_y; y++)
-			for (int x = start_x; x <= stop_x; x++) {
-				int value = array[x][y] & 0xFF;
-				if (value != 0) {
-					final double
-					dist_x = x - centre_out.x,
-					dist_y = y - centre_out.y,
-					dist_sq = dist_x*dist_x + dist_y*dist_y,
-					dist = Math.sqrt(dist_sq),
-					abs = dist - mean;
-					if ((abs > 0 ? abs : -abs) >= sigma*st_dev) {
-						// disregard point if it is too far away
-						array[x][y] = 0;
-						continue;
-					}
-					sum += dist;
-					sq_sum += dist_sq;
-					pt_count++;
-					cx += x;
-					cy += y;
-				}
-			}
-		if (pt_count != 0) {
-			centre_out.x = cx / pt_count;
-			centre_out.y = cy / pt_count;
-		} else {
-			centre_out.x = -1;
-			centre_out.y = -1;
-		}
-		mean = sum / pt_count;
-		st_dev = Math.sqrt(sq_sum / pt_count - mean * mean);
-		return st_dev;
 	}
 
 	/**
@@ -540,7 +560,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private final void drawArray(final byte[][] channel, final int r, final int g, final int b) {
 		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
-				final double coeff = channel[x][y] != 0 ? 1 : 0;//(channel[x][y] & 0xFF) / 255d;
+				final double coeff = (channel[x][y] & 0xFF) / 255d;
 				final int nr = (int) (r*coeff),
 						ng = (int) (g*coeff),
 						nb = (int) (b*coeff);
@@ -583,29 +603,10 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		height = config.getFieldHeight();
 		stop_y = start_y+height;
 		pixels_count = width * height;
-		robot_radius = width * Robot.LENGTH / 5;
-		ball_radius = 3 * width / Tools.PITCH_WIDTH_CM;
+		final double cmtopix = width / Tools.PITCH_WIDTH_CM;
+		area_ball_px = area_ball_cm * cmtopix * cmtopix;
+		area_T_px = area_T_cm * cmtopix * cmtopix;
 	}
-
-	//	/**
-	//	 * Gets the value of the particular color for the particular pixel of {@link #pixels}
-	//	 * @param x the x position of the pixel
-	//	 * @param y the y position
-	//	 * @param color which color value should be returned
-	//	 * @return value in range 0 .. 255
-	//	 */
-	//	private final int getPixel(final int x, final int y, final rgb color) {
-	//		switch (color) {
-	//		case red:
-	//			return pixels[(x+y*im_width)*3+2] & 0xFF;
-	//		case blue:
-	//			return pixels[(x+y*im_width)*3] & 0xFF;
-	//		case green:
-	//			return pixels[(x+y*im_width)*3+1] & 0xFF;
-	//		default:
-	//			return -1;
-	//		}
-	//	}
 
 	/**
 	 * Sets the value of a particular pixel and color to a particular value of {@link #pixels}
@@ -676,4 +677,56 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		return new Point2D.Double((global.x-start_x)/width, ((global.y-start_y)/height)*Tools.PITCH_HEIGHT_CM/Tools.PITCH_WIDTH_CM);
 	}
 
+	// low pass filtering
+	
+	/**
+	 * A simple low-pass filter
+	 * @param old_value
+	 * @param new_value
+	 * @param amount
+	 * @return a filtered value
+	 */
+	private final static double lowPass(final double old_value, final double new_value, final double amount) {
+		return (old_value+new_value*amount)/((double) (amount+1));
+	}
+
+	/**
+	 * Low pass for angles
+	 * @param old_value
+	 * @param new_value
+	 * @return the filtered angle
+	 */
+	private final static double lowPass(final double old_value, final double new_value) {
+		return lowPass(old_value, new_value, filteredAngleAmount);
+	}
+	
+	/**
+	 * Low pass on position
+	 * @param old_value
+	 * @param new_value
+	 * @param amount
+	 * @return the filtered position
+	 */
+	private final static Point2D.Double lowPass(final Point2D.Double old_value, final Point2D.Double new_value) {
+		if (new_value.x == -1 && new_value.y == -1)
+			return new_value;
+		if (old_value.x == -1 && old_value.y == -1)
+			return new_value;
+		return new Point2D.Double (
+				lowPass(old_value.getX(), new_value.getX(), filteredPositionAmount),
+				lowPass(old_value.getY(), new_value.getY(), filteredPositionAmount));
+	}
+
+	/**
+	 * Low pass on a robot
+	 * @param old_value
+	 * @param new_value
+	 * @param amount
+	 * @return a new robot with low_pass
+	 */
+	private final static Robot lowPass(final Robot old_value, final Robot new_value) {
+		return new Robot(
+				lowPass(old_value.getCoords(), new_value.getCoords()),
+				lowPass(old_value.getAngle(), new_value.getAngle()));
+	}
 }
