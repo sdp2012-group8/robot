@@ -33,7 +33,8 @@ public class Brick {
 	private static Communicator mCont;
 	private static UltrasonicSensor sens;
 	private static boolean collision = false;
-	
+	private static boolean can_kick = false;
+
 	private static TouchSensor kickSensor;
 
 	/**
@@ -59,22 +60,24 @@ public class Brick {
 				while (is_on) {
 					boolean initial = kickSensor.isPressed();
 					if (!initial) {
+						if (can_kick) {can_kick = false;}
 						Motor.B.setSpeed(Motor.B.getMaxSpeed());
 						Motor.B.setAcceleration(10000);
 						Motor.B.backward();
-					}
-					
-					while (!kickSensor.isPressed()) {
-						try {
-							Thread.sleep(10);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
+						while (!kickSensor.isPressed()) {
+							try {
+								Thread.sleep(10);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
 						}
-					}
-					if (!initial)
 						Motor.B.stop();
+					}
+					can_kick = true;
+					
+
 					try {
-							Thread.sleep(100);						
+						Thread.sleep(100);						
 					} catch (InterruptedException e) {}
 				}
 			};
@@ -86,7 +89,7 @@ public class Brick {
 			// for joypad
 			private float speed_a = 0;
 			private float speed_c = 0;
-			
+
 			// for conversions
 			private int acc = 1000; // acc in degrees/s/s
 			private double acceleration = acc*0.017453292519943295*WHEELR;//69.8;
@@ -109,20 +112,6 @@ public class Brick {
 				// to send messages back to PC, use mCont.sendMessage
 				switch (op) {
 
-				case checkTouch:
-					TouchSensor tsens = new TouchSensor(SensorPort.S2);
-					TouchSensor tsens2 = new TouchSensor(SensorPort.S3);
-					while(is_on) {
-						int i = 0;
-						if (tsens.isPressed() || tsens2.isPressed()){
-							LCD.drawString("tSensor is true", 2, 4);
-							i++;
-						} else {
-							LCD.drawString("tSensor is false", 2, 4);
-						}
-						if (i>10) break;
-					}
-
 				case exit:
 					mCont.close();
 					Sound.setVolume(def_vol);
@@ -134,72 +123,12 @@ public class Brick {
 					NXT.shutDown();
 					break;
 
-				case move:
-					if (args.length > 0) {					
-						Motor.A.setSpeed(slowest);
-						Motor.C.setSpeed(slowest);
-						Motor.A.setAcceleration(args[1]*100);
-						Motor.C.setAcceleration(args[1]*100);
-						Motor.A.forward();
-						Motor.C.forward();
-						try {
-							Thread.sleep(args[0]*500);
-							LCD.drawString("M-A: " + (Motor.A.getTachoCount()-lastCountA), 2, 3);
-							LCD.drawString("M-C: " + (Motor.C.getTachoCount()-lastCountC), 2, 4);
-							lastCountA = Motor.A.getTachoCount();
-							lastCountC = Motor.C.getTachoCount();
-							Thread.sleep(args[0]*500);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-						Motor.A.setSpeed(0);
-						Motor.C.setSpeed(0);
-						Motor.C.stop();
-						Motor.A.stop();
-					}
-					break;
-
-				case moveback:
-					if (args.length > 0) {
-						Motor.A.setSpeed(slowest);
-						Motor.C.setSpeed(slowest);
-						Motor.A.backward();
-						Motor.C.backward();
-
-						try {
-							Thread.sleep(args[0]*1000);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-						Motor.C.setSpeed(0);
-						Motor.A.setSpeed(0);
-						Motor.C.stop();
-						Motor.A.stop();
-					}
-					break;
-
 				case kick:
-					Motor.B.setSpeed(Motor.B.getMaxSpeed());
-					Motor.B.setAcceleration(10000);
-					Motor.B.backward();
-					break;
-
-				case turn:
-					if (args.length > 0) {
-						int a =(int) ((args[0]*ROBOTR)/WHEELR);
-						Motor.A.setSpeed(360);
-						Motor.C.setSpeed(360);
-						Motor.A.rotate(a, true);
-						Motor.C.rotate(-a, true);
-					}
-
-					break;
-
-				case rotate_kicker:
-					if (args.length > 0) {
-						Motor.B.setSpeed(slowest);
-						Motor.B.setAcceleration(100000);
-						Motor.B.rotate(args[0]);
+					if (can_kick) {
+						Motor.B.setSpeed(Motor.B.getMaxSpeed());
+						Motor.B.setAcceleration(10000);
+						Motor.B.backward();
+						can_kick = false;
 					}
 					break;
 
@@ -211,20 +140,11 @@ public class Brick {
 					}
 					Motor.B.stop();
 					break;
-					
-				case rotate_kicker_lock:
-					if (args.length > 0) {
-						Motor.B.setSpeed(slowest);
-						Motor.B.setAcceleration(100000);
-						Motor.B.rotate(args[0]);
-					}
-					Motor.B.lock(100);
-					break;
-					
-				case float_motor:
+
+				case float_kicker:
 					Motor.B.flt();
 					break;	
-					
+
 				case move_to_wall:
 					Motor.A.setSpeed(slowest);
 					Motor.C.setSpeed(slowest);
@@ -246,7 +166,7 @@ public class Brick {
 					Motor.C.setSpeed(0);
 					Motor.C.stop();
 					Motor.A.stop();
-					
+
 					break;
 
 				case operate:
@@ -272,7 +192,7 @@ public class Brick {
 						// change speed according to turning
 						Motor.A.setSpeed(Math.abs(speed_a));
 						Motor.C.setSpeed(Math.abs(speed_c));
-						
+
 						// check if we need to start motors or turn their direction
 						if (args.length > 2) {
 							//change acceleration
