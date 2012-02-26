@@ -92,15 +92,15 @@ public class AIVisualServoing extends AI {
 			mComm.sendMessage(opcode.operate, (byte) -30, (byte) 0);
 		}
 
-		if ( ((ai_world_state.getRobot().getBackRight().x < ai_world_state.getEnemyGoal().getCentre().x ) 
-				&& (ai_world_state.getRobot().getBackRight().x > ai_world_state.getBallCoords().x)
-					&& ai_world_state.getMyGoalLeft())
-						|| ((ai_world_state.getRobot().getBackRight().x > ai_world_state.getEnemyGoal().getCentre().x)
-							&& (ai_world_state.getRobot().getBackRight().x < ai_world_state.getBallCoords().x))
-						 		&& !ai_world_state.getMyGoalLeft()){
-			System.out.println("I'm between goal and ball");
-			navigateBehindBall();
-		}
+//		if ( ((ai_world_state.getRobot().getBackRight().x < ai_world_state.getEnemyGoal().getCentre().x ) 
+//				&& (ai_world_state.getRobot().getBackRight().x > ai_world_state.getBallCoords().x)
+//					&& ai_world_state.getMyGoalLeft())
+//						|| ((ai_world_state.getRobot().getBackRight().x > ai_world_state.getEnemyGoal().getCentre().x)
+//							&& (ai_world_state.getRobot().getBackRight().x < ai_world_state.getBallCoords().x))
+//						 		&& !ai_world_state.getMyGoalLeft()){
+//			System.out.println("I'm between goal and ball");
+//			navigateBehindBall();
+//		}
 		
 		// check whether to go into got_ball mode
 		if (Math.abs(turning_angle) < TURNING_ACCURACY && ai_world_state.getDistanceToBall() < 10) {
