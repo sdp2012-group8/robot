@@ -17,12 +17,12 @@ public interface Communicator {
 	 *
 	 */
 	public enum opcode {
-		move, exit, moveback, kick, rotate_kicker, turn, move_to_wall, checkTouch,
+		exit, kick, move_to_wall, 
 		operate, // two arguments; 
 				 // speed in cm per second
 				 // turning speed of robot in degrees per second
 		play_sound // no arguments
-		, rotate_kicker_stop,rotate_kicker_lock, float_motor
+		, rotate_kicker_stop,float_kicker
 	}
 	
 	/**

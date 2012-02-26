@@ -13,6 +13,7 @@ import static com.googlecode.javacv.cpp.opencv_imgproc.*;
 
 import sdp.common.Robot;
 import sdp.common.Tools;
+import sdp.common.Utilities;
 import sdp.common.WorldState;
 
 /**
@@ -56,6 +57,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private static final int take_average_every = 1;
 
 	// standard deviation filter. Filter out points more than this amount of sigmas from the st dev
+<<<<<<< HEAD
 	private static final double blue_color_sigma = 8;
 	private static final double red_color_sigma = 12;
 	private static final double yellow_color_sigma = 10;
@@ -63,6 +65,13 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private static final double area_T_cm = 56.32; // cm*cm
 	private static final double area_ball_cm = 20; // cm*cm
 	private static double area_T_px, area_ball_px;
+=======
+	private static final double blue_color_sigma = 10;
+	private static final double red_color_sigma = 10;
+	private static final double yellow_color_sigma = 6;
+	private static final double robot_sigma = 2;
+	private static final double ball_sigma = 1;
+>>>>>>> 80dfe4dbdcff0194ecc6414f61133100f170e056
 
 	// maximum empty pixels in a feature for angle detection purposes
 	private static final int robot_max_radius = 100;
@@ -136,7 +145,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	@Override
 	public synchronized WorldState extractWorldState(final BufferedImage frame) {
 		getCurrentROI();
-		//frame = preprocessFrame(frame);
+		frame = preprocessFrame(frame);
 		final boolean graph_needed = config.isShowBoundingBoxes() || config.isShowContours() || config.isShowStateData() || !config.isShowWorld();
 		if (graph_needed)
 			graph = frame.createGraphics();
@@ -463,7 +472,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 				graph.fillOval(x-2, y-2, 4, 4);
 			}
 		}
-		return Tools.normalizeAngle(-max_id*rot_ang_rad*180/PI);
+		return Utilities.normaliseAngle(-max_id*rot_ang_rad*180/PI);
 	}
 
 	/**
@@ -603,9 +612,14 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		height = config.getFieldHeight();
 		stop_y = start_y+height;
 		pixels_count = width * height;
+<<<<<<< HEAD
 		final double cmtopix = width / Tools.PITCH_WIDTH_CM;
 		area_ball_px = area_ball_cm * cmtopix * cmtopix;
 		area_T_px = area_T_cm * cmtopix * cmtopix;
+=======
+		robot_radius = width * Robot.LENGTH / 4;
+		ball_radius = 3 * width / Tools.PITCH_WIDTH_CM;
+>>>>>>> 80dfe4dbdcff0194ecc6414f61133100f170e056
 	}
 
 	/**
