@@ -49,29 +49,60 @@ public class Launcher extends JFrame implements Runnable {
 	private JSpinner channelSpinner;
 	private JSpinner testFpsSpinner;
 	/** Combobox for selecting image processor. */
-	private JComboBox combo_img_proc;
+	private JComboBox processorComboBox;
 	
 	
 	/**
 	 * The main constructor.
 	 */
 	public Launcher() {
-		setSize(new Dimension(198, 274));
+		setSize(new Dimension(200, 271));
 		setTitle("Launcher");
 		GridBagLayout gridBagLayout = new GridBagLayout();
-		gridBagLayout.columnWidths = new int[]{150, 0};
-		gridBagLayout.rowHeights = new int[]{25, 0, 0};
-		gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		gridBagLayout.rowWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
+		gridBagLayout.columnWidths = new int[]{0, 0, 0, 0};
+		gridBagLayout.rowHeights = new int[]{0, 25, 0, 0, 0, 0};
+		gridBagLayout.columnWeights = new double[]{1.0, 0.0, 1.0, Double.MIN_VALUE};
+		gridBagLayout.rowWeights = new double[]{1.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		getContentPane().setLayout(gridBagLayout);
+		
+		JPanel generalSettingPanel = new JPanel();
+		GridBagConstraints gbc_generalSettingPanel = new GridBagConstraints();
+		gbc_generalSettingPanel.fill = GridBagConstraints.BOTH;
+		gbc_generalSettingPanel.insets = new Insets(0, 0, 5, 5);
+		gbc_generalSettingPanel.gridx = 1;
+		gbc_generalSettingPanel.gridy = 1;
+		getContentPane().add(generalSettingPanel, gbc_generalSettingPanel);
+		GridBagLayout gbl_generalSettingPanel = new GridBagLayout();
+		gbl_generalSettingPanel.columnWidths = new int[]{0, 0, 0};
+		gbl_generalSettingPanel.rowHeights = new int[]{24, 0};
+		gbl_generalSettingPanel.columnWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
+		gbl_generalSettingPanel.rowWeights = new double[]{0.0, Double.MIN_VALUE};
+		generalSettingPanel.setLayout(gbl_generalSettingPanel);
+		
+		JLabel processorLabel = new JLabel("Processor");
+		GridBagConstraints gbc_processorLabel = new GridBagConstraints();
+		gbc_processorLabel.insets = new Insets(0, 0, 0, 5);
+		gbc_processorLabel.anchor = GridBagConstraints.EAST;
+		gbc_processorLabel.gridx = 0;
+		gbc_processorLabel.gridy = 0;
+		generalSettingPanel.add(processorLabel, gbc_processorLabel);
+		
+		processorComboBox = new JComboBox();
+		GridBagConstraints gbc_processorComboBox = new GridBagConstraints();
+		gbc_processorComboBox.fill = GridBagConstraints.HORIZONTAL;
+		gbc_processorComboBox.anchor = GridBagConstraints.NORTH;
+		gbc_processorComboBox.gridx = 1;
+		gbc_processorComboBox.gridy = 0;
+		generalSettingPanel.add(processorComboBox, gbc_processorComboBox);
+		processorComboBox.setModel(new DefaultComboBoxModel(new String[] {"Main", "Secondary"}));
 		
 		JPanel competitionModePanel = new JPanel();
 		GridBagConstraints gbc_competitionModePanel = new GridBagConstraints();
 		gbc_competitionModePanel.fill = GridBagConstraints.HORIZONTAL;
 		gbc_competitionModePanel.anchor = GridBagConstraints.NORTH;
-		gbc_competitionModePanel.insets = new Insets(0, 0, 5, 0);
-		gbc_competitionModePanel.gridx = 0;
-		gbc_competitionModePanel.gridy = 0;
+		gbc_competitionModePanel.insets = new Insets(0, 0, 5, 5);
+		gbc_competitionModePanel.gridx = 1;
+		gbc_competitionModePanel.gridy = 2;
 		getContentPane().add(competitionModePanel, gbc_competitionModePanel);
 		competitionModePanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Competition mode", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(51, 51, 51)));
 		GridBagLayout gbl_competitionModePanel = new GridBagLayout();
@@ -147,16 +178,17 @@ public class Launcher extends JFrame implements Runnable {
 		JPanel testModePanel = new JPanel();
 		testModePanel.setBorder(new TitledBorder(null, "Test mode", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		GridBagConstraints gbc_testModePanel = new GridBagConstraints();
+		gbc_testModePanel.insets = new Insets(0, 0, 5, 5);
 		gbc_testModePanel.anchor = GridBagConstraints.NORTH;
 		gbc_testModePanel.fill = GridBagConstraints.HORIZONTAL;
-		gbc_testModePanel.gridx = 0;
-		gbc_testModePanel.gridy = 1;
+		gbc_testModePanel.gridx = 1;
+		gbc_testModePanel.gridy = 3;
 		getContentPane().add(testModePanel, gbc_testModePanel);
 		GridBagLayout gbl_testModePanel = new GridBagLayout();
 		gbl_testModePanel.columnWidths = new int[]{80, 0, 0};
-		gbl_testModePanel.rowHeights = new int[]{0, 0, 0, 0};
-		gbl_testModePanel.columnWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
-		gbl_testModePanel.rowWeights = new double[]{0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_testModePanel.rowHeights = new int[]{0, 0, 0};
+		gbl_testModePanel.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
+		gbl_testModePanel.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
 		testModePanel.setLayout(gbl_testModePanel);
 		
 		JLabel testFpsLabel = new JLabel("FPS");
@@ -176,20 +208,11 @@ public class Launcher extends JFrame implements Runnable {
 		gbc_testFpsSpinner.gridy = 0;
 		testModePanel.add(testFpsSpinner, gbc_testFpsSpinner);
 		
-		combo_img_proc = new JComboBox();
-		combo_img_proc.setModel(new DefaultComboBoxModel(new String[] {"Main", "Secondary"}));
-		GridBagConstraints gbc_comboBox = new GridBagConstraints();
-		gbc_comboBox.gridwidth = 2;
-		gbc_comboBox.insets = new Insets(0, 0, 5, 5);
-		gbc_comboBox.gridx = 0;
-		gbc_comboBox.gridy = 1;
-		testModePanel.add(combo_img_proc, gbc_comboBox);
-		
 		JButton startTestButton = new JButton("Start testing");
 		GridBagConstraints gbc_startTestButton = new GridBagConstraints();
 		gbc_startTestButton.gridwidth = 2;
 		gbc_startTestButton.gridx = 0;
-		gbc_startTestButton.gridy = 2;
+		gbc_startTestButton.gridy = 1;
 		testModePanel.add(startTestButton, gbc_startTestButton);
 		startTestButton.addActionListener(new ActionListener() {			
 			@Override
@@ -210,7 +233,7 @@ public class Launcher extends JFrame implements Runnable {
 	 */
 	private void startCompetitionMode() {
 		Vision vision = null;
-		switch (combo_img_proc.getSelectedIndex()) {
+		switch (processorComboBox.getSelectedIndex()) {
 		case 0:
 			vision = new Vision(new MainImageProcessor());
 			break;
@@ -234,7 +257,7 @@ public class Launcher extends JFrame implements Runnable {
 	 */
 	private void startTestingMode() {
 		Vision vision = null;
-		switch (combo_img_proc.getSelectedIndex()) {
+		switch (processorComboBox.getSelectedIndex()) {
 		case 0:
 			vision = new Vision(new MainImageProcessor());
 			break;
