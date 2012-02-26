@@ -78,7 +78,8 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 * @param frame Frame to preprocess.
 	 */
 	private BufferedImage preprocessFrame(BufferedImage frame) {
-		IplImage frame_ipl = IplImage.createFrom(frame);		
+		IplImage frame_ipl = IplImage.createFrom(frame);
+		frame_ipl = undistortImage(frame_ipl);
 		cvSetImageROI(frame_ipl, getCurrentROI());		
 		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, 5);
 		return frame_ipl.getBufferedImage();
@@ -315,18 +316,18 @@ public class MainImageProcessor extends BaseImageProcessor {
 			Point pt1, pt2;
 			
 			// Draw ball position.
-			pt1 = ProcUtils.normalToFrameCoordinates(config, ball.x, ball.y, false);
+			pt1 = ProcUtils.normalToFrameCoordinatesInt(config, ball.x, ball.y, false);
 			drawPositionMarker(graphics, Color.red, pt1, null);
 			
 			// Draw blue robot position and direction.
-			pt1 = ProcUtils.normalToFrameCoordinates(config, blueRobot.getCoords().x,
+			pt1 = ProcUtils.normalToFrameCoordinatesInt(config, blueRobot.getCoords().x,
 					blueRobot.getCoords().y, false);
 			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
 					blueRobot.getAngle());
 			drawPositionMarker(graphics, Color.blue, pt1, pt2);
 			
 			// Draw yellow robot position and direction.
-			pt1 = ProcUtils.normalToFrameCoordinates(config, yellowRobot.getCoords().x,
+			pt1 = ProcUtils.normalToFrameCoordinatesInt(config, yellowRobot.getCoords().x,
 					yellowRobot.getCoords().y, false);
 			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
 					yellowRobot.getAngle());

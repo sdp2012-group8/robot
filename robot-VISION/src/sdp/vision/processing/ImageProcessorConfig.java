@@ -1,12 +1,29 @@
 package sdp.vision.processing;
 
+import java.io.File;
+import java.util.logging.Logger;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import sdp.common.xml.XmlUtils;
+
 
 /**
  * Vision subsystem configuration container.
  * 
+ * This ungodly collection of auto-generated getters and setters is brought you
+ * by the letter MAI EK (U+0E48). Deal with it.
+ * 
+ * See http://opencv.itseez.com/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
+ * for the meaning of the undistortion coefficients.
+ * 
  * @author Gediminas Liktaras
  */
 public class ImageProcessorConfig {
+	
+	/** Class's logger. */
+	private static final Logger LOGGER = Logger.getLogger("sdp.vision.ImageProcessorConfig");
 	
 	/** Height of the incoming images. */
 	private int frameHeight = 480;	
@@ -72,6 +89,24 @@ public class ImageProcessorConfig {
 	private int yellowSizeMinValue = 15;
 	/** Upper bound of the Yellow contour size. */
 	private int yellowSizeMaxValue = 50;
+	
+	/** Image undistortion coefficient f_x. */
+	private double undistort_fx = 1.0;
+	/** Image undistortion coefficient f_y. */
+	private double undistort_fy = 1.0;
+	/** Image undistortion coefficient c_x. */
+	private double undistort_cx = 1.0;
+	/** Image undistortion coefficient c_y. */
+	private double undistort_cy = 1.0;
+	
+	/** Image undistortion coefficient k_1. */
+	private double undistort_k1 = 0.0;
+	/** Image undistortion coefficient k_2. */
+	private double undistort_k2 = 0.0;
+	/** Image undistortion coefficient p_1. */
+	private double undistort_p1 = 0.0;
+	/** Image undistortion coefficient p_2. */
+	private double undistort_p2 = 0.0;
 	
 	/** Whether to show the captured frame itself. */
 	private boolean showWorld = true;
@@ -747,6 +782,159 @@ public class ImageProcessorConfig {
 		return showWorld;
 	}
 
+	
+	/**
+	 * Get the undistortion coefficient f_x.
+	 * 
+	 * @return Coefficient f_x.
+	 */
+	public double getUndistort_fx() {
+		return undistort_fx;
+	}
+
+	/**
+	 * Set the undistortion coefficient f_x.
+	 * 
+	 * @param undistort_fx New value of coefficient f_x.
+	 */
+	public void setUndistort_fx(double undistort_fx) {
+		this.undistort_fx = undistort_fx;
+	}
+
+
+	/**
+	 * Get the undistortion coefficient f_y.
+	 * 
+	 * @return Coefficient f_y.
+	 */
+	public double getUndistort_fy() {
+		return undistort_fy;
+	}
+
+	/**
+	 * Set the undistortion coefficient f_y.
+	 * 
+	 * @param undistort_fy New value of coefficient f_y.
+	 */
+	public void setUndistort_fy(double undistort_fy) {
+		this.undistort_fy = undistort_fy;
+	}
+
+
+	/**
+	 * Get the undistortion coefficient c_x.
+	 * 
+	 * @return Coefficient c_x.
+	 */
+	public double getUndistort_cx() {
+		return undistort_cx;
+	}
+
+	/**
+	 * Set the undistortion coefficient c_x.
+	 * 
+	 * @param undistort_cx New value of coefficient c_x.
+	 */
+	public void setUndistort_cx(double undistort_cx) {
+		this.undistort_cx = undistort_cx;
+	}
+
+
+	/**
+	 * Get the undistortion coefficient c_y.
+	 * 
+	 * @return Coefficient c_y.
+	 */
+	public double getUndistort_cy() {
+		return undistort_cy;
+	}
+
+	/**
+	 * Set the undistortion coefficient c_y.
+	 * 
+	 * @param undistort_cy New value of coefficient c_y.
+	 */
+	public void setUndistort_cy(double undistort_cy) {
+		this.undistort_cy = undistort_cy;
+	}
+
+
+	/**
+	 * Get the undistortion coefficient k_1.
+	 * 
+	 * @return Coefficient k_1.
+	 */
+	public double getUndistort_k1() {
+		return undistort_k1;
+	}
+
+	/**
+	 * Set the undistortion coefficient k_1.
+	 * 
+	 * @param undistort_k1 New value of coefficient k_1.
+	 */
+	public void setUndistort_k1(double undistort_k1) {
+		this.undistort_k1 = undistort_k1;
+	}
+
+
+	/**
+	 * Get the undistortion coefficient k_2.
+	 * 
+	 * @return Coefficient k_2.
+	 */
+	public double getUndistort_k2() {
+		return undistort_k2;
+	}
+
+	/**
+	 * Set the undistortion coefficient k_2.
+	 * 
+	 * @param undistort_k2 New value of coefficient k_2.
+	 */
+	public void setUndistort_k2(double undistort_k2) {
+		this.undistort_k2 = undistort_k2;
+	}
+
+
+	/**
+	 * Get the undistortion coefficient p_1.
+	 * 
+	 * @return Coefficient p_1.
+	 */
+	public double getUndistort_p1() {
+		return undistort_p1;
+	}
+
+	/**
+	 * Set the undistortion coefficient p_1.
+	 * 
+	 * @param undistort_p1 New value of coefficient p_1.
+	 */
+	public void setUndistort_p1(double undistort_p1) {
+		this.undistort_p1 = undistort_p1;
+	}
+
+
+	/**
+	 * Get the undistortion coefficient p_2.
+	 * 
+	 * @return Coefficient p_2.
+	 */
+	public double getUndistort_p2() {
+		return undistort_p2;
+	}
+
+	/**
+	 * Set the undistortion coefficient p_2.
+	 * 
+	 * @param undistort_p2 New value of coefficient p_2.
+	 */
+	public void setUndistort_p2(double undistort_p2) {
+		this.undistort_p2 = undistort_p2;
+	}
+
+
 	/**
 	 * Set whether to show the captured frame.
 	 * 
@@ -830,6 +1018,142 @@ public class ImageProcessorConfig {
 	 */
 	public void setShowStateData(boolean showStateData) {
 		this.showStateData = showStateData;
+	}
+	
+	
+	/**
+	 * Reads an image processor configuration from a file and returns it as
+	 * a ImageProcessorConfiguration instance.
+	 * 
+	 * @param filename Name of the file that contains the configuration.
+	 * @return An appropriate ImageProcessorConfiguration instance.
+	 */
+	public static ImageProcessorConfig loadConfiguration(String filename) {
+		File configFile = new File(filename);
+		if (!configFile.exists()) {
+			LOGGER.info("The given image processor configuration file does not exist.");
+			return null;
+		}
+				
+		Document doc = XmlUtils.openXmlDocument(configFile);		
+		ImageProcessorConfig config = new ImageProcessorConfig();
+		
+		Element rootElement = (Element)doc.getElementsByTagName("config").item(0);
+		
+		Element undistortElement = (Element)doc.getElementsByTagName("undistortion").item(0);
+		config.setUndistort_cx(XmlUtils.getChildDouble(undistortElement, "cx"));
+		config.setUndistort_cy(XmlUtils.getChildDouble(undistortElement, "cy"));
+		config.setUndistort_fx(XmlUtils.getChildDouble(undistortElement, "fx"));
+		config.setUndistort_fy(XmlUtils.getChildDouble(undistortElement, "fy"));
+		config.setUndistort_k1(XmlUtils.getChildDouble(undistortElement, "k1"));
+		config.setUndistort_k2(XmlUtils.getChildDouble(undistortElement, "k2"));
+		config.setUndistort_p1(XmlUtils.getChildDouble(undistortElement, "p1"));
+		config.setUndistort_p2(XmlUtils.getChildDouble(undistortElement, "p2"));
+		
+		Element fieldElement = (Element)rootElement.getElementsByTagName("field").item(0);
+		config.setRawFieldLowX(XmlUtils.getChildDouble(fieldElement, "lowX"));
+		config.setRawFieldLowY(XmlUtils.getChildDouble(fieldElement, "lowY"));
+		config.setRawFieldHighX(XmlUtils.getChildDouble(fieldElement, "highX"));
+		config.setRawFieldHighY(XmlUtils.getChildDouble(fieldElement, "highY"));
+		
+		Element ballElement = (Element)rootElement.getElementsByTagName("ball").item(0);
+		config.setBallHueMinValue(XmlUtils.getChildInt(ballElement, "hueMin"));
+		config.setBallHueMaxValue(XmlUtils.getChildInt(ballElement, "hueMax"));
+		config.setBallSatMinValue(XmlUtils.getChildInt(ballElement, "satMin"));
+		config.setBallSatMaxValue(XmlUtils.getChildInt(ballElement, "satMax"));
+		config.setBallValMinValue(XmlUtils.getChildInt(ballElement, "valMin"));
+		config.setBallValMaxValue(XmlUtils.getChildInt(ballElement, "valMax"));
+		config.setBallSizeMinValue(XmlUtils.getChildInt(ballElement, "sizeMin"));
+		config.setBallSizeMaxValue(XmlUtils.getChildInt(ballElement, "sizeMax"));
+		
+		Element blueElement = (Element)rootElement.getElementsByTagName("blue").item(0);
+		config.setBlueHueMinValue(XmlUtils.getChildInt(blueElement, "hueMin"));
+		config.setBlueHueMaxValue(XmlUtils.getChildInt(blueElement, "hueMax"));
+		config.setBlueSatMinValue(XmlUtils.getChildInt(blueElement, "satMin"));
+		config.setBlueSatMaxValue(XmlUtils.getChildInt(blueElement, "satMax"));
+		config.setBlueValMinValue(XmlUtils.getChildInt(blueElement, "valMin"));
+		config.setBlueValMaxValue(XmlUtils.getChildInt(blueElement, "valMax"));
+		config.setBlueSizeMinValue(XmlUtils.getChildInt(blueElement, "sizeMin"));
+		config.setBlueSizeMaxValue(XmlUtils.getChildInt(blueElement, "sizeMax"));
+		
+		Element yellowElement = (Element)rootElement.getElementsByTagName("yellow").item(0);
+		config.setYellowHueMinValue(XmlUtils.getChildInt(yellowElement, "hueMin"));
+		config.setYellowHueMaxValue(XmlUtils.getChildInt(yellowElement, "hueMax"));
+		config.setYellowSatMinValue(XmlUtils.getChildInt(yellowElement, "satMin"));
+		config.setYellowSatMaxValue(XmlUtils.getChildInt(yellowElement, "satMax"));
+		config.setYellowValMinValue(XmlUtils.getChildInt(yellowElement, "valMin"));
+		config.setYellowValMaxValue(XmlUtils.getChildInt(yellowElement, "valMax"));
+		config.setYellowSizeMinValue(XmlUtils.getChildInt(yellowElement, "sizeMin"));
+		config.setYellowSizeMaxValue(XmlUtils.getChildInt(yellowElement, "sizeMax"));
+		
+		return config;
+	}
+	
+	
+	/**
+	 * Writes the given image processor configuration into an XML file.
+	 * 
+	 * @param config Configuration to output.
+	 * @param filename Output filename.
+	 */
+	public static void saveConfiguration(ImageProcessorConfig config, String filename) {
+		Document doc = XmlUtils.createBlankXmlDocument();
+		
+		Element rootElement = doc.createElement("config");
+		doc.appendChild(rootElement);
+		
+		Element undistortElement = doc.createElement("undistortion");
+		XmlUtils.addChildDouble(doc, undistortElement, "cx", config.getUndistort_cx());
+		XmlUtils.addChildDouble(doc, undistortElement, "cy", config.getUndistort_cy());
+		XmlUtils.addChildDouble(doc, undistortElement, "fx", config.getUndistort_fx());
+		XmlUtils.addChildDouble(doc, undistortElement, "fy", config.getUndistort_fy());
+		XmlUtils.addChildDouble(doc, undistortElement, "k1", config.getUndistort_k1());
+		XmlUtils.addChildDouble(doc, undistortElement, "k2", config.getUndistort_k2());
+		XmlUtils.addChildDouble(doc, undistortElement, "p1", config.getUndistort_p1());
+		XmlUtils.addChildDouble(doc, undistortElement, "p2", config.getUndistort_p2());
+		rootElement.appendChild(undistortElement);
+		
+		Element fieldElement = doc.createElement("field");
+		XmlUtils.addChildDouble(doc, fieldElement, "lowX", config.getRawFieldLowX());
+		XmlUtils.addChildDouble(doc, fieldElement, "lowY", config.getRawFieldLowY());
+		XmlUtils.addChildDouble(doc, fieldElement, "highX", config.getRawFieldHighX());
+		XmlUtils.addChildDouble(doc, fieldElement, "highY", config.getRawFieldHighY());
+		rootElement.appendChild(fieldElement);
+		
+		Element ballElement = doc.createElement("ball");
+		XmlUtils.addChildInt(doc, ballElement, "hueMin", config.getBallHueMinValue());
+		XmlUtils.addChildInt(doc, ballElement, "hueMax", config.getBallHueMaxValue());
+		XmlUtils.addChildInt(doc, ballElement, "satMin", config.getBallSatMinValue());
+		XmlUtils.addChildInt(doc, ballElement, "satMax", config.getBallSatMaxValue());
+		XmlUtils.addChildInt(doc, ballElement, "valMin", config.getBallValMinValue());
+		XmlUtils.addChildInt(doc, ballElement, "valMax", config.getBallValMaxValue());
+		XmlUtils.addChildInt(doc, ballElement, "sizeMin", config.getBallSizeMinValue());
+		XmlUtils.addChildInt(doc, ballElement, "sizeMax", config.getBallSizeMaxValue());
+		rootElement.appendChild(ballElement);
+		
+		Element blueElement = doc.createElement("blue");
+		XmlUtils.addChildInt(doc, blueElement, "hueMin", config.getBlueHueMinValue());
+		XmlUtils.addChildInt(doc, blueElement, "hueMax", config.getBlueHueMaxValue());
+		XmlUtils.addChildInt(doc, blueElement, "satMin", config.getBlueSatMinValue());
+		XmlUtils.addChildInt(doc, blueElement, "satMax", config.getBlueSatMaxValue());
+		XmlUtils.addChildInt(doc, blueElement, "valMin", config.getBlueValMinValue());
+		XmlUtils.addChildInt(doc, blueElement, "valMax", config.getBlueValMaxValue());
+		XmlUtils.addChildInt(doc, blueElement, "sizeMin", config.getBlueSizeMinValue());
+		XmlUtils.addChildInt(doc, blueElement, "sizeMax", config.getBlueSizeMaxValue());
+		rootElement.appendChild(blueElement);
+		
+		Element yellowElement = doc.createElement("yellow");
+		XmlUtils.addChildInt(doc, yellowElement, "hueMin", config.getYellowHueMinValue());
+		XmlUtils.addChildInt(doc, yellowElement, "hueMax", config.getYellowHueMaxValue());
+		XmlUtils.addChildInt(doc, yellowElement, "satMin", config.getYellowSatMinValue());
+		XmlUtils.addChildInt(doc, yellowElement, "satMax", config.getYellowSatMaxValue());
+		XmlUtils.addChildInt(doc, yellowElement, "valMin", config.getYellowValMinValue());
+		XmlUtils.addChildInt(doc, yellowElement, "valMax", config.getYellowValMaxValue());
+		XmlUtils.addChildInt(doc, yellowElement, "sizeMin", config.getYellowSizeMinValue());
+		XmlUtils.addChildInt(doc, yellowElement, "sizeMax", config.getYellowSizeMaxValue());
+		rootElement.appendChild(yellowElement);
+		
+		XmlUtils.writeXmlDocument(doc, filename);
 	}
 
 }

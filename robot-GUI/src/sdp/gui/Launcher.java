@@ -5,6 +5,8 @@ import javax.swing.JFrame;
 import au.edu.jcu.v4l4j.V4L4JConstants;
 import sdp.common.WorldStateObserver;
 import sdp.vision.Vision;
+import sdp.vision.processing.MainImageProcessor;
+import sdp.vision.processing.SecondaryImageProcessor;
 import sdp.vision.visualinput.CameraVisualInputProvider;
 import sdp.vision.visualinput.ImageVisualInputProvider;
 
@@ -46,19 +48,21 @@ public class Launcher extends JFrame implements Runnable {
 	/** A spinner for selecting the camera channel. */
 	private JSpinner channelSpinner;
 	private JSpinner testFpsSpinner;
+	/** Combobox for selecting image processor. */
+	private JComboBox combo_img_proc;
 	
 	
 	/**
 	 * The main constructor.
 	 */
 	public Launcher() {
-		setSize(new Dimension(198, 243));
+		setSize(new Dimension(198, 274));
 		setTitle("Launcher");
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{150, 0};
 		gridBagLayout.rowHeights = new int[]{25, 0, 0};
 		gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		gridBagLayout.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
+		gridBagLayout.rowWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
 		getContentPane().setLayout(gridBagLayout);
 		
 		JPanel competitionModePanel = new JPanel();
@@ -150,9 +154,9 @@ public class Launcher extends JFrame implements Runnable {
 		getContentPane().add(testModePanel, gbc_testModePanel);
 		GridBagLayout gbl_testModePanel = new GridBagLayout();
 		gbl_testModePanel.columnWidths = new int[]{80, 0, 0};
-		gbl_testModePanel.rowHeights = new int[]{0, 0, 0};
-		gbl_testModePanel.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
-		gbl_testModePanel.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
+		gbl_testModePanel.rowHeights = new int[]{0, 0, 0, 0};
+		gbl_testModePanel.columnWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
+		gbl_testModePanel.rowWeights = new double[]{0.0, 0.0, 0.0, Double.MIN_VALUE};
 		testModePanel.setLayout(gbl_testModePanel);
 		
 		JLabel testFpsLabel = new JLabel("FPS");
@@ -172,12 +176,20 @@ public class Launcher extends JFrame implements Runnable {
 		gbc_testFpsSpinner.gridy = 0;
 		testModePanel.add(testFpsSpinner, gbc_testFpsSpinner);
 		
+		combo_img_proc = new JComboBox();
+		combo_img_proc.setModel(new DefaultComboBoxModel(new String[] {"Main", "Secondary"}));
+		GridBagConstraints gbc_comboBox = new GridBagConstraints();
+		gbc_comboBox.gridwidth = 2;
+		gbc_comboBox.insets = new Insets(0, 0, 5, 5);
+		gbc_comboBox.gridx = 0;
+		gbc_comboBox.gridy = 1;
+		testModePanel.add(combo_img_proc, gbc_comboBox);
+		
 		JButton startTestButton = new JButton("Start testing");
 		GridBagConstraints gbc_startTestButton = new GridBagConstraints();
 		gbc_startTestButton.gridwidth = 2;
-		gbc_startTestButton.insets = new Insets(0, 0, 0, 5);
 		gbc_startTestButton.gridx = 0;
-		gbc_startTestButton.gridy = 1;
+		gbc_startTestButton.gridy = 2;
 		testModePanel.add(startTestButton, gbc_startTestButton);
 		startTestButton.addActionListener(new ActionListener() {			
 			@Override
@@ -197,7 +209,16 @@ public class Launcher extends JFrame implements Runnable {
 	 * Start camera vision test. 
 	 */
 	private void startCompetitionMode() {
-		Vision vision = new Vision();
+		Vision vision = null;
+		switch (combo_img_proc.getSelectedIndex()) {
+		case 0:
+			vision = new Vision(new MainImageProcessor());
+			break;
+		case 1:
+			vision = new Vision(new SecondaryImageProcessor());
+			break;
+		}
+		
 		WorldStateObserver visionObserver = new WorldStateObserver(vision);		
 		CameraVisualInputProvider input = createCameraInputProvider();
 		input.setCallback(vision);
@@ -212,7 +233,16 @@ public class Launcher extends JFrame implements Runnable {
 	 * Start image vision test.
 	 */
 	private void startTestingMode() {
-		Vision vision = new Vision();
+		Vision vision = null;
+		switch (combo_img_proc.getSelectedIndex()) {
+		case 0:
+			vision = new Vision(new MainImageProcessor());
+			break;
+		case 1:
+			vision = new Vision(new SecondaryImageProcessor());
+			break;
+		}
+		
 		WorldStateObserver visionObserver = new WorldStateObserver(vision);
 		
 		ImageVisualInputProvider input = createImageInputProvider();
@@ -253,12 +283,19 @@ public class Launcher extends JFrame implements Runnable {
 	 */
 	private ImageVisualInputProvider createImageInputProvider() {
 		String filenames[] = {
+				"../robot-VISION/data/testImages/1.png",
+				"../robot-VISION/data/testImages/2.png",
+				"../robot-VISION/data/testImages/3.png",
+				"../robot-VISION/data/testImages/4.png",
+				"../robot-VISION/data/testImages/5.png",
+				"../robot-VISION/data/testImages/pitch.png",
+				"../robot-VISION/data/testImages/pitch1-2.png",
+				"../robot-VISION/data/testImages/pitch1-3.png",
 				"../robot-VISION/data/testImages/pitch2-1.png",
 				"../robot-VISION/data/testImages/pitch2-2.png",
 				"../robot-VISION/data/testImages/pitch2-3.png"
 		};
 		int fps = ((Integer)testFpsSpinner.getValue()).intValue();
-		
 		return new ImageVisualInputProvider(filenames, fps);
 	}
 	
