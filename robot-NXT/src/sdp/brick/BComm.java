@@ -29,7 +29,7 @@ public class BComm implements Communicator {
 	private static NXTConnection connection;
 	
 	/**
-	 * Initializes the contorller with a listener
+	 * Initialises the controller with a listener
 	 * @param listener
 	 */
 	public BComm() {

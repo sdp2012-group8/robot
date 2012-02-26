@@ -91,30 +91,42 @@ public class AIWorldState extends WorldState {
 	
 	/**
 	 * Calculates if the ball has a direct line of sight to the enemy goal.
-	 * @param enemy_robot The robot defending the goal
-	 * @param enemy_goal The goal of the opposing robot
-	 * @return -1 if error, 0 if false, 1 if can see top, 2 middle, 3 bottom.
+	 * @return true if goal is visible
 	 */
-	public int isGoalVisible(Robot enemy_robot, Goal enemy_goal) {
+	public boolean isGoalVisible() {
 		
 		enemy_robot.setCoords(true); //need to convert robot coords to cm
 		
-		if (Utilities.isPathClear(getBallCoords(), enemy_goal.getCentre(), enemy_robot)) {
-			return 2;
-		} else if (Utilities.isPathClear(getBallCoords(), enemy_goal.getTop(), enemy_robot)) {
-			return 1;
-		} else if (Utilities.isPathClear(getBallCoords(), enemy_goal.getBottom(), enemy_robot)) {
-			return 3;
+		if (Utilities.isPathClear(getBallCoords(), enemy_goal.getCentre(), enemy_robot)
+				|| Utilities.isPathClear(getBallCoords(), enemy_goal.getTop(), enemy_robot) 
+				|| Utilities.isPathClear(getBallCoords(), enemy_goal.getBottom(), enemy_robot)) {
+			return true;
 		}
 		
 		//Check for "special" case where the ball is between the enemy robot and their goal.
 		if (enemy_goal.getCentre().x == 0) {
-			if (getBallCoords().x < enemy_robot.getCoords().x) return 2;
+			if (getBallCoords().x < enemy_robot.getCoords().x) return true;
 		} else {
-			if (getBallCoords().x > enemy_robot.getCoords().x) return 2;
+			if (getBallCoords().x > enemy_robot.getCoords().x) return true;
 		}
 		
-		return 0; //can't see goal
+		return false; //can't see goal
+	}
+	
+	public double calculateShootAngle() {
+		return Math.min(anglebetween(getRobot().getCoords(), enemy_goal.getTop()), 
+				Math.min(anglebetween(getRobot().getCoords(), enemy_goal.getCentre()), 
+						anglebetween(getRobot().getCoords(), enemy_goal.getBottom())));
+	}
+	
+	/**
+	 * Gets the angle between two points
+	 * @param A
+	 * @param B
+	 * @return if you stand at A how many degrees should you turn to face B
+	 */
+	protected double anglebetween(Point2D.Double A, Point2D.Double B) {
+		return (180*Math.atan2(-B.getY()+A.getY(), B.getX()-A.getX()))/Math.PI;
 	}
 
 	public Robot getEnemyRobot() {
