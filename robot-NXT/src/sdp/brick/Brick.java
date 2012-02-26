@@ -1,8 +1,10 @@
 package sdp.brick;
 
 import java.io.File;
+import java.io.IOException;
 
 import sdp.common.Communicator;
+import sdp.common.Communicator.sensorType;
 import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 
@@ -30,7 +32,7 @@ public class Brick {
 	private static final int turning_boost = 20; // degrees per sec
 	private static boolean is_on = true;
 
-	private static Communicator mCont;
+	private static Communicator mComm;
 	private static UltrasonicSensor sens;
 	private static boolean collision = false;
 	private static boolean can_kick = false;
@@ -51,6 +53,19 @@ public class Brick {
 				while (is_on) {
 					int dist = sens.getDistance();
 					collision = dist < coll_threshold;
+//					try {
+//						if ( collision && mComm != null){
+//							try {
+//								mComm.sendMessage(opcode.sensor, (byte) 0, (byte) dist);
+//								Thread.sleep(10);
+//							} catch (IOException e) {
+//								e.printStackTrace();
+//							}
+//						}
+//						Thread.sleep(100);
+//					} catch (InterruptedException e) {
+//						e.printStackTrace();
+//					}
 				}
 				sens.off();
 			};
@@ -74,7 +89,7 @@ public class Brick {
 						Motor.B.stop();
 					}
 					can_kick = true;
-					
+
 
 					try {
 						Thread.sleep(100);						
@@ -83,8 +98,8 @@ public class Brick {
 			};
 		};
 		kicker_retractor.start();
-		mCont = new BComm();
-		mCont.registerListener(new MessageListener() {
+		mComm = new BComm();
+		mComm.registerListener(new MessageListener() {
 
 			// for joypad
 			private float speed_a = 0;
@@ -99,8 +114,6 @@ public class Brick {
 
 			public static final float ROBOTR = 7.1F;
 			public static final float WHEELR = 4F;
-			int lastCountA = 0;
-			int lastCountC = 0;
 			float slowest = Motor.A.getMaxSpeed() > Motor.B.getMaxSpeed() ? Motor.B.getMaxSpeed()-10 : Motor.A.getMaxSpeed()-10;
 
 			/**
@@ -113,7 +126,7 @@ public class Brick {
 				switch (op) {
 
 				case exit:
-					mCont.close();
+					mComm.close();
 					Sound.setVolume(def_vol);
 					is_on = false;
 					try {

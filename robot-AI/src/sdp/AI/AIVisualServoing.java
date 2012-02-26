@@ -1,9 +1,6 @@
 package sdp.AI;
 
 import java.io.IOException;
-import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
-
 import sdp.AI.AIWorldState.mode;
 import sdp.common.Communicator;
 import sdp.common.Robot;
@@ -18,8 +15,6 @@ import sdp.common.Communicator.opcode;
  *
  */
 public class AIVisualServoing extends AI {
-
-	private int turn_wall = 90;
 
 	public AIVisualServoing(Communicator comm) {
 		super(comm);
@@ -97,15 +92,15 @@ public class AIVisualServoing extends AI {
 			mComm.sendMessage(opcode.operate, (byte) -30, (byte) 0);
 		}
 
-		if ( ((ai_world_state.getRobot().getBackRight().x < ai_world_state.getEnemyGoal().getCentre().x ) 
-				&& (ai_world_state.getRobot().getBackRight().x > ai_world_state.getBallCoords().x)
-					&& ai_world_state.getMyGoalLeft())
-						|| ((ai_world_state.getRobot().getBackRight().x > ai_world_state.getEnemyGoal().getCentre().x)
-							&& (ai_world_state.getRobot().getBackRight().x < ai_world_state.getBallCoords().x))
-						 		&& !ai_world_state.getMyGoalLeft()){
-			System.out.println("I'm between goal and ball");
-			navigateBehindBall();
-		}
+//		if ( ((ai_world_state.getRobot().getBackRight().x < ai_world_state.getEnemyGoal().getCentre().x ) 
+//				&& (ai_world_state.getRobot().getBackRight().x > ai_world_state.getBallCoords().x)
+//					&& ai_world_state.getMyGoalLeft())
+//						|| ((ai_world_state.getRobot().getBackRight().x > ai_world_state.getEnemyGoal().getCentre().x)
+//							&& (ai_world_state.getRobot().getBackRight().x < ai_world_state.getBallCoords().x))
+//						 		&& !ai_world_state.getMyGoalLeft()){
+//			System.out.println("I'm between goal and ball");
+//			navigateBehindBall();
+//		}
 		
 		// check whether to go into got_ball mode
 		if (Math.abs(turning_angle) < TURNING_ACCURACY && ai_world_state.getDistanceToBall() < 10) {
@@ -128,25 +123,13 @@ public class AIVisualServoing extends AI {
 		if (ai_world_state.getDistanceToBall() > 10) {
 			ai_world_state.setMode(mode.chase_ball);
 		} else {
-			int can_we_shoot = ai_world_state.isGoalVisible(ai_world_state.getEnemyRobot(), ai_world_state.getEnemyGoal());
+			boolean can_we_shoot = ai_world_state.isGoalVisible();
 
-			if (can_we_shoot > 0) {
+			if (can_we_shoot) {
 				// We can see the goal
 				System.out.println("We can shoot");
-				Point2D.Double target = null;
-				switch(can_we_shoot) {
-				case 1:
-					target = ai_world_state.getEnemyGoal().getTop();
-					break;
-				case 2:
-					target = ai_world_state.getEnemyGoal().getCentre();
-					break;
-				case 3:
-					target = ai_world_state.getEnemyGoal().getBottom();
-					break;
-				}
 
-				double angle_between = anglebetween(ai_world_state.getRobot().getCoords(), target);
+				double angle_between = ai_world_state.calculateShootAngle();
 				double turning_angle = angle_between - ai_world_state.getRobot().getAngle();
 				byte forward_speed = 4;
 
@@ -156,15 +139,15 @@ public class AIVisualServoing extends AI {
 				forward_speed = normaliseSpeed(forward_speed);
 				turning_angle = Utilities.normaliseAngle(turning_angle);
 
-				if (turning_angle > TURNING_ACCURACY && (ai_world_state.getDistanceToGoal() > 1)){
+				if (turning_angle > KICKING_ACCURACY && (ai_world_state.getDistanceToGoal() > 1)){
 					mComm.sendMessage(opcode.operate, forward_speed, (byte)20);
 					//System.out.println("Going to goal - Turning: " + turning_angle);
-				} else if( turning_angle < -TURNING_ACCURACY && (ai_world_state.getDistanceToGoal() > 1)){
+				} else if( turning_angle < -KICKING_ACCURACY && (ai_world_state.getDistanceToGoal() > 1)){
 					mComm.sendMessage(opcode.operate, forward_speed, (byte)-20);
 					//System.out.println("Going to goal - Turning: " + turning_angle);	
 				} else  {
 					mComm.sendMessage(opcode.kick);
-					//ai_world_state.setMode(AIWorldState.mode.chase_ball);
+					ai_world_state.setMode(AIWorldState.mode.chase_ball);
 				}
 
 			} else {
@@ -194,7 +177,7 @@ public class AIVisualServoing extends AI {
 		double turning_angle = Utilities.normaliseAngle(-ai_world_state.getRobot().getAngle() + Vector2D.getDirection(dir));
 		
 		
-		while(ai_world_state.getRobot().getBackRight().x < (ai_world_state.getBallCoords().x + 15)){
+		if (ai_world_state.getRobot().getBackRight().x < (ai_world_state.getBallCoords().x )){
 			mComm.sendMessage(opcode.operate, forward_speed, (byte) Utilities.normaliseToByte(Utilities.normaliseAngle(turning_angle)));
 		}
 		

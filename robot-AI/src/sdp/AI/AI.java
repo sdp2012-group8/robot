@@ -19,6 +19,7 @@ public abstract class AI {
 	
 	// robot constants
 	protected final static double TURNING_ACCURACY = 5;
+	protected final static double KICKING_ACCURACY = 2;
 
 	protected final static double ROBOT_ACC_CM_S_S = 69.8; // 1000 degrees/s/s
 	protected final static int MAX_SPEED_CM_S = 30; // 50 cm per second
@@ -67,15 +68,7 @@ public abstract class AI {
 		mQueue.close();
 	}
 
-	/**
-	 * Gets the angle between two points
-	 * @param A
-	 * @param B
-	 * @return if you stand at A how many degrees should you turn to face B
-	 */
-	protected double anglebetween(Point2D.Double A, Point2D.Double B) {
-		return (180*Math.atan2(-B.getY()+A.getY(), B.getX()-A.getX()))/Math.PI;
-	}
+	
 	
 	/**
 	 * Updates the held ai_world_state of the AI.

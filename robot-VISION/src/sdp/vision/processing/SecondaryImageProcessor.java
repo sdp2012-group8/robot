@@ -59,9 +59,9 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	// standard deviation filter. Filter out points more than this amount of sigmas from the st dev
 	private static final double blue_color_sigma = 8;
 	private static final double red_color_sigma = 12;
-	private static final double yellow_color_sigma = 10;
+	private static final double yellow_color_sigma = 7.5;
 	
-	private static final double area_T_cm = 56.32; // cm*cm
+	private static final double area_T_cm = 100; // cm*cm
 	private static final double area_ball_cm = 20; // cm*cm
 	private static double area_T_px, area_ball_px;
 
@@ -167,7 +167,9 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 
 		stDevColorFilter(yellow_robot_image, yellow_color_sigma);
 		//drawArray(yellow_robot_image, 255, 255, 0);
+		System.out.println("YELLOW STa");
 		filterByArea(yellow_robot_image, area_T_px, yellow_pos);
+		System.out.println("YELLOW STo");
 
 		stDevColorFilter(ball_image, red_color_sigma);
 		filterByArea(ball_image, area_ball_px, ball_pos);
@@ -189,14 +191,14 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 				new Robot(convertTo1(yellow_pos), getAngle(yellow_robot_image, yellow_pos)),
 				frame);
 		
-		if (oldstate != null) {	
-			state = new WorldState(
-					lowPass(oldstate.getBallCoords(), state.getBallCoords()),
-					lowPass(oldstate.getBlueRobot(),state.getBlueRobot()),
-					lowPass(oldstate.getYellowRobot(), state.getYellowRobot()),
-					frame);
-		}
-		oldstate = state;
+//		if (oldstate != null) {	
+//			state = new WorldState(
+//					lowPass(oldstate.getBallCoords(), state.getBallCoords()),
+//					lowPass(oldstate.getBlueRobot(),state.getBlueRobot()),
+//					lowPass(oldstate.getYellowRobot(), state.getYellowRobot()),
+//					frame);
+//		}
+//		oldstate = state;
 
 		// drawing part
 		if (!config.isShowWorld()) {
@@ -243,6 +245,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 					 if (area_temp > 255)
 						 area_temp = 255;
 					 area_value = (byte) (255 - area_temp);
+					 System.out.println("area "+area_so_far);
 					 if ((area_value & 0xFF) < PXV_AREA_INVALID_RATIO)
 						 area_value = PXV_BELOW_THRESHOLD;
 					 if ((area_value & 0xFF) > biggest_area) {
@@ -511,7 +514,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 				yellow_robot_image[x][y] = (byte) (clean_y < 0 ? 0 : (clean_y > 255 ? 255 : clean_y));
 				blue_robot_image[x][y] =  (byte) (clean_b < 0 ? 0 : (clean_b > 255 ? 255 : clean_b));
 				ball_image[x][y] = (byte) (clean_r < 0 ? 0 : (clean_r > 255 ? 255 : clean_r));
-				setPixel(x, y, clean_y, clean_y, clean_y);
+				//setPixel(x, y, clean_y, clean_y, clean_y);
 			}
 	}
 

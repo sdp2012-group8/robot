@@ -23,7 +23,7 @@ import sdp.common.Communicator;
 import sdp.common.FPSCounter;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
-import sdp.communicator.JComm;
+import sdp.communicator.AIComm;
 import sdp.gui.filefilters.XmlFileFilter;
 import sdp.vision.Vision;
 import sdp.vision.processing.ImageProcessorConfig;
@@ -148,7 +148,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			com = null;
 		} else {
 			try {
-				com = new JComm();
+				com = new AIComm();
 			} catch (IOException e) {
 				LOGGER.warning("Connection with brick failed! Going into test mode.");
 				com = null;

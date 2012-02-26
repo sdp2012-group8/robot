@@ -441,7 +441,7 @@ public class ManualControl {
 				boolean repeat = true;
 				while (repeat) {
 					try {
-						mComm = new JComm();
+						mComm = new AIComm();
 						mComm.registerListener(new MessageListener() {
 
 							@Override
