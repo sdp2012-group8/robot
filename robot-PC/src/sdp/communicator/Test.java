@@ -21,7 +21,7 @@ public class Test implements MessageListener {
 		my = new JComm();
 		my.registerListener(this); // initialize bluetooth communicator
 		// send move message
-		my.sendMessage(opcode.move, (byte)2);
+		my.sendMessage(opcode.exit, (byte)2);
 		Thread.sleep(12000);
 		// after 12 seconds send an exit message
 		my.sendMessage(opcode.exit);
