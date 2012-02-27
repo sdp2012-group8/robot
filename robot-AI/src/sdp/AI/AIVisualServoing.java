@@ -32,6 +32,7 @@ public class AIVisualServoing extends AI {
 	 * @throws IOException 
 	 */
 	public void chaseBall() throws IOException {
+		
 		if (!Tools.reachability(ai_world_state, new Vector2D(ai_world_state.getBallCoords()), ai_world_state.getMyTeamBlue())) {
 			// if ball is not directly reachable
 			avoidObstacle();
@@ -118,12 +119,13 @@ public class AIVisualServoing extends AI {
 		}
 		
 	}
-
+	
 	/**
 	 * Mode set if got ball.
 	 * Aims and shoots the ball into the opposing goal. 
 	 * @throws IOException 
 	 */
+
 	public void gotBall() throws IOException{
 		System.out.println("Attempting to score goal");
 
@@ -161,7 +163,7 @@ public class AIVisualServoing extends AI {
 
 			} else {
 				// Can't see the goal
-
+				
 				if (ai_world_state.getRobot().getCoords().y > Tools.PITCH_HEIGHT_CM/2 + 20){
 					// Robot is closest to bottom
 					mComm.sendMessage(opcode.operate, (byte) 10, (byte) -80);
@@ -174,6 +176,7 @@ public class AIVisualServoing extends AI {
 		}
 	}
 
+	
 	/**
 	 * Move behind the ball before attempting to score
 	 */
@@ -301,6 +304,15 @@ public class AIVisualServoing extends AI {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Play ball from walls
+	 */
+	public void kickWithWalls() throws IOException{
+		boolean shootWithWall = ai_world_state.goalImage();
+		System.out.println("can see imaginary goal " + shootWithWall);
+		mComm.sendMessage(opcode.kick);
 	}
 	
 	/**
