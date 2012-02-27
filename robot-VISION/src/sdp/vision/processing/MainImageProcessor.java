@@ -257,9 +257,61 @@ public class MainImageProcessor extends BaseImageProcessor {
             
             double massCenterX = moments.m10() / moments.m00();
             double massCenterY = moments.m01() / moments.m00();  
-            double angle = 0.0;
+            int angle = 0;
             
-            // Find the contour's farthest point from the mass center. 
+            
+            double[] dists = new double[360];
+            for (int i = 0; i < bestRobotShape.total(); ++i) {
+            	CvPoint pt1 = new CvPoint(cvGetSeqElem(bestRobotShape, i));
+            	CvPoint pt2 = new CvPoint(cvGetSeqElem(bestRobotShape, (i + 1) % bestRobotShape.total()));
+            	
+            	int a1 = (int) Math.toDegrees( Math.atan2(pt1.y() - massCenterY, massCenterX - pt1.x()) ) + 179;
+            	int a2 = (int) Math.toDegrees( Math.atan2(pt2.y() - massCenterY, massCenterX - pt2.x()) ) + 179;
+            	if (a1 > a2) {
+            		int x = a1;
+            		a1 = a2;
+            		a2 = x;
+            	}
+            	
+            	double d1 = Point.distance(massCenterX, massCenterY, pt1.x(), pt1.y());
+            	double d2 = Point.distance(massCenterX, massCenterY, pt2.x(), pt2.y());
+            	
+            	int ad = a2 - a1;
+            	if ((360 - ad) < ad) {
+            		for (int j = a2; j < 360; ++j) {
+            			dists[j] = d2 + ((d1 - d2) * (j - a2)) / (360 - ad);
+            		}
+            		for (int j = 0; j < a1; ++j) {
+            			dists[j] = d2 + ((d1 - d2) * (j + (360 - a2))) / (360 - ad);
+            		}
+            	} else {
+            		for (int j = a1; j < a2; ++j) {
+            			dists[j] = d1 + ((d2 - d1) * (j - a1)) / (ad);
+            		}
+            	}
+            }
+            
+//            for (int i = 0; i < 360; ++i) {
+//            	System.out.format("%.2f ", dists[i]);
+//            }
+//            System.out.println("");
+            
+            double bestArea = 0;
+            for (int i = 0; i < 360; ++i) {
+            	double curArea = 0;
+	            for (int j = -20; j <= 20; ++j) {
+	            	int k = (i + j + 360) % 360;
+	            	curArea += dists[k] * (25 - Math.abs(j));
+	            }
+	            if (curArea > bestArea) {
+	            	bestArea = curArea;
+	            	angle = i;
+	            }
+            }
+            
+            
+            // Find the contour's farthest point from the mass center.
+            /*
             double maxShapeDist = Double.MIN_VALUE;
             int farthestPoint = -1;
             
@@ -287,10 +339,11 @@ public class MainImageProcessor extends BaseImageProcessor {
             		ySum = ySum + pt.y() - massCenterY;
             	}
             }
+            */
 
             // Compute final robot position and direction.
             Point2D.Double robotPos = ProcUtils.frameToNormalCoordinates(config, massCenterX, massCenterY, true);
-            angle = Math.toDegrees( Math.atan2(ySum, -xSum) ) + 180.0;
+            //angle = Math.toDegrees( Math.atan2(ySum, -xSum) ) + 180.0;
             
             return new Robot(robotPos, angle);
 		}
