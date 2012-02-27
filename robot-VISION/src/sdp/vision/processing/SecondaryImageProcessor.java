@@ -32,9 +32,9 @@ import sdp.common.WorldState;
  */
 public class SecondaryImageProcessor extends BaseImageProcessor {
 
-	//	private static enum rgb {
-	//		red, green, blue
-	//	}
+	private static final int mask = 0xFF;
+	
+	private static final int delayed_start = 10;
 
 	private int start_x = 0, stop_x = 0, start_y = 0, stop_y = 0, height = 0, width = 0, pixels_count = 0, im_width = 0;
 	private int avg_r = 0, avg_b = 0, avg_g = 0;
@@ -57,12 +57,12 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private static final int take_average_every = 1;
 
 	// standard deviation filter. Filter out points more than this amount of sigmas from the st dev
-	private static final double blue_color_sigma = 8;
+	private static final double blue_color_sigma = 5;
 	private static final double red_color_sigma = 12;
-	private static final double yellow_color_sigma = 7.5;
-	
+	private static final double yellow_color_sigma = 4;
+
 	private static final double area_T_cm = 100; // cm*cm
-	private static final double area_ball_cm = 20; // cm*cm
+	private static final double area_ball_cm = 30; // cm*cm
 	private static double area_T_px, area_ball_px;
 
 	// maximum empty pixels in a feature for angle detection purposes
@@ -76,6 +76,14 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			sin_ang = Math.sin(rot_ang_rad),
 			PI = Math.PI;
 
+	// background substraction
+	private static double back_sigma = 1; // everything below this is considered background
+	private static byte[][] back_r, back_g, back_b;
+	private static final int gauss_back_img_count = 50;
+	private static final double gauss_back_img_amount = 2;
+	private static final int gauss_back_img_matrix_size = gauss_back_img_count*2+1;
+	private static final double[][] gauss_back_img_filter = new double[gauss_back_img_matrix_size][gauss_back_img_matrix_size];;
+
 	// gaussian filtering for angle
 	private static final int gauss_count = 20; // this is the number of points that would be affected by smoothing. Must be even.
 	private static final double gauss_amount = 50; // the smoothing factor
@@ -86,7 +94,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private static final double gauss_img_amount = 3;
 	private static final int gauss_img_matrix_size = gauss_img_count*2+1;
 	private static final double[][] gauss_img_filter = new double[gauss_img_matrix_size][gauss_img_matrix_size];
-	
+
 	// pixel value constants for calculating blob area
 	private static final int PXV_BELOW_THRESHOLD = 0;
 	private static final int PXV_ABOVE_THRESHOLD = 1;
@@ -95,9 +103,9 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private static final int PXV_AREA_INVALID_RATIO = 50;
 	private static int area_so_far = 0;
 	private static byte area_value = 0;
-	
+
 	// low pass filter
-	
+
 	private static double filteredPositionAmount = 0.8;
 	private static double filteredAngleAmount = 0.8;
 
@@ -132,6 +140,21 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		for (int x = 0; x < gauss_img_matrix_size; x++)
 			for (int y = 0; y < gauss_img_matrix_size; y++)
 				gauss_img_filter[x][y] = gauss_img_filter[x][y] / sum;
+
+		// background gaussian filter
+		sum = 0;
+		for (int x = -gauss_back_img_count; x <= gauss_back_img_count; x++)
+			for (int y = -gauss_back_img_count; y <= gauss_back_img_count; y++) {
+				final int xid = x+gauss_back_img_count;
+				final int yid = y+gauss_back_img_count;
+				final double dist_sq = x*x + y*y;
+				gauss_back_img_filter[xid][yid] = Math.exp(-dist_sq/(2*gauss_back_img_amount*gauss_back_img_amount))/gauss_back_img_amount;
+				sum += gauss_back_img_filter[xid][yid];
+			}
+		// normalize
+		for (int x = 0; x < gauss_back_img_matrix_size; x++)
+			for (int y = 0; y < gauss_back_img_matrix_size; y++)
+				gauss_back_img_filter[x][y] = gauss_back_img_filter[x][y] / sum;
 	}
 
 	@Override
@@ -144,21 +167,32 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 
 		frame_count++;
 
-
 		if (pixels == null) {
 			// when first image is received
 			pixels = ((DataBufferByte) frame.getRaster().getDataBuffer()).getData();
 			im_width = frame.getWidth();
-			yellow_robot_image = new byte[frame.getWidth()][frame.getHeight()];
-			blue_robot_image = new byte[frame.getWidth()][frame.getHeight()];
-			ball_image = new byte[frame.getWidth()][frame.getHeight()];
+			yellow_robot_image = new byte[im_width][frame.getHeight()];
+			blue_robot_image = new byte[im_width][frame.getHeight()];
+			ball_image = new byte[im_width][frame.getHeight()];
+			back_r = new byte[im_width][frame.getHeight()];
+			back_g = new byte[im_width][frame.getHeight()];
+			back_b = new byte[im_width][frame.getHeight()];
 		} else
 			pixels = ((DataBufferByte) frame.getRaster().getDataBuffer()).getData();
+		
+		if (frame_count < delayed_start) {
+			for (int y = start_y; y <= stop_y; y++)
+				for (int x = start_x; x <= stop_x; x++) {
+				back_r[x][y] = 0;
+				back_g[x][y] = 0;
+				back_b[x][y] = 0;
+			}
+		}
 
-		gaussianSmooth();
+		//gaussianSmooth();
 
 		if (frame_count % take_average_every == 0)
-			average();
+			backgRoundSub();
 
 		doThresholding();
 
@@ -166,14 +200,13 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		filterByArea(blue_robot_image, area_T_px, blue_pos);
 
 		stDevColorFilter(yellow_robot_image, yellow_color_sigma);
-		//drawArray(yellow_robot_image, 255, 255, 0);
 		System.out.println("YELLOW STa");
 		filterByArea(yellow_robot_image, area_T_px, yellow_pos);
 		System.out.println("YELLOW STo");
 
 		stDevColorFilter(ball_image, red_color_sigma);
 		filterByArea(ball_image, area_ball_px, ball_pos);
-		
+
 		// some manual fixing
 		if (yellow_pos.x != -1 && yellow_pos.y != -1) {
 			final double dx = yellow_pos.x - blue_pos.x,
@@ -185,25 +218,27 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			}
 		}
 
-		
+
 		state = new WorldState(convertTo1(ball_pos),
 				new Robot(convertTo1(blue_pos), getAngle(blue_robot_image, blue_pos)),
 				new Robot(convertTo1(yellow_pos), getAngle(yellow_robot_image, yellow_pos)),
 				frame);
-		
-//		if (oldstate != null) {	
-//			state = new WorldState(
-//					lowPass(oldstate.getBallCoords(), state.getBallCoords()),
-//					lowPass(oldstate.getBlueRobot(),state.getBlueRobot()),
-//					lowPass(oldstate.getYellowRobot(), state.getYellowRobot()),
-//					frame);
-//		}
-//		oldstate = state;
+
+		//		if (oldstate != null) {	
+		//			state = new WorldState(
+		//					lowPass(oldstate.getBallCoords(), state.getBallCoords()),
+		//					lowPass(oldstate.getBlueRobot(),state.getBlueRobot()),
+		//					lowPass(oldstate.getYellowRobot(), state.getYellowRobot()),
+		//					frame);
+		//		}
+		//		oldstate = state;
 
 		// drawing part
 		if (!config.isShowWorld()) {
-			graph.setColor(new Color(avg_r, avg_g, avg_b));
-			graph.fillRect(start_x, start_y, width, height);	
+			for (int y = start_y; y <= stop_y; y++)
+				for (int x = start_x; x <= stop_x; x++) {
+					setPixel(x, y, back_r[x][y] & mask, back_g[x][y] & mask, back_b[x][y] & mask);
+				}
 		}
 
 		if (config.isShowThresholds()) {
@@ -230,29 +265,29 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			graph.dispose();
 		return state;
 	}
-	
+
 	private final void filterByArea(final byte[][] channel, final double area_px, final Point2D.Double center) {
 		int biggest_area = 0;
 		// find areas of all blobs
 		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
-				 final double value = channel[x][y] & 0xFF;
-				 if (value == PXV_ABOVE_THRESHOLD) {
-					 area_so_far = 1;
-					 channel[x][y] = PXV_BEING_CHECKED;
-					 recursePixelSize(channel, x, y);
-					 int area_temp = (int) (255*Math.abs(area_so_far - area_px)/area_px);
-					 if (area_temp > 255)
-						 area_temp = 255;
-					 area_value = (byte) (255 - area_temp);
-					 System.out.println("area "+area_so_far);
-					 if ((area_value & 0xFF) < PXV_AREA_INVALID_RATIO)
-						 area_value = PXV_BELOW_THRESHOLD;
-					 if ((area_value & 0xFF) > biggest_area) {
-						 biggest_area = area_value & 0xFF;
-					 }
-					 setArea(channel);
-				 }
+				final double value = channel[x][y] & mask;
+				if (value == PXV_ABOVE_THRESHOLD) {
+					area_so_far = 1;
+					channel[x][y] = PXV_BEING_CHECKED;
+					recursePixelSize(channel, x, y);
+					int area_temp = (int) (255*Math.abs(area_so_far - area_px)/area_px);
+					if (area_temp > 255)
+						area_temp = 255;
+					area_value = (byte) (255 - area_temp);
+					System.out.println("area "+area_so_far+" expected "+area_px);
+					if ((area_value & mask) < PXV_AREA_INVALID_RATIO)
+						area_value = PXV_BELOW_THRESHOLD;
+					if ((area_value & mask) > biggest_area) {
+						biggest_area = area_value & mask;
+					}
+					setArea(channel);
+				}
 			}
 		// get the com of the blob with biggest area
 		if (biggest_area < PXV_AREA_INVALID_RATIO || biggest_area == 0) {
@@ -265,7 +300,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			int px_count = 0;
 			for (int y = start_y; y <= stop_y; y++)
 				for (int x = start_x; x <= stop_x; x++)
-					if ((channel[x][y] & 0xFF) == biggest_area) {
+					if ((channel[x][y] & mask) == biggest_area) {
 						cx += x;
 						cy += y;
 						px_count++;
@@ -276,22 +311,22 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			center.y = cy/px_count;
 		}
 	}
-	
+
 	private final void recursePixelSize(final byte[][] channel, final int x, final int y) {
 		final int xm1 = x-1,
-				  xp1 = x+1,
-				  ym1 = y-1,
-				  yp1 = y+1;
+				xp1 = x+1,
+				ym1 = y-1,
+				yp1 = y+1;
 		final boolean
-				  xm1_in_range = (xm1 >= start_x && xm1 <= stop_x),
-				  xp1_in_range = (xp1 >= start_x && xp1 <= stop_x),
-				  ym1_in_range = (ym1 >= start_y && ym1 <= stop_y),
-				  yp1_in_range = (yp1 >= start_y && yp1 <= stop_y),
-				  left = xm1_in_range && (channel[xm1][y] & 0xFF) == PXV_ABOVE_THRESHOLD,
-				  right = xp1_in_range && (channel[xp1][y] & 0xFF) == PXV_ABOVE_THRESHOLD,
-				  above = yp1_in_range && (channel[x][yp1] & 0xFF) == PXV_ABOVE_THRESHOLD,
-				  below = ym1_in_range && (channel[x][ym1] & 0xFF) == PXV_ABOVE_THRESHOLD;
-		
+		xm1_in_range = (xm1 >= start_x && xm1 <= stop_x),
+		xp1_in_range = (xp1 >= start_x && xp1 <= stop_x),
+		ym1_in_range = (ym1 >= start_y && ym1 <= stop_y),
+		yp1_in_range = (yp1 >= start_y && yp1 <= stop_y),
+		left = xm1_in_range && (channel[xm1][y] & mask) == PXV_ABOVE_THRESHOLD,
+		right = xp1_in_range && (channel[xp1][y] & mask) == PXV_ABOVE_THRESHOLD,
+		above = yp1_in_range && (channel[x][yp1] & mask) == PXV_ABOVE_THRESHOLD,
+		below = ym1_in_range && (channel[x][ym1] & mask) == PXV_ABOVE_THRESHOLD;
+
 		// flip surrounding bits
 		if (left) {
 			channel[xm1][y] = PXV_BEING_CHECKED;
@@ -309,7 +344,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			channel[x][ym1] = PXV_BEING_CHECKED;
 			area_so_far ++;
 		}
-		
+
 		// recurse
 		if (left)
 			recursePixelSize(channel, xm1, y);
@@ -320,12 +355,12 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		if (below)
 			recursePixelSize(channel, x, ym1);
 	}
-	
+
 	private final void setArea(final byte[][] channel) {
-		
+
 		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
-				if ((channel[x][y] & 0xFF) == PXV_BEING_CHECKED)
+				if ((channel[x][y] & mask) == PXV_BEING_CHECKED)
 					channel[x][y] = area_value;
 			}
 	}
@@ -415,7 +450,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 				if (oldx == x && oldy == y)
 					continue;
 				if (x >= 0 && y >= 0 && y < channel[0].length && x < channel.length) {
-					final int value = channel[x][y] & 0xFF;
+					final int value = channel[x][y] & mask;
 					if (value == PXV_VALID_THRESHOLD) {
 						sector_width += count+1;// value < 200 ? 200/255d : value/255d;
 						oldx = x;
@@ -475,22 +510,26 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	 * It is based on the average color of the table.
 	 */
 	private final void doThresholding() {
-		final int
-		mdb = 255 - avg_b,
-		mdr = 255 - avg_r,
-		mdg = 255 - avg_g;
+
 		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
 				// calculate red, green, blue and yellowness of the pixel at x y
 				final int
 				id = (x+y*im_width)*3,
-				re = pixels[id+2] & 0xFF,//getPixel(x,y, rgb.red),
-				gr = pixels[id+1] & 0xFF,//getPixel(x,y, rgb.green),
-				bl = pixels[id] & 0xFF;//getPixel(x,y, rgb.blue);
+				re = pixels[id+2] & mask,//getPixel(x,y, rgb.red),
+				gr = pixels[id+1] & mask,//getPixel(x,y, rgb.green),
+				bl = pixels[id] & mask,//getPixel(x,y, rgb.blue);
 				// get the positive diviation from the avarage values
-				int		dr = 255*(re-avg_r)/mdr,
-						db = 255*(bl-avg_b)/mdb,
-						dg = 255*(gr-avg_g)/mdg;
+				aver_r = back_r[x][y] & mask,
+				aver_b = back_b[x][y] & mask,
+				aver_g = back_g[x][y] & mask;
+				final int
+				mdb = 255 - aver_b,
+				mdr = 255 - aver_r,
+				mdg = 255 - aver_g;
+				int		dr = mdr == 0 ? 255 : 255*(re-aver_r)/mdr,
+						db = mdb == 0 ? 255 : 255*(bl-aver_b)/mdb,
+								dg = mdg == 0 ? 255 : 255*(gr-aver_g)/mdg;
 				// isolate only the positive values
 				if (dr < 0) dr = 0;
 				else if (dr > 255) dr = 255;
@@ -519,6 +558,95 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	}
 
 	/**
+	 * Generates background averages
+	 */
+	private final void backgRoundSub() {
+		long sumg = 0;
+		long sq_sumg = 0;
+		for (int y = start_y; y <= stop_y; y++)
+			for (int x = start_x; x <= stop_x; x++) {
+				final int id = (x+y*im_width)*3,
+					re = pixels[id+2] & mask,
+					gr = pixels[id+1] & mask,
+					bl = pixels[id] & mask,
+					value = gr - 5*re + bl;
+					sumg += value;
+					sq_sumg += value*value;
+
+			}
+		final double px_ct = (double) pixels_count,
+				iniy_avg_g = sumg / px_ct,
+				col_st_devg = sq_sumg / px_ct - iniy_avg_g * iniy_avg_g;
+		double avr = 0, avg = 0, avb = 0;
+		boolean should_i_fix = false;
+		// start averaging
+		for (int y = start_y; y <= stop_y; y++)
+			for (int x = start_x; x <= stop_x; x++) {
+
+				final int id = (x+y*im_width)*3,
+						re = pixels[id+2] & mask,
+						gr = pixels[id+1] & mask,
+						bl = pixels[id] & mask,
+						value = gr - 5*re + bl;
+				final double dvalue = value - iniy_avg_g;
+						// check st div
+						if (dvalue*dvalue < col_st_devg*back_sigma) {
+							int r = back_r[x][y] & mask,
+									g = back_g[x][y] & mask,
+									b = back_b[x][y] & mask;
+							if (r != 0 && b != 0 && g != 0) {
+								r = (r+re)/2;
+								g = (g+gr)/2;
+								b = (b+bl)/2;
+							} else {
+								r = re;
+								g = gr;
+								b = bl;
+							}
+							back_r[x][y] = (byte) r;
+							back_g[x][y] = (byte) g;
+							back_b[x][y] = (byte) b;
+							avr += r / px_ct;
+							avg += g / px_ct;
+							avb += b / px_ct;
+						} else {
+							if (back_r[x][y] == 0 && back_g[x][y] == 0 && back_b[x][y] == 0)
+								should_i_fix = true;
+						}
+			}
+
+		avg_r = (int) avr;
+		avg_g = (int) avg;
+		avg_b = (int) avb;
+		if (should_i_fix) {
+			for (int y = start_y; y <= stop_y; y++)
+				for (int x = start_x; x <= stop_x; x++)
+					if (back_r[x][y] == 0 || back_g[x][y] == 0 || back_b[x][y] == 0) {
+						back_r[x][y] = avg_r == 0 ? 1 : (byte) avg_r;
+						back_g[x][y] = avg_g == 0 ? 1 : (byte) avg_g;
+						back_b[x][y] = avg_b == 0 ? 1 : (byte) avg_b;
+					}
+			//			// gaussian filter
+			//			for (int y = start_y; y <= stop_y; y++)
+			//				for (int x = start_x; x <= stop_x; x++) {
+			//					double r = 0, g = 0, b = 0;
+			//					for (int i = -gauss_back_img_count; i <= gauss_back_img_count; i++)
+			//						for (int j = -gauss_back_img_count; j <= gauss_back_img_count; j++) {
+			//							final int xid = i+gauss_back_img_count;
+			//							final int yid = j+gauss_back_img_count;
+			//							final double gaus_f = gauss_back_img_filter[xid][yid];
+			//							r += (back_r[x][y] & mask) * gaus_f;
+			//							g += (back_g[x][y] & mask) * gaus_f;
+			//							b += (back_b[x][y] & mask) * gaus_f;
+			//						}
+			//					back_r[x][y] = (byte) r;
+			//					back_g[x][y] = (byte) g;
+			//					back_b[x][y] = (byte) b;
+			//				}
+		}
+	}
+
+	/**
 	 * Normalizes the array between 0 and 255 according to {@link #threshold_ratio}
 	 * 
 	 * @param array the input array
@@ -528,14 +656,11 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		// find global average for rough thresholding
 		double sum = 0;
 		double sq_sum = 0;
-		int max = 0;
 		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
-				int value = array[x][y] & 0xFF;
+				int value = array[x][y] & mask;
 				sum += value;
 				sq_sum += value*value;
-				if (value > max)
-					max = value;
 			}
 		final double col_mean = sum / pixels_count;
 		final double col_st_dev = Math.sqrt(sq_sum / pixels_count - col_mean * col_mean);
@@ -544,7 +669,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 
 		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
-				final int value = array[x][y] & 0xFF;
+				final int value = array[x][y] & mask;
 				final double abs = value - col_mean;
 				if ((abs > 0 ? abs : -abs) > color_sigma*col_st_dev) {
 					array[x][y] = PXV_ABOVE_THRESHOLD;
@@ -564,36 +689,13 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private final void drawArray(final byte[][] channel, final int r, final int g, final int b) {
 		for (int y = start_y; y <= stop_y; y++)
 			for (int x = start_x; x <= stop_x; x++) {
-				final double coeff = (channel[x][y] & 0xFF) / 255d;
+				final double coeff = (channel[x][y] & mask) / 255d;
 				final int nr = (int) (r*coeff),
 						ng = (int) (g*coeff),
 						nb = (int) (b*coeff);
 				if (nr != 0 || ng != 0 || nb != 0)
 					setPixel(x, y, nr, ng, nb);
 			}
-	}
-
-	/**
-	 * Find avarage color and store it into local variables
-	 * 
-	 * {@link #pixels} must be initialized beforehand!
-	 */
-	private final void average() {
-		double ag = 0, ar = 0, ab = 0;
-		for (int y = start_y; y <= stop_y; y++)
-			for (int x = start_x; x <= stop_x; x++) {
-				final int id = (x+y*im_width)*3,
-						re = pixels[id+2] & 0xFF,//getPixel(x,y, rgb.red),
-						gr = pixels[id+1] & 0xFF,//getPixel(x,y, rgb.green),
-						bl = pixels[id] & 0xFF;
-				ar += re/(double) pixels_count;
-				ag += gr/(double) pixels_count;
-				ab += bl/(double) pixels_count;
-			}
-		avg_r = (int) ar;
-		avg_g = (int) ag;
-		avg_b = (int) ab;
-
 	}
 
 	/**
@@ -658,9 +760,9 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 						final int px2y = y + j;
 						final int id = (px2x+px2y*im_width)*3;
 						final double gaus_f = gauss_img_filter[xid][yid];
-						r += (pixels[id+2] & 0xFF) * gaus_f;
-						g += (pixels[id+1] & 0xFF) * gaus_f;
-						b += (pixels[id] & 0xFF) * gaus_f;
+						r += (pixels[id+2] & mask) * gaus_f;
+						g += (pixels[id+1] & mask) * gaus_f;
+						b += (pixels[id] & mask) * gaus_f;
 					}
 				final int id = (x+y*im_width)*3; 
 				pixels[id+2] = (byte) r;
@@ -681,7 +783,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	}
 
 	// low pass filtering
-	
+
 	/**
 	 * A simple low-pass filter
 	 * @param old_value
@@ -702,7 +804,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private final static double lowPass(final double old_value, final double new_value) {
 		return lowPass(old_value, new_value, filteredAngleAmount);
 	}
-	
+
 	/**
 	 * Low pass on position
 	 * @param old_value
