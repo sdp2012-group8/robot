@@ -23,7 +23,7 @@ import sdp.common.MessageListener;
  * @author martinmarinov
  *
  */
-public class JComm implements sdp.common.Communicator {
+public class AIComm implements sdp.common.Communicator {
 	
 	// password and mac settings
 	private static final int max_retries = 6; // how many times to try connecting to brick before quitting
@@ -32,7 +32,7 @@ public class JComm implements sdp.common.Communicator {
 	
 	private static byte[] old_operate = null;
 	
-	private final static Logger LOGGER = Logger.getLogger(JComm.class .getName());
+	private final static Logger LOGGER = Logger.getLogger(AIComm.class .getName());
 
 	// variables
 	private ArrayList<MessageListener> mListener = new ArrayList<MessageListener>();
@@ -46,7 +46,7 @@ public class JComm implements sdp.common.Communicator {
 	 * @param listener the listener that will receive updates from the robot
 	 * @throws NXTCommException if a connection cannot be established
 	 */
-	public JComm() throws IOException {
+	public AIComm() throws IOException {
 		try {
 		mComm = NXTCommFactory.createNXTComm(NXTCommFactory.BLUETOOTH);
 		} catch (Exception e) {
@@ -114,7 +114,7 @@ public class JComm implements sdp.common.Communicator {
 		// notify all listeners
 		Iterator<MessageListener> ml = mListener.iterator();
 		while (ml.hasNext())
-			ml.next().receiveMessage(op, args, JComm.this);
+			ml.next().receiveMessage(op, args, AIComm.this);
 	}
 
 	/**
@@ -122,7 +122,7 @@ public class JComm implements sdp.common.Communicator {
 	 * @param op the opcode of the mssage
 	 * @param args the arguments
 	 */
-	@Override
+	//@Override
 	public void sendMessage(opcode op, byte... args) throws IOException {
 		if (op == opcode.operate)
 			if (old_operate != null && Arrays.equals(old_operate, args))

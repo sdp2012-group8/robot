@@ -16,7 +16,7 @@ import javax.swing.JLabel;
 import sdp.common.Communicator;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
-import sdp.communicator.JComm;
+import sdp.communicator.AIComm;
 import sdp.vision.Vision;
 import sdp.vision.visualinput.CameraVisualInputProvider;
 import sdp.vision.visualinput.ImageVisualInputProvider;
@@ -190,7 +190,7 @@ public class AITesterGUI {
 						mInput.setCallback(vision);
 						Communicator com;
 						try {
-							com = chckbxExecuteCommands.isSelected() ? new JComm() : null;
+							com = chckbxExecuteCommands.isSelected() ? new AIComm() : null;
 						} catch (IOException e) {
 							System.out.println("Connection with brick failed! Going into testmode");
 							chckbxExecuteCommands.setSelected(false);

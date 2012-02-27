@@ -22,9 +22,13 @@ public interface Communicator {
 				 // speed in cm per second
 				 // turning speed of robot in degrees per second
 		play_sound // no arguments
-		, rotate_kicker_stop,float_kicker
+		, rotate_kicker_stop,float_kicker, sensor
 	}
 	
+	public enum sensorType {
+		front_sonar
+	}
+		
 	/**
 	 * Asynchronously send a message to a device.
 	 * @param op the opcode {@link opcode}
