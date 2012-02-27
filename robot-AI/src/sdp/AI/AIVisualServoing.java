@@ -18,7 +18,8 @@ public class AIVisualServoing extends AI {
 	
 	private final static int coll_secs_count = 110;
 	private final static double sec_angle = 360d/coll_secs_count;
-	private final static int coll_start = 30;
+	private final static int coll_start = 25;
+	private final static int corner_coll_threshold = 3;
 
 	public AIVisualServoing(Communicator comm) {
 		super(comm);
@@ -97,21 +98,22 @@ public class AIVisualServoing extends AI {
 		//check if the ball is very close to the sides of the robot and move back 
 		final Robot robot = ai_world_state.getRobot();			
 		//might cause problems when very close to walls 
+		
 		if (Math.toDegrees(Utilities.getAngle(ai_world_state.getBallCoords(), robot.getFrontLeft(), robot.getBackLeft())) > 170
 				|| Math.toDegrees(Utilities.getAngle( ai_world_state.getBallCoords(), robot.getFrontRight(),robot.getBackRight())) > 170){
 			mComm.sendMessage(opcode.operate, (byte) -30, (byte) 0);
 		}
 
-//		if ( ((ai_world_state.getRobot().getBackRight().x < ai_world_state.getEnemyGoal().getCentre().x ) 
-//				&& (ai_world_state.getRobot().getBackRight().x > ai_world_state.getBallCoords().x)
-//					&& ai_world_state.getMyGoalLeft())
-//						|| ((ai_world_state.getRobot().getBackRight().x > ai_world_state.getEnemyGoal().getCentre().x)
-//							&& (ai_world_state.getRobot().getBackRight().x < ai_world_state.getBallCoords().x))
-//						 		&& !ai_world_state.getMyGoalLeft()){
-//			System.out.println("I'm between goal and ball");
-//			navigateBehindBall();
-//		}
-		
+
+		if ( ((ai_world_state.getRobot().getCoords().x > ai_world_state.getBallCoords().x)
+					&& ai_world_state.getMyGoalLeft())
+						|| ((ai_world_state.getRobot().getCoords().x < ai_world_state.getBallCoords().x)
+						 	&& !ai_world_state.getMyGoalLeft()) ){
+			System.out.println("I'm between goal and ball");
+			navigateBehindBall();
+		}
+				
+
 		// check whether to go into got_ball mode
 		if (Math.abs(turning_angle) < TURNING_ACCURACY && ai_world_state.getDistanceToBall() < 10) {
 			//ai_world_state.setMode(mode.sit);
@@ -184,12 +186,21 @@ public class AIVisualServoing extends AI {
 		//TODO: Whenever we are between the enemy goal and the ball, get the ball and re-orientate ourselves towards the enemy goal
 		System.out.println("In navigateBehindBall");
 		
-		Vector2D dir = Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(ai_world_state.getRobot().getCoords()));
-		byte forward_speed = (byte) Utilities.normaliseToByte((15+(ai_world_state.getDistanceToBall()/40)*25));
+		Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
+		Vector2D offset = new Vector2D(10,0);
+		Vector2D robotCords = new Vector2D(ai_world_state.getRobot().getCoords());
+		Vector2D dir = Vector2D.subtract(Vector2D.add(ball, offset), robotCords);
+		double newDis = dir.getLength();
+		
+		//byte forward_speed = (byte) Utilities.normaliseToByte((15+(newDis/40)*25));
+		byte forward_speed = (byte) 30;
 		double turning_angle = Utilities.normaliseAngle(-ai_world_state.getRobot().getAngle() + Vector2D.getDirection(dir));
 		
-		
-		if (ai_world_state.getRobot().getBackRight().x < (ai_world_state.getBallCoords().x )){
+		if((ai_world_state.getRobot().getCoords().x > ai_world_state.getBallCoords().x
+			 && ai_world_state.getMyGoalLeft())
+			 	|| (ai_world_state.getRobot().getCoords().x < ai_world_state.getBallCoords().x
+					 && !ai_world_state.getMyGoalLeft()) ){
+			System.out.println("I'm in the navigateLoop");
 			mComm.sendMessage(opcode.operate, forward_speed, (byte) Utilities.normaliseToByte(Utilities.normaliseAngle(turning_angle)));
 		}
 		
@@ -217,42 +228,63 @@ public class AIVisualServoing extends AI {
 	 * Avoid obstacles using sectors. This method is only called if ball cannot be reached directly!
 	 */
 	public void avoidObstacle() {
+
+		final Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
 		
 		// get relative ball coordinates
-		Vector2D ball_rel = Tools.getLocalVector(ai_world_state.getRobot(), new Vector2D(ai_world_state.getBallCoords()));
+		final Vector2D ball_rel = Tools.getLocalVector(ai_world_state.getRobot(), ball);
 		
-		// get direction of ball
-		double ball_dir = Vector2D.getDirection(ball_rel);
+		// get direction and distance to ball
+		final double ball_dir = Vector2D.getDirection(ball_rel);
+		final double ball_dist = ball_rel.getLength();
 		
 		// if you go directly towards the ball, at which closest point are we going to be in a collision
-		double ball_coll_dist = Tools.reachability2(ai_world_state, new Vector2D(ai_world_state.getBallCoords()), ai_world_state.getMyTeamBlue());
+		final double ball_left_coll_dist = Tools.reachabilityLeft2(ai_world_state, ball, ai_world_state.getMyTeamBlue());
+		final double ball_right_coll_dist = Tools.reachabilityRight2(ai_world_state, ball, ai_world_state.getMyTeamBlue());
+		final double ball_coll_dist = Math.min(ball_left_coll_dist, ball_right_coll_dist);
+		final double ball_vis_dist = Tools.visibility2(ai_world_state, ball, ai_world_state.getMyTeamBlue());
 		
 		// the angle that we need to turn in order to avoid hitting our left or right corner at the obstacle
-		double turn_ang_more = Math.toDegrees(Math.atan2(Robot.LENGTH_CM, ball_coll_dist));
+		final double turn_ang_more = Math.toDegrees(Math.atan2(Robot.LENGTH_CM, ball_coll_dist));
 		
 		// get the sectors
-		double[] sectors = Tools.getSectors(ai_world_state, ai_world_state.getMyTeamBlue(), 5, coll_secs_count, false);
+		final double[] sectors = Tools.getSectors(ai_world_state, ai_world_state.getMyTeamBlue(), 5, coll_secs_count, false);
 		
 		// sectors[0] starts at at -90
-		double min_diff = 999;
+		double temp = 999;
 		double turning_angle = 999;
 		
-		// find the sector that is closest to the ball but has a collision distance greater than the ball_coll_dist
-		for (int i = 0; i < sectors.length; i++) {
-			if (sectors[i] > ball_coll_dist + Robot.LENGTH_CM) {
-				double ang = Utilities.normaliseAngle(((-90+i*sec_angle)+(-90+(i+1)*sec_angle))/2);
-				double diff = Utilities.normaliseAngle(ang-ball_dir);
-				if (Math.abs(diff) < Math.abs(min_diff)) {
-					min_diff = diff;
-					turning_angle = ang + (diff > 0 ? turn_ang_more : -turn_ang_more);
+		// path planning if obstacle is away
+		
+		if (ball_vis_dist < ball_dist) {
+			// if ball is not visible
+			// find the sector that is closest to the ball but has a collision distance greater than the ball_coll_dist
+			for (int i = 0; i < sectors.length; i++) {
+				if (sectors[i] > ball_coll_dist+Robot.LENGTH_CM/2) {
+					double ang = Utilities.normaliseAngle(((-90+i*sec_angle)+(-90+(i+1)*sec_angle))/2);
+					double diff = Utilities.normaliseAngle(ang-ball_dir);
+					if (Math.abs(diff) < Math.abs(temp)) {
+						temp = diff;
+						turning_angle = ang + (ball_left_coll_dist < ball_right_coll_dist ? turn_ang_more : -turn_ang_more);
+					}
 				}
 			}
+
+		} else {
+			// if ball is visible
+			turning_angle = ball_dir + (ball_left_coll_dist < ball_right_coll_dist ? turn_ang_more : -turn_ang_more);
 		}
 		
-		// if we have no way of reaching the ball
+		// if we have no way of reaching the ball go into the most free direction
 		if (turning_angle == 999) {
-			System.out.println("I am surrounded! "+ball_coll_dist+" ball is "+ball_rel.getLength());
-			return;
+			temp = 0;
+			for (int i = 0; i < sectors.length; i++) {
+				if (sectors[i] > temp) {
+					temp = sectors[i];
+					double ang = Utilities.normaliseAngle(((-90+i*sec_angle)+(-90+(i+1)*sec_angle))/2);
+					turning_angle = ang + (ball_left_coll_dist < ball_right_coll_dist ? turn_ang_more : -turn_ang_more);
+				}
+			}
 		} 
 		
 		// set forward speed
@@ -276,7 +308,6 @@ public class AIVisualServoing extends AI {
 				if (speed_coeff < -1)
 					speed_coeff = -1;
 				forward_speed *= speed_coeff;
-				turning_angle += turning_angle > 0 ? 10 : -10; // accelerate turning
 			}
 		} else if (back_dist < coll_start) {
 			if (forward_speed <= 0) {
@@ -287,8 +318,26 @@ public class AIVisualServoing extends AI {
 				if (speed_coeff < -1)
 					speed_coeff = -1;
 				forward_speed *= speed_coeff;
-				turning_angle += turning_angle > 0 ? 10 : -10; // accelerate turning
 			}
+		}
+		
+		// check if either of the edges are in collision
+		final Vector2D
+				front_left = Tools.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getBackLeft()),Tools.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
+				front_right = Tools.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getBackRight()),Tools.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
+				back_left = Tools.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontLeft()),Tools.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
+				back_right = Tools.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontRight()),Tools.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords())));
+		final boolean
+				front_left_coll = front_left.getLength() <= corner_coll_threshold,
+				front_right_coll = front_right.getLength() <= corner_coll_threshold,
+				back_left_coll = back_left.getLength() <= corner_coll_threshold,
+				back_right_coll = back_right.getLength() <= corner_coll_threshold,
+				any_collision = front_left_coll || front_right_coll || back_left_coll || back_right_coll;
+		
+		if (any_collision) {
+			//System.out.println("Collision "+(front_left_coll || front_right_coll ? "FRONT" : "BACK")+" "+(front_left_coll || back_left_coll ? "LEFT" : "RIGHT"));
+			forward_speed = (byte) (front_left_coll || front_right_coll ? -35 : 35);
+			turning_angle += front_left_coll || back_left_coll ? -10 : 10;
 		}
 		
 		// acclerate all turning
@@ -297,7 +346,7 @@ public class AIVisualServoing extends AI {
 		// normalize
 		forward_speed = normaliseSpeed(forward_speed);
 		turning_angle =  Utilities.normaliseToByte(Utilities.normaliseAngle(turning_angle));
-
+		
 		// send command
 		try {
 			mComm.sendMessage(opcode.operate, forward_speed, (byte) (turning_angle));
