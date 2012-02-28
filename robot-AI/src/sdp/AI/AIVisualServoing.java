@@ -47,7 +47,8 @@ public class AIVisualServoing extends AI {
 		Vector2D dir = Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(ai_world_state.getRobot().getCoords()));
 		// Keep the turning angle between -180 and 180
 		double turning_angle = Utilities.normaliseAngle(-ai_world_state.getRobot().getAngle() + Vector2D.getDirection(dir));
-
+		System.out.println(turning_angle);
+		
 		// calculates speed formula:
 		// speed_when_robot_next_to_ball+(distance_to_ball/max_distance)*speed_when_over_max_distance
 		// every distance between 0 and max_distance will be mapped between speed_when_robot_next_to_ball and speed_when_over_max_distance
@@ -88,7 +89,11 @@ public class AIVisualServoing extends AI {
 			forward_speed = -15;
 		}
 		//forward_speed = 0;
-
+		
+		if(ai_world_state.getDistanceToBall() < 20 && (Math.abs(turning_angle) > 10 )){
+			forward_speed = 0;
+			System.out.println("Distance is under 20 and angle over 10.");
+		}
 
 
 
@@ -114,9 +119,11 @@ public class AIVisualServoing extends AI {
 
 
 		if ( ((ai_world_state.getRobot().getCoords().x > ai_world_state.getBallCoords().x)
-					&& ai_world_state.getMyGoalLeft())
+					&& ai_world_state.getMyGoalLeft()
+						&& ai_world_state.getBallCoords().x > 10)
 						|| ((ai_world_state.getRobot().getCoords().x < ai_world_state.getBallCoords().x)
-						 	&& !ai_world_state.getMyGoalLeft()) ){
+						 	&& !ai_world_state.getMyGoalLeft()
+								&& ai_world_state.getBallCoords().x < 230)){
 			//System.out.println("I'm between goal and ball");
 			navigateBehindBall();
 			
@@ -174,7 +181,11 @@ public class AIVisualServoing extends AI {
 
 			} else {
 				// Can't see the goal
-				
+				if(ai_world_state.goalImage()){
+					System.out.println("can see imaginary goal ");
+					mComm.sendMessage(opcode.kick);
+				}
+				else{
 				if (ai_world_state.getRobot().getCoords().y > Tools.PITCH_HEIGHT_CM/2 + 20){
 					// Robot is closest to bottom
 					mComm.sendMessage(opcode.operate, (byte) 10, (byte) -80);
@@ -182,7 +193,7 @@ public class AIVisualServoing extends AI {
 					// Robot is closest to top
 					mComm.sendMessage(opcode.operate, (byte) 10, (byte) 80);
 				}
-
+				}
 			}
 		}
 	}
@@ -224,15 +235,7 @@ public class AIVisualServoing extends AI {
 			System.out.println("I'm in the navigateLoop");
 			mComm.sendMessage(opcode.operate, forward_speed, (byte) Utilities.normaliseToByte(Utilities.normaliseAngle(turning_angle)));
 		}
-		else{
-			
-			System.out.println("In else");
-			Vector2D newDir = Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(ai_world_state.getRobot().getCoords()));
-			double newTurning_angle = Utilities.normaliseAngle(-ai_world_state.getRobot().getAngle() + Vector2D.getDirection(newDir));
-			
-			mComm.sendMessage(opcode.operate, (byte)0, (byte) Utilities.normaliseToByte(Utilities.normaliseAngle(newTurning_angle)));
-			
-		}
+
 	}
 
 	/**
@@ -385,12 +388,12 @@ public class AIVisualServoing extends AI {
 	
 	/**
 	 * Play ball from walls
-	 */
-	public void kickWithWalls() throws IOException{
-		boolean shootWithWall = ai_world_state.goalImage();
-		System.out.println("can see imaginary goal " + shootWithWall);
-		mComm.sendMessage(opcode.kick);
-	}
+//	 */
+//	public void kickWithWalls() throws IOException{
+//		boolean shootWithWall = ai_world_state.goalImage();
+//		System.out.println("can see imaginary goal " + shootWithWall);
+//		mComm.sendMessage(opcode.kick);
+//	}
 	
 	/**
 	 * Gives the ID of a given angle. Angle is wrt to (1, 0) local vector on robot (i.e. 0 is forward)
