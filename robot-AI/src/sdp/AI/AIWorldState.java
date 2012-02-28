@@ -127,9 +127,18 @@ public class AIWorldState extends WorldState {
 	}
 	
 	public double calculateShootAngle() {
-		return Math.min(anglebetween(getRobot().getCoords(), enemy_goal.getTop()), 
-				Math.min(anglebetween(getRobot().getCoords(), enemy_goal.getCentre()), 
-						anglebetween(getRobot().getCoords(), enemy_goal.getBottom())));
+		double topmin = anglebetween(getRobot().getCoords(), enemy_goal.getTop());
+		double midmin = anglebetween(getRobot().getCoords(), enemy_goal.getCentre());
+		double botmin = anglebetween(getRobot().getCoords(), enemy_goal.getBottom());
+		
+		if (Math.abs(topmin) < Math.abs(midmin) && Math.abs(topmin) < Math.abs(botmin) && Utilities.isPathClear(getBallCoords(), enemy_goal.getTop(), enemy_robot)) {
+			return topmin;
+		} else if (Math.abs(midmin) < Math.abs(botmin) && Utilities.isPathClear(getBallCoords(), enemy_goal.getCentre(), enemy_robot)) {
+			return midmin;
+		} else {
+			return botmin;
+		}
+		
 	}
 	
 	/**
