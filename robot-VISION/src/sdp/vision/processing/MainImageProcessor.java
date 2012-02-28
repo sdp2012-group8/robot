@@ -28,10 +28,10 @@ public class MainImageProcessor extends BaseImageProcessor {
 	/** How many directions the outline distance calculations will use. */
 	private static final int OUTLINE_ANGLE_COUNT = 360;
 	/** The size of the direction cone angle. */
-	private static final int DIRECTION_CONE_ANGLE = 40;
+	private static final int DIRECTION_CONE_ANGLE = 30;
 	
 	/** Polygon approximation error (arg in cvApproxPoly). */
-	private static final double POLY_APPROX_ERROR = 0.02;
+	private static final double POLY_APPROX_ERROR = 0.0001;
 	
 	/** Length of the direction line. */
 	private static final int DIR_LINE_LENGTH = 40;
@@ -276,7 +276,8 @@ public class MainImageProcessor extends BaseImageProcessor {
             	
 	            for (int j = -(DIRECTION_CONE_ANGLE / 2); j <= (DIRECTION_CONE_ANGLE / 2); ++j) {
 	            	int k = (i + j + OUTLINE_ANGLE_COUNT) % OUTLINE_ANGLE_COUNT;
-	            	curArea += dists[k] * (DIRECTION_CONE_ANGLE - Math.abs(j) + 5);
+	            	int w = DIRECTION_CONE_ANGLE / 2 - Math.abs(j);
+	            	curArea += dists[k] * w;
 	            }
 	            
 	            if (curArea > bestArea) {
