@@ -3,12 +3,12 @@
 require_relative "gui"
 
 localfolder = File.expand_path(File.dirname(__FILE__))
-imagefolder = "data/testImages/"
+imagefolder = "data/friendly/"
 File.open('./xml/imagedata.xml','w') do |f|
   f.puts "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
   f.puts "<annotations>"
   Dir.entries("#{localfolder}/#{imagefolder}").each do |image|
-    next if (!image.include? ".png")
+    next if (!image.include? ".jpg")
     f.puts "<image>"
     f.puts "<filename>"
     f.puts "#{imagefolder}#{image}"
