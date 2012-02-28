@@ -262,10 +262,10 @@ public class AIVisualServoing extends AI {
 		if (!interceptBall.equals(null)){
 			
 			if((interceptBall.y < ai_world_state.getMyGoal().getBottom().y)  && (interceptBall.y > ai_world_state.getMyGoal().getTop().y)){
-				 if ((interceptBall.y > ai_world_state.getRobot().getCoords().y + 2)  ){
+				 if ((interceptBall.y > ai_world_state.getRobot().getCoords().y + 0.5)  ){
 					byte forward_speed = (byte) -20; //Utilities.normaliseToByte((15+(interceptDistance.getLength()/40)*25));
 					mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
-				} else if((interceptBall.y < ai_world_state.getRobot().getCoords().y - 2)) {
+				} else if((interceptBall.y < ai_world_state.getRobot().getCoords().y - 0.5)) {
 					byte forward_speed = (byte) 20; //Utilities.normaliseToByte(-(15+(interceptDistance.getLength()/40)*25));
 					mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
 				}
