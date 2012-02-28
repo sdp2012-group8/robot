@@ -167,6 +167,10 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		robotConnectButton.setText("Disconnect");
 	}
 	
+	private void updateGoalOrColor() {
+		aiInstance.updateGoalOrTeam(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected());
+	}
+	
 	/**
 	 * Disconnect from our robot.
 	 */
@@ -1216,7 +1220,11 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		comboAI.setBounds(662, 342, 117, 24);
 		for (int i = 0; i < mode.values().length; i++)
 			comboAI.addItem(mode.values()[i]);
-		robotSettingPanel.add(comboAI);
+		GridBagConstraints gbc_comboAI = new GridBagConstraints();
+		gbc_comboAI.insets = new Insets(0, 0, 5, 5);
+		gbc_comboAI.gridx = 1;
+		gbc_comboAI.gridy = 0;
+		robotSettingPanel.add(comboAI, gbc_comboAI);
 		
 		JButton btnChaseBall = new JButton("Change State");
 		btnChaseBall.addActionListener(new ActionListener() {
@@ -1225,7 +1233,22 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			}
 		});
 		btnChaseBall.setBounds(662, 378, 117, 25);
-		robotSettingPanel.add(btnChaseBall);
+		GridBagConstraints gbc_btnChaseBall = new GridBagConstraints();
+		gbc_btnChaseBall.insets = new Insets(0, 0, 5, 0);
+		gbc_btnChaseBall.gridx = 2;
+		gbc_btnChaseBall.gridy = 0;
+		robotSettingPanel.add(btnChaseBall, gbc_btnChaseBall);
+		
+		btnChangeGateOr = new JButton("Change gate or color");
+		btnChangeGateOr.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				updateGoalOrColor();
+			}
+		});
+		GridBagConstraints gbc_btnChangeGateOr = new GridBagConstraints();
+		gbc_btnChangeGateOr.gridx = 2;
+		gbc_btnChangeGateOr.gridy = 7;
+		robotSettingPanel.add(btnChangeGateOr, gbc_btnChangeGateOr);
 	}
 	
 	
@@ -1320,5 +1343,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JTextField p2Textfield;
 	private JLabel intristicLabel;
 	private JLabel distortionLabel;
+	private JButton btnChangeGateOr;
 	
 }

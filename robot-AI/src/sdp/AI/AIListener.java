@@ -24,6 +24,7 @@ public abstract class AIListener extends WorldStateProvider {
 	protected WorldState world_state = null;
 	
 	protected AIWorldState ai_world_state;
+	private boolean my_goal_left, my_team_blue;
 	
 	// this is the amount of filtering to be done
 	// higher values mean that the new data will "weigh more"
@@ -49,7 +50,9 @@ public abstract class AIListener extends WorldStateProvider {
 	 * @param my_team_blue true if my team is blue, false if my team is yellow
 	 * @param my_goal_left true if my goal is on the left of camera, false otherwise
 	 */
-	public void start(final boolean my_team_blue, final boolean my_goal_left) {
+	public void start(final boolean is_my_team_blue, final boolean is_my_goal_left) {
+		this.my_team_blue = is_my_team_blue;
+		this.my_goal_left = is_my_goal_left;
 		mVisionThread = new Thread() {
 			@Override
 			public void run() {
@@ -66,7 +69,7 @@ public abstract class AIListener extends WorldStateProvider {
 								state.getWorldImage());
 					}
 					
-					ai_world_state.update(world_state);
+					ai_world_state.update(world_state, my_team_blue, my_goal_left);
 					
 					// pass coordinates to decision making logic
 					setChanged();
@@ -77,6 +80,11 @@ public abstract class AIListener extends WorldStateProvider {
 			}
 		};
 		mVisionThread.start();
+	}
+	
+	public void updateGoalOrTeam(final boolean is_my_team_blue, final boolean is_my_goal_left) {
+		this.my_team_blue = is_my_team_blue;
+		this.my_goal_left = is_my_goal_left;
 	}
 
 

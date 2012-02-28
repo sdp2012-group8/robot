@@ -1,10 +1,6 @@
 package sdp.AI;
 
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 import sdp.common.Goal;
 import sdp.common.Robot;
@@ -19,10 +15,10 @@ public class AIWorldState extends WorldState {
 		chase_ball, sit, got_ball, dribble
 	}
 	
-	private final boolean my_team_blue;
-	private final boolean my_goal_left;
-	private final Goal enemy_goal;
-	private final Goal my_goal;
+	private boolean my_team_blue;
+	private boolean my_goal_left;
+	private Goal enemy_goal;
+	private Goal my_goal;
 	private final static double GOAL_SIZE = 60; // cm
 	
 	//changing variables
@@ -50,6 +46,13 @@ public class AIWorldState extends WorldState {
 		
 	public AIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
 		super(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
+
+		
+		update(world_state, my_team_blue, my_goal_left);
+	}
+	
+	public void update(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
+		
 		this.my_team_blue = my_team_blue;
 		this.my_goal_left = my_goal_left;
 
@@ -60,11 +63,6 @@ public class AIWorldState extends WorldState {
 			enemy_goal = new Goal(new Point2D.Double(0 , Tools.GOAL_Y_CM ));
 			my_goal = new Goal(new Point2D.Double(Tools.PITCH_WIDTH_CM , Tools.GOAL_Y_CM ));
 		}
-		
-		update(world_state);
-	}
-	
-	public void update(WorldState world_state) {
 				
 		super.update(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
 		//update variables
