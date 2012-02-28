@@ -233,8 +233,8 @@ public class AIVisualServoing extends AI {
 		// Our robot will be placed like shown bellow:
 		//
 		// *----------------------------------------------------------*
-		// |OO														  |
-		// |OO														  |
+		// |														  |
+		// |														  |
 		// |_														 _|
 		// |  _____		 ______										  |
 		// |  |	| |		|_____||									  |
@@ -242,8 +242,8 @@ public class AIVisualServoing extends AI {
 		// |  |___|		         									  |
 		// |														  |
 		// |_														 _|
-		// | OO														  |
-		// | OO                                                         |
+		// |	     												  |
+		// |                                                          |
 		// *----------------------------------------------------------*
 		//
 		//
@@ -254,21 +254,29 @@ public class AIVisualServoing extends AI {
 		// Make our robot move to that intersection.
 		//
 		//
-		Vector2D enemyDirection=Vector2D.subtract(new Vector2D (ai_world_state.getEnemyRobot().getFrontCenter()),new Vector2D(ai_world_state.getEnemyRobot().getCoords()));
-		Point2D.Double interceptBall= Utilities.intersection(enemyDirection, ai_world_state.getBallCoords(), ai_world_state.getRobot().getCoords(), ai_world_state.getRobot().getFrontCenter());
-
+		
+		Point2D.Double interceptBall= Utilities.intersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getRobot().getCoords(), ai_world_state.getRobot().getFrontCenter());
+		System.out.println("InterceptDistance: " + interceptBall);
+		System.out.println("Our robot's y: " + ai_world_state.getRobot().getCoords().y);
+		
 		if (!interceptBall.equals(null)){
-			Vector2D interceptDistance = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(interceptBall));
-
-			if (interceptDistance.y < ai_world_state.getRobot().getCoords().y){
-				byte forward_speed = (byte) 40; //Utilities.normaliseToByte((15+(interceptDistance.getLength()/40)*25));
-				mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
-			} else {
-				byte forward_speed = (byte) -40; //Utilities.normaliseToByte(-(15+(interceptDistance.getLength()/40)*25));
-				mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
+			
+			if((interceptBall.y < ai_world_state.getMyGoal().getBottom().y)  && (interceptBall.y > ai_world_state.getMyGoal().getTop().y)){
+				 if ((interceptBall.y > ai_world_state.getRobot().getCoords().y + 2)  ){
+					byte forward_speed = (byte) -20; //Utilities.normaliseToByte((15+(interceptDistance.getLength()/40)*25));
+					mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
+				} else if((interceptBall.y < ai_world_state.getRobot().getCoords().y - 2)) {
+					byte forward_speed = (byte) 20; //Utilities.normaliseToByte(-(15+(interceptDistance.getLength()/40)*25));
+					mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
+				}
 			}
-
+			else
+			{
+				mComm.sendMessage(opcode.operate, (byte) 0, (byte) 0);
+			}
+			
 		}
+		
 	}
 
 	/**
