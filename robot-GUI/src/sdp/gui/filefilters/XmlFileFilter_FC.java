@@ -10,9 +10,9 @@ import javax.swing.filechooser.FileFilter;
  * 
  * @author Gediminas Liktaras
  */
-public class XmlFileFilter extends FileFilter {
+public class XmlFileFilter_FC extends FileFilter {
 
-	/* (non-Javadoc)
+	/**
 	 * @see javax.swing.filechooser.FileFilter#accept(java.io.File)
 	 */
 	@Override
@@ -29,7 +29,7 @@ public class XmlFileFilter extends FileFilter {
 		return false;
 	}
 
-	/* (non-Javadoc)
+	/**
 	 * @see javax.swing.filechooser.FileFilter#getDescription()
 	 */
 	@Override
