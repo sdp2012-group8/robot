@@ -21,7 +21,7 @@ import sdp.common.FPSCounter;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.communicator.AIComm;
-import sdp.gui.filefilters.XmlFileFilter;
+import sdp.gui.filefilters.XmlFileFilter_FC;
 import sdp.vision.Vision;
 import sdp.vision.processing.ImageProcessorConfig;
 
@@ -106,7 +106,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		fileChooser = new JFileChooser("../data/Vision Configurations");
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		fileChooser.setAcceptAllFileFilterUsed(false);
-		fileChooser.addChoosableFileFilter(new XmlFileFilter());
+		fileChooser.addChoosableFileFilter(new XmlFileFilter_FC());
 		
 		setSize(new Dimension(1050, 550));
 		setTitle(WINDOW_TITLE);
@@ -184,6 +184,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 * Load the vision system configuration, selected by user.
 	 */
 	private void loadConfiguration() {
+		fileChooser.setDialogTitle("Load configuration");
 		int retValue = fileChooser.showOpenDialog(this);
 		
 		if (retValue == JFileChooser.APPROVE_OPTION) {
@@ -262,7 +263,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	/**
 	 * Save the current vision configuration into a file.
 	 */
-	private void saveConfiguration() {		
+	private void saveConfiguration() {
+		fileChooser.setDialogTitle("Save configuration");
 		int retValue = fileChooser.showSaveDialog(this);
 		
 		if (retValue == JFileChooser.APPROVE_OPTION) {
