@@ -6,5 +6,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/robot-AI"/>
 	<classpathentry kind="lib" path="/robot-COMMON/lib/neuroph-2.6.jar"/>
 	<classpathentry kind="lib" path="/robot-COMMON/lib/encog-engine-2.5.0.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/robot-PC"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

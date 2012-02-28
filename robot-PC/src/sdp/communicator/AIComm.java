@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
@@ -22,14 +23,16 @@ import sdp.common.MessageListener;
  * @author martinmarinov
  *
  */
-public class JComm implements sdp.common.Communicator {
+public class AIComm implements sdp.common.Communicator {
 	
 	// password and mac settings
 	private static final int max_retries = 6; // how many times to try connecting to brick before quitting
 	private static final String friendly_name = "Ball-E";
 	private static final String mac_of_brick = "00:16:53:0A:5C:22";
 	
-	private final static Logger LOGGER = Logger.getLogger(JComm.class .getName());
+	private static byte[] old_operate = null;
+	
+	private final static Logger LOGGER = Logger.getLogger(AIComm.class .getName());
 
 	// variables
 	private ArrayList<MessageListener> mListener = new ArrayList<MessageListener>();
@@ -43,7 +46,7 @@ public class JComm implements sdp.common.Communicator {
 	 * @param listener the listener that will receive updates from the robot
 	 * @throws NXTCommException if a connection cannot be established
 	 */
-	public JComm() throws IOException {
+	public AIComm() throws IOException {
 		try {
 		mComm = NXTCommFactory.createNXTComm(NXTCommFactory.BLUETOOTH);
 		} catch (Exception e) {
@@ -111,7 +114,7 @@ public class JComm implements sdp.common.Communicator {
 		// notify all listeners
 		Iterator<MessageListener> ml = mListener.iterator();
 		while (ml.hasNext())
-			ml.next().receiveMessage(op, args, JComm.this);
+			ml.next().receiveMessage(op, args, AIComm.this);
 	}
 
 	/**
@@ -119,8 +122,13 @@ public class JComm implements sdp.common.Communicator {
 	 * @param op the opcode of the mssage
 	 * @param args the arguments
 	 */
-	@Override
+	//@Override
 	public void sendMessage(opcode op, byte... args) throws IOException {
+		if (op == opcode.operate)
+			if (old_operate != null && Arrays.equals(old_operate, args))
+				return;
+			else
+				old_operate = args;
 		// send a message to device
 		os.write(op.ordinal()); // write opcode
 		os.write(args.length); // write number of args

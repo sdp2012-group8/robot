@@ -13,11 +13,10 @@ import javax.swing.JRadioButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
-import sdp.AI.AI.mode;
 import sdp.common.Communicator;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
-import sdp.communicator.JComm;
+import sdp.communicator.AIComm;
 import sdp.vision.Vision;
 import sdp.vision.visualinput.CameraVisualInputProvider;
 import sdp.vision.visualinput.ImageVisualInputProvider;
@@ -44,7 +43,7 @@ public class AITesterGUI {
 
 	private JFrame frmAlphaTeamAi;
 	private boolean running = false;
-	private AI mAI;
+	private AIMaster mAI;
 	private VisualInputProvider mInput = null;
 	private WorldState lastWS = null;
 
@@ -191,13 +190,13 @@ public class AITesterGUI {
 						mInput.setCallback(vision);
 						Communicator com;
 						try {
-							com = chckbxExecuteCommands.isSelected() ? new JComm() : null;
+							com = chckbxExecuteCommands.isSelected() ? new AIComm() : null;
 						} catch (IOException e) {
 							System.out.println("Connection with brick failed! Going into testmode");
 							chckbxExecuteCommands.setSelected(false);
 							com = null;
 						}
-						mAI = new AIVisualServoing(com, vision);
+						mAI = new AIMaster(com, vision, AIMaster.AIMode.visual_servoing);
 						mInput.startCapture();
 						mAI.start(rdbtnBlue.isSelected(), rdbtnLeft.isSelected());
 						final WorldStateObserver obs = new WorldStateObserver(mAI);
@@ -228,7 +227,7 @@ public class AITesterGUI {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				mAI.setMode(mode.chase_ball);
+				mAI.setMode(AIWorldState.mode.chase_ball);
 			}
 			
 		});

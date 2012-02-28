@@ -18,13 +18,13 @@ public class Test implements MessageListener {
 	
 	public Test() throws IOException, InterruptedException{
 		Communicator my = null;
-		my = new JComm();
+		my = new AIComm();
 		my.registerListener(this); // initialize bluetooth communicator
 		// send move message
-		my.sendMessage(opcode.move, (byte)2);
+		//my.sendMessage(opcode.move, (byte)2);
 		Thread.sleep(12000);
 		// after 12 seconds send an exit message
-		my.sendMessage(opcode.exit);
+		//my.sendMessage(opcode.exit);
 	}
 
 	@Override

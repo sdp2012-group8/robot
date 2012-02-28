@@ -14,9 +14,8 @@ import java.awt.event.MouseMotionListener;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import sdp.AI.AI;
-import sdp.AI.AI.mode;
-import sdp.AI.AIVisualServoing;
+import sdp.AI.AIMaster;
+import sdp.AI.AIWorldState.mode;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.Tools;
@@ -44,16 +43,16 @@ import javax.swing.DefaultComboBoxModel;
  */
 public class SimTesterGUI {
 
-	private static final double placement_right = 20; // in cm
-	private static final double placement_left = Simulator.pitch_width_cm - placement_right; // in cm
+	private static final double PLACEMENT_LEFT = 20; // in cm
+	private static final double PLACEMENT_RIGHT = Simulator.PITCH_WIDTH_CM - PLACEMENT_LEFT; // in cm
 	
 	private JFrame frmAlphaTeamSimulator;
 	
 	private WorldState lastWS = null;
 	
-	private AI mAI;
+	private AIMaster mAI;
 	 //will be used for the opponent(yellow) robot
-	private AI opponentAI;
+	private AIMaster opponentAI;
 	
 	private Simulator mSim;
 	private Communicator mComm;
@@ -111,11 +110,11 @@ public class SimTesterGUI {
 		combo_team.setModel(new DefaultComboBoxModel(new String[] {"ME = Blue", "ME = Yellow"}));
 		combo_team.setBounds(662, 47, 117, 24);
 		frmAlphaTeamSimulator.getContentPane().add(combo_team);
-		
-		final JComboBox combo_goal = new JComboBox();
-		combo_goal.setModel(new DefaultComboBoxModel(new String[] {"ME : AI", "AI : ME"}));
-		combo_goal.setBounds(662, 83, 117, 24);
-		frmAlphaTeamSimulator.getContentPane().add(combo_goal);
+//		
+//		final JComboBox combo_goal = new JComboBox();
+//		combo_goal.setModel(new DefaultComboBoxModel(new String[] {"ME : AI", "AI : ME"}));
+//		combo_goal.setBounds(662, 83, 117, 24);
+//		frmAlphaTeamSimulator.getContentPane().add(combo_goal);
 		
 		panel = new JPanel() {
 			private static final long serialVersionUID = 8430961287318430359L;
@@ -199,7 +198,8 @@ public class SimTesterGUI {
 			public void actionPerformed(ActionEvent arg0) {
 				btnConnect.setText("Wait...");
 				btnConnect.setEnabled(false);
-				Connect(combo_team.getSelectedIndex() == 0, combo_goal.getSelectedIndex() != 0);
+				//Connect(combo_team.getSelectedIndex() == 0, combo_goal.getSelectedIndex() == 0);
+				Connect(combo_team.getSelectedIndex() == 0, true);
 				btnConnect.setText("Ready!");
 			}
 		});
@@ -209,8 +209,8 @@ public class SimTesterGUI {
 		
 		final JComboBox comboYellowAI = new JComboBox();
 		comboYellowAI.setBounds(662, 379, 117, 24);
-		for (int i = 0; i < AI.mode.values().length; i++)
-			comboYellowAI.addItem(AI.mode.values()[i]);
+		for (int i = 0; i < mode.values().length; i++)
+			comboYellowAI.addItem(mode.values()[i]);
 		frmAlphaTeamSimulator.getContentPane().add(comboYellowAI);
 		
 		JButton btnChangeYellowAI = new JButton("Change Yellow AI");
@@ -280,8 +280,8 @@ public class SimTesterGUI {
 		
 		final JComboBox comboBlueAI = new JComboBox();
 		comboBlueAI.setBounds(662, 299, 117, 27);
-		for (int i = 0; i < AI.mode.values().length; i++)
-			comboBlueAI.addItem(AI.mode.values()[i]);
+		for (int i = 0; i < mode.values().length; i++)
+			comboBlueAI.addItem(mode.values()[i]);
 		frmAlphaTeamSimulator.getContentPane().add(comboBlueAI);
 		
 		JButton btnChangeBlueAI = new JButton("Change Blue AI");
@@ -327,31 +327,46 @@ public class SimTesterGUI {
 		});
 	}
 	
-	private void Connect(boolean blue_selected, boolean my_door_right) {
+	private void Connect(boolean blue_selected, boolean my_goal_left) {
 		mComm = new VBrick();
 		opponentComm = new VBrick();
 		mSim = new Simulator();
 
 		final WorldStateObserver obs = new WorldStateObserver(mSim);
 		
-		blue_placement = blue_selected ? (my_door_right ? placement_left : placement_right) : (my_door_right ? placement_right : placement_left);
-		yellow_placement = blue_placement == placement_left ? placement_right : placement_left;
-	
+		if (blue_selected) {
+			if (my_goal_left) {
+				blue_placement = PLACEMENT_LEFT;
+				yellow_placement = PLACEMENT_RIGHT;
+			} else {
+				blue_placement = PLACEMENT_RIGHT;
+				yellow_placement = PLACEMENT_LEFT;
+			}
+		} else {
+			if (my_goal_left) {
+				blue_placement = PLACEMENT_RIGHT;
+				yellow_placement = PLACEMENT_LEFT;
+			} else {
+				blue_placement = PLACEMENT_LEFT;
+				yellow_placement = PLACEMENT_RIGHT;
+			}
+		}
+		
 		mSim.registerBlue(blue_selected ? (VBrick) mComm : (VBrick) opponentComm,
 				blue_placement,
-				Simulator.pitch_height_cm/2,
-				blue_placement == placement_left ? 180: 0);
+				Simulator.PITCH_HEIGHT_CM/2,
+				blue_placement == PLACEMENT_LEFT ? 0 : 180);
 		mSim.registerYellow(blue_selected ? (VBrick) opponentComm : (VBrick) mComm,
 				yellow_placement,
-				Simulator.pitch_height_cm/2,
-				yellow_placement == placement_left ? 180 : 0);
+				Simulator.PITCH_HEIGHT_CM/2,
+				yellow_placement == PLACEMENT_LEFT ? 0 : 180);
 		
 
-		mAI = new AIVisualServoing(mComm, mSim);
-		mAI.start(blue_selected, my_door_right);
+		mAI = new AIMaster(mComm, mSim, AIMaster.AIMode.visual_servoing);
+		mAI.start(blue_selected, my_goal_left);
 		
-		opponentAI = new AIVisualServoing(opponentComm, mSim);
-		opponentAI.start(!blue_selected, !my_door_right);
+		opponentAI = new AIMaster(opponentComm, mSim, AIMaster.AIMode.visual_servoing);
+		opponentAI.start(!blue_selected, !my_goal_left);
 
 		
 		new Thread() {
@@ -369,8 +384,8 @@ public class SimTesterGUI {
 	 */
 	private void resetField() {
 		mSim.putBallAt();
-		mSim.putAt(blue_placement/Simulator.pitch_width_cm, Simulator.pitch_height_cm/(2*Simulator.pitch_width_cm), 0, blue_placement == placement_left ? 180: 0);
-		mSim.putAt(yellow_placement/Simulator.pitch_width_cm, Simulator.pitch_height_cm/(2*Simulator.pitch_width_cm), 1, yellow_placement == placement_left ? 180: 0);
+		mSim.putAt(blue_placement/Simulator.PITCH_WIDTH_CM, Simulator.PITCH_HEIGHT_CM/(2*Simulator.PITCH_WIDTH_CM), 0, blue_placement == PLACEMENT_LEFT ?  0 : 180);
+		mSim.putAt(yellow_placement/Simulator.PITCH_WIDTH_CM, Simulator.PITCH_HEIGHT_CM/(2*Simulator.PITCH_WIDTH_CM), 1, yellow_placement == PLACEMENT_LEFT ?  0 : 180);
 	}
 	
 	/**
@@ -379,17 +394,18 @@ public class SimTesterGUI {
 	 * @param pressed true if pressed, false if released
 	 */
 	private void keyAction(final int key_id, final boolean pressed) {
+		if (mAI.getMode()!= mode.sit) mAI.setMode(mode.sit);
 		try {
 			switch (key_id) {
 			case KeyEvent.VK_UP:
 			case KeyEvent.VK_W:
 				speed = pressed ? max_speed : 0;
-				turn_speed = 0;
+				//turn_speed = 0;
 				break;
 			case KeyEvent.VK_DOWN:
 			case KeyEvent.VK_S:
 				speed = pressed ? -max_speed : 0;
-				turn_speed = 0;
+				//turn_speed = 0;
 				break;
 			case KeyEvent.VK_LEFT:
 			case KeyEvent.VK_A:
@@ -400,13 +416,14 @@ public class SimTesterGUI {
 				turn_speed = pressed ? -max_turn_speed : 0;
 				break;
 			case KeyEvent.VK_ENTER:
+			case KeyEvent.VK_E:
 				if (pressed)
 					mComm.sendMessage(opcode.kick);
 				return;
 			}
-			if (speed > 128 || speed < -127)
+			if (speed > 127 || speed < -128)
 				System.out.println("ERROR: CURRENT SPEED OVERFLOW!!! = "+speed);
-			if (turn_speed > 128 || turn_speed < -127)
+			if (turn_speed > 127 || turn_speed < -128)
 				System.out.println("ERROR: TURN SPEED OVERFLOW!!! = "+turn_speed);
 			mComm.sendMessage(opcode.operate, (byte) speed, (byte) turn_speed);
 		} catch (IOException e) {

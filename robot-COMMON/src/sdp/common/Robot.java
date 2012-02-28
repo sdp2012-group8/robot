@@ -1,6 +1,7 @@
 package sdp.common;
 
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 
 
 /**
@@ -39,6 +40,10 @@ public final class Robot {
 	private Point2D.Double backLeftPoint;
 	/** Coordinates of the robot's back-right corner. */
 	private Point2D.Double backRightPoint;
+	/** Coordinates of the robot's front-center. */
+	private Point2D.Double frontCenterPoint;
+	/** Coordinates of the robot's back-center. */
+	private Point2D.Double backCenterPoint;
 
 	
 	/**
@@ -91,6 +96,13 @@ public final class Robot {
 		
 		backRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, -width / 2), angle);
 		Utilities.translatePoint(backRightPoint, coords);
+		
+		frontCenterPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, 0), angle);
+		Utilities.translatePoint(frontCenterPoint, coords);
+		
+		backCenterPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, 0), angle);
+		Utilities.translatePoint(backCenterPoint, coords);
+		
 	}
 	
 	/**
@@ -155,5 +167,25 @@ public final class Robot {
 	 */
 	public final Point2D.Double getBackRight() {
 		return backRightPoint;
+	}
+	
+	/**
+	 * Get coordinates of the front center of the robot.
+	 * 
+	 * @return Coordinates of the front center of robot.
+	 */
+	
+	public final Point2D.Double getFrontCenter(){	
+		return frontCenterPoint;
+	}
+	
+	/**
+	 * Get coordinates of the back center of the robot.
+	 * 
+	 * @return Coordinates of the back center of the robot.
+	 */
+	
+	public final Point2D.Double getBackCenter(){
+		return backCenterPoint;
 	}
 }

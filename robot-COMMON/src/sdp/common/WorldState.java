@@ -9,7 +9,7 @@ import java.awt.image.BufferedImage;
  * 
  * @author Gediminas Liktaras
  */
-public final class WorldState {
+public class WorldState {
 
 	/** Location of the ball. */
 	private Point2D.Double ballCoords;
@@ -72,6 +72,14 @@ public final class WorldState {
 	 */
 	public final BufferedImage getWorldImage() {
 		return worldImage;
+	}
+
+
+	public void update(Point2D.Double ballCoords, Robot blueRobot, Robot yellowRobot, BufferedImage worldImage) {
+		this.ballCoords = ballCoords;
+		this.blueRobot = blueRobot;
+		this.yellowRobot = yellowRobot;
+		this.worldImage = worldImage;
 	}
 	
 }
