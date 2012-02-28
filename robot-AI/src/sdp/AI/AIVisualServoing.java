@@ -1,6 +1,9 @@
 package sdp.AI;
 
 import java.io.IOException;
+
+import org.neuroph.util.benchmark.MyBenchmarkTask;
+
 import sdp.AI.AIWorldState.mode;
 import sdp.common.Communicator;
 import sdp.common.Robot;
@@ -34,6 +37,7 @@ public class AIVisualServoing extends AI {
 	 */
 	public void chaseBall() throws IOException {
 		
+		//System.out.println(ai_world_state.getDistanceToBall());
 		if (!Tools.reachability(ai_world_state, new Vector2D(ai_world_state.getBallCoords()), ai_world_state.getMyTeamBlue())) {
 			// if ball is not directly reachable
 			avoidObstacle();
@@ -55,31 +59,34 @@ public class AIVisualServoing extends AI {
 				Tools.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords())
 				));
 		// do the backwards turn
+		
 		if (ncp.getLength() < Robot.LENGTH_CM) {
 			//System.out.println("collision "+ncp.x+" and "+ncp.y+" dist "+ncp.getLength());
+			
+
+			
 			if (ncp.x > 0) {
 				// collision in front
 				if (turning_angle > 90 || turning_angle < -90) {
-					System.out.println("in front, going backwards");
+				//	System.out.println("in front, going backwards");
 					forward_speed = -15;
-				} else if (turning_angle > 30 || turning_angle < -30) {
-					System.out.println("in front, turning on spot");
+				} else if (turning_angle > 30 || turning_angle < -30 ) {
+				//	System.out.println("in front, turning on spot");
 					forward_speed = 0;
 				}
 			} else {
 				
 				// collision behind
-				if (turning_angle > 30 || turning_angle < -30) {
-					System.out.println("behind on spot");
+				if (turning_angle > 30 || turning_angle < -30 ) {
+				//	System.out.println("behind on spot");
 					forward_speed = 0;
 				} else
 				System.out.println("behind else");
 			}
 		} else if (turning_angle > 90 || turning_angle < -90) {
-			System.out.println("no collision, going backwards");
+			//System.out.println("no collision, going backwards");
 			forward_speed = -15;
 		}
-		
 		//forward_speed = 0;
 
 
@@ -101,6 +108,7 @@ public class AIVisualServoing extends AI {
 		
 		if (Math.toDegrees(Utilities.getAngle(ai_world_state.getBallCoords(), robot.getFrontLeft(), robot.getBackLeft())) > 170
 				|| Math.toDegrees(Utilities.getAngle( ai_world_state.getBallCoords(), robot.getFrontRight(),robot.getBackRight())) > 170){
+			//System.out.println("In the unknown function");
 			mComm.sendMessage(opcode.operate, (byte) -30, (byte) 0);
 		}
 
@@ -109,8 +117,9 @@ public class AIVisualServoing extends AI {
 					&& ai_world_state.getMyGoalLeft())
 						|| ((ai_world_state.getRobot().getCoords().x < ai_world_state.getBallCoords().x)
 						 	&& !ai_world_state.getMyGoalLeft()) ){
-			System.out.println("I'm between goal and ball");
+			//System.out.println("I'm between goal and ball");
 			navigateBehindBall();
+			
 		}
 				
 
@@ -184,27 +193,46 @@ public class AIVisualServoing extends AI {
 	 */
 	public void navigateBehindBall() throws IOException {
 		//TODO: Whenever we are between the enemy goal and the ball, get the ball and re-orientate ourselves towards the enemy goal
-		System.out.println("In navigateBehindBall");
+		//System.out.println("In navigateBehindBall");
+		
+		Vector2D offset = new Vector2D(0,0);
+
+		
+		if(ai_world_state.getMyGoalLeft()){
+			 offset = new Vector2D(-3*ai_world_state.getBallCoords().x,0);
+		}
+		else{
+			 offset = new Vector2D(3*(Tools.PITCH_WIDTH_CM - ai_world_state.getBallCoords().x),0);
+		}
 		
 		Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
-		Vector2D offset = new Vector2D(10,0);
 		Vector2D robotCords = new Vector2D(ai_world_state.getRobot().getCoords());
 		Vector2D dir = Vector2D.subtract(Vector2D.add(ball, offset), robotCords);
 		double newDis = dir.getLength();
 		
 		//byte forward_speed = (byte) Utilities.normaliseToByte((15+(newDis/40)*25));
 		byte forward_speed = (byte) 30;
+		
 		double turning_angle = Utilities.normaliseAngle(-ai_world_state.getRobot().getAngle() + Vector2D.getDirection(dir));
 		
 		if((ai_world_state.getRobot().getCoords().x > ai_world_state.getBallCoords().x
-			 && ai_world_state.getMyGoalLeft())
-			 	|| (ai_world_state.getRobot().getCoords().x < ai_world_state.getBallCoords().x
-					 && !ai_world_state.getMyGoalLeft()) ){
+			 && ai_world_state.getMyGoalLeft()
+				&& (ai_world_state.getRobot().getCoords().y != ai_world_state.getBallCoords().y))
+			 		|| (ai_world_state.getRobot().getCoords().x < ai_world_state.getBallCoords().x
+			 				&& !ai_world_state.getMyGoalLeft())
+			 					&& (ai_world_state.getRobot().getCoords().y != ai_world_state.getBallCoords().y)){
 			System.out.println("I'm in the navigateLoop");
 			mComm.sendMessage(opcode.operate, forward_speed, (byte) Utilities.normaliseToByte(Utilities.normaliseAngle(turning_angle)));
 		}
-		
-		ai_world_state.setMode(mode.chase_ball);
+		else{
+			
+			System.out.println("In else");
+			Vector2D newDir = Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(ai_world_state.getRobot().getCoords()));
+			double newTurning_angle = Utilities.normaliseAngle(-ai_world_state.getRobot().getAngle() + Vector2D.getDirection(newDir));
+			
+			mComm.sendMessage(opcode.operate, (byte)0, (byte) Utilities.normaliseToByte(Utilities.normaliseAngle(newTurning_angle)));
+			
+		}
 	}
 
 	/**
