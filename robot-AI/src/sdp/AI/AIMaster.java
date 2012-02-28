@@ -56,6 +56,8 @@ public class AIMaster extends AIListener {
 					ai.sit();
 				//}
 				break;
+			case defend_penalties:
+					ai.penaltiesDefend();
 		
 			}
 		} catch (IOException e) {

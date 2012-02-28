@@ -1,16 +1,15 @@
 package sdp.AI;
 
+import java.awt.geom.Point2D;
 import java.io.IOException;
-
-//import org.neuroph.util.benchmark.MyBenchmarkTask;
 
 import sdp.AI.AIWorldState.mode;
 import sdp.common.Communicator;
+import sdp.common.Communicator.opcode;
 import sdp.common.Robot;
 import sdp.common.Tools;
 import sdp.common.Utilities;
 import sdp.common.Vector2D;
-import sdp.common.Communicator.opcode;
 
 /**
  * Sends a new command every frame that overwrites the old one.
@@ -228,7 +227,7 @@ public class AIVisualServoing extends AI {
 	/**
 	 * Defend against penalties
 	 */
-	public void penaltiesDefend() {
+	public void penaltiesDefend() throws IOException {
 		//TODO: Find direction of opposing robot and move into intercept path.
 		//
 		// Our robot will be placed like shown bellow:
@@ -255,6 +254,21 @@ public class AIVisualServoing extends AI {
 		// Make our robot move to that intersection.
 		//
 		//
+		Vector2D enemyDirection=Vector2D.subtract(new Vector2D (ai_world_state.getEnemyRobot().getFrontCenter()),new Vector2D(ai_world_state.getEnemyRobot().getCoords()));
+		Point2D.Double interceptBall= Utilities.intersection(enemyDirection, ai_world_state.getBallCoords(), ai_world_state.getRobot().getCoords(), ai_world_state.getRobot().getFrontCenter());
+
+		if (!interceptBall.equals(null)){
+			Vector2D interceptDistance = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(interceptBall));
+
+			if (interceptDistance.y < ai_world_state.getRobot().getCoords().y){
+				byte forward_speed = (byte) 40; //Utilities.normaliseToByte((15+(interceptDistance.getLength()/40)*25));
+				mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
+			} else {
+				byte forward_speed = (byte) -40; //Utilities.normaliseToByte(-(15+(interceptDistance.getLength()/40)*25));
+				mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
+			}
+
+		}
 	}
 
 	/**
