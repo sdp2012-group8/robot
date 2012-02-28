@@ -2,7 +2,7 @@ package sdp.AI;
 
 import java.io.IOException;
 
-import org.neuroph.util.benchmark.MyBenchmarkTask;
+//import org.neuroph.util.benchmark.MyBenchmarkTask;
 
 import sdp.AI.AIWorldState.mode;
 import sdp.common.Communicator;
@@ -18,6 +18,11 @@ import sdp.common.Communicator.opcode;
  *
  */
 public class AIVisualServoing extends AI {
+	
+	/**TODO: Look at all local variables and see which ones we can make global...
+	I think the agent coordinates (ball, robots) should be global as we're using them everywhere.
+	-Paul.
+	**/
 	
 	private final static int coll_secs_count = 110;
 	private final static double sec_angle = 360d/coll_secs_count;
@@ -37,24 +42,22 @@ public class AIVisualServoing extends AI {
 	 */
 	public void chaseBall() throws IOException {
 		
-		//System.out.println(ai_world_state.getDistanceToBall());
 		if (!Tools.reachability(ai_world_state, new Vector2D(ai_world_state.getBallCoords()), ai_world_state.getMyTeamBlue())) {
 			// if ball is not directly reachable
 			avoidObstacle();
 			return;
 		}
+		
 		// get direction from robot to ball
 		Vector2D dir = Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(ai_world_state.getRobot().getCoords()));
 		// Keep the turning angle between -180 and 180
 		double turning_angle = Utilities.normaliseAngle(-ai_world_state.getRobot().getAngle() + Vector2D.getDirection(dir));
-		System.out.println(turning_angle);
 		
 		// calculates speed formula:
 		// speed_when_robot_next_to_ball+(distance_to_ball/max_distance)*speed_when_over_max_distance
 		// every distance between 0 and max_distance will be mapped between speed_when_robot_next_to_ball and speed_when_over_max_distance
 		byte forward_speed = (byte) Utilities.normaliseToByte((15+(ai_world_state.getDistanceToBall()/40)*25));
 
-		//System.out.println("I'm in chase ball :), turning speed : " + turning_angle);
 		Vector2D ncp = Tools.getLocalVector(ai_world_state.getRobot(),
 				Vector2D.add(new Vector2D(ai_world_state.getRobot().getCoords()),
 				Tools.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords())
@@ -62,9 +65,6 @@ public class AIVisualServoing extends AI {
 		// do the backwards turn
 		
 		if (ncp.getLength() < Robot.LENGTH_CM) {
-			//System.out.println("collision "+ncp.x+" and "+ncp.y+" dist "+ncp.getLength());
-			
-
 			
 			if (ncp.x > 0) {
 				// collision in front
@@ -113,18 +113,17 @@ public class AIVisualServoing extends AI {
 		
 		if (Math.toDegrees(Utilities.getAngle(ai_world_state.getBallCoords(), robot.getFrontLeft(), robot.getBackLeft())) > 170
 				|| Math.toDegrees(Utilities.getAngle( ai_world_state.getBallCoords(), robot.getFrontRight(),robot.getBackRight())) > 170){
-			//System.out.println("In the unknown function");
 			mComm.sendMessage(opcode.operate, (byte) -30, (byte) 0);
 		}
 
-
+		// This checks whether or not we are between enemy goal and the ball.
+		// We also check whether or not the ball is too close to our goal, if it is don't try to go behind it to avoid catastrophies.
 		if ( ((ai_world_state.getRobot().getCoords().x > ai_world_state.getBallCoords().x)
 					&& ai_world_state.getMyGoalLeft()
 						&& ai_world_state.getBallCoords().x > 10)
 						|| ((ai_world_state.getRobot().getCoords().x < ai_world_state.getBallCoords().x)
 						 	&& !ai_world_state.getMyGoalLeft()
 								&& ai_world_state.getBallCoords().x < 230)){
-			//System.out.println("I'm between goal and ball");
 			navigateBehindBall();
 			
 		}
@@ -132,7 +131,6 @@ public class AIVisualServoing extends AI {
 
 		// check whether to go into got_ball mode
 		if (Math.abs(turning_angle) < TURNING_ACCURACY && ai_world_state.getDistanceToBall() < 10) {
-			//ai_world_state.setMode(mode.sit);
 			ai_world_state.setMode(mode.got_ball);
 		}
 		
@@ -200,14 +198,12 @@ public class AIVisualServoing extends AI {
 
 	
 	/**
-	 * Move behind the ball before attempting to score
+	 * When between the ball and the enemy goal move back towards the ball
+	 * @throws IOException
 	 */
 	public void navigateBehindBall() throws IOException {
-		//TODO: Whenever we are between the enemy goal and the ball, get the ball and re-orientate ourselves towards the enemy goal
-		//System.out.println("In navigateBehindBall");
-		
-		Vector2D offset = new Vector2D(0,0);
 
+		Vector2D offset = new Vector2D(0,0);
 		
 		if(ai_world_state.getMyGoalLeft()){
 			 offset = new Vector2D(-3*ai_world_state.getBallCoords().x,0);
@@ -218,23 +214,14 @@ public class AIVisualServoing extends AI {
 		
 		Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
 		Vector2D robotCords = new Vector2D(ai_world_state.getRobot().getCoords());
-		Vector2D dir = Vector2D.subtract(Vector2D.add(ball, offset), robotCords);
-		double newDis = dir.getLength();
 		
-		//byte forward_speed = (byte) Utilities.normaliseToByte((15+(newDis/40)*25));
+		Vector2D dir = Vector2D.subtract(Vector2D.add(ball, offset), robotCords);
+		
 		byte forward_speed = (byte) 30;
 		
 		double turning_angle = Utilities.normaliseAngle(-ai_world_state.getRobot().getAngle() + Vector2D.getDirection(dir));
-		
-		if((ai_world_state.getRobot().getCoords().x > ai_world_state.getBallCoords().x
-			 && ai_world_state.getMyGoalLeft()
-				&& (ai_world_state.getRobot().getCoords().y != ai_world_state.getBallCoords().y))
-			 		|| (ai_world_state.getRobot().getCoords().x < ai_world_state.getBallCoords().x
-			 				&& !ai_world_state.getMyGoalLeft())
-			 					&& (ai_world_state.getRobot().getCoords().y != ai_world_state.getBallCoords().y)){
-			System.out.println("I'm in the navigateLoop");
-			mComm.sendMessage(opcode.operate, forward_speed, (byte) Utilities.normaliseToByte(Utilities.normaliseAngle(turning_angle)));
-		}
+
+		mComm.sendMessage(opcode.operate, forward_speed, (byte) Utilities.normaliseToByte(Utilities.normaliseAngle(turning_angle)));		
 
 	}
 
@@ -243,6 +230,31 @@ public class AIVisualServoing extends AI {
 	 */
 	public void penaltiesDefend() {
 		//TODO: Find direction of opposing robot and move into intercept path.
+		//
+		// Our robot will be placed like shown bellow:
+		//
+		// *----------------------------------------------------------*
+		// |														  |
+		// |														  |
+		// |_														 _|
+		// |  _____		 ______										  |
+		// |  |	| |		|_____||									  |
+		// |  |_|_| 	|_____||									  |
+		// |  |___|		         									  |
+		// |														  |
+		// |_														 _|
+		// | 														  |
+		// |                                                          |
+		// *----------------------------------------------------------*
+		//
+		//
+		// 
+		//
+		// Get the direction of the enemy robot and make that a vector.
+		// Find the intersection between our direction vector and the enemies robot direction, this is where our robot will need to be.
+		// Make our robot move to that intersection.
+		//
+		//
 	}
 
 	/**
@@ -252,8 +264,15 @@ public class AIVisualServoing extends AI {
 		//TODO: Determine shoot path - Turn and shoot quickly.
 	}
 
+	/**
+	 * Block goal when in a dangerous situation
+	 */
 	
-
+	public void protectGoal(){
+		/**TODO: When the ball is in one of the corners of our goal, instead of trying to take it and risking to throw it in our own goal
+				 it would be wiser to simply guard our goal and try to intercept the ball if the other robot gets it... maybe?
+		**/
+	}
 
 	/**
 	 * Avoid obstacles using sectors. This method is only called if ball cannot be reached directly!
