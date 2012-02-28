@@ -9,7 +9,7 @@ class GameWindow < Gosu::Window
   
 
   def initialize(image)
-    super 640, 480, false
+    super 640, 480, true
     self.caption = "Also Butts"
     @font = Gosu::Font.new(self, Gosu::default_font_name, 20)
     @message = "Click on the center of the ball"
@@ -23,6 +23,7 @@ class GameWindow < Gosu::Window
   end
 
   def update
+    @background_image.draw(0,0,0)
   end
 
   def toggleinput
