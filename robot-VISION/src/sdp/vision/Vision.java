@@ -67,7 +67,7 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 		return imageProcessor.extractWorldState(frame);	
 	}
 
-	/* (non-Javadoc)
+	/** (non-Javadoc)
 	 * @see sdp.vision.VisualInputCallback#nextFrame(java.awt.image.BufferedImage)
 	 */	
 	@Override

@@ -19,7 +19,7 @@ public class ImageFileFilter_IO implements FileFilter {
 	
 
 	/**
-	 * @see javax.swing.filechooser.FileFilter#accept(java.io.File)
+	 * @see java.io.FileFilter#accept(java.io.File)
 	 */
 	@Override
 	public boolean accept(File file) {

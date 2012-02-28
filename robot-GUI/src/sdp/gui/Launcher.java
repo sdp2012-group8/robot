@@ -65,7 +65,7 @@ public class Launcher extends JFrame implements Runnable {
 	 * Show a dialog to select the image directory.
 	 */
 	private void selectImageDirectory() {
-		int retValue = imageDirChooser.showSaveDialog(this);
+		int retValue = imageDirChooser.showOpenDialog(this);
 		
 		if (retValue == JFileChooser.APPROVE_OPTION) {
 			String chosenDir = imageDirChooser.getSelectedFile().getAbsolutePath();

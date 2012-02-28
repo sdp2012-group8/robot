@@ -18,12 +18,15 @@ import sdp.AI.AIMaster;
 import sdp.AI.AIWorldState.mode;
 import sdp.common.Communicator;
 import sdp.common.FPSCounter;
+import sdp.common.Utilities;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.communicator.AIComm;
+import sdp.gui.filefilters.TextFileFilter_FC;
 import sdp.gui.filefilters.XmlFileFilter_FC;
 import sdp.vision.Vision;
 import sdp.vision.processing.ImageProcessorConfig;
+import sdp.vision.testbench.TestBench;
 
 import java.util.logging.Logger;
 import javax.swing.JLabel;
@@ -32,15 +35,27 @@ import java.awt.Color;
 
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JRadioButton;
 import javax.swing.JButton;
 import javax.swing.ButtonGroup;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FilePermission;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+
 import javax.swing.JCheckBox;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.JTextArea;
+import javax.swing.JScrollPane;
 
 
 /**
@@ -66,8 +81,12 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	/** Window's FPS counter. */
 	private FPSCounter fpsCounter;
 	
-	/** The window's file chooser. */
-	private JFileChooser fileChooser;
+	/** The vision configuration file chooser. */
+	private JFileChooser visionConfigFileChooser;
+	/** Test bench test case file chooser. */
+	private JFileChooser testBenchTestFileChooser;
+	/** Test bench output file chooser. */
+	private JFileChooser testBenchOutputFileChooser;
 	
 	/** Active AI subsystem instance. */
 	private AIMaster aiInstance = null;
@@ -78,6 +97,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private Vision vision = null;	
 	/** A flag that controls whether vision system calibration is enabled. */
 	private boolean visionChangesEnabled = true;
+	
+	/** Active test bench instance. */
+	private TestBench testBench;
 	
 	/** GUI's world state provider. */
 	private WorldStateObserver worldStateObserver;
@@ -103,10 +125,24 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		fpsCounter = new FPSCounter();
 		visionChangesEnabled = true;
 		
-		fileChooser = new JFileChooser("../data/Vision Configurations");
-		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		fileChooser.setAcceptAllFileFilterUsed(false);
-		fileChooser.addChoosableFileFilter(new XmlFileFilter_FC());
+		visionConfigFileChooser = new JFileChooser("../data/Vision Configurations");
+		visionConfigFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		visionConfigFileChooser.setAcceptAllFileFilterUsed(false);
+		visionConfigFileChooser.addChoosableFileFilter(new XmlFileFilter_FC());
+		
+		testBenchTestFileChooser = new JFileChooser("../robot-VISION/xml");
+		testBenchTestFileChooser.setDialogTitle("Select test case");
+		testBenchTestFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		testBenchTestFileChooser.setAcceptAllFileFilterUsed(false);
+		testBenchTestFileChooser.addChoosableFileFilter(new XmlFileFilter_FC());
+		
+		testBenchOutputFileChooser = new JFileChooser("..");
+		testBenchOutputFileChooser.setDialogTitle("Save test bench output");
+		testBenchOutputFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		testBenchOutputFileChooser.setAcceptAllFileFilterUsed(false);
+		testBenchOutputFileChooser.addChoosableFileFilter(new TextFileFilter_FC());
+		
+		testBench = new TestBench();
 		
 		setSize(new Dimension(1050, 550));
 		setTitle(WINDOW_TITLE);
@@ -120,6 +156,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		
 		if (testMode) {
 			robotControlTabbedPanel.remove(robotSettingPanel);
+		} else {
+			robotControlTabbedPanel.remove(testBenchPanel);
 		}
 		
 		for (int i = 0; i < mode.values().length; i++) {
@@ -184,11 +222,11 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 * Load the vision system configuration, selected by user.
 	 */
 	private void loadConfiguration() {
-		fileChooser.setDialogTitle("Load configuration");
-		int retValue = fileChooser.showOpenDialog(this);
+		visionConfigFileChooser.setDialogTitle("Load configuration");
+		int retValue = visionConfigFileChooser.showOpenDialog(this);
 		
 		if (retValue == JFileChooser.APPROVE_OPTION) {
-			String chosenFile = fileChooser.getSelectedFile().getAbsolutePath();
+			String chosenFile = visionConfigFileChooser.getSelectedFile().getAbsolutePath();
 			ImageProcessorConfig config = ImageProcessorConfig.loadConfiguration(chosenFile);
 			setGUIConfiguration(config);
 		}
@@ -264,11 +302,11 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 * Save the current vision configuration into a file.
 	 */
 	private void saveConfiguration() {
-		fileChooser.setDialogTitle("Save configuration");
-		int retValue = fileChooser.showSaveDialog(this);
+		visionConfigFileChooser.setDialogTitle("Save configuration");
+		int retValue = visionConfigFileChooser.showSaveDialog(this);
 		
 		if (retValue == JFileChooser.APPROVE_OPTION) {
-			String chosenFile = fileChooser.getSelectedFile().getAbsolutePath();
+			String chosenFile = visionConfigFileChooser.getSelectedFile().getAbsolutePath();
 			ImageProcessorConfig config = getGUIConfiguration();
 			ImageProcessorConfig.saveConfiguration(config, chosenFile);
 		}
@@ -360,9 +398,56 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		
 		return config;
 	}
+	
+	
+	/**
+	 * Open a dialog to select a test bench test file and modify the appropriate
+	 * field on the GUI.
+	 */
+	private void selectTestCase() {
+		int retValue = testBenchTestFileChooser.showOpenDialog(this);
+		
+		if (retValue == JFileChooser.APPROVE_OPTION) {
+			String chosenFile = testBenchTestFileChooser.getSelectedFile().getAbsolutePath();
+			testCaseTextfield.setText(chosenFile);
+		}
+	}
+	
+	/**
+	 * Run the test bench on the selected test case.
+	 */
+	private void runTestBench() {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		PrintStream ps = new PrintStream(baos);
+		
+		String testCase = Utilities.stripString(testCaseTextfield.getText());
+		testBench.runTest(testCase, new ImageProcessorConfig(), ps);
+		
+		testBenchOutputTextarea.setText(baos.toString());
+	}
+	
+	/**
+	 * Allow the user to save test bench output into a file.
+	 */
+	private void saveTestBenchOutput() {
+		int retValue = testBenchOutputFileChooser.showOpenDialog(this);
+		
+		if (retValue == JFileChooser.APPROVE_OPTION) {
+			String chosenFile = testBenchOutputFileChooser.getSelectedFile().getAbsolutePath();
+			
+			try {
+				PrintWriter fout = new PrintWriter(chosenFile);
+				fout.write(testBenchOutputTextarea.getText());
+				fout.close();
+			} catch (FileNotFoundException e) {
+				JOptionPane.showMessageDialog(this, "Could not open file for writing, output not saved.",
+						"FileNotFoundException", JOptionPane.ERROR_MESSAGE);
+			}
+		}
+	}
 
 	
-	/* (non-Javadoc)
+	/**
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
@@ -1243,6 +1328,91 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_changeStateButton.gridx = 0;
 		gbc_changeStateButton.gridy = 10;
 		robotSettingPanel.add(changeStateButton, gbc_changeStateButton);
+		
+		testBenchPanel = new JPanel();
+		robotControlTabbedPanel.addTab("Test Bench", null, testBenchPanel, null);
+		robotControlTabbedPanel.setEnabledAt(2, true);
+		GridBagLayout gbl_testBenchPanel = new GridBagLayout();
+		gbl_testBenchPanel.columnWidths = new int[]{0, 0, 0, 0};
+		gbl_testBenchPanel.rowHeights = new int[]{0, 0, 0, 0};
+		gbl_testBenchPanel.columnWeights = new double[]{1.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_testBenchPanel.rowWeights = new double[]{0.0, 1.0, 0.0, Double.MIN_VALUE};
+		testBenchPanel.setLayout(gbl_testBenchPanel);
+		
+		testCaseTextfield = new JTextField();
+		GridBagConstraints gbc_testCaseTextfield = new GridBagConstraints();
+		gbc_testCaseTextfield.insets = new Insets(0, 0, 5, 5);
+		gbc_testCaseTextfield.fill = GridBagConstraints.HORIZONTAL;
+		gbc_testCaseTextfield.gridx = 0;
+		gbc_testCaseTextfield.gridy = 0;
+		testBenchPanel.add(testCaseTextfield, gbc_testCaseTextfield);
+		testCaseTextfield.setColumns(10);
+		
+		JButton selectTestRunButton = new JButton("...");
+		selectTestRunButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				selectTestCase();
+			}
+		});
+		GridBagConstraints gbc_selectTestRunButton = new GridBagConstraints();
+		gbc_selectTestRunButton.insets = new Insets(0, 0, 5, 5);
+		gbc_selectTestRunButton.gridx = 1;
+		gbc_selectTestRunButton.gridy = 0;
+		testBenchPanel.add(selectTestRunButton, gbc_selectTestRunButton);
+		
+		JButton runTestBenchButton = new JButton("Run Test");
+		runTestBenchButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				runTestBench();
+			}
+		});
+		GridBagConstraints gbc_runTestBenchButton = new GridBagConstraints();
+		gbc_runTestBenchButton.insets = new Insets(0, 0, 5, 0);
+		gbc_runTestBenchButton.gridx = 2;
+		gbc_runTestBenchButton.gridy = 0;
+		testBenchPanel.add(runTestBenchButton, gbc_runTestBenchButton);
+		
+		testBenchOutputPanel = new JPanel();
+		testBenchOutputPanel.setBorder(new TitledBorder(null, "Test Bench Output", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		GridBagConstraints gbc_testBenchOutputPanel = new GridBagConstraints();
+		gbc_testBenchOutputPanel.fill = GridBagConstraints.BOTH;
+		gbc_testBenchOutputPanel.gridwidth = 3;
+		gbc_testBenchOutputPanel.insets = new Insets(0, 0, 5, 5);
+		gbc_testBenchOutputPanel.gridx = 0;
+		gbc_testBenchOutputPanel.gridy = 1;
+		testBenchPanel.add(testBenchOutputPanel, gbc_testBenchOutputPanel);
+		GridBagLayout gbl_testBenchOutputPanel = new GridBagLayout();
+		gbl_testBenchOutputPanel.columnWidths = new int[]{0, 0, 0, 0};
+		gbl_testBenchOutputPanel.rowHeights = new int[]{0, 0};
+		gbl_testBenchOutputPanel.columnWeights = new double[]{1.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_testBenchOutputPanel.rowWeights = new double[]{1.0, Double.MIN_VALUE};
+		testBenchOutputPanel.setLayout(gbl_testBenchOutputPanel);
+		
+		testBenchOutputScrollPane = new JScrollPane();
+		GridBagConstraints gbc_testBenchOutputScrollPane = new GridBagConstraints();
+		gbc_testBenchOutputScrollPane.fill = GridBagConstraints.BOTH;
+		gbc_testBenchOutputScrollPane.gridwidth = 3;
+		gbc_testBenchOutputScrollPane.insets = new Insets(0, 0, 0, 5);
+		gbc_testBenchOutputScrollPane.gridx = 0;
+		gbc_testBenchOutputScrollPane.gridy = 0;
+		testBenchOutputPanel.add(testBenchOutputScrollPane, gbc_testBenchOutputScrollPane);
+		
+		testBenchOutputTextarea = new JTextArea();
+		testBenchOutputScrollPane.setViewportView(testBenchOutputTextarea);
+		testBenchOutputTextarea.setEditable(false);
+		
+		JButton saveTestBenchOutputButton = new JButton("Save to File");
+		saveTestBenchOutputButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				saveTestBenchOutput();
+			}
+		});
+		GridBagConstraints gbc_saveTestBenchOutputButton = new GridBagConstraints();
+		gbc_saveTestBenchOutputButton.anchor = GridBagConstraints.EAST;
+		gbc_saveTestBenchOutputButton.gridwidth = 3;
+		gbc_saveTestBenchOutputButton.gridx = 0;
+		gbc_saveTestBenchOutputButton.gridy = 2;
+		testBenchPanel.add(saveTestBenchOutputButton, gbc_saveTestBenchOutputButton);
 	}
 	
 	
@@ -1339,5 +1509,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JLabel distortionLabel;
 	private JLabel robotStateLabel;
 	private JComboBox aiStateCombobox;
-	
+	private JPanel testBenchPanel;
+	private JTextField testCaseTextfield;
+	private JTextArea testBenchOutputTextarea;
+	private JScrollPane testBenchOutputScrollPane;
+	private JPanel testBenchOutputPanel;
 }
