@@ -12,7 +12,7 @@ import sdp.common.WorldState;
 public class AIWorldState extends WorldState {
 	
 	public enum mode {
-		chase_ball, sit, got_ball, dribble
+		chase_ball, sit, got_ball, dribble, defend_penalties
 	}
 	
 	private boolean my_team_blue;
