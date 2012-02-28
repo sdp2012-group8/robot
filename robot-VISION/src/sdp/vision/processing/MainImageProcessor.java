@@ -25,8 +25,13 @@ import sdp.common.WorldState;
  */
 public class MainImageProcessor extends BaseImageProcessor {
 	
+	/** How many directions the outline distance calculations will use. */
+	private static final int OUTLINE_ANGLE_COUNT = 360;
+	/** The size of the direction cone angle. */
+	private static final int DIRECTION_CONE_ANGLE = 30;
+	
 	/** Polygon approximation error (arg in cvApproxPoly). */
-	private static final double POLY_APPROX_ERROR = 0.02;
+	private static final double POLY_APPROX_ERROR = 0.0001;
 	
 	/** Length of the direction line. */
 	private static final int DIR_LINE_LENGTH = 40;
@@ -256,42 +261,31 @@ public class MainImageProcessor extends BaseImageProcessor {
             cvMoments(bestRobotShape, moments, 1);
             
             double massCenterX = moments.m10() / moments.m00();
-            double massCenterY = moments.m01() / moments.m00();  
-            double angle = 0.0;
+            double massCenterY = moments.m01() / moments.m00();
+            Point2D.Double robotPos = ProcUtils.frameToNormalCoordinates(config, massCenterX, massCenterY, true);            
             
-            // Find the contour's farthest point from the mass center. 
-            double maxShapeDist = Double.MIN_VALUE;
-            int farthestPoint = -1;
+            // Find the contour's outline distances.
+            double[] dists = getContourOutlineDistances(bestRobotShape, massCenterX, massCenterY);
             
-            for (int i = 0; i < bestRobotShape.total(); ++i) {
-            	CvPoint pt = new CvPoint(cvGetSeqElem(bestRobotShape, i));
-            	double curDist = Point2D.distance(massCenterX, massCenterY, pt.x(), pt.y());
+            // Find the robot's direction.
+            int angle = 0;
+            double bestArea = 0.0;
+            
+            for (int i = 0; i < OUTLINE_ANGLE_COUNT; ++i) {
+            	double curArea = 0.0;
             	
-            	if (curDist > maxShapeDist) {
-            		maxShapeDist = curDist;
-            		farthestPoint = i;            		
-            	}
+	            for (int j = -(DIRECTION_CONE_ANGLE / 2); j <= (DIRECTION_CONE_ANGLE / 2); ++j) {
+	            	int k = (i + j + OUTLINE_ANGLE_COUNT) % OUTLINE_ANGLE_COUNT;
+	            	int w = DIRECTION_CONE_ANGLE / 2 - Math.abs(j);
+	            	curArea += dists[k] * w;
+	            }
+	            
+	            if (curArea > bestArea) {
+	            	bestArea = curArea;
+	            	angle = i;
+	            }
             }
-            
-            // Smooth angle using adjacent equally distance points.
-            double xSum = 0.0;
-            double ySum = 0.0;
-            
-            for (int i = -1; i <= 1; ++i) {
-            	int j = (farthestPoint + i + bestRobotShape.total()) % bestRobotShape.total();
-            	CvPoint pt = new CvPoint(cvGetSeqElem(bestRobotShape, j));
-            	
-            	double curDist = Point2D.distance(massCenterX, massCenterY, pt.x(), pt.y());            	
-            	if (curDist >= (maxShapeDist - 2.0)) {
-            		xSum = xSum + pt.x() - massCenterX;
-            		ySum = ySum + pt.y() - massCenterY;
-            	}
-            }
-
-            // Compute final robot position and direction.
-            Point2D.Double robotPos = ProcUtils.frameToNormalCoordinates(config, massCenterX, massCenterY, true);
-            angle = Math.toDegrees( Math.atan2(ySum, -xSum) ) + 180.0;
-            
+        
             return new Robot(robotPos, angle);
 		}
 	}
@@ -411,6 +405,69 @@ public class MainImageProcessor extends BaseImageProcessor {
 			
 			return largestShape;
 		}
+	}
+	
+	
+	/**
+	 * Get contour outline distances.
+	 * 
+	 * These are distances from the given center of the contour to its border
+	 * at each direction. The definition of "center" is up to the caller of
+	 * the function.
+	 * 
+	 * @param contour Contour of interest.
+	 * @param centerX X coordinate of the contour's center.
+	 * @param centerY Y coordinate of the contour's center.
+	 * @return Contour's outline distances.
+	 */
+	private double[] getContourOutlineDistances(CvSeq contour, double centerX, double centerY) {
+		double countFactor = OUTLINE_ANGLE_COUNT / 360.0;
+		
+		double[] distances = new double[OUTLINE_ANGLE_COUNT];
+		for (int i = 0; i < OUTLINE_ANGLE_COUNT; ++i) {
+			distances[i] = Double.MAX_VALUE;
+		}
+		
+		for (int i = 0; i < contour.total(); ++i) {
+        	CvPoint point1 = new CvPoint(cvGetSeqElem(contour, i));
+        	CvPoint point2 = new CvPoint(cvGetSeqElem(contour, (i + 1) % contour.total()));
+        	
+        	double angle1 = Math.atan2(point1.y() - centerY, centerX - point1.x());
+        	int dirIdx1 = (int) ((Math.toDegrees(angle1) + 179) * countFactor);
+        	
+        	double angle2 = Math.atan2(point2.y() - centerY, centerX - point2.x());
+        	int dirIdx2 = (int) ((Math.toDegrees(angle2) + 179) * countFactor);
+        	
+        	if (dirIdx1 > dirIdx2) {
+        		int x = dirIdx1;
+        		dirIdx1 = dirIdx2;
+        		dirIdx2 = x;
+        	}
+        	
+        	double dist1 = Point.distance(centerX, centerY, point1.x(), point1.y());
+        	double dist2 = Point.distance(centerX, centerY, point2.x(), point2.y());
+        	
+        	int dirSize = dirIdx2 - dirIdx1;
+        	int revDirSize = OUTLINE_ANGLE_COUNT - dirSize;
+        	
+        	if (revDirSize < dirSize) {
+        		for (int j = dirIdx2; j < OUTLINE_ANGLE_COUNT; ++j) {
+        			double d = dist2 + ((dist1 - dist2) * (j - dirIdx2)) / revDirSize;
+        			distances[j] = Math.min(distances[j], d);
+        		}
+        		for (int j = 0; j < dirIdx1; ++j) {
+        			double d = dist2 + ((dist1 - dist2) * (j - dirIdx2 + OUTLINE_ANGLE_COUNT)) / revDirSize;
+        			distances[j] = Math.min(distances[j], d);
+        		}
+        	} else {
+        		for (int j = dirIdx1; j < dirIdx2; ++j) {
+        			double d = dist1 + ((dist2 - dist1) * (j - dirIdx1)) / dirSize;
+        			distances[j] = Math.min(distances[j], d);
+        		}
+        	}
+        }
+		
+		return distances;
 	}
 	
 

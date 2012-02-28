@@ -52,13 +52,11 @@ public class ProcUtils {
 	 */
 	public static Point2D.Double frameToNormalCoordinates(ImageProcessorConfig config,
 			double x, double y, boolean withinROI) {
-		double scaleFactor = (double)(config.getFieldWidth());
-		
 		if (!withinROI) {
 			x += config.getFieldLowX();
 			y += config.getFieldLowY();
 		}
-		return new Point2D.Double(x / scaleFactor, y / scaleFactor);
+		return new Point2D.Double(x / config.getFieldWidth(), y / config.getFieldHeight());
 	}
 	
 	/**
@@ -73,10 +71,8 @@ public class ProcUtils {
 	 */
 	public static Point2D.Double normalToFrameCoordinates(ImageProcessorConfig config,
 			double x, double y, boolean withinROI) {
-		double scaleFactor = config.getFieldWidth();
-		
-		x *= scaleFactor;
-		y *= scaleFactor;
+		x *= config.getFieldWidth();
+		y *= config.getFieldHeight();
 		
 		if (!withinROI) {
 			x += config.getFieldLowX();
