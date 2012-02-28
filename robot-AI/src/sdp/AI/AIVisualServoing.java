@@ -234,8 +234,8 @@ public class AIVisualServoing extends AI {
 		// Our robot will be placed like shown bellow:
 		//
 		// *----------------------------------------------------------*
-		// |														  |
-		// |														  |
+		// |OO														  |
+		// |OO														  |
 		// |_														 _|
 		// |  _____		 ______										  |
 		// |  |	| |		|_____||									  |
@@ -243,8 +243,8 @@ public class AIVisualServoing extends AI {
 		// |  |___|		         									  |
 		// |														  |
 		// |_														 _|
-		// | 														  |
-		// |                                                          |
+		// | OO														  |
+		// | OO                                                         |
 		// *----------------------------------------------------------*
 		//
 		//
@@ -267,7 +267,6 @@ public class AIVisualServoing extends AI {
 	/**
 	 * Block goal when in a dangerous situation
 	 */
-	
 	public void protectGoal(){
 		/**TODO: When the ball is in one of the corners of our goal, instead of trying to take it and risking to throw it in our own goal
 				 it would be wiser to simply guard our goal and try to intercept the ball if the other robot gets it... maybe?
