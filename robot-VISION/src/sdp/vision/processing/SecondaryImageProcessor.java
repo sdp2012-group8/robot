@@ -7,6 +7,8 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 
+import com.googlecode.javacv.cpp.opencv_core.IplImage;
+
 import static com.googlecode.javacv.cpp.opencv_core.*;
 import static com.googlecode.javacv.cpp.opencv_imgproc.*;
 
@@ -34,7 +36,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 
 	private static final int mask = 0xFF;
 
-	private static final int delayed_start = 10;
+	private static final int delayed_start = 2;
 
 	private int start_x = 0, stop_x = 0, start_y = 0, stop_y = 0, height = 0, width = 0, pixels_count = 0, im_width = 0;
 	private int avg_r = 0, avg_b = 0, avg_g = 0;
@@ -50,19 +52,15 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			bucket = new double[angular_acc];
 
 	private WorldState state;
-	private WorldState oldstate = null; 
 	private Graphics2D graph;
 
-	// how often to take average
-	private static final int take_average_every = 1;
-
 	// standard deviation filter. Filter out points more than this amount of sigmas from the st dev
-	private static final double blue_color_sigma = 5;
-	private static final double red_color_sigma = 12;
-	private static final double yellow_color_sigma = 7;
+	private static final double blue_color_sigma = 10;
+	private static final double red_color_sigma = 15;
+	private static final double yellow_color_sigma = 10;
 
 	private static final double area_T_cm = 100; // cm*cm
-	private static final double area_ball_cm = 30; // cm*cm
+	private static final double area_ball_cm = 20; // cm*cm
 	private static double area_T_px, area_ball_px;
 
 	// maximum empty pixels in a feature for angle detection purposes
@@ -78,25 +76,25 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 
 	// background substraction
 	private static double back_sigma = 1; // everything below this is considered background
-	private static int back_scale = 4;
+	private static int back_scale_shift_bytes = 1;
 	private static byte[][] back_r, back_g, back_b;
-	private static final int gauss_back_img_count = 50;
-	private static final double gauss_back_img_amount = 2;
-	private static final int gauss_back_img_matrix_size = gauss_back_img_count*2+1;
-	private static final double[][] gauss_back_img_filter = new double[gauss_back_img_matrix_size][gauss_back_img_matrix_size];
+	//	private static final int gauss_back_img_count = 50;
+	//	private static final double gauss_back_img_amount = 2;
+	//	private static final int gauss_back_img_matrix_size = gauss_back_img_count*2+1;
+	//	private static final double[][] gauss_back_img_filter = new double[gauss_back_img_matrix_size][gauss_back_img_matrix_size];
 	private static boolean[] x_empty, y_empty;
 	private static boolean[][] empty;
 
 	// gaussian filtering for angle
 	private static final int gauss_count = 20; // this is the number of points that would be affected by smoothing. Must be even.
-	private static final double gauss_amount = 50; // the smoothing factor
+	private static final double gauss_amount = 80; // the smoothing factor
 	private static final double[] gauss_filter_matrix = new double[gauss_count*2+1]; // the matrix that would be filled in with values
 
 	// gaussian smooth for image
-	private static final int gauss_img_count = 1;
-	private static final double gauss_img_amount = 3;
-	private static final int gauss_img_matrix_size = gauss_img_count*2+1;
-	private static final double[][] gauss_img_filter = new double[gauss_img_matrix_size][gauss_img_matrix_size];
+	//	private static final int gauss_img_count = 1;
+	//	private static final double gauss_img_amount = 3;
+	//	private static final int gauss_img_matrix_size = gauss_img_count*2+1;
+	//	private static final double[][] gauss_img_filter = new double[gauss_img_matrix_size][gauss_img_matrix_size];
 
 	// pixel value constants for calculating blob area
 	private static final int PXV_BELOW_THRESHOLD = 0;
@@ -107,10 +105,10 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private static int area_so_far = 0;
 	private static byte area_value = 0;
 
-	// low pass filter
-
-	private static double filteredPositionAmount = 0.8;
-	private static double filteredAngleAmount = 0.8;
+	//	// low pass filter
+	//
+	//	private static double filteredPositionAmount = 0.8;
+	//	private static double filteredAngleAmount = 0.8;
 
 	private long frame_count = 0;
 
@@ -129,149 +127,159 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		for (int i = 0; i < gauss_filter_matrix.length; i++)
 			gauss_filter_matrix[i] = gauss_filter_matrix[i]/sum;
 
-		// image gaussian filter
-		sum = 0;
-		for (int x = -gauss_img_count; x <= gauss_img_count; x++)
-			for (int y = -gauss_img_count; y <= gauss_img_count; y++) {
-				final int xid = x+gauss_img_count;
-				final int yid = y+gauss_img_count;
-				final double dist_sq = x*x + y*y;
-				gauss_img_filter[xid][yid] = Math.exp(-dist_sq/(2*gauss_img_amount*gauss_img_amount))/gauss_img_amount;
-				sum += gauss_img_filter[xid][yid];
-			}
-		// normalize
-		for (int x = 0; x < gauss_img_matrix_size; x++)
-			for (int y = 0; y < gauss_img_matrix_size; y++)
-				gauss_img_filter[x][y] = gauss_img_filter[x][y] / sum;
-
-		// background gaussian filter
-		sum = 0;
-		for (int x = -gauss_back_img_count; x <= gauss_back_img_count; x++)
-			for (int y = -gauss_back_img_count; y <= gauss_back_img_count; y++) {
-				final int xid = x+gauss_back_img_count;
-				final int yid = y+gauss_back_img_count;
-				final double dist_sq = x*x + y*y;
-				gauss_back_img_filter[xid][yid] = Math.exp(-dist_sq/(2*gauss_back_img_amount*gauss_back_img_amount))/gauss_back_img_amount;
-				sum += gauss_back_img_filter[xid][yid];
-			}
-		// normalize
-		for (int x = 0; x < gauss_back_img_matrix_size; x++)
-			for (int y = 0; y < gauss_back_img_matrix_size; y++)
-				gauss_back_img_filter[x][y] = gauss_back_img_filter[x][y] / sum;
+		//		// image gaussian filter
+		//		sum = 0;
+		//		for (int x = -gauss_img_count; x <= gauss_img_count; x++)
+		//			for (int y = -gauss_img_count; y <= gauss_img_count; y++) {
+		//				final int xid = x+gauss_img_count;
+		//				final int yid = y+gauss_img_count;
+		//				final double dist_sq = x*x + y*y;
+		//				gauss_img_filter[xid][yid] = Math.exp(-dist_sq/(2*gauss_img_amount*gauss_img_amount))/gauss_img_amount;
+		//				sum += gauss_img_filter[xid][yid];
+		//			}
+		//		// normalize
+		//		for (int x = 0; x < gauss_img_matrix_size; x++)
+		//			for (int y = 0; y < gauss_img_matrix_size; y++)
+		//				gauss_img_filter[x][y] = gauss_img_filter[x][y] / sum;
+		//
+		//		// background gaussian filter
+		//		sum = 0;
+		//		for (int x = -gauss_back_img_count; x <= gauss_back_img_count; x++)
+		//			for (int y = -gauss_back_img_count; y <= gauss_back_img_count; y++) {
+		//				final int xid = x+gauss_back_img_count;
+		//				final int yid = y+gauss_back_img_count;
+		//				final double dist_sq = x*x + y*y;
+		//				gauss_back_img_filter[xid][yid] = Math.exp(-dist_sq/(2*gauss_back_img_amount*gauss_back_img_amount))/gauss_back_img_amount;
+		//				sum += gauss_back_img_filter[xid][yid];
+		//			}
+		//		// normalize
+		//		for (int x = 0; x < gauss_back_img_matrix_size; x++)
+		//			for (int y = 0; y < gauss_back_img_matrix_size; y++)
+		//				gauss_back_img_filter[x][y] = gauss_back_img_filter[x][y] / sum;
 	}
 
 	@Override
-	public synchronized WorldState extractWorldState(final BufferedImage frame) {
+	public synchronized WorldState extractWorldState(BufferedImage frame) {
 		getCurrentROI();
-		//frame = preprocessFrame(frame);
-		final boolean graph_needed = config.isShowBoundingBoxes() || config.isShowContours() || config.isShowStateData() || !config.isShowWorld();
-		if (graph_needed)
-			graph = frame.createGraphics();
+		frame = preprocessFrame(frame);
 
-		frame_count++;
+//		try {
+			final boolean graph_needed = config.isShowBoundingBoxes() || config.isShowContours() || config.isShowStateData() || !config.isShowWorld();
+			if (graph_needed)
+				graph = frame.createGraphics();
 
-		if (pixels == null) {
-			// when first image is received
-			pixels = ((DataBufferByte) frame.getRaster().getDataBuffer()).getData();
-			im_width = frame.getWidth();
-			yellow_robot_image = new byte[im_width][frame.getHeight()];
-			blue_robot_image = new byte[im_width][frame.getHeight()];
-			ball_image = new byte[im_width][frame.getHeight()];
-			back_r = new byte[im_width/back_scale][frame.getHeight()/back_scale];
-			back_g = new byte[im_width/back_scale][frame.getHeight()/back_scale];
-			back_b = new byte[im_width/back_scale][frame.getHeight()/back_scale];
-			x_empty = new boolean[im_width/back_scale];
-			y_empty = new boolean[frame.getHeight()/back_scale];
-			empty = new boolean[im_width/back_scale][frame.getHeight()/back_scale];
-		} else
-			pixels = ((DataBufferByte) frame.getRaster().getDataBuffer()).getData();
+			frame_count++;
 
-		if (frame_count < delayed_start) {
-			for (int y = start_y; y <= stop_y; y++)
-				for (int x = start_x; x <= stop_x; x++) {
-					back_r[x/back_scale][y/back_scale] = 0;
-					back_g[x/back_scale][y/back_scale] = 0;
-					back_b[x/back_scale][y/back_scale] = 0;
-				}
-		}
+			if (pixels == null) {
+				// when first image is received
+				pixels = ((DataBufferByte) frame.getRaster().getDataBuffer()).getData();
+				im_width = frame.getWidth();
+				yellow_robot_image = new byte[im_width][frame.getHeight()];
+				blue_robot_image = new byte[im_width][frame.getHeight()];
+				ball_image = new byte[im_width][frame.getHeight()];
+				back_r = new byte[im_width >> back_scale_shift_bytes][frame.getHeight() >> back_scale_shift_bytes];
+				back_g = new byte[im_width >> back_scale_shift_bytes][frame.getHeight() >> back_scale_shift_bytes];
+				back_b = new byte[im_width >> back_scale_shift_bytes][frame.getHeight() >> back_scale_shift_bytes];
+				x_empty = new boolean[im_width >> back_scale_shift_bytes];
+				y_empty = new boolean[frame.getHeight() >> back_scale_shift_bytes];
+				empty = new boolean[im_width >> back_scale_shift_bytes][frame.getHeight() >> back_scale_shift_bytes];
+			} else
+				pixels = ((DataBufferByte) frame.getRaster().getDataBuffer()).getData();
 
-		//gaussianSmooth();
+			if (frame_count < delayed_start) {
+				for (int y = start_y; y <= stop_y; y++)
+					for (int x = start_x; x <= stop_x; x++) {
+						back_r[x >> back_scale_shift_bytes][y >> back_scale_shift_bytes] = 0;
+						back_g[x >> back_scale_shift_bytes][y >> back_scale_shift_bytes] = 0;
+						back_b[x >> back_scale_shift_bytes][y >> back_scale_shift_bytes] = 0;
+					}
+			}
 
-		if (frame_count % take_average_every == 0)
+			//gaussianSmooth();
+
 			backgRoundSub();
 
-		doThresholding();
+			doThresholding();
 
-		stDevColorFilter(blue_robot_image, blue_color_sigma);
-		filterByArea(blue_robot_image, area_T_px, blue_pos);
+			stDevColorFilter(blue_robot_image, blue_color_sigma);
+			filterByArea(blue_robot_image, area_T_px, blue_pos);
 
-		stDevColorFilter(yellow_robot_image, yellow_color_sigma);
-		//System.out.println("YELLOW STa");
-		filterByArea(yellow_robot_image, area_T_px, yellow_pos);
-		//System.out.println("YELLOW STo");
+			stDevColorFilter(yellow_robot_image, yellow_color_sigma);
+			//System.out.println("YELLOW STa");
+			filterByArea(yellow_robot_image, area_T_px, yellow_pos);
+			//System.out.println("YELLOW STo");
 
-		stDevColorFilter(ball_image, red_color_sigma);
-		filterByArea(ball_image, area_ball_px, ball_pos);
+			stDevColorFilter(ball_image, red_color_sigma);
+			filterByArea(ball_image, area_ball_px, ball_pos);
 
-		// some manual fixing
-		if (yellow_pos.x != -1 && yellow_pos.y != -1) {
-			final double dx = yellow_pos.x - blue_pos.x,
-					dy = yellow_pos.y - blue_pos.y,
-					r2 = dx*dx+dy*dy;
-			if (r2 < (Robot.LENGTH * Robot.LENGTH * width * width) / 4) {
-				yellow_pos.x = -1;
-				yellow_pos.y = -1;
-			}
-		}
-
-
-		state = new WorldState(convertTo1(ball_pos),
-				new Robot(convertTo1(blue_pos), getAngle(blue_robot_image, blue_pos)),
-				new Robot(convertTo1(yellow_pos), getAngle(yellow_robot_image, yellow_pos)),
-				frame);
-
-		// drawing part
-		if (!config.isShowWorld()) {
-			for (int y = start_y; y <= stop_y; y++)
-				for (int x = start_x; x <= stop_x; x++) {
-					setPixel(x, y, back_r[x/back_scale][y/back_scale] & mask, back_g[x/back_scale][y/back_scale] & mask, back_b[x/back_scale][y/back_scale] & mask);
+			// some manual fixing
+			if (yellow_pos.x != -1 && yellow_pos.y != -1) {
+				final double dx = yellow_pos.x - blue_pos.x,
+						dy = yellow_pos.y - blue_pos.y,
+						r2 = dx*dx+dy*dy;
+				if (r2 < (Robot.LENGTH * Robot.LENGTH * width * width) / 4) {
+					yellow_pos.x = -1;
+					yellow_pos.y = -1;
 				}
-		}
+			}
 
-		if (config.isShowThresholds()) {
-			drawArray(blue_robot_image, 0, 0, 255);
-			drawArray(yellow_robot_image, 200, 200, 0);
-			drawArray(ball_image, 255, 0, 0);
-		}
 
-		if (config.isShowBoundingBoxes())
-			drawThings();
+			state = new WorldState(convertTo1(ball_pos),
+					new Robot(convertTo1(blue_pos), getAngle(blue_robot_image, blue_pos)),
+					new Robot(convertTo1(yellow_pos), getAngle(yellow_robot_image, yellow_pos)),
+					frame);
 
-		if (config.isShowStateData()) {
-			if (oldtime != -1) {
-				final long curtime = System.currentTimeMillis();
-				graph.drawString(String.format("%.2f fps", 1000d/(curtime-oldtime)), 10, 10);
-				oldtime = curtime;
-			} else
-				oldtime = System.currentTimeMillis();
-		} else if (oldtime != -1)
-			oldtime = -1;
+			// drawing part
+			if (!config.isShowWorld()) {
+				for (int y = start_y; y < stop_y; y++)
+					for (int x = start_x; x < stop_x; x++) {
+						setPixel(x, y, back_r[x >> back_scale_shift_bytes][y >> back_scale_shift_bytes] & mask, back_g[x >> back_scale_shift_bytes][y >> back_scale_shift_bytes] & mask, back_b[x >> back_scale_shift_bytes][y >> back_scale_shift_bytes] & mask);
+					}
+			}
 
-		// finishing
-		if (graph_needed)
-			graph.dispose();
-		return state;
+			if (config.isShowThresholds()) {
+				drawArray(blue_robot_image, 0, 0, 255);
+				drawArray(yellow_robot_image, 200, 200, 0);
+				drawArray(ball_image, 255, 0, 0);
+			}
+
+			if (config.isShowBoundingBoxes())
+				drawThings();
+
+			if (config.isShowStateData()) {
+				if (oldtime != -1) {
+					final long curtime = System.currentTimeMillis();
+					graph.drawString(String.format("%.2f fps", 1000d/(curtime-oldtime)), 10, 10);
+					oldtime = curtime;
+				} else
+					oldtime = System.currentTimeMillis();
+			} else if (oldtime != -1)
+				oldtime = -1;
+
+			// finishing
+			if (graph_needed)
+				graph.dispose();
+			return state;
+//		} catch (ArrayIndexOutOfBoundsException e) {
+//			pixels = null;
+//			frame_count = 0;
+//			System.out.println("out_of_bounds");
+//			return new WorldState(new Point2D.Double(-1, -1),
+//					new Robot(new Point2D.Double(-1, -1), 0),
+//					new Robot(new Point2D.Double(-1, -1), 0),
+//					frame);
+//		}
 	}
 
 	private final void filterByArea(final byte[][] channel, final double area_px, final Point2D.Double center) {
 		int biggest_area = 0;
 		// find areas of all blobs
 		for (int y = start_y; y - stop_y != 0; y++) {
-			final int sc_y = y/back_scale;
+			final int sc_y = y >> back_scale_shift_bytes;
 			if (!y_empty[sc_y])
 				continue;
 			for (int x = start_x; x - stop_x != 0; x++) {
-				final int sc_x = x/back_scale;
+				final int sc_x = x >> back_scale_shift_bytes;
 				if (!x_empty[sc_x ])
 					continue;
 				if (empty[sc_x ][sc_y]) {
@@ -305,23 +313,23 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			long cy = 0;
 			int px_count = 0;
 			for (int y = start_y; y - stop_y != 0; y++) {
-				final int sc_y = y/back_scale;
-				if (!y_empty[sc_y])
-					continue;
-				for (int x = start_x; x - stop_x != 0; x++) {
-					final int sc_x = x/back_scale;
-					if (!x_empty[sc_x ])
-						continue;
-					if (empty[sc_x ][sc_y]) {
-						if ((channel[x][y] & mask) == biggest_area) {
-							cx += x;
-							cy += y;
-							px_count++;
-							channel[x][y] = (byte) PXV_VALID_THRESHOLD;
-						} else
-							channel[x][y] = 0;
-					}
-				}
+				final int sc_y = y >> back_scale_shift_bytes;
+		if (!y_empty[sc_y])
+			continue;
+		for (int x = start_x; x - stop_x != 0; x++) {
+			final int sc_x = x >> back_scale_shift_bytes;
+			if (!x_empty[sc_x ])
+				continue;
+			if (empty[sc_x ][sc_y]) {
+				if ((channel[x][y] & mask) == biggest_area) {
+					cx += x;
+					cy += y;
+					px_count++;
+					channel[x][y] = (byte) PXV_VALID_THRESHOLD;
+				} else
+					channel[x][y] = 0;
+			}
+		}
 			}
 			center.x = cx/px_count;
 			center.y = cy/px_count;
@@ -329,6 +337,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	}
 
 	private final void recursePixelSize(final byte[][] channel, final int x, final int y) {
+		
 		final int xm1 = x-1,
 				xp1 = x+1,
 				ym1 = y-1,
@@ -374,11 +383,12 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 
 	private final void setArea(final byte[][] channel) {
 
-		for (int y = start_y; y <= stop_y; y++)
-			for (int x = start_x; x <= stop_x; x++) {
-				if ((channel[x][y] & mask) == PXV_BEING_CHECKED)
+		for (int y = start_y; y < stop_y; y++) {
+			for (int x = start_x; x < stop_x; x++) {
+				if (channel[x][y] == PXV_BEING_CHECKED)
 					channel[x][y] = area_value;
 			}
+		}
 	}
 
 	private final void drawThings() {
@@ -528,61 +538,58 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private final void doThresholding() {
 
 		for (int y = start_y; y - stop_y != 0; y++) {
-			final int sc_y = y/back_scale;
-			if (!y_empty[sc_y])
-				continue;
-			for (int x = start_x; x - stop_x != 0; x++) {
-				final int sc_x = x/back_scale;
-				if (!x_empty[sc_x ])
+			final int sc_y = y >> back_scale_shift_bytes;
+				if (!y_empty[sc_y])
 					continue;
-				if (empty[sc_x ][sc_y]) {
-					// calculate red, green, blue and yellowness of the pixel at x y
-					final int
-					id = (x+y*im_width)*3,
-					re = pixels[id+2] & mask,//getPixel(x,y, rgb.red),
-					gr = pixels[id+1] & mask,//getPixel(x,y, rgb.green),
-					bl = pixels[id] & mask,//getPixel(x,y, rgb.blue);
-					// get the positive diviation from the avarage values
-					aver_r = back_r[sc_x][sc_y] & mask,
-					aver_b = back_b[sc_x][sc_y] & mask,
-					aver_g = back_g[sc_x][sc_y] & mask;
-					final int
-					mdb = 255 - aver_b,
-					mdr = 255 - aver_r,
-					mdg = 255 - aver_g;
-					int		dr = mdr == 0 ? 255 : 255*(re-aver_r)/mdr,
-							db = mdb == 0 ? 255 : 255*(bl-aver_b)/mdb,
-									dg = mdg == 0 ? 255 : 255*(gr-aver_g)/mdg;
-					// isolate only the positive values
-					if (dr < 0) dr = 0;
-					else if (dr > 255) dr = 255;
-					if (db < 0) db = 0;
-					else if (db > 255) db = 255;
-					if (dg < 0) dg = 0;
-					else if (dg > 255) dg = 255;
-					final double abs = dr-dg;
-					final double diff_coeff = (255-(abs > 0 ? abs : -abs))/255d;
-					final double int_coeff = ((dr+dg)/2d)/255d;
-					int dy = (int) (255*diff_coeff*int_coeff);
-					if (dy < 0) dy = 0;
-					else if (dy > 255) dy = 255;
-					// remove pollutants
-					final int
-					// red is poluted by yellow as well
-					clean_r = dr - dy -dg - db,
-					clean_b = db - dg - dr, //
-					clean_y = dy - dg/5 - dr/6;
-					// normalize and buffer
-					yellow_robot_image[x][y] = (byte) (clean_y < 0 ? 0 : (clean_y > 255 ? 255 : clean_y));
-					blue_robot_image[x][y] =  (byte) (clean_b < 0 ? 0 : (clean_b > 255 ? 255 : clean_b));
-					ball_image[x][y] = (byte) (clean_r < 0 ? 0 : (clean_r > 255 ? 255 : clean_r));
-					//setPixel(x, y, clean_y, clean_y, clean_y);
-				} else {
-					yellow_robot_image[x][y] = 0;
-					blue_robot_image[x][y] = 0;
-					ball_image[x][y] = 0;
+				for (int x = start_x; x - stop_x != 0; x++) {
+					final int sc_x = x >> back_scale_shift_bytes;
+		if (!x_empty[sc_x ])
+			continue;
+		if (empty[sc_x ][sc_y]) {
+			// calculate red, green, blue and yellowness of the pixel at x y
+			final int
+			id = (x+y*im_width)*3,
+			re = pixels[id+2] & mask,//getPixel(x,y, rgb.red),
+			gr = pixels[id+1] & mask,//getPixel(x,y, rgb.green),
+			bl = pixels[id] & mask,//getPixel(x,y, rgb.blue);
+			// get the positive diviation from the avarage values
+			aver_r = back_r[sc_x][sc_y] & mask,
+			aver_b = back_b[sc_x][sc_y] & mask,
+			aver_g = back_g[sc_x][sc_y] & mask,
+			white = (re+gr+bl)/3;
+			final int
+			mdb = 255 - aver_b,
+			mdr = 255 - aver_r,
+			mdg = 255 - aver_g;
+			int		dr = mdr == 0 ? 255 : 255*(re-aver_r)/mdr,
+					db = mdb == 0 ? 255 : 255*(bl-aver_b)/mdb,
+							dg = mdg == 0 ? 255 : 255*(gr-aver_g)/mdg;
+			// isolate only the positive values
+			if (dr < 0) dr = 0;
+			else if (dr > 255) dr = 255;
+			if (db < 0) db = 0;
+			else if (db > 255) db = 255;
+			if (dg < 0) dg = 0;
+			else if (dg > 255) dg = 255;
+			final double abs = dr-dg;
+			final double diff_coeff = (255-(abs > 0 ? abs : -abs))/255d;
+			final double int_coeff = ((3*dr+dg)/2d)/255d;
+			int dy = (int) (255*diff_coeff*int_coeff);
+			if (dy < 0) dy = 0;
+			else if (dy > 255) dy = 255;
+			// remove pollutants
+			final int
+			// red is poluted by yellow as well
+			clean_r = dr - dy,// -dg - db,
+			clean_b = db - dg - dr, //
+			clean_y = dy - dg/6 - white/10;// - white/4 - dg/2;
+			// normalize and buffer
+			yellow_robot_image[x][y] = (byte) (clean_y < 0 ? 0 : (clean_y > 255 ? 255 : clean_y));
+			blue_robot_image[x][y] =  (byte) (clean_b < 0 ? 0 : (clean_b > 255 ? 255 : clean_b));
+			ball_image[x][y] = (byte) (clean_r < 0 ? 0 : (clean_r > 255 ? 255 : clean_r));
+			//setPixel(x, y, clean_y, clean_y, clean_y);
+		}
 				}
-			}
 		}
 	}
 
@@ -595,8 +602,12 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		long sumg = 0;
 		long sq_sumg = 0;
 		for (int y = start_y; y - stop_y != 0; y++) {
-			y_empty[y/back_scale] = false;
+			final int y_sc = y >> back_scale_shift_bytes; 
+			y_empty[y_sc] = false;
 			for (int x = start_x; x - stop_x != 0; x++) {
+				yellow_robot_image[x][y] = 0;
+				blue_robot_image[x][y] = 0;
+				ball_image[x][y] = 0;
 				final int id = (x+y*im_width)*3,
 						re = pixels[id+2] & mask,
 						gr = pixels[id+1] & mask,
@@ -604,8 +615,9 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 						value = gr - 5*re + bl;
 				sumg += value;
 				sq_sumg += value*value;
-				x_empty[x/back_scale] = false;
-				empty[x/back_scale][y/back_scale] = false;
+				final int x_sc = x >> back_scale_shift_bytes;
+				x_empty[x_sc] = false;
+				empty[x_sc][y_sc] = false;
 			}
 		}
 		final double px_ct = (double) pixels_count,
@@ -615,98 +627,101 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		boolean should_i = false;
 		int pix_ct = 0;
 		// start averaging
-		final int scaled_start_y = start_y/back_scale,
-				scaled_start_x = start_x/back_scale,
-				scaled_stop_x = stop_x/back_scale,
-				scaled_stop_y = stop_y/back_scale;
-		for (int sc_y = scaled_start_y; sc_y <= scaled_stop_y; sc_y++) {
-			for (int sc_x = scaled_start_x; sc_x <= scaled_stop_x; sc_x++) {
-				final int id = (sc_x+sc_y*im_width)*3*back_scale,
-						re = pixels[id+2] & mask,
-						gr = pixels[id+1] & mask,
-						bl = pixels[id] & mask,
-						value = gr - 5*re + bl;
-				final double dvalue = value - iniy_avg_g;
-				// check st div
-				if (dvalue*dvalue < col_st_devg*back_sigma) {
-					int r = back_r[sc_x][sc_y] & mask,
-							g = back_g[sc_x][sc_y] & mask,
-							b = back_b[sc_x][sc_y] & mask;
-					if (r != 0 && b != 0 && g != 0) {
-						r = (r*10+re)/11;
-						g = (g*10+gr)/11;
-						b = (b*10+bl)/11;
-					} else {
-						r = re;
-						g = gr;
-						b = bl;
-					}
-					back_r[sc_x][sc_y] = (byte) r;
-					back_g[sc_x][sc_y] = (byte) g;
-					back_b[sc_x][sc_y] = (byte) b;
-					avr += r;
-					avg += g;
-					avb += b;
-					pix_ct++;
-				} else {
-					x_empty[sc_x] = true;
-					y_empty[sc_y] = true;
-					empty[sc_x][sc_y] = true;
-					should_i = true;
-				}
-			}
-		}
-
-		avg_r = (int) (avr/pix_ct);
-		avg_g = (int) (avg/pix_ct);
-		avg_b = (int) (avb/pix_ct);
-		if (should_i) {
-			for (int y = start_y; y - stop_y != 0; y++) {
-				final int sc_y = y/back_scale;
-				if (!y_empty[sc_y])
-					continue;
-				for (int x = start_x; x - stop_x != 0; x++) {
-					final int sc_x = x/back_scale;
-					if (!x_empty[sc_x])
-						continue;
-					if (empty[sc_x ][sc_y]) {
-						if (back_r[sc_x][sc_y] == 0 || back_g[sc_x][sc_y] == 0 || back_b [sc_x][sc_y] == 0) {
-							back_r[sc_x][sc_y] = (byte) avg_r;
-							back_g[sc_x][sc_y] = (byte) avg_g;
-							back_b[sc_x][sc_y] = (byte) avg_b;
+		final int scaled_start_y = start_y >> back_scale_shift_bytes,
+				scaled_start_x = start_x >> back_scale_shift_bytes,
+				scaled_stop_x = stop_x >> back_scale_shift_bytes,
+				scaled_stop_y = stop_y >> back_scale_shift_bytes;
+				for (int sc_y = scaled_start_y; sc_y < scaled_stop_y; sc_y++) {
+					for (int sc_x = scaled_start_x; sc_x < scaled_stop_x; sc_x++) {
+						final int id = ((sc_x+sc_y*im_width)*3) << back_scale_shift_bytes,
+								re = pixels[id+2] & mask,
+								gr = pixels[id+1] & mask,
+								bl = pixels[id] & mask,
+								value = gr - 5*re + bl;
+						final double dvalue = value - iniy_avg_g;
+						// check st div
+						if (dvalue*dvalue < col_st_devg*back_sigma) {
+							int r = back_r[sc_x][sc_y] & mask,
+									g = back_g[sc_x][sc_y] & mask,
+									b = back_b[sc_x][sc_y] & mask;
+							if (r != 0 && b != 0 && g != 0) {
+								r = (r*10+re)/11;
+								g = (g*10+gr)/11;
+								b = (b*10+bl)/11;
+							} else {
+								r = re;
+								g = gr;
+								b = bl;
+							}
+							back_r[sc_x][sc_y] = (byte) r;
+							back_g[sc_x][sc_y] = (byte) g;
+							back_b[sc_x][sc_y] = (byte) b;
+							avr += r;
+							avg += g;
+							avb += b;
+							pix_ct++;
+						} else {
+							x_empty[sc_x] = true;
+							y_empty[sc_y] = true;
+							empty[sc_x][sc_y] = true;
+							if (back_r[sc_x][sc_y] == 0 && back_g[sc_x][sc_y] == 0 && back_b[sc_x][sc_y] == 0)
+								should_i = true;
 						}
 					}
 				}
-			}
-		}
-		// smooth
-		for (int y = scaled_start_y; y <= scaled_stop_y; y++) {
-			for (int x = scaled_start_x; x <= scaled_stop_x; x++) {
-				final int
-					xm1 = x - scaled_start_x == 0 ? scaled_start_x : x-1,
-					xp1 = x - scaled_stop_x == 0 ? scaled_stop_x : x+1,
-					ym1 = y - scaled_start_y == 0 ? scaled_start_y : y-1,
-					yp1 = y - scaled_stop_y == 0 ? scaled_stop_y : y+1,
-					l_r = back_r[xm1][y] & mask,
-					u_r = back_r[x][yp1] & mask,
-					r_r = back_r[xp1][y] & mask,
-					d_r = back_r[x][ym1] & mask,
-					l_g = back_g[xm1][y] & mask,
-					u_g = back_g[x][yp1] & mask,
-					r_g = back_g[xp1][y] & mask,
-					d_g = back_g[x][ym1] & mask,
-					l_b = back_b[xm1][y] & mask,
-					u_b = back_b[x][yp1] & mask,
-					r_b = back_b[xp1][y] & mask,
-					d_b = back_b[x][ym1] & mask,
-					c_r = back_r[x][y] & mask,
-					c_g = back_g[x][y] & mask,
-					c_b = back_b[x][y] & mask;
-				back_r[x][y] = (byte) ((l_r+r_r+d_r+u_r+4*c_r)/8);
-				back_g[x][y] = (byte) ((l_g+r_g+d_g+u_g+4*c_g)/8);
-				back_b[x][y] = (byte) ((l_b+r_b+d_b+u_b+4*c_b)/8);
-			}
-		}
+
+				avg_r = (int) (avr/pix_ct);
+				avg_g = (int) (avg/pix_ct);
+				avg_b = (int) (avb/pix_ct);
+				if (should_i) {
+					for (int y = scaled_start_y; y < scaled_stop_y; y++) {
+						if (!y_empty[y])
+							continue;
+						for (int x = scaled_start_x; x < scaled_stop_x; x++) {
+							if (!x_empty[x] || !empty[x][y])
+								continue;
+							if (back_r[x][y] == 0 || back_g[x][y] == 0 || back_b [x][y] == 0) {
+								back_r[x][y] = (byte) avg_r;
+								back_g[x][y] = (byte) avg_g;
+								back_b[x][y] = (byte) avg_b;
+							}
+						}
+					}
+				}
+				// smooth
+				for (int y = scaled_start_y; y < scaled_stop_y; y++) {
+					if (!y_empty[y])
+						continue;
+					for (int x = scaled_start_x; x < scaled_stop_x; x++) {
+						if (!x_empty[x] || !empty[x][y])
+							continue;
+						final int
+						xm1 = x - scaled_start_x == 0 ? scaled_start_x : x-1,
+								xp1 = x - scaled_stop_x + 1 == 0 ? scaled_stop_x - 1 : x+1,
+										ym1 = y - scaled_start_y == 0 ? scaled_start_y : y-1,
+												yp1 = y - scaled_stop_y + 1 == 0 ? scaled_stop_y - 1 : y+1,
+														l_r = back_r[xm1][y] & mask,
+														u_r = back_r[x][yp1] & mask,
+														r_r = back_r[xp1][y] & mask,
+														d_r = back_r[x][ym1] & mask,
+														l_g = back_g[xm1][y] & mask,
+														u_g = back_g[x][yp1] & mask,
+														r_g = back_g[xp1][y] & mask,
+														d_g = back_g[x][ym1] & mask,
+														l_b = back_b[xm1][y] & mask,
+														u_b = back_b[x][yp1] & mask,
+														r_b = back_b[xp1][y] & mask,
+														d_b = back_b[x][ym1] & mask,
+														c_r = back_r[x][y] & mask,
+														c_g = back_g[x][y] & mask,
+														c_b = back_b[x][y] & mask;
+						final boolean x_right = x > (scaled_start_x+scaled_stop_x)/2,
+								y_top = y > (scaled_start_y+scaled_stop_y)/2;
+								back_r[x][y] = (byte) (Math.round((x_right ? l_r : r_r)+(y_top ? d_r : u_r)+c_r)/3);
+								back_g[x][y] = (byte) (Math.round((x_right ? l_g : r_g)+(y_top ? d_g : u_g)+c_g)/3);
+								back_b[x][y] = (byte) (Math.round((x_right ? l_b : r_b)+(y_top ? d_b : u_b)+c_b)/3);
+					}
+				}
 	}
 
 	/**
@@ -720,19 +735,19 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		long sum = 0;
 		long sq_sum = 0;
 		for (int y = start_y; y - stop_y != 0; y++) {
-			final int sc_y = y/back_scale;
-			if (!y_empty[sc_y])
-				continue;
-			for (int x = start_x; x - stop_x != 0; x++) {
-				final int sc_x = x/back_scale;
-				if (!x_empty[sc_x ])
-					continue;
-				if (empty[sc_x ][sc_y]) {
-					int value = array[x][y] & mask;
-					sum += value;
-					sq_sum += value*value;
-				}
-			}
+			final int sc_y = y >> back_scale_shift_bytes;
+						if (!y_empty[sc_y])
+							continue;
+						for (int x = start_x; x - stop_x != 0; x++) {
+							final int sc_x = x >> back_scale_shift_bytes;
+						if (!x_empty[sc_x ])
+							continue;
+						if (empty[sc_x ][sc_y]) {
+							int value = array[x][y] & mask;
+							sum += value;
+							sq_sum += value*value;
+						}
+						}
 		}
 		final double col_mean = sum / pixels_count;
 		final double col_st_dev = Math.sqrt(sq_sum / pixels_count - col_mean * col_mean);
@@ -740,11 +755,11 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		// apply thresholding and find rough centre
 
 		for (int y = start_y; y - stop_y != 0; y++) {
-			final int sc_y = y/back_scale;
-			if (!y_empty[sc_y])
-				continue;
-			for (int x = start_x; x - stop_x != 0; x++) {
-				final int sc_x = x/back_scale;
+			final int sc_y = y >> back_scale_shift_bytes;
+						if (!y_empty[sc_y])
+							continue;
+						for (int x = start_x; x - stop_x != 0; x++) {
+							final int sc_x = x >> back_scale_shift_bytes;
 				if (!x_empty[sc_x ])
 					continue;
 				if (empty[sc_x ][sc_y]) {
@@ -755,7 +770,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 					} else
 						array[x][y] = PXV_BELOW_THRESHOLD;
 				}
-			}
+						}
 		}
 	}
 
@@ -768,8 +783,8 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	 * @param b
 	 */
 	private final void drawArray(final byte[][] channel, final int r, final int g, final int b) {
-		for (int y = start_y; y <= stop_y; y++)
-			for (int x = start_x; x <= stop_x; x++) {
+		for (int y = start_y; y < stop_y; y++)
+			for (int x = start_x; x < stop_x; x++) {
 				final double coeff = (channel[x][y] & mask) / 255d;
 				final int nr = (int) (r*coeff),
 						ng = (int) (g*coeff),
@@ -818,39 +833,40 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	 * 
 	 * @param frame Frame to preprocess.
 	 */
-	@SuppressWarnings("unused")
 	private BufferedImage preprocessFrame(BufferedImage frame) {
 		IplImage frame_ipl = IplImage.createFrom(frame);
-		frame_ipl = undistortImage(frame_ipl);	
+		frame_ipl = undistortImage(frame_ipl);
+		cvSetImageROI(frame_ipl, cvRect(config.getFieldLowX(), config.getFieldLowY(),
+				config.getFieldWidth(), config.getFieldHeight()));		
 		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, 5);
 		return frame_ipl.getBufferedImage();
 	}
 
-	/**
-	 * Does gaussian smooth to the frame
-	 */
-	private final void gaussianSmooth() {
-		for (int y = start_y; y <= stop_y; y++)
-			for (int x = start_x; x <= stop_x; x++) {
-				double r = 0, g = 0, b = 0;
-				for (int i = -gauss_img_count; i <= gauss_img_count; i++)
-					for (int j = -gauss_img_count; j <= gauss_img_count; j++) {
-						final int xid = i+gauss_img_count;
-						final int yid = j+gauss_img_count;
-						final int px2x = x + i;
-						final int px2y = y + j;
-						final int id = (px2x+px2y*im_width)*3;
-						final double gaus_f = gauss_img_filter[xid][yid];
-						r += (pixels[id+2] & mask) * gaus_f;
-						g += (pixels[id+1] & mask) * gaus_f;
-						b += (pixels[id] & mask) * gaus_f;
-					}
-				final int id = (x+y*im_width)*3; 
-				pixels[id+2] = (byte) r;
-				pixels[id+1] = (byte) g;
-				pixels[id] = (byte) b;
-			}
-	}
+	//	/**
+	//	 * Does gaussian smooth to the frame
+	//	 */
+	//	private final void gaussianSmooth() {
+	//		for (int y = start_y; y <= stop_y; y++)
+	//			for (int x = start_x; x <= stop_x; x++) {
+	//				double r = 0, g = 0, b = 0;
+	//				for (int i = -gauss_img_count; i <= gauss_img_count; i++)
+	//					for (int j = -gauss_img_count; j <= gauss_img_count; j++) {
+	//						final int xid = i+gauss_img_count;
+	//						final int yid = j+gauss_img_count;
+	//						final int px2x = x + i;
+	//						final int px2y = y + j;
+	//						final int id = (px2x+px2y*im_width)*3;
+	//						final double gaus_f = gauss_img_filter[xid][yid];
+	//						r += (pixels[id+2] & mask) * gaus_f;
+	//						g += (pixels[id+1] & mask) * gaus_f;
+	//						b += (pixels[id] & mask) * gaus_f;
+	//					}
+	//				final int id = (x+y*im_width)*3; 
+	//				pixels[id+2] = (byte) r;
+	//				pixels[id+1] = (byte) g;
+	//				pixels[id] = (byte) b;
+	//			}
+	//	}
 
 	/**
 	 * Converts a "global" vector to 1..0
@@ -863,56 +879,56 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		return new Point2D.Double((global.x-start_x)/width, ((global.y-start_y)/height)*Tools.PITCH_HEIGHT_CM/Tools.PITCH_WIDTH_CM);
 	}
 
-	// low pass filtering
-
-	/**
-	 * A simple low-pass filter
-	 * @param old_value
-	 * @param new_value
-	 * @param amount
-	 * @return a filtered value
-	 */
-	private final static double lowPass(final double old_value, final double new_value, final double amount) {
-		return (old_value+new_value*amount)/((double) (amount+1));
-	}
-
-	/**
-	 * Low pass for angles
-	 * @param old_value
-	 * @param new_value
-	 * @return the filtered angle
-	 */
-	private final static double lowPass(final double old_value, final double new_value) {
-		return lowPass(old_value, new_value, filteredAngleAmount);
-	}
-
-	/**
-	 * Low pass on position
-	 * @param old_value
-	 * @param new_value
-	 * @param amount
-	 * @return the filtered position
-	 */
-	private final static Point2D.Double lowPass(final Point2D.Double old_value, final Point2D.Double new_value) {
-		if (new_value.x == -1 && new_value.y == -1)
-			return new_value;
-		if (old_value.x == -1 && old_value.y == -1)
-			return new_value;
-		return new Point2D.Double (
-				lowPass(old_value.getX(), new_value.getX(), filteredPositionAmount),
-				lowPass(old_value.getY(), new_value.getY(), filteredPositionAmount));
-	}
-
-	/**
-	 * Low pass on a robot
-	 * @param old_value
-	 * @param new_value
-	 * @param amount
-	 * @return a new robot with low_pass
-	 */
-	private final static Robot lowPass(final Robot old_value, final Robot new_value) {
-		return new Robot(
-				lowPass(old_value.getCoords(), new_value.getCoords()),
-				lowPass(old_value.getAngle(), new_value.getAngle()));
-	}
+	//	// low pass filtering
+	//
+	//	/**
+	//	 * A simple low-pass filter
+	//	 * @param old_value
+	//	 * @param new_value
+	//	 * @param amount
+	//	 * @return a filtered value
+	//	 */
+	//	private final static double lowPass(final double old_value, final double new_value, final double amount) {
+	//		return (old_value+new_value*amount)/((double) (amount+1));
+	//	}
+	//
+	//	/**
+	//	 * Low pass for angles
+	//	 * @param old_value
+	//	 * @param new_value
+	//	 * @return the filtered angle
+	//	 */
+	//	private final static double lowPass(final double old_value, final double new_value) {
+	//		return lowPass(old_value, new_value, filteredAngleAmount);
+	//	}
+	//
+	//	/**
+	//	 * Low pass on position
+	//	 * @param old_value
+	//	 * @param new_value
+	//	 * @param amount
+	//	 * @return the filtered position
+	//	 */
+	//	private final static Point2D.Double lowPass(final Point2D.Double old_value, final Point2D.Double new_value) {
+	//		if (new_value.x == -1 && new_value.y == -1)
+	//			return new_value;
+	//		if (old_value.x == -1 && old_value.y == -1)
+	//			return new_value;
+	//		return new Point2D.Double (
+	//				lowPass(old_value.getX(), new_value.getX(), filteredPositionAmount),
+	//				lowPass(old_value.getY(), new_value.getY(), filteredPositionAmount));
+	//	}
+	//
+	//	/**
+	//	 * Low pass on a robot
+	//	 * @param old_value
+	//	 * @param new_value
+	//	 * @param amount
+	//	 * @return a new robot with low_pass
+	//	 */
+	//	private final static Robot lowPass(final Robot old_value, final Robot new_value) {
+	//		return new Robot(
+	//				lowPass(old_value.getCoords(), new_value.getCoords()),
+	//				lowPass(old_value.getAngle(), new_value.getAngle()));
+	//	}
 }
