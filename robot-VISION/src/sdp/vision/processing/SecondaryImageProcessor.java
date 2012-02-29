@@ -55,9 +55,9 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private Graphics2D graph;
 
 	// standard deviation filter. Filter out points more than this amount of sigmas from the st dev
-	private static final double blue_color_sigma = 10;
+	private static final double blue_color_sigma = 6;
 	private static final double red_color_sigma = 15;
-	private static final double yellow_color_sigma = 10;
+	private static final double yellow_color_sigma = 6;
 
 	private static final double area_T_cm = 100; // cm*cm
 	private static final double area_ball_cm = 20; // cm*cm
@@ -75,7 +75,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			PI = Math.PI;
 
 	// background substraction
-	private static double back_sigma = 1; // everything below this is considered background
+	private static double back_sigma = 0.1; // everything below this is considered background
 	private static int back_scale_shift_bytes = 1;
 	private static byte[][] back_r, back_g, back_b;
 	//	private static final int gauss_back_img_count = 50;
@@ -573,7 +573,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			else if (dg > 255) dg = 255;
 			final double abs = dr-dg;
 			final double diff_coeff = (255-(abs > 0 ? abs : -abs))/255d;
-			final double int_coeff = ((3*dr+dg)/2d)/255d;
+			final double int_coeff = ((dr+dg)/2d)/255d;
 			int dy = (int) (255*diff_coeff*int_coeff);
 			if (dy < 0) dy = 0;
 			else if (dy > 255) dy = 255;
@@ -582,12 +582,12 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 			// red is poluted by yellow as well
 			clean_r = dr - dy,// -dg - db,
 			clean_b = db - dg - dr, //
-			clean_y = dy - dg/6 - white/10;// - white/4 - dg/2;
+			clean_y = dy - db/8 - dr/8;// - white/4 - dg/2;
 			// normalize and buffer
 			yellow_robot_image[x][y] = (byte) (clean_y < 0 ? 0 : (clean_y > 255 ? 255 : clean_y));
 			blue_robot_image[x][y] =  (byte) (clean_b < 0 ? 0 : (clean_b > 255 ? 255 : clean_b));
 			ball_image[x][y] = (byte) (clean_r < 0 ? 0 : (clean_r > 255 ? 255 : clean_r));
-			//setPixel(x, y, clean_y, clean_y, clean_y);
+			setPixel(x, y, clean_y, clean_y, clean_y);
 		}
 				}
 		}
@@ -612,7 +612,8 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 						re = pixels[id+2] & mask,
 						gr = pixels[id+1] & mask,
 						bl = pixels[id] & mask,
-						value = gr - 5*re + bl;
+						valuepre = gr - (re+gr)/2 - bl,
+						value = (valuepre < 0) ? 0 : (valuepre > 255 ? 255 : valuepre);
 				sumg += value;
 				sq_sumg += value*value;
 				final int x_sc = x >> back_scale_shift_bytes;
@@ -637,7 +638,8 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 								re = pixels[id+2] & mask,
 								gr = pixels[id+1] & mask,
 								bl = pixels[id] & mask,
-								value = gr - 5*re + bl;
+								valuepre = gr - (re+gr)/2 - bl,
+								value = (valuepre < 0) ? 0 : (valuepre > 255 ? 255 : valuepre);
 						final double dvalue = value - iniy_avg_g;
 						// check st div
 						if (dvalue*dvalue < col_st_devg*back_sigma) {
@@ -645,9 +647,9 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 									g = back_g[sc_x][sc_y] & mask,
 									b = back_b[sc_x][sc_y] & mask;
 							if (r != 0 && b != 0 && g != 0) {
-								r = (r*10+re)/11;
-								g = (g*10+gr)/11;
-								b = (b*10+bl)/11;
+								r = (r+re)/2;
+								g = (g+gr)/2;
+								b = (b+bl)/2;
 							} else {
 								r = re;
 								g = gr;
@@ -835,9 +837,9 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	 */
 	private BufferedImage preprocessFrame(BufferedImage frame) {
 		IplImage frame_ipl = IplImage.createFrom(frame);
-		frame_ipl = undistortImage(frame_ipl);
-		cvSetImageROI(frame_ipl, cvRect(config.getFieldLowX(), config.getFieldLowY(),
-				config.getFieldWidth(), config.getFieldHeight()));		
+		//frame_ipl = undistortImage(frame_ipl);
+		//cvSetImageROI(frame_ipl, cvRect(config.getFieldLowX(), config.getFieldLowY(),
+			//	config.getFieldWidth(), config.getFieldHeight()));		
 		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, 5);
 		return frame_ipl.getBufferedImage();
 	}
