@@ -97,8 +97,7 @@ public class AIVisualServoing extends AI {
 		}
 
 
-
-		turning_angle = Utilities.normaliseToByte(turning_angle);
+		turning_angle = Utilities.normaliseAngle(turning_angle);
 
 
 		forward_speed = normaliseSpeed(forward_speed);
@@ -107,7 +106,7 @@ public class AIVisualServoing extends AI {
 
 		// make a virtual sensor at Robot.length/2 pointing at 1,0
 		//double collision_dist = Tools.raytraceVector(worldState, robot, new Vector2D(Robot.LENGTH_CM/2,0), new Vector2D(1,0), am_i_blue).getLength();
-		mComm.sendMessage(opcode.operate, forward_speed, (byte) (turning_speed));		
+		mComm.sendMessage(opcode.operate, forward_speed, (byte) turning_speed);		
 
 		//check if the ball is very close to the sides of the robot and move back 
 		//final Robot robot = ai_world_state.getRobot();			

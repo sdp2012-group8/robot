@@ -53,19 +53,19 @@ public class Brick {
 				while (is_on) {
 					int dist = sens.getDistance();
 					collision = dist < coll_threshold;
-					try {
-						if ( collision && mComm != null){
-							try {
-								mComm.sendMessage(opcode.sensor, (byte) 0, (byte) dist);
-								Thread.sleep(10);
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-						Thread.sleep(100);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
+//					try {
+//						if ( collision && mComm != null){
+//							try {
+//								mComm.sendMessage(opcode.sensor, (byte) 0, (byte) dist);
+//								Thread.sleep(10);
+//							} catch (IOException e) {
+//								e.printStackTrace();
+//							}
+//						}
+//						Thread.sleep(100);
+//					} catch (InterruptedException e) {
+//						e.printStackTrace();
+//					}
 				}
 				sens.off();
 			};
