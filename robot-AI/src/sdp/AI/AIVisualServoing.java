@@ -68,7 +68,7 @@ public class AIVisualServoing extends AI {
 			if (ncp.x > 0) {
 				// collision in front
 				if (turning_angle > 90 || turning_angle < -90) {
-				//	System.out.println("in front, going backwards");
+					System.out.println("in front, going backwards");
 					forward_speed = -15;
 				} else if (turning_angle > 30 || turning_angle < -30 ) {
 				//	System.out.println("in front, turning on spot");
@@ -80,40 +80,44 @@ public class AIVisualServoing extends AI {
 				if (turning_angle > 30 || turning_angle < -30 ) {
 				//	System.out.println("behind on spot");
 					forward_speed = 0;
-				} else
-				System.out.println("behind else");
+				} else {
+					//System.out.println("behind else");
+				}
+				
 			}
 		} else if (turning_angle > 90 || turning_angle < -90) {
-			//System.out.println("no collision, going backwards");
+			System.out.println("no collision, going backwards");
 			forward_speed = -15;
 		}
 		//forward_speed = 0;
 		
-		if(ai_world_state.getDistanceToBall() < 20 && (Math.abs(turning_angle) > 10 )){
+		if(ai_world_state.getDistanceToBall() < 10 && (Math.abs(turning_angle) > 60 )){
 			forward_speed = 0;
 			System.out.println("Distance is under 20 and angle over 10.");
 		}
 
 
-
-		turning_angle = Utilities.normaliseToByte(turning_angle);
+		turning_angle = Utilities.normaliseAngle(turning_angle);
 
 
 		forward_speed = normaliseSpeed(forward_speed);
-		turning_angle = Utilities.normaliseAngle(turning_angle);
+		
+		double turning_speed = Utilities.normaliseToByte(turning_angle*2);
+		if (turning_speed > MAX_TURNING_SPEED) turning_speed = MAX_TURNING_SPEED;
+		if (turning_speed < -MAX_TURNING_SPEED) turning_speed = -MAX_TURNING_SPEED;
 
 		// make a virtual sensor at Robot.length/2 pointing at 1,0
 		//double collision_dist = Tools.raytraceVector(worldState, robot, new Vector2D(Robot.LENGTH_CM/2,0), new Vector2D(1,0), am_i_blue).getLength();
-		mComm.sendMessage(opcode.operate, forward_speed, (byte) (turning_angle));		
+		mComm.sendMessage(opcode.operate, forward_speed, (byte) turning_speed);		
 
 		//check if the ball is very close to the sides of the robot and move back 
-		final Robot robot = ai_world_state.getRobot();			
+		//final Robot robot = ai_world_state.getRobot();			
 		//might cause problems when very close to walls 
 		
-		if (Math.toDegrees(Utilities.getAngle(ai_world_state.getBallCoords(), robot.getFrontLeft(), robot.getBackLeft())) > 170
-				|| Math.toDegrees(Utilities.getAngle( ai_world_state.getBallCoords(), robot.getFrontRight(),robot.getBackRight())) > 170){
-			mComm.sendMessage(opcode.operate, (byte) -30, (byte) 0);
-		}
+//		if (Math.toDegrees(Utilities.getAngle(ai_world_state.getBallCoords(), robot.getFrontLeft(), robot.getBackLeft())) > 170
+//				|| Math.toDegrees(Utilities.getAngle( ai_world_state.getBallCoords(), robot.getFrontRight(),robot.getBackRight())) > 170){
+//			mComm.sendMessage(opcode.operate, (byte) -30, (byte) 0);
+//		}
 
 		// This checks whether or not we are between enemy goal and the ball.
 		// We also check whether or not the ball is too close to our goal, if it is don't try to go behind it to avoid catastrophies.
@@ -130,7 +134,8 @@ public class AIVisualServoing extends AI {
 
 		// check whether to go into got_ball mode
 		if (Math.abs(turning_angle) < TURNING_ACCURACY && ai_world_state.getDistanceToBall() < 10) {
-			ai_world_state.setMode(mode.got_ball);
+			mComm.sendMessage(opcode.kick);
+			//ai_world_state.setMode(mode.got_ball);
 		}
 		
 	}
@@ -166,10 +171,10 @@ public class AIVisualServoing extends AI {
 				turning_angle = Utilities.normaliseAngle(turning_angle);
 
 				if (turning_angle > KICKING_ACCURACY && (ai_world_state.getDistanceToGoal() > 1)){
-					mComm.sendMessage(opcode.operate, forward_speed, (byte)20);
+					mComm.sendMessage(opcode.operate, forward_speed, (byte)30);
 					//System.out.println("Going to goal - Turning: " + turning_angle);
 				} else if( turning_angle < -KICKING_ACCURACY && (ai_world_state.getDistanceToGoal() > 1)){
-					mComm.sendMessage(opcode.operate, forward_speed, (byte)-20);
+					mComm.sendMessage(opcode.operate, forward_speed, (byte)-30);
 					//System.out.println("Going to goal - Turning: " + turning_angle);	
 				} else  {
 					mComm.sendMessage(opcode.kick);
@@ -242,7 +247,7 @@ public class AIVisualServoing extends AI {
 		// |  |___|		         									  |
 		// |														  |
 		// |_														 _|
-		// | 														  |
+		// |	     												  |
 		// |                                                          |
 		// *----------------------------------------------------------*
 		//
@@ -254,21 +259,29 @@ public class AIVisualServoing extends AI {
 		// Make our robot move to that intersection.
 		//
 		//
-		Vector2D enemyDirection=Vector2D.subtract(new Vector2D (ai_world_state.getEnemyRobot().getFrontCenter()),new Vector2D(ai_world_state.getEnemyRobot().getCoords()));
-		Point2D.Double interceptBall= Utilities.intersection(enemyDirection, ai_world_state.getBallCoords(), ai_world_state.getRobot().getCoords(), ai_world_state.getRobot().getFrontCenter());
-
+		
+		Point2D.Double interceptBall= Utilities.intersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getRobot().getCoords(), ai_world_state.getRobot().getFrontCenter());
+		System.out.println("InterceptDistance: " + interceptBall);
+		System.out.println("Our robot's y: " + ai_world_state.getRobot().getCoords().y);
+		
 		if (!interceptBall.equals(null)){
-			Vector2D interceptDistance = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(interceptBall));
-
-			if (interceptDistance.y < ai_world_state.getRobot().getCoords().y){
-				byte forward_speed = (byte) 40; //Utilities.normaliseToByte((15+(interceptDistance.getLength()/40)*25));
-				mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
-			} else {
-				byte forward_speed = (byte) -40; //Utilities.normaliseToByte(-(15+(interceptDistance.getLength()/40)*25));
-				mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
+			
+			if((interceptBall.y < ai_world_state.getMyGoal().getBottom().y)  && (interceptBall.y > ai_world_state.getMyGoal().getTop().y)){
+				 if ((interceptBall.y > ai_world_state.getRobot().getCoords().y)  ){
+					byte forward_speed = (byte) -20; //Utilities.normaliseToByte((15+(interceptDistance.getLength()/40)*25));
+					mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
+				} else if((interceptBall.y < ai_world_state.getRobot().getCoords().y)) {
+					byte forward_speed = (byte) 20; //Utilities.normaliseToByte(-(15+(interceptDistance.getLength()/40)*25));
+					mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
+				}
 			}
-
+			else
+			{
+				mComm.sendMessage(opcode.operate, (byte) 0, (byte) 0);
+			}
+			
 		}
+		
 	}
 
 	/**
@@ -318,7 +331,6 @@ ai_world_state.getEnemyGoal().getTop().y);
 	/**
 	 * Block goal when in a dangerous situation
 	 */
-	
 	public void protectGoal(){
 		/**TODO: When the ball is in one of the corners of our goal, instead of trying to take it and risking to throw it in our own goal
 				 it would be wiser to simply guard our goal and try to intercept the ball if the other robot gets it... maybe?

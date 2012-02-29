@@ -98,4 +98,10 @@ public class AINeuralNetwork extends AI {
 	public void sit() throws IOException {
 	}
 
+	@Override
+	protected void penaltiesDefend() throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

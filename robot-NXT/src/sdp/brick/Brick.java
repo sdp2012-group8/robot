@@ -53,19 +53,19 @@ public class Brick {
 				while (is_on) {
 					int dist = sens.getDistance();
 					collision = dist < coll_threshold;
-					try {
-						if ( collision && mComm != null){
-							try {
-								mComm.sendMessage(opcode.sensor, (byte) 0, (byte) dist);
-								Thread.sleep(10);
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-						Thread.sleep(100);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
+//					try {
+//						if ( collision && mComm != null){
+//							try {
+//								mComm.sendMessage(opcode.sensor, (byte) 0, (byte) dist);
+//								Thread.sleep(10);
+//							} catch (IOException e) {
+//								e.printStackTrace();
+//							}
+//						}
+//						Thread.sleep(100);
+//					} catch (InterruptedException e) {
+//						e.printStackTrace();
+//					}
 				}
 				sens.off();
 			};
@@ -76,12 +76,12 @@ public class Brick {
 					boolean initial = kickSensor.isPressed();
 					if (!initial) {
 						if (can_kick) {can_kick = false;}
-						Motor.B.setSpeed(Motor.B.getMaxSpeed());
-						Motor.B.setAcceleration(10000);
+						Motor.B.setSpeed((int)(Motor.B.getMaxSpeed()/2));
+						Motor.B.setAcceleration(6000);
 						Motor.B.backward();
 						while (!kickSensor.isPressed()) {
 							try {
-								Thread.sleep(10);
+								Thread.sleep(5);
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}

@@ -4,15 +4,14 @@ import java.io.File;
 
 import javax.swing.filechooser.FileFilter;
 
-
 /**
- * A file filter that shows only XML files.
+ * A file filter that shows only text files.
  * 
  * @author Gediminas Liktaras
  */
-public class XmlFileFilter extends FileFilter {
+public class TextFileFilter_FC extends FileFilter {
 
-	/* (non-Javadoc)
+	/**
 	 * @see javax.swing.filechooser.FileFilter#accept(java.io.File)
 	 */
 	@Override
@@ -22,19 +21,19 @@ public class XmlFileFilter extends FileFilter {
 		}
 		
 		String filename = file.getAbsolutePath();
-		if (filename.endsWith(".xml")) {
+		if (filename.endsWith(".txt")) {
 			return true;
 		}
 		
 		return false;
 	}
 
-	/* (non-Javadoc)
+	/**
 	 * @see javax.swing.filechooser.FileFilter#getDescription()
 	 */
 	@Override
 	public String getDescription() {
-		return "XML files";
+		return "Text files";
 	}
 
 }
