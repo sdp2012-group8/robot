@@ -103,6 +103,8 @@ public class AIVisualServoing extends AI {
 		forward_speed = normaliseSpeed(forward_speed);
 		
 		double turning_speed = Utilities.normaliseAngle(turning_angle*2);
+		if (turning_speed > MAX_TURNING_SPEED) turning_speed = MAX_TURNING_SPEED;
+		if (turning_speed < -MAX_TURNING_SPEED) turning_speed = -MAX_TURNING_SPEED;
 
 		// make a virtual sensor at Robot.length/2 pointing at 1,0
 		//double collision_dist = Tools.raytraceVector(worldState, robot, new Vector2D(Robot.LENGTH_CM/2,0), new Vector2D(1,0), am_i_blue).getLength();
@@ -168,10 +170,10 @@ public class AIVisualServoing extends AI {
 				turning_angle = Utilities.normaliseAngle(turning_angle);
 
 				if (turning_angle > KICKING_ACCURACY && (ai_world_state.getDistanceToGoal() > 1)){
-					mComm.sendMessage(opcode.operate, forward_speed, (byte)20);
+					mComm.sendMessage(opcode.operate, forward_speed, (byte)30);
 					//System.out.println("Going to goal - Turning: " + turning_angle);
 				} else if( turning_angle < -KICKING_ACCURACY && (ai_world_state.getDistanceToGoal() > 1)){
-					mComm.sendMessage(opcode.operate, forward_speed, (byte)-20);
+					mComm.sendMessage(opcode.operate, forward_speed, (byte)-30);
 					//System.out.println("Going to goal - Turning: " + turning_angle);	
 				} else  {
 					mComm.sendMessage(opcode.kick);
@@ -264,10 +266,10 @@ public class AIVisualServoing extends AI {
 		if (!interceptBall.equals(null)){
 			
 			if((interceptBall.y < ai_world_state.getMyGoal().getBottom().y)  && (interceptBall.y > ai_world_state.getMyGoal().getTop().y)){
-				 if ((interceptBall.y > ai_world_state.getRobot().getCoords().y + 0.5)  ){
+				 if ((interceptBall.y > ai_world_state.getRobot().getCoords().y)  ){
 					byte forward_speed = (byte) -20; //Utilities.normaliseToByte((15+(interceptDistance.getLength()/40)*25));
 					mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
-				} else if((interceptBall.y < ai_world_state.getRobot().getCoords().y - 0.5)) {
+				} else if((interceptBall.y < ai_world_state.getRobot().getCoords().y)) {
 					byte forward_speed = (byte) 20; //Utilities.normaliseToByte(-(15+(interceptDistance.getLength()/40)*25));
 					mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
 				}
