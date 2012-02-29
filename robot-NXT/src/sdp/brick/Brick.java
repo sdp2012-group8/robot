@@ -76,12 +76,12 @@ public class Brick {
 					boolean initial = kickSensor.isPressed();
 					if (!initial) {
 						if (can_kick) {can_kick = false;}
-						Motor.B.setSpeed(Motor.B.getMaxSpeed());
-						Motor.B.setAcceleration(10000);
+						Motor.B.setSpeed((int)(Motor.B.getMaxSpeed()/2));
+						Motor.B.setAcceleration(6000);
 						Motor.B.backward();
 						while (!kickSensor.isPressed()) {
 							try {
-								Thread.sleep(10);
+								Thread.sleep(5);
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
@@ -188,10 +188,10 @@ public class Brick {
 					// args[2] - acceleration in cm/s/s
 					if (args.length > 0) {
 						// collision detection
-						if (collision && Math.abs(args[1]) >= angle_threshold) {
-							args[0] = back_speed;
-							args[1] += args[1] > 0 ? turning_boost : -turning_boost;
-						}
+//						if (collision && Math.abs(args[1]) >= angle_threshold) {
+//							args[0] = back_speed;
+//							args[1] += args[1] > 0 ? turning_boost : -turning_boost;
+//						}
 						float old_a = speed_a;
 						float old_c = speed_c;
 						// convert the degrees per second around robot
