@@ -68,7 +68,7 @@ public class AIVisualServoing extends AI {
 			if (ncp.x > 0) {
 				// collision in front
 				if (turning_angle > 90 || turning_angle < -90) {
-				//	System.out.println("in front, going backwards");
+					System.out.println("in front, going backwards");
 					forward_speed = -15;
 				} else if (turning_angle > 30 || turning_angle < -30 ) {
 				//	System.out.println("in front, turning on spot");
@@ -86,7 +86,7 @@ public class AIVisualServoing extends AI {
 				
 			}
 		} else if (turning_angle > 90 || turning_angle < -90) {
-			//System.out.println("no collision, going backwards");
+			System.out.println("no collision, going backwards");
 			forward_speed = -15;
 		}
 		//forward_speed = 0;
@@ -102,7 +102,7 @@ public class AIVisualServoing extends AI {
 
 		forward_speed = normaliseSpeed(forward_speed);
 		
-		double turning_speed = Utilities.normaliseAngle(turning_angle*2);
+		double turning_speed = Utilities.normaliseToByte(turning_angle*2);
 		if (turning_speed > MAX_TURNING_SPEED) turning_speed = MAX_TURNING_SPEED;
 		if (turning_speed < -MAX_TURNING_SPEED) turning_speed = -MAX_TURNING_SPEED;
 
@@ -134,7 +134,8 @@ public class AIVisualServoing extends AI {
 
 		// check whether to go into got_ball mode
 		if (Math.abs(turning_angle) < TURNING_ACCURACY && ai_world_state.getDistanceToBall() < 10) {
-			ai_world_state.setMode(mode.got_ball);
+			mComm.sendMessage(opcode.kick);
+			//ai_world_state.setMode(mode.got_ball);
 		}
 		
 	}
