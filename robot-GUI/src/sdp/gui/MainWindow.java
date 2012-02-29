@@ -421,7 +421,10 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		PrintStream ps = new PrintStream(baos);
 		
 		String testCase = Utilities.stripString(testCaseTextfield.getText());
-		testBench.runTest(testCase, new ImageProcessorConfig(), ps);
+		
+		vision.setEnabled(false);
+		testBench.runTest(testCase, getGUIConfiguration(), ps);
+		vision.setEnabled(true);
 		
 		testBenchOutputTextarea.setText(baos.toString());
 	}
@@ -430,7 +433,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 * Allow the user to save test bench output into a file.
 	 */
 	private void saveTestBenchOutput() {
-		int retValue = testBenchOutputFileChooser.showOpenDialog(this);
+		int retValue = testBenchOutputFileChooser.showSaveDialog(this);
 		
 		if (retValue == JFileChooser.APPROVE_OPTION) {
 			String chosenFile = testBenchOutputFileChooser.getSelectedFile().getAbsolutePath();
@@ -1333,32 +1336,11 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		robotControlTabbedPanel.addTab("Test Bench", null, testBenchPanel, null);
 		robotControlTabbedPanel.setEnabledAt(2, true);
 		GridBagLayout gbl_testBenchPanel = new GridBagLayout();
-		gbl_testBenchPanel.columnWidths = new int[]{0, 0, 0, 0};
+		gbl_testBenchPanel.columnWidths = new int[]{0, 0, 0, 0, 0};
 		gbl_testBenchPanel.rowHeights = new int[]{0, 0, 0, 0};
-		gbl_testBenchPanel.columnWeights = new double[]{1.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_testBenchPanel.columnWeights = new double[]{0.0, 1.0, 0.0, 0.0, Double.MIN_VALUE};
 		gbl_testBenchPanel.rowWeights = new double[]{0.0, 1.0, 0.0, Double.MIN_VALUE};
 		testBenchPanel.setLayout(gbl_testBenchPanel);
-		
-		testCaseTextfield = new JTextField();
-		GridBagConstraints gbc_testCaseTextfield = new GridBagConstraints();
-		gbc_testCaseTextfield.insets = new Insets(0, 0, 5, 5);
-		gbc_testCaseTextfield.fill = GridBagConstraints.HORIZONTAL;
-		gbc_testCaseTextfield.gridx = 0;
-		gbc_testCaseTextfield.gridy = 0;
-		testBenchPanel.add(testCaseTextfield, gbc_testCaseTextfield);
-		testCaseTextfield.setColumns(10);
-		
-		JButton selectTestRunButton = new JButton("...");
-		selectTestRunButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				selectTestCase();
-			}
-		});
-		GridBagConstraints gbc_selectTestRunButton = new GridBagConstraints();
-		gbc_selectTestRunButton.insets = new Insets(0, 0, 5, 5);
-		gbc_selectTestRunButton.gridx = 1;
-		gbc_selectTestRunButton.gridy = 0;
-		testBenchPanel.add(selectTestRunButton, gbc_selectTestRunButton);
 		
 		JButton runTestBenchButton = new JButton("Run Test");
 		runTestBenchButton.addActionListener(new ActionListener() {
@@ -1366,18 +1348,47 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 				runTestBench();
 			}
 		});
+		
+		JButton selectTestRunButton = new JButton("...");
+		selectTestRunButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				selectTestCase();
+			}
+		});
+		
+		testCaseLabel = new JLabel("Test Case");
+		GridBagConstraints gbc_testCaseLabel = new GridBagConstraints();
+		gbc_testCaseLabel.insets = new Insets(0, 0, 5, 5);
+		gbc_testCaseLabel.anchor = GridBagConstraints.EAST;
+		gbc_testCaseLabel.gridx = 0;
+		gbc_testCaseLabel.gridy = 0;
+		testBenchPanel.add(testCaseLabel, gbc_testCaseLabel);
+		
+		testCaseTextfield = new JTextField();
+		GridBagConstraints gbc_testCaseTextfield = new GridBagConstraints();
+		gbc_testCaseTextfield.insets = new Insets(0, 0, 5, 5);
+		gbc_testCaseTextfield.fill = GridBagConstraints.HORIZONTAL;
+		gbc_testCaseTextfield.gridx = 1;
+		gbc_testCaseTextfield.gridy = 0;
+		testBenchPanel.add(testCaseTextfield, gbc_testCaseTextfield);
+		testCaseTextfield.setColumns(10);
+		GridBagConstraints gbc_selectTestRunButton = new GridBagConstraints();
+		gbc_selectTestRunButton.insets = new Insets(0, 0, 5, 5);
+		gbc_selectTestRunButton.gridx = 2;
+		gbc_selectTestRunButton.gridy = 0;
+		testBenchPanel.add(selectTestRunButton, gbc_selectTestRunButton);
 		GridBagConstraints gbc_runTestBenchButton = new GridBagConstraints();
 		gbc_runTestBenchButton.insets = new Insets(0, 0, 5, 0);
-		gbc_runTestBenchButton.gridx = 2;
+		gbc_runTestBenchButton.gridx = 3;
 		gbc_runTestBenchButton.gridy = 0;
 		testBenchPanel.add(runTestBenchButton, gbc_runTestBenchButton);
 		
 		testBenchOutputPanel = new JPanel();
-		testBenchOutputPanel.setBorder(new TitledBorder(null, "Test Bench Output", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		testBenchOutputPanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Test Bench Output", TitledBorder.CENTER, TitledBorder.TOP, null, null));
 		GridBagConstraints gbc_testBenchOutputPanel = new GridBagConstraints();
 		gbc_testBenchOutputPanel.fill = GridBagConstraints.BOTH;
-		gbc_testBenchOutputPanel.gridwidth = 3;
-		gbc_testBenchOutputPanel.insets = new Insets(0, 0, 5, 5);
+		gbc_testBenchOutputPanel.gridwidth = 5;
+		gbc_testBenchOutputPanel.insets = new Insets(0, 0, 5, 0);
 		gbc_testBenchOutputPanel.gridx = 0;
 		gbc_testBenchOutputPanel.gridy = 1;
 		testBenchPanel.add(testBenchOutputPanel, gbc_testBenchOutputPanel);
@@ -1408,8 +1419,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			}
 		});
 		GridBagConstraints gbc_saveTestBenchOutputButton = new GridBagConstraints();
+		gbc_saveTestBenchOutputButton.insets = new Insets(0, 0, 0, 5);
 		gbc_saveTestBenchOutputButton.anchor = GridBagConstraints.EAST;
-		gbc_saveTestBenchOutputButton.gridwidth = 3;
+		gbc_saveTestBenchOutputButton.gridwidth = 4;
 		gbc_saveTestBenchOutputButton.gridx = 0;
 		gbc_saveTestBenchOutputButton.gridy = 2;
 		testBenchPanel.add(saveTestBenchOutputButton, gbc_saveTestBenchOutputButton);
@@ -1514,4 +1526,5 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JTextArea testBenchOutputTextarea;
 	private JScrollPane testBenchOutputScrollPane;
 	private JPanel testBenchOutputPanel;
+	private JLabel testCaseLabel;
 }
