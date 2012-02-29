@@ -43,7 +43,7 @@ public class TestBench {
 	 * @param testSpec A path to an XML file that contains the test specification.
 	 */
 	public void runTest(String testSpec) {
-		runTest(testSpec, new ImageProcessorConfig());
+		runTest(testSpec, new ImageProcessorConfig(), System.out);
 	}
 	
 	/**
@@ -52,8 +52,9 @@ public class TestBench {
 	 * 
 	 * @param testSpec A path to an XML file that contains the test specification.
 	 * @param config Image processor configuration to use.
+	 * @param out Output stream to dump data to.
 	 */
-	public void runTest(String testSpec, ImageProcessorConfig config) {
+	public void runTest(String testSpec, ImageProcessorConfig config, PrintStream out) {
 		vision.setConfiguration(config);
 		
 		ArrayList<VisionTestCase> tests = readTestCases(testSpec);
@@ -66,7 +67,7 @@ public class TestBench {
 			errorAcc.addRecord(test.getImageFilename(), test.getExpectedState(), actualState_frame);
 		}
 
-		errorAcc.dumpMetrics(System.out);		
+		errorAcc.dumpMetrics(out);		
 	}
 
 	
@@ -87,7 +88,7 @@ public class TestBench {
 		for (int i = 0; i < entries.getLength(); ++i) {
 			Element imageEntry = (Element) entries.item(i);
 			
-			String imageFilename = XmlUtils.getChildText(imageEntry, "filename");
+			String imageFilename = "../robot-VISION/" + XmlUtils.getChildText(imageEntry, "filename");
 			
 			Element locDataElem = (Element) imageEntry.getElementsByTagName("location-data").item(0);
 			
@@ -117,7 +118,7 @@ public class TestBench {
 
 		return tests;
 	}
-
+	
 	
 	/**
 	 * The entry point.

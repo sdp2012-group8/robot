@@ -89,10 +89,10 @@ public class AIVisualServoing extends AI {
 		}
 		//forward_speed = 0;
 		
-		if(ai_world_state.getDistanceToBall() < 20 && (Math.abs(turning_angle) > 10 )){
-			forward_speed = 0;
-			System.out.println("Distance is under 20 and angle over 10.");
-		}
+//		if(ai_world_state.getDistanceToBall() < 20 && (Math.abs(turning_angle) > 10 )){
+//			forward_speed = 0;
+//			System.out.println("Distance is under 20 and angle over 10.");
+//		}
 
 
 
@@ -100,7 +100,9 @@ public class AIVisualServoing extends AI {
 
 
 		forward_speed = normaliseSpeed(forward_speed);
+		//turning_angle *= 4;
 		turning_angle = Utilities.normaliseAngle(turning_angle);
+		
 
 		// make a virtual sensor at Robot.length/2 pointing at 1,0
 		//double collision_dist = Tools.raytraceVector(worldState, robot, new Vector2D(Robot.LENGTH_CM/2,0), new Vector2D(1,0), am_i_blue).getLength();
@@ -110,10 +112,10 @@ public class AIVisualServoing extends AI {
 		final Robot robot = ai_world_state.getRobot();			
 		//might cause problems when very close to walls 
 		
-		if (Math.toDegrees(Utilities.getAngle(ai_world_state.getBallCoords(), robot.getFrontLeft(), robot.getBackLeft())) > 170
-				|| Math.toDegrees(Utilities.getAngle( ai_world_state.getBallCoords(), robot.getFrontRight(),robot.getBackRight())) > 170){
-			mComm.sendMessage(opcode.operate, (byte) -30, (byte) 0);
-		}
+//		if (Math.toDegrees(Utilities.getAngle(ai_world_state.getBallCoords(), robot.getFrontLeft(), robot.getBackLeft())) > 170
+//				|| Math.toDegrees(Utilities.getAngle( ai_world_state.getBallCoords(), robot.getFrontRight(),robot.getBackRight())) > 170){
+//			mComm.sendMessage(opcode.operate, (byte) -30, (byte) 0);
+//		}
 
 		// This checks whether or not we are between enemy goal and the ball.
 		// We also check whether or not the ball is too close to our goal, if it is don't try to go behind it to avoid catastrophies.

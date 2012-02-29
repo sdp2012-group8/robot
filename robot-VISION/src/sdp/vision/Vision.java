@@ -21,7 +21,10 @@ import sdp.vision.visualinput.VisualInputCallback;
 public class Vision extends WorldStateProvider implements VisualInputCallback {
 	
 	/** Image processor. */
-	BaseImageProcessor imageProcessor;
+	private BaseImageProcessor imageProcessor;
+	
+	/** Whether the vision system is enabled. */
+	private boolean isEnabled = true;
 	
 	
 	/**
@@ -58,6 +61,16 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 	
 	
 	/**
+	 * Enable of disable the vision system.
+	 * 
+	 * @param isEnabled New vision system status.
+	 */
+	public void setEnabled(boolean isEnabled) {
+		this.isEnabled = isEnabled;
+	}
+	
+	
+	/**
 	 * A convenience function to get the world state out of an image.
 	 * 
 	 * @param frame Image to process.
@@ -67,14 +80,16 @@ public class Vision extends WorldStateProvider implements VisualInputCallback {
 		return imageProcessor.extractWorldState(frame);	
 	}
 
-	/* (non-Javadoc)
+	/** (non-Javadoc)
 	 * @see sdp.vision.VisualInputCallback#nextFrame(java.awt.image.BufferedImage)
 	 */	
 	@Override
 	public void nextFrame(BufferedImage frame) {
-		WorldState nextState = extractWorldState(frame);
-		setChanged();
-		notifyObservers(nextState);
+		if (isEnabled) {
+			WorldState nextState = extractWorldState(frame);
+			setChanged();
+			notifyObservers(nextState);
+		}
 	}
 	
 }
