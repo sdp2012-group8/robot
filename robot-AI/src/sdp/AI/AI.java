@@ -35,6 +35,7 @@ public abstract class AI {
 	protected abstract void chaseBall() throws IOException;
 	protected abstract void gotBall() throws IOException;
 	protected abstract void penaltiesDefend() throws IOException;
+	protected abstract void penaltiesAttack() throws IOException;
 	
 	/**
 	 * Initialise the AI

@@ -274,9 +274,46 @@ public class AIVisualServoing extends AI {
 	/**
 	 * Score a penalty
 	 */
-	public void penaltiesAttack() {
-		//TODO: Determine shoot path - Turn and shoot quickly.
-	}
+	public void penaltiesAttack() throws IOException {
+        //TODO: Determine shoot path - Turn and shoot quickly.
+
+        Point2D.Double pointInGoal= 
+Utilities.intersection(ai_world_state.getRobot().getCoords(), 
+ai_world_state.getRobot().getFrontCenter(), ai_world_state.getEnemyGoal().getTop(), 
+ai_world_state.getEnemyGoal().getBottom());
+        boolean clear_path = Utilities.isPathClear(pointInGoal, ai_world_state.getBallCoords(), 
+ai_world_state.getEnemyRobot());
+//        System.out.println(clear_path);
+        if (clear_path){
+                mComm.sendMessage(opcode.kick);
+                ai_world_state.setMode(mode.chase_ball);
+
+        }
+
+Point2D enemyRobot;
+if(ai_world_state.isGoalVisible())        {
+ enemyRobot= ai_world_state.getEnemyRobot().getCoords();
+ //if enemy robot in the lower part of the goal then shoot in the upper part
+ if( enemyRobot.getY() < ai_world_state.getEnemyGoal().getCentre().y){
+         mComm.sendMessage(opcode.operate,(byte) 0, (byte) 
+ai_world_state.getEnemyGoal().getTop().y);
+        ///// mComm.sendMessage(opcode.kick);
+        //if enemy robot in the upper part of the goal then shoot in the lower part
+ }else if( enemyRobot.getY() <ai_world_state.getEnemyGoal().getCentre().y){
+         mComm.sendMessage(opcode.operate, (byte) 0, (byte) 
+ai_world_state.getEnemyGoal().getBottom().y);
+        // mComm.sendMessage(opcode.kick);
+ }
+ //else just kick in upper part of the goal by ...this is the default
+ else{
+         mComm.sendMessage(opcode.operate, (byte) 0, (byte) 
+ai_world_state.getEnemyGoal().getTop().y);
+//         mComm.sendMessage(opcode.kick);
+ }
+}
+
+}
+
 
 	/**
 	 * Block goal when in a dangerous situation
