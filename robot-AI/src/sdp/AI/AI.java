@@ -18,7 +18,7 @@ import sdp.common.Communicator.opcode;
 public abstract class AI {
 	
 	// robot constants
-	protected final static double TURNING_ACCURACY = 5;
+	protected final static double TURNING_ACCURACY = 10;
 	protected final static double KICKING_ACCURACY = 2;
 
 	protected final static double ROBOT_ACC_CM_S_S = 69.8; // 1000 degrees/s/s

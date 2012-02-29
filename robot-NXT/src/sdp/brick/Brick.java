@@ -76,12 +76,12 @@ public class Brick {
 					boolean initial = kickSensor.isPressed();
 					if (!initial) {
 						if (can_kick) {can_kick = false;}
-						Motor.B.setSpeed(Motor.B.getMaxSpeed());
-						Motor.B.setAcceleration(10000);
+						Motor.B.setSpeed((int)(Motor.B.getMaxSpeed()/2));
+						Motor.B.setAcceleration(6000);
 						Motor.B.backward();
 						while (!kickSensor.isPressed()) {
 							try {
-								Thread.sleep(10);
+								Thread.sleep(5);
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
