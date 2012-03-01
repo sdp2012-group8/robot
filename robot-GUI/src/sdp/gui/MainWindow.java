@@ -15,7 +15,6 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.JTabbedPane;
 
 import sdp.AI.AIMaster;
-import sdp.AI.AIWorldState.mode;
 import sdp.common.Communicator;
 import sdp.common.FPSCounter;
 import sdp.common.Utilities;
@@ -160,8 +159,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			robotControlTabbedPanel.remove(testBenchPanel);
 		}
 		
-		for (int i = 0; i < mode.values().length; i++) {
-			aiStateCombobox.addItem(mode.values()[i]);
+		for (int i = 0; i < AIMaster.mode.values().length; i++) {
+			aiStateCombobox.addItem(AIMaster.mode.values()[i]);
 		}
 	}
 	
@@ -1323,7 +1322,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		JButton changeStateButton = new JButton("Change State");
 		changeStateButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				aiInstance.setMode(mode.values()[aiStateCombobox.getSelectedIndex()]);
+				aiInstance.setState(AIMaster.mode.values()[aiStateCombobox.getSelectedIndex()]);
 			}
 		});
 		changeStateButton.setBounds(662, 378, 117, 25);

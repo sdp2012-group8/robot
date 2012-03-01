@@ -11,10 +11,6 @@ import sdp.common.WorldState;
 
 public class AIWorldState extends WorldState {
 	
-	public enum mode {
-		chase_ball, sit, got_ball, dribble, defend_penalties, attack_penalties
-	}
-	
 	private boolean my_team_blue;
 	private boolean my_goal_left;
 	private Goal enemy_goal;
@@ -24,8 +20,6 @@ public class AIWorldState extends WorldState {
 	//changing variables
 	private Robot robot = null;
 	private Robot enemy_robot = null;
-	private mode state = mode.sit;
-	private mode old_state = null;
 	private double distance_to_ball;
 	private double distance_to_goal;
 	
@@ -85,27 +79,7 @@ public class AIWorldState extends WorldState {
 		}
 	}
 	
-	
-	/**
-	 * Change mode. Can be used for penalty, freeplay, testing, etc
-	 */
-	public void setState(mode new_state) {
-		old_state = state;
-		state = new_state;
-	}
-	
-	/**
-	 * Gets AI mode
-	 * @return
-	 */
-	public mode getMode() {
-		return state;
-	}
-	
-	public mode getOldState() {
-		return old_state;
-	}
-	
+
 	/**
 	 * Calculates if the ball has a direct line of sight to the enemy goal.
 	 * @return true if goal is visible

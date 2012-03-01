@@ -3,7 +3,6 @@ package sdp.AI;
 import java.awt.geom.Point2D;
 import java.io.IOException;
 
-import sdp.AI.AIWorldState.mode;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.Robot;

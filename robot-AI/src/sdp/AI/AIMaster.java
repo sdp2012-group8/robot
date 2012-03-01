@@ -2,7 +2,8 @@ package sdp.AI;
 
 import java.io.IOException;
 
-import sdp.AI.AIWorldState.mode;
+import javax.jws.WebParam.Mode;
+
 import sdp.AI.neural.AINeuralNetwork;
 import sdp.common.Communicator;
 import sdp.common.WorldStateProvider;
@@ -16,11 +17,16 @@ import sdp.common.WorldStateProvider;
  */
 public class AIMaster extends AIListener {
 	
+	public enum mode {
+		chase_ball, sit, got_ball, dribble, defend_penalties, attack_penalties
+	}
+	
 	public enum AIMode {
 		visual_servoing, neural_network
 	}
 	
 	private AI ai;
+	private mode state = mode.sit;
 
 	public AIMaster(Communicator comm, WorldStateProvider obs, AIMode ai_mode) {
 		super(obs);
@@ -40,9 +46,10 @@ public class AIMaster extends AIListener {
 	 * The methods called are in all types of the AI.
 	 */
 	protected synchronized void worldChanged() {
+		checkState();
 		ai.update(ai_world_state);
 		try {
-			switch (ai_world_state.getMode()) {
+			switch (getState()) {
 			case chase_ball:
 				ai.chaseBall();
 				break;
@@ -66,24 +73,34 @@ public class AIMaster extends AIListener {
 		}
 	}
 	
+	private void checkState() {
+		// Check the new world state and decide what state we should be in.
+		
+		if (ai_world_state.getDistanceToBall() > 10) {
+			setState(mode.chase_ball);
+		} else {
+			setState(mode.sit);
+		}		
+		
+	}
+
 	public void close() {
 		ai.close();
 	}
 	
 	/**
-	 * Used to set the mode of the AI.
-	 * @param new_mode
+	 * Change mode. Can be used for penalty, freeplay, testing, etc
 	 */
-	public void setMode(AIWorldState.mode new_mode) {
-		ai_world_state.setState(new_mode);
+	public void setState(mode new_state) {
+		state = new_state;
 	}
 	
 	/**
-	 * Used to get the current AI mode.
+	 * Gets AI mode
 	 * @return
 	 */
-	public AIWorldState.mode getMode() {
-		return ai_world_state.getMode();
+	public mode getState() {
+		return state;
 	}
 
 }
