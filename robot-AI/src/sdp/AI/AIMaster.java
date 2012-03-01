@@ -4,8 +4,9 @@ import java.io.IOException;
 
 import javax.jws.WebParam.Mode;
 
-import sdp.AI.neural.AINeuralNetwork;
+//import sdp.AI.neural.AINeuralNetwork;
 import sdp.common.Communicator;
+import sdp.common.Communicator.opcode;
 import sdp.common.WorldStateProvider;
 
 
@@ -18,7 +19,7 @@ import sdp.common.WorldStateProvider;
 public class AIMaster extends AIListener {
 	
 	public enum mode {
-		chase_ball, sit, got_ball, dribble, defend_penalties, attack_penalties
+		chase_ball, got_ball, defend_goal, sit, defend_penalties, attack_penalties
 	}
 	
 	public enum AIMode {
@@ -27,16 +28,18 @@ public class AIMaster extends AIListener {
 	
 	private AI ai;
 	private mode state = mode.sit;
+	private Communicator mComm;
 
 	public AIMaster(Communicator comm, WorldStateProvider obs, AIMode ai_mode) {
 		super(obs);
+		this.mComm = comm;
 		
 		switch(ai_mode) {
 		case visual_servoing:
-			ai = new AIVisualServoing(comm);
+			ai = new AIVisualServoing_Old();
 			break;
 		case neural_network:
-			ai = new AINeuralNetwork(comm, "data");
+			//ai = new AINeuralNetwork(comm, "data");
 			break;
 		}
 	}
@@ -46,46 +49,59 @@ public class AIMaster extends AIListener {
 	 * The methods called are in all types of the AI.
 	 */
 	protected synchronized void worldChanged() {
+		AI.Commands command;
+		
 		checkState();
 		ai.update(ai_world_state);
 		try {
-			switch (getState()) {
-			case chase_ball:
-				ai.chaseBall();
-				break;
-			case got_ball:
-				ai.gotBall();
-				break;
-			case sit:
-				//if (ai.old_ai_world_state == null || ai.old_ai_world_state.getMode() != mode.sit) {
-					ai.sit();
-				//}
-				break;
-			case defend_penalties:
-					ai.penaltiesDefend();
-					break;
-			case attack_penalties:
-					ai.penaltiesAttack();
-					break;
-			}
+			command = getCommand();
+			mComm.sendMessage(opcode.operate, command.speed, command.turning_speed);
+			if (command.kick) mComm.sendMessage(opcode.kick);
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+		
+	}
+	
+	private AI.Commands getCommand() throws IOException {
+		switch (getState()) {
+		case chase_ball:
+			return ai.chaseBall();
+		case got_ball:
+			return ai.gotBall();
+		case sit:
+			return ai.sit();
+		case defend_penalties:
+			return ai.penaltiesDefend();
+		case attack_penalties:
+			return ai.penaltiesAttack();
+		default:
+			return null;
 		}
 	}
 	
 	private void checkState() {
 		// Check the new world state and decide what state we should be in.
-		
 		if (ai_world_state.getDistanceToBall() > 10) {
 			setState(mode.chase_ball);
 		} else {
 			setState(mode.sit);
 		}		
-		
 	}
 
+	/**
+	 * Gracefully close AI
+	 */
 	public void close() {
-		ai.close();
+		// disconnect queue
+		mQueue.addMessageToQueue(0, opcode.exit);
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		// close queue
+		mQueue.close();
 	}
 	
 	/**

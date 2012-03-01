@@ -227,12 +227,12 @@ public class Utilities {
 	 * @param angle
 	 * @return double between -128 and 127
 	 */
-	public static double normaliseToByte(double angle){
+	public static byte normaliseToByte(double angle){
 		if (angle > 127)
 			angle = 127;
 		if (angle < -128)
 			angle = -128;
-		return angle;
+		return (byte)angle;
 	}
 
     

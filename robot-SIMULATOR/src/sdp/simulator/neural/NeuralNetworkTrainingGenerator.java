@@ -14,7 +14,7 @@ import org.neuroph.nnet.MultiLayerPerceptron;
 import org.neuroph.nnet.learning.BackPropagation;
 
 import sdp.AI.AIMaster;
-import sdp.AI.AIWorldState.mode;
+import sdp.AI.AIMaster.mode;
 import sdp.AI.neural.AINeuralNetwork;
 import sdp.common.NNetTools;
 import sdp.common.Robot;
@@ -175,7 +175,7 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 			public void run() {
 				while (recording) {
 					WorldState worldState = Tools.toCentimeters(mObs.getNextState());
-					if (!pause && mAi.getMode() == mode.sit) {
+					if (!pause && mAi.getState() == mode.sit) {
 						if (oldWorldState != null && Tools.delta(oldWorldState, worldState) > 0.1) {
 							// outputs normalized to 1
 							//boolean
