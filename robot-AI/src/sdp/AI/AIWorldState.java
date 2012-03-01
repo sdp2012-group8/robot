@@ -25,6 +25,7 @@ public class AIWorldState extends WorldState {
 	private Robot robot = null;
 	private Robot enemy_robot = null;
 	private mode state = mode.sit;
+	private mode old_state = null;
 	private double distance_to_ball;
 	private double distance_to_goal;
 	
@@ -88,8 +89,9 @@ public class AIWorldState extends WorldState {
 	/**
 	 * Change mode. Can be used for penalty, freeplay, testing, etc
 	 */
-	public void setMode(mode new_mode) {
-		state = new_mode;
+	public void setState(mode new_state) {
+		old_state = state;
+		state = new_state;
 	}
 	
 	/**
@@ -98,6 +100,10 @@ public class AIWorldState extends WorldState {
 	 */
 	public mode getMode() {
 		return state;
+	}
+	
+	public mode getOldState() {
+		return old_state;
 	}
 	
 	/**

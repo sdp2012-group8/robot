@@ -23,10 +23,10 @@ public class AIVisualServoing extends AI {
 	-Paul.
 	 **/
 
-	private final static int coll_secs_count = 110;
-	private final static double sec_angle = 360d/coll_secs_count;
-	private final static int coll_start = 25;
-	private final static int corner_coll_threshold = 3;
+	private final static int COLL_SECS_COUNT = 110;
+	private final static double SEC_ANGLE = 360d/COLL_SECS_COUNT;
+	private final static int COLL_ANGLE = 25;
+	private final static int CORNER_COLL_THRESHOLD = 3;
 
 	public AIVisualServoing(Communicator comm) {
 		super(comm);
@@ -152,7 +152,7 @@ public class AIVisualServoing extends AI {
 		System.out.println("Distance to ball: " + ai_world_state.getDistanceToBall());
 
 		if (ai_world_state.getDistanceToBall() > 10) {
-			ai_world_state.setMode(mode.chase_ball);
+			ai_world_state.setState(mode.chase_ball);
 		} else {
 			boolean can_we_shoot = ai_world_state.isGoalVisible();
 
@@ -178,7 +178,7 @@ public class AIVisualServoing extends AI {
 					//System.out.println("Going to goal - Turning: " + turning_angle);	
 				} else  {
 					mComm.sendMessage(opcode.kick);
-					ai_world_state.setMode(AIWorldState.mode.chase_ball);
+					ai_world_state.setState(AIWorldState.mode.chase_ball);
 				}
 
 			} else {
@@ -362,7 +362,7 @@ public class AIVisualServoing extends AI {
 		final double turn_ang_more = Math.toDegrees(Math.atan2(Robot.LENGTH_CM, ball_coll_dist));
 
 		// get the sectors
-		final double[] sectors = Tools.getSectors(ai_world_state, ai_world_state.getMyTeamBlue(), 5, coll_secs_count, false);
+		final double[] sectors = Tools.getSectors(ai_world_state, ai_world_state.getMyTeamBlue(), 5, COLL_SECS_COUNT, false);
 
 		// sectors[0] starts at at -90
 		double temp = 999;
@@ -375,7 +375,7 @@ public class AIVisualServoing extends AI {
 			// find the sector that is closest to the ball but has a collision distance greater than the ball_coll_dist
 			for (int i = 0; i < sectors.length; i++) {
 				if (sectors[i] > ball_coll_dist+Robot.LENGTH_CM/2) {
-					double ang = Utilities.normaliseAngle(((-90+i*sec_angle)+(-90+(i+1)*sec_angle))/2);
+					double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
 					double diff = Utilities.normaliseAngle(ang-ball_dir);
 					if (Math.abs(diff) < Math.abs(temp)) {
 						temp = diff;
@@ -395,7 +395,7 @@ public class AIVisualServoing extends AI {
 			for (int i = 0; i < sectors.length; i++) {
 				if (sectors[i] > temp) {
 					temp = sectors[i];
-					double ang = Utilities.normaliseAngle(((-90+i*sec_angle)+(-90+(i+1)*sec_angle))/2);
+					double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
 					turning_angle = ang + (ball_left_coll_dist < ball_right_coll_dist ? turn_ang_more : -turn_ang_more);
 				}
 			}
@@ -413,20 +413,20 @@ public class AIVisualServoing extends AI {
 		double for_dist = getMin(sectors, anid(-10), anid(10)); // get collision distance at the front
 		double back_dist =getMin(sectors, anid(170), anid(190)); // get collision distance at the back
 
-		if (for_dist < coll_start) {
+		if (for_dist < COLL_ANGLE) {
 			if (forward_speed >= 0) {
 				// go backwards
-				double speed_coeff = -1+for_dist/coll_start;
+				double speed_coeff = -1+for_dist/COLL_ANGLE;
 				if (speed_coeff > 0)
 					speed_coeff = 0;
 				if (speed_coeff < -1)
 					speed_coeff = -1;
 				forward_speed *= speed_coeff;
 			}
-		} else if (back_dist < coll_start) {
+		} else if (back_dist < COLL_ANGLE) {
 			if (forward_speed <= 0) {
 				// same as above
-				double speed_coeff = -1+back_dist/coll_start;
+				double speed_coeff = -1+back_dist/COLL_ANGLE;
 				if (speed_coeff > 0)
 					speed_coeff = 0;
 				if (speed_coeff < -1)
@@ -442,10 +442,10 @@ public class AIVisualServoing extends AI {
 		back_left = Tools.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontLeft()),Tools.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
 		back_right = Tools.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontRight()),Tools.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords())));
 		final boolean
-		front_left_coll = front_left.getLength() <= corner_coll_threshold,
-		front_right_coll = front_right.getLength() <= corner_coll_threshold,
-		back_left_coll = back_left.getLength() <= corner_coll_threshold,
-		back_right_coll = back_right.getLength() <= corner_coll_threshold,
+		front_left_coll = front_left.getLength() <= CORNER_COLL_THRESHOLD,
+		front_right_coll = front_right.getLength() <= CORNER_COLL_THRESHOLD,
+		back_left_coll = back_left.getLength() <= CORNER_COLL_THRESHOLD,
+		back_right_coll = back_right.getLength() <= CORNER_COLL_THRESHOLD,
 		any_collision = front_left_coll || front_right_coll || back_left_coll || back_right_coll;
 
 		if (any_collision) {
@@ -484,8 +484,8 @@ public class AIVisualServoing extends AI {
 	 * @return
 	 */
 	private int anid(double angle) {
-		int id =  (int) (coll_secs_count*(angle+90)/360);
-		return id < 0 ? coll_secs_count + id : (id >= coll_secs_count ? id - coll_secs_count : id);
+		int id =  (int) (COLL_SECS_COUNT*(angle+90)/360);
+		return id < 0 ? COLL_SECS_COUNT + id : (id >= COLL_SECS_COUNT ? id - COLL_SECS_COUNT : id);
 	}
 
 	/**

@@ -46,11 +46,9 @@ public class AIMaster extends AIListener {
 			case chase_ball:
 				ai.chaseBall();
 				break;
-
 			case got_ball:
 				ai.gotBall();
 				break;
-
 			case sit:
 				//if (ai.old_ai_world_state == null || ai.old_ai_world_state.getMode() != mode.sit) {
 					ai.sit();
@@ -59,7 +57,6 @@ public class AIMaster extends AIListener {
 			case defend_penalties:
 					ai.penaltiesDefend();
 					break;
-		
 			case attack_penalties:
 					ai.penaltiesAttack();
 					break;
@@ -78,7 +75,7 @@ public class AIMaster extends AIListener {
 	 * @param new_mode
 	 */
 	public void setMode(AIWorldState.mode new_mode) {
-		ai_world_state.setMode(new_mode);
+		ai_world_state.setState(new_mode);
 	}
 	
 	/**
