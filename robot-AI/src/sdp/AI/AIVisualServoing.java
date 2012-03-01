@@ -41,11 +41,11 @@ public class AIVisualServoing extends AI {
 	 */
 	public void chaseBall() throws IOException {
 
-		if (!Tools.reachability(ai_world_state, new Vector2D(ai_world_state.getBallCoords()), ai_world_state.getMyTeamBlue())) {
-			// if ball is not directly reachable
-			avoidObstacle();
-			return;
-		}
+//		if (!Tools.reachability(ai_world_state, new Vector2D(ai_world_state.getBallCoords()), ai_world_state.getMyTeamBlue())) {
+//			// if ball is not directly reachable
+//			avoidObstacle();
+//			return;
+//		}
 
 		// get direction from robot to ball
 		Vector2D dir = Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(ai_world_state.getRobot().getCoords()));
