@@ -9,6 +9,7 @@ import sdp.gui.filefilters.ImageFileFilter_IO;
 import sdp.vision.Vision;
 import sdp.vision.processing.MainImageProcessor;
 import sdp.vision.processing.SecondaryImageProcessor;
+import sdp.vision.processing.SecondaryOld;
 import sdp.vision.visualinput.CameraVisualInputProvider;
 import sdp.vision.visualinput.ImageVisualInputProvider;
 
@@ -86,6 +87,9 @@ public class Launcher extends JFrame implements Runnable {
 		case 1:
 			vision = new Vision(new SecondaryImageProcessor());
 			break;
+		case 2:
+			vision = new Vision(new SecondaryOld());
+			break;
 		}
 		
 		WorldStateObserver visionObserver = new WorldStateObserver(vision);		
@@ -116,6 +120,9 @@ public class Launcher extends JFrame implements Runnable {
 			break;
 		case 1:
 			vision = new Vision(new SecondaryImageProcessor());
+			break;
+		case 2:
+			vision = new Vision(new SecondaryOld());
 			break;
 		}
 		
@@ -259,7 +266,7 @@ public class Launcher extends JFrame implements Runnable {
 		gbc_processorComboBox.gridx = 1;
 		gbc_processorComboBox.gridy = 0;
 		generalSettingPanel.add(processorComboBox, gbc_processorComboBox);
-		processorComboBox.setModel(new DefaultComboBoxModel(new String[] {"Main", "Secondary"}));
+		processorComboBox.setModel(new DefaultComboBoxModel(new String[] {"Main", "Secondary", "Sec Old"}));
 		
 		JPanel competitionModePanel = new JPanel();
 		GridBagConstraints gbc_competitionModePanel = new GridBagConstraints();
