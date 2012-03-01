@@ -64,7 +64,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		}
 
 		public static final byte ratio(final col a, final col b) {
-			final int rat = Math.round(255 - 255*a.total/b.total);
+			final int rat = Math.round(255 - 255*b.total/a.total);
 			return rat < 0 ? 0 : (byte) (rat > 255 ? 255 : rat);
 		}
 	}
@@ -90,7 +90,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private Graphics2D graph;
 
 	// standard deviation filter. Filter out points more than this amount of sigmas from the st dev
-	private static final double blue_color_sigma = 100;
+	private static final double blue_color_sigma = 50;
 	private static final double red_color_sigma = 4;
 	private static final double yellow_color_sigma = 8;
 
@@ -99,7 +99,10 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	col_green_g = 86,
 	col_green_b = 14;
 	private static col[]
-			desired = new col[] {new col(49, 0, 0), new col(0,0,57), new col(37, 13, 30)},
+			desired = new col[] {
+				new col(49, 0, 0),
+				new col(0,0,57),
+				new col(37, 13, 30)},
 			undesired = new col[] {new col(255, 255, 255)};		
 	private static col temp = new col(0,0,0);
 
@@ -571,8 +574,10 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 								float min = 999;
 								col colres = null;
 								int cid = -1;
+								float sum = 0;
 								for (int i = 0; i < desired.length; i++) {
 									float val = col.diff(temp, desired[i]);
+									sum+=val;
 									if (val < min) {
 										min = val;
 										colres = desired[i];
@@ -589,7 +594,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 								}
 								byte vr = 0, vb = 0, vy = 0;
 								if (colres != null) {
-									final byte value = col.ratio(temp, colres);
+									final byte value = (byte) (255-255*min/sum);//col.ratio(temp, colres);
 									switch (cid) {
 									case 0: // red
 										vr = value;
@@ -606,7 +611,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 								yellow_robot_image[x][y] = vy;
 								blue_robot_image[x][y] = vb;
 								ball_image[x][y] = vr;
-								setPixel(x, y, (int) (vy & mask), (int) (vy & mask), (int) (vy & mask));
+								setPixel(x, y, (int) (temp.r*255), (int) (temp.g*255), (int) (temp.b*255));
 						}
 		}
 	}
