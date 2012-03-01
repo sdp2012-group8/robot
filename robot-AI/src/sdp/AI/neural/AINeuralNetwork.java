@@ -47,7 +47,7 @@ public class AINeuralNetwork extends AI {
 		Vector2D ball_rel = Tools.getLocalVector(ai_world_state.getRobot(), ball);
 		ball_rel.setX(ball_rel.getX()-Robot.LENGTH_CM/2);
 		if (ball_rel.getLength() < got_ball_dist)
-			ai_world_state.setMode(mode.got_ball);
+			ai_world_state.setState(mode.got_ball);
 		operate();
 		
 		
@@ -59,7 +59,7 @@ public class AINeuralNetwork extends AI {
 		Vector2D ball_rel = Tools.getLocalVector(ai_world_state.getRobot(), ball);
 		ball_rel.setX(ball_rel.getX()-Robot.LENGTH_CM/2);
 		if (ball_rel.getLength() >= got_ball_dist)
-			ai_world_state.setMode(mode.chase_ball);
+			ai_world_state.setState(mode.chase_ball);
 		operate();
 		
 	}
@@ -96,6 +96,18 @@ public class AINeuralNetwork extends AI {
 	
 	@Override
 	public void sit() throws IOException {
+	}
+
+	@Override
+	protected void penaltiesDefend() throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void penaltiesAttack() throws IOException {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
