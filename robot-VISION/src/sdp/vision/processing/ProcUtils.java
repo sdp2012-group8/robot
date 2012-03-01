@@ -6,6 +6,7 @@ import java.awt.Point;
 import java.awt.geom.Point2D;
 
 import sdp.common.Robot;
+import sdp.common.Tools;
 import sdp.common.Utilities;
 import sdp.common.WorldState;
 
@@ -52,13 +53,11 @@ public class ProcUtils {
 	 */
 	public static Point2D.Double frameToNormalCoordinates(ImageProcessorConfig config,
 			double x, double y, boolean withinROI) {
-		double scaleFactor = (double)(config.getFieldWidth());
-		
 		if (!withinROI) {
 			x += config.getFieldLowX();
 			y += config.getFieldLowY();
 		}
-		return new Point2D.Double(x / scaleFactor, y / scaleFactor);
+		return new Point2D.Double(x / config.getFieldWidth(), (y / config.getFieldHeight())*(Tools.PITCH_HEIGHT_CM/Tools.PITCH_WIDTH_CM));
 	}
 	
 	/**
@@ -73,10 +72,8 @@ public class ProcUtils {
 	 */
 	public static Point2D.Double normalToFrameCoordinates(ImageProcessorConfig config,
 			double x, double y, boolean withinROI) {
-		double scaleFactor = config.getFieldWidth();
-		
-		x *= scaleFactor;
-		y *= scaleFactor;
+		x *= config.getFieldWidth();
+		y *= config.getFieldHeight()*(Tools.PITCH_WIDTH_CM/Tools.PITCH_HEIGHT_CM);
 		
 		if (!withinROI) {
 			x += config.getFieldLowX();

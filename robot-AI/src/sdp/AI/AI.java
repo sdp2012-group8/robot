@@ -6,6 +6,7 @@ import java.io.IOException;
 import sdp.common.Communicator;
 import sdp.common.MessageQueue;
 import sdp.common.Communicator.opcode;
+import sdp.common.Utilities;
 
 /**
  * 
@@ -18,23 +19,21 @@ import sdp.common.Communicator.opcode;
 public abstract class AI {
 	
 	// robot constants
-	protected final static double TURNING_ACCURACY = 5;
-	protected final static double KICKING_ACCURACY = 2;
+	protected final static double TURNING_ACCURACY = 10;
+	protected final static double KICKING_ACCURACY = 10;
 
 	protected final static double ROBOT_ACC_CM_S_S = 69.8; // 1000 degrees/s/s
-	protected final static int MAX_SPEED_CM_S = 30; // 50 cm per second
-	protected final static int MAX_TURNING_SPEED = 50;
+	protected final static int MAX_SPEED_CM_S = 53; // 50 cm per second
+	protected final static int MAX_TURNING_SPEED = 127;
 
 	protected AIWorldState ai_world_state= null;
 	protected AIWorldState old_ai_world_state = null;
-	private MessageQueue mQueue = null;
-	protected Communicator mComm = null;
 	
-
-	
-	protected abstract void chaseBall() throws IOException;
-	protected abstract void gotBall() throws IOException;
-	protected abstract void penaltiesDefend() throws IOException;
+	protected abstract Commands chaseBall() throws IOException;
+	protected abstract Commands gotBall() throws IOException;
+	protected abstract Commands defendGoal() throws IOException;
+	protected abstract Commands penaltiesDefend() throws IOException;
+	protected abstract Commands penaltiesAttack() throws IOException;
 	
 	/**
 	 * Initialise the AI
@@ -42,31 +41,11 @@ public abstract class AI {
 	 * @param Comm a communicator for making connection with real robot/simulated one
 	 * @param Obs an observer for taking information about the table
 	 */
-	public AI(Communicator Comm) {
-		mQueue = new MessageQueue(Comm);
-		this.mComm = Comm;
+	public AI() {
 	}
-
 	
-	
-	public void sit() throws IOException {
-		mComm.sendMessage(opcode.operate, (byte)0, (byte)0);
-	}
-
-
-	/**
-	 * Gracefully close AI
-	 */
-	public void close() {
-		// disconnect queue
-		mQueue.addMessageToQueue(0, opcode.exit);
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		// close queue
-		mQueue.close();
+	public Commands sit() throws IOException {
+		return new Commands(0, 0, false);
 	}
 
 	
@@ -86,6 +65,17 @@ public abstract class AI {
 		if (speed > MAX_SPEED_CM_S) speed = MAX_SPEED_CM_S;
 		if (speed < -MAX_SPEED_CM_S) speed = -MAX_SPEED_CM_S;
 		return speed;
+	}
+	
+	public static class Commands {
+		public byte speed, turning_speed;
+		public boolean kick;
+		
+		public Commands(double speed, double turning_speed, boolean kick) {
+			this.speed = normaliseSpeed(Utilities.normaliseToByte(speed));
+			this.turning_speed = Utilities.normaliseToByte(Utilities.normaliseAngle(turning_speed));
+			this.kick = kick;
+		}
 	}
 
 }

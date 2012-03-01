@@ -16,7 +16,7 @@ import javax.swing.JPanel;
 
 import sdp.AI.AIMaster;
 import sdp.AI.AIMaster.AIMode;
-import sdp.AI.AIWorldState.mode;
+import sdp.AI.AIMaster.mode;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.Robot;
@@ -384,7 +384,7 @@ public class NeuralTrainer {
 		comboBox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (mAI != null)
-					mAI.setMode(mode.values()[comboBox.getSelectedIndex()]);
+					mAI.setState(mode.values()[comboBox.getSelectedIndex()]);
 			}
 		});
 		comboBox.setBounds(662, 156, 117, 24);
@@ -495,8 +495,8 @@ public class NeuralTrainer {
 				speed = pressed ? max_speed : 0;
 				if (pressed) {
 					if (original == null)
-						original = mAI.getMode();
-					mAI.setMode(mode.sit);
+						original = mAI.getState();
+					mAI.setState(mode.sit);
 					trainer.Resume();
 				}
 				break;
@@ -505,8 +505,8 @@ public class NeuralTrainer {
 				speed = pressed ? -max_speed : 0;
 				if (pressed) {
 					if (original == null)
-						original = mAI.getMode();
-					mAI.setMode(mode.sit);
+						original = mAI.getState();
+					mAI.setState(mode.sit);
 					trainer.Resume();
 				}
 				break;
@@ -515,8 +515,8 @@ public class NeuralTrainer {
 				turn_speed = pressed ? max_turn_speed : 0;
 				if (pressed) {
 					if (original == null)
-						original = mAI.getMode();
-					mAI.setMode(mode.sit);
+						original = mAI.getState();
+					mAI.setState(mode.sit);
 					trainer.Resume();
 				}
 				break;
@@ -525,8 +525,8 @@ public class NeuralTrainer {
 				turn_speed = pressed ? -max_turn_speed : 0;
 				if (pressed) {
 					if (original == null)
-						original = mAI.getMode();
-					mAI.setMode(mode.sit);
+						original = mAI.getState();
+					mAI.setState(mode.sit);
 					trainer.Resume();
 				}
 				break;
@@ -535,8 +535,8 @@ public class NeuralTrainer {
 					mComm.sendMessage(opcode.kick);
 				if (pressed) {
 					if (original == null)
-						original = mAI.getMode();
-					mAI.setMode(mode.sit);
+						original = mAI.getState();
+					mAI.setState(mode.sit);
 					trainer.Resume();
 				}
 				return;
@@ -546,7 +546,7 @@ public class NeuralTrainer {
 						return;
 					System.out.println(original);
 					trainer.Pause();
-					mAI.setMode(original);
+					mAI.setState(original);
 					original = null;
 				}
 				break;
@@ -557,8 +557,8 @@ public class NeuralTrainer {
 				}
 				if (pressed) {
 					if (original == null)
-						original = mAI.getMode();
-					mAI.setMode(mode.sit);
+						original = mAI.getState();
+					mAI.setState(mode.sit);
 					trainer.Resume();
 				}
 				break;
