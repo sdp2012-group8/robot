@@ -209,7 +209,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 * Disconnect from our robot.
 	 */
 	private void disconnectFromRobot() {
-		aiInstance.close();
 		aiInstance = null;
 		
 		robotRunning = false;

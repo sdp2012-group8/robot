@@ -15,7 +15,6 @@ import org.neuroph.nnet.learning.BackPropagation;
 
 import sdp.AI.AIMaster;
 import sdp.AI.AIMaster.mode;
-import sdp.AI.neural.AINeuralNetwork;
 import sdp.common.NNetTools;
 import sdp.common.Robot;
 import sdp.common.Tools;
@@ -224,7 +223,8 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 		Vector2D ball = new Vector2D(ws.getBallCoords());
 		Vector2D ball_rel = Tools.getLocalVector(am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(), ball);
 		ball_rel.setX(ball_rel.getX()-Robot.LENGTH_CM/2);
-		return ball_rel.getLength() < AINeuralNetwork.got_ball_dist ? mode.got_ball : mode.chase_ball;
+		return null; // TODO! FIX!
+		//return ball_rel.getLength() < AINeuralNetwork.got_ball_dist ? mode.got_ball : mode.chase_ball;
 	}
 	
 	@SuppressWarnings("unchecked")

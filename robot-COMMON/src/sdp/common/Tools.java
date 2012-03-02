@@ -9,6 +9,8 @@ public class Tools {
 	public final static double PITCH_WIDTH_CM = 244;
 	public final static double PITCH_HEIGHT_CM = 113.7;
 	public final static double GOAL_Y_CM = PITCH_HEIGHT_CM/2;
+	
+	public final static double size_of_ball_obstacle = Robot.LENGTH_CM;
 
 	public static double getDistBetweenPoints(Point p1, Point p2)
 	{
@@ -301,7 +303,7 @@ public class Tools {
 	 * @param ignore_blue true to ignore blue robot, false to ignore yellow, null to include both
 	 * @return a {@link Vector2D} in the same direction as direction but with greater length (distance from origin to the nearest collision point, raytraced along direction's direction)
 	 */
-	public static Vector2D raytraceVector(WorldState ws, Vector2D origin, Vector2D direction, Boolean ignore_blue) {
+	public static Vector2D raytraceVector(WorldState ws, Vector2D origin, Vector2D direction, Boolean ignore_blue, boolean include_ball_as_obstacle) {
 		if (origin.getX() <= 0 || origin.getY() <= 0 || origin.getX() >= PITCH_WIDTH_CM || origin.getY() >= PITCH_HEIGHT_CM)
 			return Vector2D.ZERO();
 		Vector2D near;
@@ -334,6 +336,13 @@ public class Tools {
 			if (temp != null && (near == null || temp.getLength() < near.getLength()))
 				near = temp;
 		}
+		// collision with ball
+		if (include_ball_as_obstacle) {
+			Vector2D ball = new Vector2D(ws.getBallCoords());
+			temp = vectorLineIntersection(origin, direction, new Vector2D(ball.getX(), ball.getY()-size_of_ball_obstacle/2), new Vector2D(ball.getX(), ball.getY()+size_of_ball_obstacle/2));
+			if (temp != null && (near == null || temp.getLength() < near.getLength()))
+				near = temp;
+		}
 		if (near != null) 
 			return near;
 		return
@@ -348,8 +357,8 @@ public class Tools {
 	 * @param local_direction In robot's coordinate system
 	 * @return same output as {@link #raytraceVector(WorldState, Vector2D, Vector2D)} - in table coordinates
 	 */
-	public static Vector2D raytraceVector(WorldState ws, Robot robot, Vector2D local_origin, Vector2D local_direction) {
-		return raytraceVector(ws, robot, local_origin, local_direction, null);
+	public static Vector2D raytraceVector(WorldState ws, Robot robot, Vector2D local_origin, Vector2D local_direction, boolean include_ball_as_obstacle) {
+		return raytraceVector(ws, robot, local_origin, local_direction, null, include_ball_as_obstacle);
 	}
 	
 	
@@ -362,10 +371,10 @@ public class Tools {
 	 * @param am_i_blue if true, ignores blue if false ignores yellow. To include all robots, use {@link #raytraceVector(WorldState, Robot, Vector2D, Vector2D)}
 	 * @return same output as {@link #raytraceVector(WorldState, Vector2D, Vector2D)} - in table coordinates
 	 */
-	public static Vector2D raytraceVector(WorldState ws, Robot robot, Vector2D local_origin, Vector2D local_direction,  Boolean am_i_blue) {
+	public static Vector2D raytraceVector(WorldState ws, Robot robot, Vector2D local_origin, Vector2D local_direction,  Boolean am_i_blue, boolean include_ball_as_obstacle) {
 		Vector2D origin = Tools.getGlobalVector(robot, local_origin);
 		Vector2D direction = Vector2D.subtract(origin, Tools.getGlobalVector(robot, local_direction));
-		return raytraceVector(ws, origin, direction, am_i_blue);
+		return raytraceVector(ws, origin, direction, am_i_blue, include_ball_as_obstacle);
 	}
 	
 	/**
@@ -376,11 +385,11 @@ public class Tools {
 	 * @param endPt
 	 * @return
 	 */
-	public static boolean visibility(WorldState ws, Vector2D endPt, boolean am_i_blue) {
+	public static boolean visibility(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
 		Vector2D startPt = new Vector2D(robot.getCoords());
 		Vector2D dir =  Vector2D.subtract(endPt, startPt);
-		Vector2D ray = raytraceVector(ws, startPt, dir, am_i_blue);
+		Vector2D ray = raytraceVector(ws, startPt, dir, am_i_blue, include_ball_as_obstacle);
 		return ray.getLength() >= dir.getLength();
 	}
 	
@@ -392,11 +401,11 @@ public class Tools {
 	 * @param endPt
 	 * @return
 	 */
-	public static double visibility2(WorldState ws, Vector2D endPt, boolean am_i_blue) {
+	public static double visibility2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
 		Vector2D startPt = new Vector2D(robot.getCoords());
 		Vector2D dir =  Vector2D.subtract(endPt, startPt);
-		Vector2D ray = raytraceVector(ws, startPt, dir, am_i_blue);
+		Vector2D ray = raytraceVector(ws, startPt, dir, am_i_blue, include_ball_as_obstacle);
 		return ray.getLength();
 	}
 	
@@ -408,7 +417,7 @@ public class Tools {
 	 * @param endPt
 	 * @return
 	 */
-	public static double reachabilityLeft2(WorldState ws, Vector2D endPt, boolean am_i_blue) {
+	public static double reachabilityLeft2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
 		Vector2D startPt = new Vector2D(robot.getCoords());
 		Vector2D dir =  Vector2D.subtract(endPt, startPt);
@@ -418,7 +427,7 @@ public class Tools {
 		double sin = Math.sin(angle)*length;
 		Vector2D left = new Vector2D(cos, sin);
 
-		Vector2D ray_left = Tools.raytraceVector(ws, Vector2D.add(startPt, left), dir, am_i_blue);
+		Vector2D ray_left = Tools.raytraceVector(ws, Vector2D.add(startPt, left), dir, am_i_blue, include_ball_as_obstacle);
 		return ray_left.getLength();
 	}
 	
@@ -430,7 +439,7 @@ public class Tools {
 	 * @param endPt
 	 * @return
 	 */
-	public static double reachabilityRight2(WorldState ws, Vector2D endPt, boolean am_i_blue) {
+	public static double reachabilityRight2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
 		Vector2D startPt = new Vector2D(robot.getCoords());
 		Vector2D dir =  Vector2D.subtract(endPt, startPt);
@@ -440,7 +449,7 @@ public class Tools {
 		double sin = Math.sin(angle)*length;
 		Vector2D right = new Vector2D(-cos, -sin);
 		
-		Vector2D ray_right = Tools.raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue);
+		Vector2D ray_right = Tools.raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue, include_ball_as_obstacle);
 		return ray_right.getLength();
 	}
 	
@@ -453,8 +462,8 @@ public class Tools {
 	 * @param endPt
 	 * @return
 	 */
-	public static boolean reachability(WorldState ws, Vector2D endPt, boolean am_i_blue) {
-		if (!visibility(ws, endPt, am_i_blue))
+	public static boolean reachability(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
+		if (!visibility(ws, endPt, am_i_blue, include_ball_as_obstacle))
 			return false;
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
 		Vector2D startPt = new Vector2D(robot.getCoords());
@@ -467,10 +476,10 @@ public class Tools {
 		Vector2D left = new Vector2D(cos, sin);
 		Vector2D right = new Vector2D(-cos, -sin);
 
-		Vector2D ray_left = Tools.raytraceVector(ws, Vector2D.add(startPt, left), dir, am_i_blue);
+		Vector2D ray_left = Tools.raytraceVector(ws, Vector2D.add(startPt, left), dir, am_i_blue, include_ball_as_obstacle);
 		if (ray_left.getLength() < dir_l)
 			return false;
-		Vector2D ray_right = Tools.raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue);
+		Vector2D ray_right = Tools.raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue, include_ball_as_obstacle);
 		return ray_right.getLength() >= dir_l;
 	}
 	
@@ -591,7 +600,7 @@ public class Tools {
 	 * @param scan_count how many parts the sector should be devided for scanning
 	 * @return the vector distance to the closest collision point a.k.a. the minimum distance determined by the scanning vector which swept the sector scan_count times.
 	 */
-	public static Vector2D getSector(WorldState ws, boolean am_i_blue, double start_angle, double end_angle, int scan_count) {
+	public static Vector2D getSector(WorldState ws, boolean am_i_blue, double start_angle, double end_angle, int scan_count, boolean include_ball_as_obstacle) {
 		start_angle = Utilities.normaliseAngle(start_angle);
 		end_angle = Utilities.normaliseAngle(end_angle);
 		final Robot me = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
@@ -602,7 +611,7 @@ public class Tools {
 		final double scan_angle = sector_angle/scan_count;
 		for (double angle = start_angle; Utilities.normaliseAngle(end_angle-angle) * sector_angle >= 0; angle+=scan_angle) {
 			final double ang_rad = angle*Math.PI/180d;
-			final Vector2D distV = raytraceVector(ws, me, zero, new Vector2D(-Math.cos(ang_rad), Math.sin(ang_rad)), am_i_blue);
+			final Vector2D distV = raytraceVector(ws, me, zero, new Vector2D(-Math.cos(ang_rad), Math.sin(ang_rad)), am_i_blue, include_ball_as_obstacle);
 			final double dist = distV.getLength();
 			if (min_dist == null || dist < min_dist) {
 				min_dist = dist;
@@ -612,7 +621,7 @@ public class Tools {
 		return min_vec;
 	}
 
-	public static double[] getSectors(WorldState ws, boolean am_i_blue, int scan_count, int sector_count, boolean normalize_to_1) {
+	public static double[] getSectors(WorldState ws, boolean am_i_blue, int scan_count, int sector_count, boolean normalize_to_1, boolean include_ball_as_obstacle) {
 		if (sector_count % 2 != 0 || (sector_count / 2) % 2 == 0) {
 			System.out.println("Sectors must be even number which halves should be odd!");
 			return null;
@@ -621,8 +630,8 @@ public class Tools {
 		double sec_angle = 360d/sector_count;
 		for (int i = 0; i < sector_count; i++)
 			ans[i] = normalize_to_1 ?
-					NNetTools.AI_normalizeDistanceTo1(getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count), PITCH_WIDTH_CM) :
-					getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count).getLength();
+					NNetTools.AI_normalizeDistanceTo1(getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle), PITCH_WIDTH_CM) :
+					getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle).getLength();
 		return ans;
 	}
 

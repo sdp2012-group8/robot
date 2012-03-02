@@ -41,7 +41,7 @@
 //		if (!Tools.reachability(ai_world_state, new Vector2D(ai_world_state.getBallCoords()), ai_world_state.getMyTeamBlue())) {
 //			// if ball is not directly reachable
 //			avoidObstacle();
-//			//return;
+//			return;
 //		}
 //
 //		// get direction from robot to ball
@@ -498,12 +498,5 @@
 //			if (array[i] < min)
 //				min = array[i];
 //		return min;
-//	}
-//
-//
-//	@Override
-//	protected Commands defendGoal() throws IOException {
-//		// TODO Auto-generated method stub
-//		return null;
 //	}
 //}

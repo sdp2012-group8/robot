@@ -68,13 +68,21 @@ public abstract class AI {
 	}
 	
 	public static class Commands {
-		public byte speed, turning_speed;
+		public double speed, turning_speed;
 		public boolean kick;
 		
 		public Commands(double speed, double turning_speed, boolean kick) {
-			this.speed = normaliseSpeed(Utilities.normaliseToByte(speed));
-			this.turning_speed = Utilities.normaliseToByte(Utilities.normaliseAngle(turning_speed));
+			this.speed = speed;
+			this.turning_speed = turning_speed;
 			this.kick = kick;
+		}
+		
+		public byte getByteSpeed() {
+			return normaliseSpeed(Utilities.normaliseToByte(speed));
+		}
+		
+		public byte getByteTurnSpeed() {
+			return Utilities.normaliseToByte(Utilities.normaliseAngle(turning_speed));
 		}
 	}
 

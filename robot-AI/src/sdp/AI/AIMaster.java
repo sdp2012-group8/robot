@@ -2,9 +2,8 @@ package sdp.AI;
 
 import java.io.IOException;
 
-import javax.jws.WebParam.Mode;
-
 //import sdp.AI.neural.AINeuralNetwork;
+import sdp.AI.AI.Commands;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.WorldStateProvider;
@@ -26,6 +25,8 @@ public class AIMaster extends AIListener {
 		visual_servoing, neural_network
 	}
 	
+	public static final int dist_to_ball = 10;
+	
 	private AI ai;
 	private mode state = mode.sit;
 	private Communicator mComm;
@@ -36,7 +37,7 @@ public class AIMaster extends AIListener {
 		
 		switch(ai_mode) {
 		case visual_servoing:
-			ai = new AIVisualServoing_Old();
+			ai = new AIVisualServoing();
 			break;
 		case neural_network:
 			//ai = new AINeuralNetwork(comm, "data");
@@ -55,7 +56,9 @@ public class AIMaster extends AIListener {
 		ai.update(ai_world_state);
 		try {
 			command = getCommand();
-			mComm.sendMessage(opcode.operate, command.speed, command.turning_speed);
+			if (command == null)
+				command = new Commands(0, 0, false);
+			mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed());
 			if (command.kick) mComm.sendMessage(opcode.kick);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -68,6 +71,7 @@ public class AIMaster extends AIListener {
 		case chase_ball:
 			return ai.chaseBall();
 		case got_ball:
+			setState(mode.sit);
 			return ai.gotBall();
 		case sit:
 			return ai.sit();
@@ -82,26 +86,11 @@ public class AIMaster extends AIListener {
 	
 	private void checkState() {
 		// Check the new world state and decide what state we should be in.
-		if (ai_world_state.getDistanceToBall() > 10) {
+		if (ai_world_state.getDistanceToBall() > dist_to_ball && getState() != mode.sit) {
 			setState(mode.chase_ball);
 		} else {
-			setState(mode.sit);
+			setState(mode.got_ball);
 		}		
-	}
-
-	/**
-	 * Gracefully close AI
-	 */
-	public void close() {
-		// disconnect queue
-		mQueue.addMessageToQueue(0, opcode.exit);
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		// close queue
-		mQueue.close();
 	}
 	
 	/**

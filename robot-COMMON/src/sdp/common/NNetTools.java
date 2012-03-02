@@ -30,9 +30,9 @@ public class NNetTools {
 		case 0:
 			Vector2D ball = new Vector2D(worldState.getBallCoords());
 			Vector2D ball_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
-			double reach = Tools.reachability(worldState, ball, am_i_blue) ? 1 : -1;
+			double reach = Tools.reachability(worldState, ball, am_i_blue, false) ? 1 : -1;
 			return Tools.concat(
-					Tools.getSectors(worldState, am_i_blue, 5, 22, true),
+					Tools.getSectors(worldState, am_i_blue, 5, 22, true, false),
 					Tools.getTargetInSectors(ball_rel, 22),
 					new double[] {
 						reach
@@ -42,10 +42,10 @@ public class NNetTools {
 			Vector2D goal = my_goal_left ? new Vector2D(Tools.PITCH_WIDTH_CM , Tools.GOAL_Y_CM ) : new Vector2D(0 , Tools.GOAL_Y_CM );
 			Vector2D goal_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), goal);
 			return Tools.concat(
-					Tools.getSectors(worldState, am_i_blue, 5, 22, true),
+					Tools.getSectors(worldState, am_i_blue, 5, 22, true, false),
 					Tools.getTargetInSectors(goal_rel, 22),
 					new double[] {
-						Tools.visibility(worldState, goal, am_i_blue) ? 1 : -1
+						Tools.visibility(worldState, goal, am_i_blue, false) ? 1 : -1
 					}
 					);
 		}
