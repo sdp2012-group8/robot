@@ -9,6 +9,8 @@ public class Tools {
 	public final static double PITCH_WIDTH_CM = 244;
 	public final static double PITCH_HEIGHT_CM = 113.7;
 	public final static double GOAL_Y_CM = PITCH_HEIGHT_CM/2;
+	
+	public final static double size_of_ball_obstacle = Robot.LENGTH_CM;
 
 	public static double getDistBetweenPoints(Point p1, Point p2)
 	{
@@ -337,7 +339,7 @@ public class Tools {
 		// collision with ball
 		if (include_ball_as_obstacle) {
 			Vector2D ball = new Vector2D(ws.getBallCoords());
-			temp = vectorLineIntersection(origin, direction, new Vector2D(ball.getX(), ball.getY()-Robot.LENGTH_CM), new Vector2D(ball.getX(), ball.getY()+Robot.LENGTH_CM));
+			temp = vectorLineIntersection(origin, direction, new Vector2D(ball.getX(), ball.getY()-size_of_ball_obstacle/2), new Vector2D(ball.getX(), ball.getY()+size_of_ball_obstacle/2));
 			if (temp != null && (near == null || temp.getLength() < near.getLength()))
 				near = temp;
 		}

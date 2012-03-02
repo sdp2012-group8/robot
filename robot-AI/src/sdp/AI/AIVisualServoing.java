@@ -9,11 +9,11 @@ import sdp.common.Vector2D;
 
 public class AIVisualServoing extends AI {
 	
-	private final static int COLL_SECS_COUNT = 110;
+	private final static int COLL_SECS_COUNT = 46;
 	private final static double SEC_ANGLE = 360d/COLL_SECS_COUNT;
 	private final static int COLL_ANGLE = 25;
 	private final static int CORNER_COLL_THRESHOLD = 3;
-	private final static int NEAR_TARGET = 30;
+	private final static int NEAR_TARGET = 10;
 	private boolean chase_ball_chase_target = true;
 
 	public AIVisualServoing() {
@@ -22,13 +22,18 @@ public class AIVisualServoing extends AI {
 
 	@Override
 	protected Commands chaseBall() throws IOException {
-		Vector2D target = new Vector2D(ai_world_state.getBallCoords().getX()-Robot.LENGTH_CM, ai_world_state.getBallCoords().getY());
+		double dist = 2*Robot.LENGTH_CM;
+		Vector2D target = new Vector2D(ai_world_state.getBallCoords().getX() + (ai_world_state.getMyGoalLeft() ? - dist : dist), ai_world_state.getBallCoords().getY());
 		if (chase_ball_chase_target && distanceTo(target) < NEAR_TARGET)
 			chase_ball_chase_target = false;
+		if (!chase_ball_chase_target) {
+			if (ai_world_state.getDistanceToBall() > 3*Robot.LENGTH_CM)
+				chase_ball_chase_target = true;
+		}
 		if (chase_ball_chase_target)
-			return goTowardsPoint(target, true);
+			return goTowardsPoint(target, true, false);
 		else
-			return goTowardsPoint(new Vector2D(ai_world_state.getBallCoords()), false);
+			return goTowardsPoint(new Vector2D(ai_world_state.getBallCoords()), false, true);
 	}
 
 	@Override
@@ -59,7 +64,7 @@ public class AIVisualServoing extends AI {
 	 * Makes robot proceed towards a point avoiding obstacles on its way
 	 * @param point
 	 */
-	private Commands goTowardsPoint(Vector2D point, boolean include_ball_as_obstacle) {
+	private Commands goTowardsPoint(Vector2D point, boolean include_ball_as_obstacle, boolean facing_point) {
 		Commands command = new Commands(0, 0, false);
 		// get relative ball coordinates
 		final Vector2D point_rel = Tools.getLocalVector(ai_world_state.getRobot(), point);
@@ -140,9 +145,8 @@ public class AIVisualServoing extends AI {
 		// acclerate all turning
 		command.turning_speed *= 2;
 		
-		// TODO!
-		// if you are between your own goal and ball
-		// if (forward_speed < 0) turning_angle = - turning_angle;!!!
+		if (facing_point && command.speed < 0)
+			command.turning_speed = - command.turning_speed;
 
 		return command;
 	}
