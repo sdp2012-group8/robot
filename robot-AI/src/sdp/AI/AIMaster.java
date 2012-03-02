@@ -25,7 +25,7 @@ public class AIMaster extends AIListener {
 		visual_servoing, neural_network
 	}
 	
-	public static final int dist_to_ball = 10;
+	public static final int DIST_TO_BALL = 10;
 	
 	private AI ai;
 	private mode state = mode.sit;
@@ -86,7 +86,7 @@ public class AIMaster extends AIListener {
 	
 	private void checkState() {
 		// Check the new world state and decide what state we should be in.
-		if (ai_world_state.getDistanceToBall() > dist_to_ball && getState() != mode.sit) {
+		if (ai_world_state.getDistanceToBall() > DIST_TO_BALL && getState() != mode.sit) {
 			setState(mode.chase_ball);
 		} else {
 			setState(mode.got_ball);

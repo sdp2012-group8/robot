@@ -23,17 +23,17 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Commands chaseBall() throws IOException {
 		double dist = 2*Robot.LENGTH_CM;
-		Vector2D target = new Vector2D(ai_world_state.getBallCoords().getX() + (ai_world_state.getMyGoalLeft() ? - dist : dist), ai_world_state.getBallCoords().getY());
+		Vector2D target = new Vector2D(ai_world_state.getOptimalPointBehindBall());
 		if (chase_ball_chase_target && distanceTo(target) < NEAR_TARGET)
 			chase_ball_chase_target = false;
 		if (!chase_ball_chase_target) {
 			if (ai_world_state.getDistanceToBall() > 3*Robot.LENGTH_CM)
 				chase_ball_chase_target = true;
 		}
-		if (chase_ball_chase_target)
+//		if (chase_ball_chase_target)
 			return goTowardsPoint(target, true, false);
-		else
-			return goTowardsPoint(new Vector2D(ai_world_state.getBallCoords()), false, true);
+//		else
+//			return goTowardsPoint(new Vector2D(ai_world_state.getBallCoords()), false, true);
 	}
 
 	@Override
