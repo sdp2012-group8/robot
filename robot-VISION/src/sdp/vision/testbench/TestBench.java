@@ -2,18 +2,13 @@ package sdp.vision.testbench;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.awt.geom.Point2D;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import sdp.common.Robot;
+import sdp.common.VisionTestCase;
 import sdp.common.WorldState;
 import sdp.vision.Vision;
 import sdp.vision.processing.ImageProcessorConfig;
 import sdp.vision.processing.ProcUtils;
 import sdp.common.Utilities;
-import sdp.common.xml.XmlUtils;
 
 
 /**
@@ -56,7 +51,7 @@ public class TestBench {
 	 */
 	public void runTest(String testSpec, ImageProcessorConfig config, PrintStream out) {
 		vision.setConfiguration(config);
-		ArrayList<VisionTestCase> tests = readTestCases(testSpec);
+		ArrayList<VisionTestCase> tests = VisionTestCase.readTestCases(testSpec);
 		VisionSystemErrorAccumulator errorAcc = new VisionSystemErrorAccumulator();
 		
 		for (VisionTestCase test : tests) {
@@ -74,61 +69,12 @@ public class TestBench {
 
 	
 	/**
-	 * Obtain a collection of test cases from the given XML file.
-	 * 
-	 * @param filename Filename of the XML file in question.
-	 * @return An array of vision test cases.
-	 */
-	private ArrayList<VisionTestCase> readTestCases(String filename) {
-		Document xmlDoc = XmlUtils.openXmlDocument(new File(filename));
-		
-		ArrayList<VisionTestCase> tests = new ArrayList<VisionTestCase>();
-		
-		Element root = xmlDoc.getDocumentElement();
-		NodeList entries = root.getElementsByTagName("image");
-		
-		for (int i = 0; i < entries.getLength(); ++i) {
-			Element imageEntry = (Element) entries.item(i);
-			
-			String imageFilename = "../robot-VISION/" + XmlUtils.getChildText(imageEntry, "filename");
-			
-			Element locDataElem = (Element) imageEntry.getElementsByTagName("location-data").item(0);
-			
-			Element ballElem = (Element) locDataElem.getElementsByTagName("ball").item(0);
-			double ballX = XmlUtils.getChildDouble(ballElem, "x");
-			double ballY = XmlUtils.getChildDouble(ballElem, "y");
-			Point2D.Double ball = new Point2D.Double(ballX, ballY);
-			
-			Element blueElem = (Element) locDataElem.getElementsByTagName("bluerobot").item(0);
-			double blueX = XmlUtils.getChildDouble(blueElem, "x");
-			double blueY = XmlUtils.getChildDouble(blueElem, "y");
-			double blueAngle = XmlUtils.getChildDouble(blueElem, "angle");
-			Point2D.Double bluePos = new Point2D.Double(blueX, blueY);
-			Robot blueRobot = new Robot(bluePos, blueAngle);
-			
-			Element yellowElem = (Element) locDataElem.getElementsByTagName("yellowrobot").item(0);
-			double yellowX = XmlUtils.getChildDouble(yellowElem, "x");
-			double yellowY = XmlUtils.getChildDouble(yellowElem, "y");
-			double yellowAngle = XmlUtils.getChildDouble(yellowElem, "angle");
-			Point2D.Double yellowPos = new Point2D.Double(yellowX, yellowY);
-			Robot yellowRobot = new Robot(yellowPos, yellowAngle);
-			
-			WorldState expectedState = new WorldState(ball, blueRobot, yellowRobot, null);
-			VisionTestCase curTestCase = new VisionTestCase(imageFilename, expectedState);
-			tests.add(curTestCase);
-		}
-
-		return tests;
-	}
-	
-	
-	/**
 	 * The entry point.
 	 * 
 	 * @param args Command-line arguments.
 	 */
 	public static void main(String[] args) {
 		TestBench testBench = new TestBench();
-		testBench.runTest("xml/imagedata.xml");
+		testBench.runTest("data/tests/friendly1.xml");
 	}
 }
