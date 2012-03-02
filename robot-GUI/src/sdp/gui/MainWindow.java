@@ -6,9 +6,12 @@ import java.awt.Component;
 import javax.swing.JPanel;
 
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.awt.Point;
+
 import javax.swing.JSpinner;
 import javax.swing.border.TitledBorder;
 import javax.swing.SpinnerNumberModel;
@@ -52,6 +55,9 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.JTextArea;
 import javax.swing.JScrollPane;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 
 
 /**
@@ -100,6 +106,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	/** GUI's world state provider. */
 	private WorldStateObserver worldStateObserver;
 	
+	/** Mouse pointer position on the canvas image. */
+	private Point imageMousePos = null;
+	
 	
 	/**
 	 * Create the main GUI with the specified components.
@@ -145,7 +154,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		initComponents();
 		
 		if (vision != null) {
-			updateComponentsFromVision();
+			getVisionConfiguration();
 		} else {
 			robotControlTabbedPanel.remove(visionSettingPanel);
 		}
@@ -169,7 +178,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 */
 	public void setImage(BufferedImage image) {
 		if (image != null) {
-			imageLabel.getGraphics().drawImage(image, 0, 0, null);
+			imageCanvasPanel.getGraphics().drawImage(image, 0, 0, null);
 		}
 	}
 	
@@ -215,6 +224,17 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	
 	
 	/**
+	 * Register a mouse click on the image canvas.
+	 * 
+	 * The caller must update imageMousePos to the click location before calling
+	 * this function.
+	 */
+	private void registerCanvasClick() {
+		System.err.println(imageMousePos.x + " " + imageMousePos.y);
+	}
+	
+	
+	/**
 	 * Load the vision system configuration, selected by user.
 	 */
 	private void loadConfiguration() {
@@ -227,72 +247,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			setGUIConfiguration(config);
 		}
 	}
-	
-	/** 
-	 * Update the vision tab components to match vision's configuration.
-	 */
-	private void updateComponentsFromVision() {
-		if (vision == null) {
-			LOGGER.info("Tried to read vision configuration when vision subsystem was inactive.");
-		} else {
-			ImageProcessorConfig config = vision.getConfiguration();
-			setGUIConfiguration(config);
-		}
-	}
-	
-	/**
-	 * Update the vision tab components to match the given configuration.
-	 * @param config Configuration to take values from.
-	 */
-	private void setGUIConfiguration(ImageProcessorConfig config) {
-		fieldLowXSpinner.setValue(new Integer((int) (config.getRawFieldLowX() * SPINNER_FLOAT_RANGE)));
-		fieldLowYSpinner.setValue(new Integer((int) (config.getRawFieldLowY() * SPINNER_FLOAT_RANGE)));
-		fieldHighXSpinner.setValue(new Integer((int) (config.getRawFieldHighX() * SPINNER_FLOAT_RANGE)));
-		fieldHighYSpinner.setValue(new Integer((int) (config.getRawFieldHighY() * SPINNER_FLOAT_RANGE)));
-		
-		ballHueMinSpinner.setValue(new Integer(config.getBallHueMinValue()));
-		ballSatMinSpinner.setValue(new Integer(config.getBallSatMinValue()));
-		ballValMinSpinner.setValue(new Integer(config.getBallValMinValue()));
-		ballSizeMinSpinner.setValue(new Integer(config.getBallSizeMinValue()));
-		ballHueMaxSpinner.setValue(new Integer(config.getBallHueMaxValue()));
-		ballSatMaxSpinner.setValue(new Integer(config.getBallSatMaxValue()));
-		ballValMaxSpinner.setValue(new Integer(config.getBallValMaxValue()));
-		ballSizeMaxSpinner.setValue(new Integer(config.getBallSizeMaxValue()));
-		
-		blueHueMinSpinner.setValue(new Integer(config.getBlueHueMinValue()));
-		blueSatMinSpinner.setValue(new Integer(config.getBlueSatMinValue()));
-		blueValMinSpinner.setValue(new Integer(config.getBlueValMinValue()));
-		blueSizeMinSpinner.setValue(new Integer(config.getBlueSizeMinValue()));
-		blueHueMaxSpinner.setValue(new Integer(config.getBlueHueMaxValue()));
-		blueSatMaxSpinner.setValue(new Integer(config.getBlueSatMaxValue()));
-		blueValMaxSpinner.setValue(new Integer(config.getBlueValMaxValue()));
-		blueSizeMaxSpinner.setValue(new Integer(config.getBlueSizeMaxValue()));
-		
-		yellowHueMinSpinner.setValue(new Integer(config.getYellowHueMinValue()));
-		yellowSatMinSpinner.setValue(new Integer(config.getYellowSatMinValue()));
-		yellowValMinSpinner.setValue(new Integer(config.getYellowValMinValue()));
-		yellowSizeMinSpinner.setValue(new Integer(config.getYellowSizeMinValue()));
-		yellowHueMaxSpinner.setValue(new Integer(config.getYellowHueMaxValue()));
-		yellowSatMaxSpinner.setValue(new Integer(config.getYellowSatMaxValue()));
-		yellowValMaxSpinner.setValue(new Integer(config.getYellowValMaxValue()));
-		yellowSizeMaxSpinner.setValue(new Integer(config.getYellowSizeMaxValue()));
-		
-		cxTextfield.setText(Double.toString(config.getUndistort_cx()));
-		cyTextfield.setText(Double.toString(config.getUndistort_cy()));
-		fxTextfield.setText(Double.toString(config.getUndistort_fx()));
-		fyTextfield.setText(Double.toString(config.getUndistort_fy()));
-		k1Textfield.setText(Double.toString(config.getUndistort_k1()));
-		k2Textfield.setText(Double.toString(config.getUndistort_k2()));
-		p1Textfield.setText(Double.toString(config.getUndistort_p1()));
-		p2Textfield.setText(Double.toString(config.getUndistort_p2()));
-		
-		showWorldCheckbox.setSelected(config.isShowWorld());
-		showThreshCheckbox.setSelected(config.isShowThresholds());
-		showContoursCheckbox.setSelected(config.isShowContours());
-		showBoxesCheckbox.setSelected(config.isShowBoundingBoxes());
-		showStateDataCheckbox.setSelected(config.isShowStateData());
-	}
-	
 	
 	/**
 	 * Save the current vision configuration into a file.
@@ -308,11 +262,24 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		}
 	}
 	
+	
+	/** 
+	 * Update the vision tab components to match vision's configuration.
+	 */
+	private void getVisionConfiguration() {
+		if (vision == null) {
+			LOGGER.info("Tried to read vision configuration when vision subsystem was inactive.");
+		} else {
+			ImageProcessorConfig config = vision.getConfiguration();
+			setGUIConfiguration(config);
+		}
+	}
+	
 	/**
 	 * Set the configuration of the vision subsystem to match the values in
 	 * vision tab.
 	 */
-	private void setNewVisionConfiguration() {
+	private void setVisionConfiguration() {
 		if (vision == null) {
 			LOGGER.info("Tried to set vision configuration when vision subsystem was inactive.");
 		} else {
@@ -320,6 +287,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			vision.setConfiguration(config);
 		}
 	}
+
 	
 	/**
 	 * Create a ImageProcessorConfig from the values in GUI components.
@@ -395,6 +363,59 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		return config;
 	}
 	
+	/**
+	 * Update the vision tab components to match the given configuration.
+	 * @param config Configuration to take values from.
+	 */
+	private void setGUIConfiguration(ImageProcessorConfig config) {
+		fieldLowXSpinner.setValue(new Integer((int) (config.getRawFieldLowX() * SPINNER_FLOAT_RANGE)));
+		fieldLowYSpinner.setValue(new Integer((int) (config.getRawFieldLowY() * SPINNER_FLOAT_RANGE)));
+		fieldHighXSpinner.setValue(new Integer((int) (config.getRawFieldHighX() * SPINNER_FLOAT_RANGE)));
+		fieldHighYSpinner.setValue(new Integer((int) (config.getRawFieldHighY() * SPINNER_FLOAT_RANGE)));
+		
+		ballHueMinSpinner.setValue(new Integer(config.getBallHueMinValue()));
+		ballSatMinSpinner.setValue(new Integer(config.getBallSatMinValue()));
+		ballValMinSpinner.setValue(new Integer(config.getBallValMinValue()));
+		ballSizeMinSpinner.setValue(new Integer(config.getBallSizeMinValue()));
+		ballHueMaxSpinner.setValue(new Integer(config.getBallHueMaxValue()));
+		ballSatMaxSpinner.setValue(new Integer(config.getBallSatMaxValue()));
+		ballValMaxSpinner.setValue(new Integer(config.getBallValMaxValue()));
+		ballSizeMaxSpinner.setValue(new Integer(config.getBallSizeMaxValue()));
+		
+		blueHueMinSpinner.setValue(new Integer(config.getBlueHueMinValue()));
+		blueSatMinSpinner.setValue(new Integer(config.getBlueSatMinValue()));
+		blueValMinSpinner.setValue(new Integer(config.getBlueValMinValue()));
+		blueSizeMinSpinner.setValue(new Integer(config.getBlueSizeMinValue()));
+		blueHueMaxSpinner.setValue(new Integer(config.getBlueHueMaxValue()));
+		blueSatMaxSpinner.setValue(new Integer(config.getBlueSatMaxValue()));
+		blueValMaxSpinner.setValue(new Integer(config.getBlueValMaxValue()));
+		blueSizeMaxSpinner.setValue(new Integer(config.getBlueSizeMaxValue()));
+		
+		yellowHueMinSpinner.setValue(new Integer(config.getYellowHueMinValue()));
+		yellowSatMinSpinner.setValue(new Integer(config.getYellowSatMinValue()));
+		yellowValMinSpinner.setValue(new Integer(config.getYellowValMinValue()));
+		yellowSizeMinSpinner.setValue(new Integer(config.getYellowSizeMinValue()));
+		yellowHueMaxSpinner.setValue(new Integer(config.getYellowHueMaxValue()));
+		yellowSatMaxSpinner.setValue(new Integer(config.getYellowSatMaxValue()));
+		yellowValMaxSpinner.setValue(new Integer(config.getYellowValMaxValue()));
+		yellowSizeMaxSpinner.setValue(new Integer(config.getYellowSizeMaxValue()));
+		
+		cxTextfield.setText(Double.toString(config.getUndistort_cx()));
+		cyTextfield.setText(Double.toString(config.getUndistort_cy()));
+		fxTextfield.setText(Double.toString(config.getUndistort_fx()));
+		fyTextfield.setText(Double.toString(config.getUndistort_fy()));
+		k1Textfield.setText(Double.toString(config.getUndistort_k1()));
+		k2Textfield.setText(Double.toString(config.getUndistort_k2()));
+		p1Textfield.setText(Double.toString(config.getUndistort_p1()));
+		p2Textfield.setText(Double.toString(config.getUndistort_p2()));
+		
+		showWorldCheckbox.setSelected(config.isShowWorld());
+		showThreshCheckbox.setSelected(config.isShowThresholds());
+		showContoursCheckbox.setSelected(config.isShowContours());
+		showBoxesCheckbox.setSelected(config.isShowBoundingBoxes());
+		showStateDataCheckbox.setSelected(config.isShowStateData());
+	}
+	
 	
 	/**
 	 * Open a dialog to select a test bench test file and modify the appropriate
@@ -465,7 +486,13 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			fpsCounter.tick();
 			setTitle(String.format("%s - %.1f FPS", WINDOW_TITLE, fpsCounter.getFPS()));
 			if (visionChangesEnabled) {
-				setNewVisionConfiguration();
+				setVisionConfiguration();
+			}
+			
+			if (imageMousePos != null) {
+				Graphics g = imageCanvasPanel.getGraphics();
+				g.setColor(Color.white);
+				g.drawRect(imageMousePos.x - 3, imageMousePos.y - 3, 7, 7);
 			}
 			
 //			System.out.println(String.format(
@@ -504,16 +531,41 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbl_cameraImagePanel.columnWeights = new double[]{0.0, Double.MIN_VALUE};
 		gbl_cameraImagePanel.rowWeights = new double[]{1.0, 0.0, 1.0, Double.MIN_VALUE};
 		cameraImagePanel.setLayout(gbl_cameraImagePanel);
-		imageLabel = new javax.swing.JLabel();
-		GridBagConstraints gbc_imageLabel = new GridBagConstraints();
-		gbc_imageLabel.insets = new Insets(0, 0, 5, 0);
-		gbc_imageLabel.fill = GridBagConstraints.BOTH;
-		gbc_imageLabel.gridx = 0;
-		gbc_imageLabel.gridy = 1;
-		cameraImagePanel.add(imageLabel, gbc_imageLabel);
-		imageLabel.setAlignmentY(Component.TOP_ALIGNMENT);
 		
-		imageLabel.setText("Image goes here");
+		imageCanvasPanel = new JPanel();
+		imageCanvasPanel.addMouseMotionListener(new MouseMotionAdapter() {
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				imageMousePos = e.getPoint();
+			}
+		});
+		imageCanvasPanel.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				imageMousePos = e.getPoint();
+			}
+			@Override
+			public void mouseExited(MouseEvent e) {
+				imageMousePos = null;
+			}
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				imageMousePos = e.getPoint();
+				registerCanvasClick();
+			}
+		});
+		GridBagConstraints gbc_imageCanvasPanel = new GridBagConstraints();
+		gbc_imageCanvasPanel.insets = new Insets(0, 0, 5, 0);
+		gbc_imageCanvasPanel.fill = GridBagConstraints.BOTH;
+		gbc_imageCanvasPanel.gridx = 0;
+		gbc_imageCanvasPanel.gridy = 1;
+		cameraImagePanel.add(imageCanvasPanel, gbc_imageCanvasPanel);
+		GridBagLayout gbl_imageCanvasPanel = new GridBagLayout();
+		gbl_imageCanvasPanel.columnWidths = new int[]{0};
+		gbl_imageCanvasPanel.rowHeights = new int[]{0};
+		gbl_imageCanvasPanel.columnWeights = new double[]{Double.MIN_VALUE};
+		gbl_imageCanvasPanel.rowWeights = new double[]{Double.MIN_VALUE};
+		imageCanvasPanel.setLayout(gbl_imageCanvasPanel);
 		
 		robotControlTabbedPanel = new JTabbedPane(JTabbedPane.TOP);
 		GridBagConstraints gbc_robotControlTabbedPanel = new GridBagConstraints();
@@ -1423,9 +1475,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		testBenchPanel.add(saveTestBenchOutputButton, gbc_saveTestBenchOutputButton);
 	}
 	
-	
-	private javax.swing.JLabel imageLabel;
-	
 	private JTabbedPane robotControlTabbedPanel;
 	
 	private JPanel visionSettingPanel;
@@ -1523,4 +1572,5 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JScrollPane testBenchOutputScrollPane;
 	private JPanel testBenchOutputPanel;
 	private JLabel testCaseLabel;
+	private JPanel imageCanvasPanel;
 }
