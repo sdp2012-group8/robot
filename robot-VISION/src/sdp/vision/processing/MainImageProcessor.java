@@ -234,7 +234,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour, minSize, maxSize);
 		
 		if (robotShapes.size() == 0) {
-			return new Robot(new Point2D.Double(-1.0, -1.0), 0.0);
+			return new Robot(new Point2D.Double(-1.0, -1.0), -1.0);
 		} else {
 			// Find the best marching T shape.
 			CvSeq bestRobotShape = getLargestShape(robotShapes);

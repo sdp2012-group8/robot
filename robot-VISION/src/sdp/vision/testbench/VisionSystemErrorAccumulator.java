@@ -24,12 +24,18 @@ public class VisionSystemErrorAccumulator {
 	private ArrayList<String> testNames = new ArrayList<String>();
 	/** Execution time accumulator. */
 	private ArrayList<Long> testTimes = new ArrayList<Long>();
+
 	/** Ball position measurement error accumulator. */
 	private PositionErrorAccumulator ballPosError = new PositionErrorAccumulator();
 	/** Blue robot position measurement error accumulator. */
 	private PositionErrorAccumulator bluePosError = new PositionErrorAccumulator();
 	/** Yellow robot position measurement error accumulator. */
 	private PositionErrorAccumulator yellowPosError = new PositionErrorAccumulator();
+	
+	/** Blue robot direction measurement error accumulator. */
+	private DirectionErrorAccumulator blueDirError = new DirectionErrorAccumulator();
+	/** Yellow robot direction measurement error accumulator. */
+	private DirectionErrorAccumulator yellowDirError = new DirectionErrorAccumulator();
 	
 	
 	/**
@@ -57,6 +63,11 @@ public class VisionSystemErrorAccumulator {
 				actual.getBlueRobot().getCoords());
 		yellowPosError.addRecord(expected.getYellowRobot().getCoords(),
 				actual.getYellowRobot().getCoords());
+		
+		blueDirError.addRecord(expected.getBlueRobot().getAngle(),
+				actual.getBlueRobot().getAngle());
+		yellowDirError.addRecord(expected.getYellowRobot().getAngle(),
+				actual.getYellowRobot().getAngle());
 	}
 	
 	
@@ -84,18 +95,31 @@ public class VisionSystemErrorAccumulator {
 				bluePosError.getInvalidRecordCount(),
 				bluePosError.getInaccurateRecordCount(),
 				bluePosError.getAccurateRecordCount());
+		out.format("  Blue robot direction: %d/%d/%d\n",
+				blueDirError.getInvalidRecordCount(),
+				blueDirError.getInaccurateRecordCount(),
+				blueDirError.getAccurateRecordCount());
 		out.format("  Yellow robot position: %d/%d/%d\n",
 				yellowPosError.getInvalidRecordCount(),
 				yellowPosError.getInaccurateRecordCount(),
 				yellowPosError.getAccurateRecordCount());
+		out.format("  Yellow robot direction: %d/%d/%d\n",
+				yellowDirError.getInvalidRecordCount(),
+				yellowDirError.getInaccurateRecordCount(),
+				yellowDirError.getAccurateRecordCount());
+		
 		out.format("\n");
 		out.format("Average execution time: %.2f ms, %.2f fps.\n", avgExecTime, avgFps);
 		out.format("Average ball position error: %.4f pixels.\n",
 				ballPosError.averageError());
 		out.format("Average blue robot position error: %.4f pixels.\n",
 				bluePosError.averageError());
+		out.format("Average blue robot direction error: %.4f degrees.\n",
+				blueDirError.averageError());
 		out.format("Average yellow robot position error: %.4f pixels.\n",
 				yellowPosError.averageError());
+		out.format("Average yellow robot direction error: %.4f degrees.\n",
+				yellowDirError.averageError());
 		
 		out.format("\n");
 		out.format("\n");
@@ -110,9 +134,15 @@ public class VisionSystemErrorAccumulator {
 			out.format("  Blue position error: %.4f pixels - %s\n",
 					bluePosError.getRecord(i),
 					posErrorMessage(bluePosError.getRecord(i)));
+			out.format("  Blue direction error: %.4f pixels - %s\n",
+					blueDirError.getRecord(i),
+					posErrorMessage(blueDirError.getRecord(i)));
 			out.format("  Yellow position error: %.4f pixels - %s\n",
 					yellowPosError.getRecord(i),
 					posErrorMessage(yellowPosError.getRecord(i)));
+			out.format("  Yellow direction error: %.4f pixels - %s\n",
+					yellowDirError.getRecord(i),
+					posErrorMessage(yellowDirError.getRecord(i)));
 		}
 	}
 	

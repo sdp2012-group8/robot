@@ -1,25 +1,23 @@
 package sdp.vision.testbench;
 
-import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
 
 /**
- * An accumulator for position error measurements.
+ * An accumulator for direction error measurements.
  * 
- * Collects position measurements, processes them and provides useful
+ * Collects direction measurements, processes them and provides useful
  * information about them. Can report the average recognition distance,
  * the number of invalid, inaccurate and acceptable recognitions. A recognition
  * record is said to be invalid if the vision system finds an object when it
  * is not there and vice-versa.
  * 
- * @author Aaron Cronin
  * @author Gediminas Liktaras
  */
-public class PositionErrorAccumulator {
-	
-	/** Maximum recognition error in pixels, before marking a measurement inaccurate. */
-	public static final double POS_ERROR_TOLERANCE = 20.0;
+public class DirectionErrorAccumulator {
+
+	/** Maximum recognition error in degrees, before marking a measurement inaccurate. */
+	public static final double DIR_ERROR_TOLERANCE = 20.0;
 
 
 	/** The sum of all valid position measurement errors. */
@@ -34,42 +32,45 @@ public class PositionErrorAccumulator {
 	
 	
 	/**
-	 * Create a new position error accumulator.
+	 * Create a new direction error accumulator.
 	 */
-	public PositionErrorAccumulator() { }
+	public DirectionErrorAccumulator() { }
 	
 	
 	/**
-	 * Add a position measurement record to the accumulator.
+	 * Add a direction measurement record to the accumulator.
 	 * 
-	 * @param expectedPos Expected position in frame coordinates.
-	 * @param actualPos Actual position in frame coordinates.
+	 * @param expectedDir Expected direction in degrees.
+	 * @param actualDir Actual direction in degrees.
 	 */
-	public void addRecord(Point2D.Double expectedPos, Point2D.Double actualPos) {
+	public void addRecord(double expectedDir, double actualDir) {
 		int validFlag = 1;
-		if ((expectedPos.x < 0) && (expectedPos.y < 0)) {
+		if (expectedDir < 0) {
 			validFlag *= -1;
 		}
-		if ((actualPos.x < 0) && (actualPos.y < 0)) {
+		if (actualDir < 0) {
 			validFlag *= -1;
 		}
 		
+		expectedDir = Math.toDegrees(expectedDir) + 179;
+		expectedDir = (expectedDir + 90) % 360;
+		
 		double error = 0.0;
 		if (validFlag > 0) {
-			double xDiff = Math.abs(expectedPos.x - actualPos.x);
-			double yDiff = Math.abs(expectedPos.y - actualPos.y);
-			
-			error = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+			error = Math.abs(expectedDir - actualDir);
+			error = Math.min(error, 360.0 - error);
 		} else {
 			error = -1.0;
 		}
+		
+		System.err.println(expectedDir + " " + actualDir);
 		
 		errorList.add(error);
 		if (error >= 0.0) {
 			totalError += error;
 			++validRecordCount;
 			
-			if (error <= POS_ERROR_TOLERANCE) {
+			if (error <= DIR_ERROR_TOLERANCE) {
 				++accurateRecordCount;
 			}
 		}
@@ -141,10 +142,9 @@ public class PositionErrorAccumulator {
 	 */
 	public double averageError() {
 		if (validRecordCount > 0) {
-			return totalError / getTotalRecordCount();
+			return totalError / getValidRecordCount();
 		} else {
 			return -1.0;
 		}
 	}
-	
 }
