@@ -2,7 +2,6 @@ package sdp.vision.testbench;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Date;
 import java.awt.geom.Point2D;
 
 import org.w3c.dom.Document;

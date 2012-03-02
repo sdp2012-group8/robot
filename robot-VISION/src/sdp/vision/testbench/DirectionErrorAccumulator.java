@@ -53,7 +53,6 @@ public class DirectionErrorAccumulator {
 		}
 		
 		expectedDir = Math.toDegrees(expectedDir) + 179;
-		expectedDir = (expectedDir + 90) % 360;
 		
 		double error = 0.0;
 		if (validFlag > 0) {
