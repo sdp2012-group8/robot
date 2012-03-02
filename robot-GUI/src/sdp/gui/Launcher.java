@@ -221,7 +221,7 @@ public class Launcher extends JFrame implements Runnable {
 	 * Initialise GUI components.
 	 */
 	private void initComponents() {
-		setSize(new Dimension(200, 271));
+		setSize(new Dimension(250, 300));
 		setTitle("Launcher");
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 200, 0, 0};

@@ -2,7 +2,6 @@ package sdp.vision.testbench;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Date;
 import java.awt.geom.Point2D;
 
 import org.w3c.dom.Document;
@@ -57,25 +56,19 @@ public class TestBench {
 	 */
 	public void runTest(String testSpec, ImageProcessorConfig config, PrintStream out) {
 		vision.setConfiguration(config);
-		ArrayList<Long> delays = new ArrayList<Long>();
 		ArrayList<VisionTestCase> tests = readTestCases(testSpec);
 		VisionSystemErrorAccumulator errorAcc = new VisionSystemErrorAccumulator();
 		
 		for (VisionTestCase test : tests) {
-			long beforeV = System.currentTimeMillis();
+			long testStartTime = System.currentTimeMillis();
 			WorldState actualState_norm = vision.extractWorldState(Utilities.deepBufferedImageCopy(test.getImage()));
-			long afterV = System.currentTimeMillis();
+			long testEndTime = System.currentTimeMillis();
+			long testExecTime = testEndTime - testStartTime;
+			
 			WorldState actualState_frame = ProcUtils.stateToFrameCoordinates(config, actualState_norm);
-			System.out.printf("d= %d ms, ", (afterV-beforeV));
-			errorAcc.addRecord(test.getImageFilename(), test.getExpectedState(), actualState_frame);
-			delays.add(afterV-beforeV);
+			errorAcc.addRecord(test.getImageFilename(), test.getExpectedState(), actualState_frame, testExecTime);
 		}
-		float average = 0;
-		for (long delay : delays){
-			average += (float) delay;
-		}
-		average = average / delays.size();
-		System.out.printf("\nAverage delay over %d frames is %f ms. \n", delays.size(), average);
+		
 		errorAcc.dumpMetrics(out);		
 	}
 
