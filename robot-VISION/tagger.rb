@@ -27,7 +27,7 @@ puts xmltag("test","true")
 this_dir = File.dirname(__FILE__)
 
 #directory for images
-subdir = '/data/friendly'
+subdir = '/data/the friendly'
 
 this_dir << subdir
 

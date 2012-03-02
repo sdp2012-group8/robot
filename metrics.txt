@@ -1,0 +1,282 @@
+= TEST SUMMARY
+
+Number of tests: 53
+Position accuracy error tolerance: 20.0000 pixels.
+
+Measurement stats (invalid/inaccurate/ok):
+  Ball position: 3/0/50
+  Blue robot position: 0/0/53
+  Yellow robot position: 53/0/0
+
+Average ball position error: 1.4132 pixels.
+Average blue robot position error: 2.1441 pixels.
+Average yellow robot position error: -1.0000 pixels.
+
+
+=== INDIVIDUAL TEST DATA
+
+Test image: ../robot-VISION/./data/friendly/00000074.jpg
+  Ball position error: 1.4142 pixels - OK
+  Blue position error: 2.3230 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000033.jpg
+  Ball position error: 1.0000 pixels - OK
+  Blue position error: 1.4804 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000018.jpg
+  Ball position error: 1.0000 pixels - OK
+  Blue position error: 1.9969 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000301.jpg
+  Ball position error: 0.0000 pixels - OK
+  Blue position error: 0.6102 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000042.jpg
+  Ball position error: 1.0000 pixels - OK
+  Blue position error: 1.6780 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000098.jpg
+  Ball position error: 1.0000 pixels - OK
+  Blue position error: 1.2352 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000081.jpg
+  Ball position error: 1.4142 pixels - OK
+  Blue position error: 1.7982 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000025.jpg
+  Ball position error: 0.0000 pixels - OK
+  Blue position error: 1.5251 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000010.jpg
+  Ball position error: 2.0000 pixels - OK
+  Blue position error: 1.1560 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000186.jpg
+  Ball position error: 2.2361 pixels - OK
+  Blue position error: 5.8523 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000666.jpg
+  Ball position error: 2.2361 pixels - OK
+  Blue position error: 3.0979 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000355.jpg
+  Ball position error: -1.0000 pixels - INVALID
+  Blue position error: 0.5470 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000015.jpg
+  Ball position error: 1.4142 pixels - OK
+  Blue position error: 0.3217 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000020.jpg
+  Ball position error: 2.2361 pixels - OK
+  Blue position error: 2.1663 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000405.jpg
+  Ball position error: 0.0000 pixels - OK
+  Blue position error: 4.3348 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000029.jpg
+  Ball position error: 1.4142 pixels - OK
+  Blue position error: 1.4699 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000013.jpg
+  Ball position error: 0.0000 pixels - OK
+  Blue position error: 1.5532 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000496.jpg
+  Ball position error: 2.2361 pixels - OK
+  Blue position error: 3.0194 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000056.jpg
+  Ball position error: 1.4142 pixels - OK
+  Blue position error: 0.5269 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000197.jpg
+  Ball position error: 1.4142 pixels - OK
+  Blue position error: 5.1649 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000096.jpg
+  Ball position error: 2.2361 pixels - OK
+  Blue position error: 3.1858 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000024.jpg
+  Ball position error: 0.0000 pixels - OK
+  Blue position error: 2.4302 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000110.jpg
+  Ball position error: 5.0000 pixels - OK
+  Blue position error: 1.8529 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000037.jpg
+  Ball position error: 0.0000 pixels - OK
+  Blue position error: 1.6142 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000055.jpg
+  Ball position error: 1.0000 pixels - OK
+  Blue position error: 2.3478 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000004.jpg
+  Ball position error: 2.0000 pixels - OK
+  Blue position error: 1.7491 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000887.jpg
+  Ball position error: 1.0000 pixels - OK
+  Blue position error: 2.5820 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000489.jpg
+  Ball position error: -1.0000 pixels - INVALID
+  Blue position error: 1.6791 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000727.jpg
+  Ball position error: -1.0000 pixels - INVALID
+  Blue position error: 2.5917 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000045.jpg
+  Ball position error: 3.1623 pixels - OK
+  Blue position error: 2.2049 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000172.jpg
+  Ball position error: 1.4142 pixels - OK
+  Blue position error: 0.6941 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000109.jpg
+  Ball position error: 4.2426 pixels - OK
+  Blue position error: 2.2448 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000028.jpg
+  Ball position error: 1.4142 pixels - OK
+  Blue position error: 0.9489 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000086.jpg
+  Ball position error: 1.0000 pixels - OK
+  Blue position error: 2.4250 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000058.jpg
+  Ball position error: 2.2361 pixels - OK
+  Blue position error: 0.5195 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000067.jpg
+  Ball position error: 2.0000 pixels - OK
+  Blue position error: 0.9862 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000059.jpg
+  Ball position error: 1.0000 pixels - OK
+  Blue position error: 1.1086 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000674.jpg
+  Ball position error: 0.0000 pixels - OK
+  Blue position error: 1.1078 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000690.jpg
+  Ball position error: 1.4142 pixels - OK
+  Blue position error: 2.3074 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000147.jpg
+  Ball position error: 1.4142 pixels - OK
+  Blue position error: 6.5800 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000276.jpg
+  Ball position error: 1.0000 pixels - OK
+  Blue position error: 3.3265 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000030.jpg
+  Ball position error: 3.1623 pixels - OK
+  Blue position error: 1.7740 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000521.jpg
+  Ball position error: 1.0000 pixels - OK
+  Blue position error: 2.1403 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000630.jpg
+  Ball position error: 2.2361 pixels - OK
+  Blue position error: 1.2808 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000849.jpg
+  Ball position error: 2.2361 pixels - OK
+  Blue position error: 1.7421 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000001.jpg
+  Ball position error: 0.0000 pixels - OK
+  Blue position error: 4.5868 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000440.jpg
+  Ball position error: 1.4142 pixels - OK
+  Blue position error: 3.7008 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000658.jpg
+  Ball position error: 1.0000 pixels - OK
+  Blue position error: 2.1604 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000207.jpg
+  Ball position error: 2.2361 pixels - OK
+  Blue position error: 2.6540 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000198.jpg
+  Ball position error: 0.0000 pixels - OK
+  Blue position error: 0.4947 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000034.jpg
+  Ball position error: 1.4142 pixels - OK
+  Blue position error: 1.3708 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000027.jpg
+  Ball position error: 2.2361 pixels - OK
+  Blue position error: 1.3833 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
+Test image: ../robot-VISION/./data/friendly/00000105.jpg
+  Ball position error: 3.0000 pixels - OK
+  Blue position error: 4.0079 pixels - OK
+  Yellow position error: -1.0000 pixels - INVALID
+
