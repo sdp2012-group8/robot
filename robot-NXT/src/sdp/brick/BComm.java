@@ -28,6 +28,8 @@ public class BComm implements Communicator {
 	private static int messages_so_far = 0;
 	private static NXTConnection connection;
 	
+	private static final boolean DEBUG = false;
+	
 	/**
 	 * Initialises the controller with a listener
 	 * @param listener
@@ -97,6 +99,7 @@ public class BComm implements Communicator {
 							}
 							// print message on the LCD
 							messages_so_far++;
+							if (DEBUG) {
 							LCD.clear(0);
 							LCD.clear(1);
 							LCD.clear(2);
@@ -111,6 +114,7 @@ public class BComm implements Communicator {
 								LCD.drawString("["+args[0]+"]",0, 2);
 							else
 								LCD.drawString("NO ARGS",0, 2);
+							}
 							// call the method
 							listener.receiveMessage(op, args, BComm.this);
 						} catch (IOException e) {

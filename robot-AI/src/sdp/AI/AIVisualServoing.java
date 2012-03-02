@@ -19,11 +19,12 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Commands chaseBall() throws IOException {
 		Commands comm = null;
-		double dist = 2*Robot.LENGTH_CM;
-		Vector2D target = new Vector2D(ai_world_state.getBallCoords().getX() + (ai_world_state.getMyGoalLeft() ? - dist : dist), ai_world_state.getBallCoords().getY());
+		//Vector2D target = new Vector2D(ai_world_state.getOptimalPointBehindBall());
+		 double dist = 2*Robot.LENGTH_CM;
+		 Vector2D target = new Vector2D(ai_world_state.getBallCoords().getX() + (ai_world_state.getMyGoalLeft() ? - dist : dist), ai_world_state.getBallCoords().getY());
 		double targ_dist = distanceTo(target);
 		if (!chase_ball_chase_target) {
-			if (ai_world_state.getDistanceToBall() > 2*Robot.LENGTH_CM) {
+			if (ai_world_state.getDistanceToBall() > 4*Robot.LENGTH_CM) {
 				System.out.println("Ball too far away, switch back to go to target");
 				chase_ball_chase_target = true;
 			}
@@ -48,14 +49,14 @@ public class AIVisualServoing extends AI {
 			System.out.println("GO TO BALL");
 		}
 		
-		
 		return comm;
+
 	}
 
 	@Override
 	protected Commands gotBall() throws IOException {
 		chase_ball_chase_target = true;
-		return null;
+		return null;//new Commands(0,0,true);
 	}
 
 	@Override
@@ -151,18 +152,16 @@ public class AIVisualServoing extends AI {
 		else if (Math.abs(command.turning_speed) < 90)
 			command.speed = MAX_SPEED_CM_S;
 
-
 		// if we get within too close (within coll_start) of an obstacle
 		backAwayIfTooClose(command, sectors);
 
 		// check if either of the corners are in collision
 		nearCollisionCheck(command);
-
-		// acclerate all turning
 		command.turning_speed *= 2;
-		
 		if (facing_point && command.speed < 0)
 			command.turning_speed = - command.turning_speed;
+		
+	
 
 		return command;
 	}
