@@ -1,6 +1,7 @@
 package sdp.common;
 
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 
 
 /**
@@ -96,6 +97,11 @@ public final class Robot {
 		backRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, -width / 2), angle);
 		Utilities.translatePoint(backRightPoint, coords);
 		
+		frontCenterPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, 0), angle);
+		Utilities.translatePoint(frontCenterPoint, coords);
+		
+		backCenterPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, 0), angle);
+		Utilities.translatePoint(backCenterPoint, coords);
 		
 	}
 	
@@ -169,12 +175,7 @@ public final class Robot {
 	 * @return Coordinates of the front center of robot.
 	 */
 	
-	public final Point2D.Double getFrontCenter(){
-		
-		Double x = (getFrontRight().getX() + getFrontLeft().getX())/2;
-		Double y = (getFrontRight().getY() + getFrontLeft().getY())/2;
-		frontCenterPoint.setLocation(x, y);
-		
+	public final Point2D.Double getFrontCenter(){	
 		return frontCenterPoint;
 	}
 	
@@ -185,10 +186,6 @@ public final class Robot {
 	 */
 	
 	public final Point2D.Double getBackCenter(){
-		
-		Double x = (getBackRight().getX() + getBackLeft().getX())/2;
-		Double y = (getBackRight().getY() + getBackLeft().getY())/2;
-		backCenterPoint.setLocation(x, y);
 		return backCenterPoint;
 	}
 }
