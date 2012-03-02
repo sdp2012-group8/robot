@@ -63,8 +63,6 @@ public class DirectionErrorAccumulator {
 			error = -1.0;
 		}
 		
-		System.err.println(expectedDir + " " + actualDir);
-		
 		errorList.add(error);
 		if (error >= 0.0) {
 			totalError += error;
