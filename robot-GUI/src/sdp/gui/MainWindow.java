@@ -121,12 +121,12 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		fpsCounter = new FPSCounter();
 		visionChangesEnabled = true;
 		
-		visionConfigFileChooser = new JFileChooser("../data/Vision Configurations");
+		visionConfigFileChooser = new JFileChooser("../robot-VISION/data/configs");
 		visionConfigFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		visionConfigFileChooser.setAcceptAllFileFilterUsed(false);
 		visionConfigFileChooser.addChoosableFileFilter(new XmlFileFilter_FC());
 		
-		testBenchTestFileChooser = new JFileChooser("../robot-VISION/xml");
+		testBenchTestFileChooser = new JFileChooser("../robot-VISION/data/tests");
 		testBenchTestFileChooser.setDialogTitle("Select test case");
 		testBenchTestFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		testBenchTestFileChooser.setAcceptAllFileFilterUsed(false);
