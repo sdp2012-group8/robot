@@ -13,27 +13,43 @@ public class AIVisualServoing extends AI {
 	private final static double SEC_ANGLE = 360d/COLL_SECS_COUNT;
 	private final static int COLL_ANGLE = 25;
 	private final static int CORNER_COLL_THRESHOLD = 3;
-	private final static int NEAR_TARGET = 10;
+	private final static int NEAR_TARGET = 5;
 	private boolean chase_ball_chase_target = true;
-
-	public AIVisualServoing() {
-		// TODO Auto-generated constructor stub
-	}
 
 	@Override
 	protected Commands chaseBall() throws IOException {
+		Commands comm = null;
 		double dist = 2*Robot.LENGTH_CM;
 		Vector2D target = new Vector2D(ai_world_state.getBallCoords().getX() + (ai_world_state.getMyGoalLeft() ? - dist : dist), ai_world_state.getBallCoords().getY());
-		if (chase_ball_chase_target && distanceTo(target) < NEAR_TARGET)
-			chase_ball_chase_target = false;
+		double targ_dist = distanceTo(target);
 		if (!chase_ball_chase_target) {
-			if (ai_world_state.getDistanceToBall() > 3*Robot.LENGTH_CM)
+			if (ai_world_state.getDistanceToBall() > 2*Robot.LENGTH_CM) {
+				System.out.println("Ball too far away, switch back to go to target");
 				chase_ball_chase_target = true;
+			}
 		}
-		if (chase_ball_chase_target)
-			return goTowardsPoint(target, true, false);
-		else
-			return goTowardsPoint(new Vector2D(ai_world_state.getBallCoords()), false, true);
+		if (chase_ball_chase_target && targ_dist < NEAR_TARGET)
+			chase_ball_chase_target = false;
+
+		if (chase_ball_chase_target) {
+			comm = goTowardsPoint(target, true, false);
+			if (targ_dist < 10) {
+				comm.turning_speed = 0;
+				comm.acceleration = 127;
+			}
+		}
+		else {
+			Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
+			
+			comm = goTowardsPoint(ball, false, true);
+			if (Math.abs(comm.turning_speed)>20)
+				slowDownSpeed(targ_dist, 10, comm, 2);
+			slowDownSpeed(ai_world_state.getDistanceToBall(), 10, comm, 2);
+			System.out.println("GO TO BALL");
+		}
+		
+		
+		return comm;
 	}
 
 	@Override
@@ -249,6 +265,19 @@ public class AIVisualServoing extends AI {
 	 */
 	private double distanceTo(Vector2D global) {
 		return Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), global).getLength();
+	}
+	
+	private void slowDownSpeed(double distance, double threshold, Commands current_speed, double slow_speed) {
+		if (distance >= threshold)
+			return;
+		if (current_speed.speed < 0)
+			slow_speed = -slow_speed;
+		if (Math.abs(current_speed.speed) < Math.abs(slow_speed)) {
+			current_speed.speed = slow_speed;
+			return;
+		}
+		double coeff = distance / threshold;
+		current_speed.speed = slow_speed+coeff*(current_speed.speed-slow_speed);
 	}
 
 }

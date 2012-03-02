@@ -571,71 +571,71 @@ public class Simulator extends WorldStateProvider {
 					}
 					robot[i].is_kicking = false;
 				}
-				// top flipper
-				// coming from below
-				if (future_rel_ball.getY() - BALL_RADIUS < -VBrick.front_left
-						.getY()
-						&& curr_rel_ball.getY() + BALL_RADIUS > -VBrick.front_left
-								.getY()
-						&& curr_rel_ball.getX() + BALL_RADIUS > VBrick.front_left
-								.getX()
-						&& (curr_rel_ball.getX() - VBrick.front_left.getX() - BALL_RADIUS) < FLIPPER_SIZE) {
-					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
-					curr_rel_spd.addmul_to(
-							getPointOfContactVel(curr_rel_ball,
-									future_rel_ball, turning_speeds[i], dt),
-							FLIPPER_BOUNCINESS);
-
-				}
-				// coming from above
-				else if (curr_rel_ball.getY() - BALL_RADIUS < -VBrick.front_left
-						.getY()
-						&& future_rel_ball.getY() + BALL_RADIUS > -VBrick.front_left
-								.getY()
-						&& future_rel_ball.getX() + BALL_RADIUS > VBrick.front_left
-								.getX()
-						&& (future_rel_ball.getX() - VBrick.front_left.getX())
-								- BALL_RADIUS < FLIPPER_SIZE) {
-					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
-					curr_rel_spd.addmul_to(
-							getPointOfContactVel(curr_rel_ball,
-									future_rel_ball, turning_speeds[i], dt),
-							FLIPPER_BOUNCINESS);
-				}
-				// bottom flipper
-				// coming from top
-				if (future_rel_ball.getY() + BALL_RADIUS > -VBrick.front_right
-						.getY()
-						&& curr_rel_ball.getY() - BALL_RADIUS < -VBrick.front_right
-								.getY()
-						&& curr_rel_ball.getX() + BALL_RADIUS > VBrick.front_right
-								.getX()
-						&& (curr_rel_ball.getX() - VBrick.front_right.getX())
-								- BALL_RADIUS < FLIPPER_SIZE) {
-					// System.out.println("Ball from top going to front right flipper");
-					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
-					curr_rel_spd.addmul_to(
-							getPointOfContactVel(curr_rel_ball,
-									future_rel_ball, turning_speeds[i], dt),
-							FLIPPER_BOUNCINESS);
-				}
-				// coming from below
-				else if (curr_rel_ball.getY() + BALL_RADIUS > -VBrick.front_right
-						.getY()
-						&& future_rel_ball.getY() - BALL_RADIUS < -VBrick.front_right
-								.getY()
-						&& future_rel_ball.getX() + BALL_RADIUS > VBrick.front_right
-								.getX()
-						&& (future_rel_ball.getX() - VBrick.front_right.getX())
-								- BALL_RADIUS < FLIPPER_SIZE) {
-					// System.out.println("Ball from below going to front right flipper");
-					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
-					curr_rel_spd.addmul_to(
-							getPointOfContactVel(curr_rel_ball,
-									future_rel_ball, turning_speeds[i], dt),
-							FLIPPER_BOUNCINESS);
-				}
-				// apply velocity change
+//				// top flipper
+//				// coming from below
+//				if (future_rel_ball.getY() - BALL_RADIUS < -VBrick.front_left
+//						.getY()
+//						&& curr_rel_ball.getY() + BALL_RADIUS > -VBrick.front_left
+//								.getY()
+//						&& curr_rel_ball.getX() + BALL_RADIUS > VBrick.front_left
+//								.getX()
+//						&& (curr_rel_ball.getX() - VBrick.front_left.getX() - BALL_RADIUS) < FLIPPER_SIZE) {
+//					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
+//					curr_rel_spd.addmul_to(
+//							getPointOfContactVel(curr_rel_ball,
+//									future_rel_ball, turning_speeds[i], dt),
+//							FLIPPER_BOUNCINESS);
+//
+//				}
+//				// coming from above
+//				else if (curr_rel_ball.getY() - BALL_RADIUS < -VBrick.front_left
+//						.getY()
+//						&& future_rel_ball.getY() + BALL_RADIUS > -VBrick.front_left
+//								.getY()
+//						&& future_rel_ball.getX() + BALL_RADIUS > VBrick.front_left
+//								.getX()
+//						&& (future_rel_ball.getX() - VBrick.front_left.getX())
+//								- BALL_RADIUS < FLIPPER_SIZE) {
+//					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
+//					curr_rel_spd.addmul_to(
+//							getPointOfContactVel(curr_rel_ball,
+//									future_rel_ball, turning_speeds[i], dt),
+//							FLIPPER_BOUNCINESS);
+//				}
+//				// bottom flipper
+//				// coming from top
+//				if (future_rel_ball.getY() + BALL_RADIUS > -VBrick.front_right
+//						.getY()
+//						&& curr_rel_ball.getY() - BALL_RADIUS < -VBrick.front_right
+//								.getY()
+//						&& curr_rel_ball.getX() + BALL_RADIUS > VBrick.front_right
+//								.getX()
+//						&& (curr_rel_ball.getX() - VBrick.front_right.getX())
+//								- BALL_RADIUS < FLIPPER_SIZE) {
+//					// System.out.println("Ball from top going to front right flipper");
+//					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
+//					curr_rel_spd.addmul_to(
+//							getPointOfContactVel(curr_rel_ball,
+//									future_rel_ball, turning_speeds[i], dt),
+//							FLIPPER_BOUNCINESS);
+//				}
+//				// coming from below
+//				else if (curr_rel_ball.getY() + BALL_RADIUS > -VBrick.front_right
+//						.getY()
+//						&& future_rel_ball.getY() - BALL_RADIUS < -VBrick.front_right
+//								.getY()
+//						&& future_rel_ball.getX() + BALL_RADIUS > VBrick.front_right
+//								.getX()
+//						&& (future_rel_ball.getX() - VBrick.front_right.getX())
+//								- BALL_RADIUS < FLIPPER_SIZE) {
+//					// System.out.println("Ball from below going to front right flipper");
+//					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
+//					curr_rel_spd.addmul_to(
+//							getPointOfContactVel(curr_rel_ball,
+//									future_rel_ball, turning_speeds[i], dt),
+//							FLIPPER_BOUNCINESS);
+//				}
+//				// apply velocity change
 				ball_velocity = Vector2D.add(
 						Vector2D.rotateVector(curr_rel_spd, directions[i]),
 						velocities[i]);
@@ -876,16 +876,16 @@ public class Simulator extends WorldStateProvider {
 			g.setStroke(new BasicStroke(3.0f));
 			double dir_x = FLIPPER_SIZE*Math.cos(robot.getAngle()*Math.PI/180d)/PITCH_WIDTH_CM;
 			double dir_y = -FLIPPER_SIZE*Math.sin(robot.getAngle()*Math.PI/180d)/PITCH_WIDTH_CM;
-			drawLine(
-					(int)(robot.getFrontLeft().getX()*IMAGE_WIDTH),
-					(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH),
-					(int)((robot.getFrontLeft().getX()+dir_x)*IMAGE_WIDTH),
-					(int)((robot.getFrontLeft().getY()+dir_y)*IMAGE_WIDTH));
-			drawLine(
-					(int)(robot.getFrontRight().getX()*IMAGE_WIDTH),
-					(int)(robot.getFrontRight().getY()*IMAGE_WIDTH),
-					(int)((robot.getFrontRight().getX()+dir_x)*IMAGE_WIDTH),
-					(int)((robot.getFrontRight().getY()+dir_y)*IMAGE_WIDTH));
+//			drawLine(
+//					(int)(robot.getFrontLeft().getX()*IMAGE_WIDTH),
+//					(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH),
+//					(int)((robot.getFrontLeft().getX()+dir_x)*IMAGE_WIDTH),
+//					(int)((robot.getFrontLeft().getY()+dir_y)*IMAGE_WIDTH));
+//			drawLine(
+//					(int)(robot.getFrontRight().getX()*IMAGE_WIDTH),
+//					(int)(robot.getFrontRight().getY()*IMAGE_WIDTH),
+//					(int)((robot.getFrontRight().getX()+dir_x)*IMAGE_WIDTH),
+//					(int)((robot.getFrontRight().getY()+dir_y)*IMAGE_WIDTH));
 
 			// draw direction pointer
 			double shift_x = 0.01 * Math.cos(robot.getAngle() * Math.PI / 180d);

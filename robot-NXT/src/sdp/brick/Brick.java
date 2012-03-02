@@ -220,7 +220,8 @@ public class Brick {
 							acceleration = args[2];
 							acc = (int) (acceleration/(0.017453292519943295*WHEELR));
 							turn_acceleration = acc*WHEELR/ROBOTR;
-						}
+						} else
+							acc = 1000;
 						if (old_a == 0 || old_a*speed_a < 0) {
 							Motor.A.setAcceleration(acc);
 							if (speed_a > 0)

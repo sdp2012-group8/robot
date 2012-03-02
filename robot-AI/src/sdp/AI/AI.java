@@ -68,7 +68,10 @@ public abstract class AI {
 	}
 	
 	public static class Commands {
-		public double speed, turning_speed;
+		
+		public static final double default_acceleration = 69.81317d;
+		
+		public double speed, turning_speed, acceleration = default_acceleration;
 		public boolean kick;
 		
 		public Commands(double speed, double turning_speed, boolean kick) {
@@ -83,6 +86,14 @@ public abstract class AI {
 		
 		public byte getByteTurnSpeed() {
 			return Utilities.normaliseToByte(Utilities.normaliseAngle(turning_speed));
+		}
+		
+		public byte getByteAcc() {
+			return Utilities.normaliseToByte(acceleration);
+		}
+		
+		public boolean isDefaultAcc() {
+			return acceleration == default_acceleration;
 		}
 	}
 

@@ -58,7 +58,10 @@ public class AIMaster extends AIListener {
 			command = getCommand();
 			if (command == null)
 				command = new Commands(0, 0, false);
-			mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed());
+			if (command.isDefaultAcc())
+				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed());
+			else
+				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed(), command.getByteAcc());
 			if (command.kick) mComm.sendMessage(opcode.kick);
 		} catch (IOException e) {
 			e.printStackTrace();
