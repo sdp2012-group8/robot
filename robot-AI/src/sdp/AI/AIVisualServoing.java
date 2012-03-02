@@ -30,10 +30,10 @@ public class AIVisualServoing extends AI {
 			if (ai_world_state.getDistanceToBall() > 3*Robot.LENGTH_CM)
 				chase_ball_chase_target = true;
 		}
-//		if (chase_ball_chase_target)
+	if (chase_ball_chase_target)
 			return goTowardsPoint(target, true, false);
-//		else
-//			return goTowardsPoint(new Vector2D(ai_world_state.getBallCoords()), false, true);
+	else
+			return goTowardsPoint(new Vector2D(ai_world_state.getBallCoords()), false, true);
 	}
 
 	@Override

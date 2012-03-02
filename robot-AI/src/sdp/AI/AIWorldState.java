@@ -241,8 +241,11 @@ public class AIWorldState extends WorldState {
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
 			Point2D.Double temp_point = getPointBehindBall(point);
+			System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
+			System.out.println("Min distance: "+min_distance);
 			if (Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength() < min_distance) {
 				min_point = temp_point;
+				min_distance = Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength();
 			}
 		}
 		
