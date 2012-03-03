@@ -15,7 +15,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import sdp.AI.AIMaster;
-import sdp.AI.AIWorldState.mode;
+import sdp.AI.AIMaster.mode;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.Tools;
@@ -216,7 +216,7 @@ public class SimTesterGUI {
 		JButton btnChangeYellowAI = new JButton("Change Yellow AI");
 		btnChangeYellowAI.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				opponentAI.setMode(mode.values()[comboYellowAI.getSelectedIndex()]);
+				opponentAI.setState(mode.values()[comboYellowAI.getSelectedIndex()]);
 			}
 		});
 		btnChangeYellowAI.setBounds(663, 412, 136, 25);
@@ -288,7 +288,7 @@ public class SimTesterGUI {
 		btnChangeBlueAI.setBounds(662, 338, 137, 29);
 		btnChangeBlueAI.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				mAI.setMode(mode.values()[comboBlueAI.getSelectedIndex()]);
+				mAI.setState(mode.values()[comboBlueAI.getSelectedIndex()]);
 			}
 		});
 		frmAlphaTeamSimulator.getContentPane().add(btnChangeBlueAI);
@@ -394,7 +394,7 @@ public class SimTesterGUI {
 	 * @param pressed true if pressed, false if released
 	 */
 	private void keyAction(final int key_id, final boolean pressed) {
-		if (mAI.getMode()!= mode.sit) mAI.setMode(mode.sit);
+		if (mAI.getState()!= mode.sit) mAI.setState(mode.sit);
 		try {
 			switch (key_id) {
 			case KeyEvent.VK_UP:

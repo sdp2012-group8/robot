@@ -227,12 +227,12 @@ public class Utilities {
 	 * @param angle
 	 * @return double between -128 and 127
 	 */
-	public static double normaliseToByte(double angle){
+	public static byte normaliseToByte(double angle){
 		if (angle > 127)
 			angle = 127;
 		if (angle < -128)
 			angle = -128;
-		return angle;
+		return (byte)angle;
 	}
 
     
@@ -264,6 +264,20 @@ public class Utilities {
         } else {
         	return string.substring(start, end);
         }
+    }
+    
+    /**
+     * Calculates if the given point is within the field.
+     * @param point The point to be checked
+     * @return True if the point is within the bounds of the field.
+     */
+    public static boolean isPointInField(Point2D.Double point) {
+    	if (point.getX() >= 0 && point.getX() <= Tools.PITCH_WIDTH_CM) {
+    		if (point.getY() >= 0 && point.getY() <= Tools.PITCH_HEIGHT_CM) {
+    			return true;
+    		}
+    	}
+		return false;
     }
     
 }

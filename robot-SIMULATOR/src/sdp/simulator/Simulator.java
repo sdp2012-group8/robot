@@ -9,6 +9,7 @@ import java.awt.image.BufferedImage;
 import sdp.common.NNetTools;
 import sdp.common.Robot;
 import sdp.common.Tools;
+import sdp.common.Utilities;
 import sdp.common.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
@@ -571,71 +572,71 @@ public class Simulator extends WorldStateProvider {
 					}
 					robot[i].is_kicking = false;
 				}
-				// top flipper
-				// coming from below
-				if (future_rel_ball.getY() - BALL_RADIUS < -VBrick.front_left
-						.getY()
-						&& curr_rel_ball.getY() + BALL_RADIUS > -VBrick.front_left
-								.getY()
-						&& curr_rel_ball.getX() + BALL_RADIUS > VBrick.front_left
-								.getX()
-						&& (curr_rel_ball.getX() - VBrick.front_left.getX() - BALL_RADIUS) < FLIPPER_SIZE) {
-					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
-					curr_rel_spd.addmul_to(
-							getPointOfContactVel(curr_rel_ball,
-									future_rel_ball, turning_speeds[i], dt),
-							FLIPPER_BOUNCINESS);
-
-				}
-				// coming from above
-				else if (curr_rel_ball.getY() - BALL_RADIUS < -VBrick.front_left
-						.getY()
-						&& future_rel_ball.getY() + BALL_RADIUS > -VBrick.front_left
-								.getY()
-						&& future_rel_ball.getX() + BALL_RADIUS > VBrick.front_left
-								.getX()
-						&& (future_rel_ball.getX() - VBrick.front_left.getX())
-								- BALL_RADIUS < FLIPPER_SIZE) {
-					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
-					curr_rel_spd.addmul_to(
-							getPointOfContactVel(curr_rel_ball,
-									future_rel_ball, turning_speeds[i], dt),
-							FLIPPER_BOUNCINESS);
-				}
-				// bottom flipper
-				// coming from top
-				if (future_rel_ball.getY() + BALL_RADIUS > -VBrick.front_right
-						.getY()
-						&& curr_rel_ball.getY() - BALL_RADIUS < -VBrick.front_right
-								.getY()
-						&& curr_rel_ball.getX() + BALL_RADIUS > VBrick.front_right
-								.getX()
-						&& (curr_rel_ball.getX() - VBrick.front_right.getX())
-								- BALL_RADIUS < FLIPPER_SIZE) {
-					// System.out.println("Ball from top going to front right flipper");
-					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
-					curr_rel_spd.addmul_to(
-							getPointOfContactVel(curr_rel_ball,
-									future_rel_ball, turning_speeds[i], dt),
-							FLIPPER_BOUNCINESS);
-				}
-				// coming from below
-				else if (curr_rel_ball.getY() + BALL_RADIUS > -VBrick.front_right
-						.getY()
-						&& future_rel_ball.getY() - BALL_RADIUS < -VBrick.front_right
-								.getY()
-						&& future_rel_ball.getX() + BALL_RADIUS > VBrick.front_right
-								.getX()
-						&& (future_rel_ball.getX() - VBrick.front_right.getX())
-								- BALL_RADIUS < FLIPPER_SIZE) {
-					// System.out.println("Ball from below going to front right flipper");
-					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
-					curr_rel_spd.addmul_to(
-							getPointOfContactVel(curr_rel_ball,
-									future_rel_ball, turning_speeds[i], dt),
-							FLIPPER_BOUNCINESS);
-				}
-				// apply velocity change
+//				// top flipper
+//				// coming from below
+//				if (future_rel_ball.getY() - BALL_RADIUS < -VBrick.front_left
+//						.getY()
+//						&& curr_rel_ball.getY() + BALL_RADIUS > -VBrick.front_left
+//								.getY()
+//						&& curr_rel_ball.getX() + BALL_RADIUS > VBrick.front_left
+//								.getX()
+//						&& (curr_rel_ball.getX() - VBrick.front_left.getX() - BALL_RADIUS) < FLIPPER_SIZE) {
+//					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
+//					curr_rel_spd.addmul_to(
+//							getPointOfContactVel(curr_rel_ball,
+//									future_rel_ball, turning_speeds[i], dt),
+//							FLIPPER_BOUNCINESS);
+//
+//				}
+//				// coming from above
+//				else if (curr_rel_ball.getY() - BALL_RADIUS < -VBrick.front_left
+//						.getY()
+//						&& future_rel_ball.getY() + BALL_RADIUS > -VBrick.front_left
+//								.getY()
+//						&& future_rel_ball.getX() + BALL_RADIUS > VBrick.front_left
+//								.getX()
+//						&& (future_rel_ball.getX() - VBrick.front_left.getX())
+//								- BALL_RADIUS < FLIPPER_SIZE) {
+//					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
+//					curr_rel_spd.addmul_to(
+//							getPointOfContactVel(curr_rel_ball,
+//									future_rel_ball, turning_speeds[i], dt),
+//							FLIPPER_BOUNCINESS);
+//				}
+//				// bottom flipper
+//				// coming from top
+//				if (future_rel_ball.getY() + BALL_RADIUS > -VBrick.front_right
+//						.getY()
+//						&& curr_rel_ball.getY() - BALL_RADIUS < -VBrick.front_right
+//								.getY()
+//						&& curr_rel_ball.getX() + BALL_RADIUS > VBrick.front_right
+//								.getX()
+//						&& (curr_rel_ball.getX() - VBrick.front_right.getX())
+//								- BALL_RADIUS < FLIPPER_SIZE) {
+//					// System.out.println("Ball from top going to front right flipper");
+//					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
+//					curr_rel_spd.addmul_to(
+//							getPointOfContactVel(curr_rel_ball,
+//									future_rel_ball, turning_speeds[i], dt),
+//							FLIPPER_BOUNCINESS);
+//				}
+//				// coming from below
+//				else if (curr_rel_ball.getY() + BALL_RADIUS > -VBrick.front_right
+//						.getY()
+//						&& future_rel_ball.getY() - BALL_RADIUS < -VBrick.front_right
+//								.getY()
+//						&& future_rel_ball.getX() + BALL_RADIUS > VBrick.front_right
+//								.getX()
+//						&& (future_rel_ball.getX() - VBrick.front_right.getX())
+//								- BALL_RADIUS < FLIPPER_SIZE) {
+//					// System.out.println("Ball from below going to front right flipper");
+//					curr_rel_spd.setY(-curr_rel_spd.getY() * ROBOT_BOUNCINESS);
+//					curr_rel_spd.addmul_to(
+//							getPointOfContactVel(curr_rel_ball,
+//									future_rel_ball, turning_speeds[i], dt),
+//							FLIPPER_BOUNCINESS);
+//				}
+//				// apply velocity change
 				ball_velocity = Vector2D.add(
 						Vector2D.rotateVector(curr_rel_spd, directions[i]),
 						velocities[i]);
@@ -876,16 +877,16 @@ public class Simulator extends WorldStateProvider {
 			g.setStroke(new BasicStroke(3.0f));
 			double dir_x = FLIPPER_SIZE*Math.cos(robot.getAngle()*Math.PI/180d)/PITCH_WIDTH_CM;
 			double dir_y = -FLIPPER_SIZE*Math.sin(robot.getAngle()*Math.PI/180d)/PITCH_WIDTH_CM;
-			drawLine(
-					(int)(robot.getFrontLeft().getX()*IMAGE_WIDTH),
-					(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH),
-					(int)((robot.getFrontLeft().getX()+dir_x)*IMAGE_WIDTH),
-					(int)((robot.getFrontLeft().getY()+dir_y)*IMAGE_WIDTH));
-			drawLine(
-					(int)(robot.getFrontRight().getX()*IMAGE_WIDTH),
-					(int)(robot.getFrontRight().getY()*IMAGE_WIDTH),
-					(int)((robot.getFrontRight().getX()+dir_x)*IMAGE_WIDTH),
-					(int)((robot.getFrontRight().getY()+dir_y)*IMAGE_WIDTH));
+//			drawLine(
+//					(int)(robot.getFrontLeft().getX()*IMAGE_WIDTH),
+//					(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH),
+//					(int)((robot.getFrontLeft().getX()+dir_x)*IMAGE_WIDTH),
+//					(int)((robot.getFrontLeft().getY()+dir_y)*IMAGE_WIDTH));
+//			drawLine(
+//					(int)(robot.getFrontRight().getX()*IMAGE_WIDTH),
+//					(int)(robot.getFrontRight().getY()*IMAGE_WIDTH),
+//					(int)((robot.getFrontRight().getX()+dir_x)*IMAGE_WIDTH),
+//					(int)((robot.getFrontRight().getY()+dir_y)*IMAGE_WIDTH));
 
 			// draw direction pointer
 			double shift_x = 0.01 * Math.cos(robot.getAngle() * Math.PI / 180d);
@@ -921,7 +922,92 @@ public class Simulator extends WorldStateProvider {
 				robot = am_i_blue ? state_cm.getBlueRobot() : state_cm
 						.getYellowRobot();
 				Vector2D local_origin = new Vector2D(Robot.LENGTH_CM/2+2,0);
-				drawVector(Tools.getGlobalVector(robot, local_origin),  Tools.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0)), true);
+				drawVector(Tools.getGlobalVector(robot, local_origin),  Tools.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0), true), true);
+				if (i == 0) {
+
+					double dist = 2*Robot.LENGTH_CM;
+					Vector2D target = new Vector2D(state_cm.getBallCoords().getX() - dist, state_cm.getBallCoords().getY());
+					Vector2D startPt = new Vector2D(robot.getCoords());
+					Vector2D dir =  Vector2D.subtract(target, startPt);
+					double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
+					final double length = Robot.LENGTH_CM/2;
+					double cos = Math.cos(angle)*length;
+					double sin = Math.sin(angle)*length;
+					Vector2D right = new Vector2D(cos, sin);
+					Vector2D left = new Vector2D(-cos, -sin);
+					drawVector(Vector2D.add(startPt, right),  Tools.raytraceVector(state_cm, Vector2D.add(startPt, right), dir, am_i_blue, true), true);
+					drawVector(Vector2D.add(startPt, left), Tools.raytraceVector(state_cm, Vector2D.add(startPt, left), dir, am_i_blue, true), true);
+
+					g.setColor(new Color(255, 255, 255, 200));
+					fillOval((int)(target.x* IMAGE_WIDTH / PITCH_WIDTH_CM-3), (int) (target.y* IMAGE_WIDTH / PITCH_WIDTH_CM-3), 6, 6);
+
+
+					g.setStroke(new BasicStroke(8.0f));
+					final int COLL_SECS_COUNT = 110;
+					final double SEC_ANGLE = 360d/COLL_SECS_COUNT;
+
+					final double[] sectors = Tools.getSectors(state_cm, true, 5, COLL_SECS_COUNT, false, true);
+					
+					// find desired
+					double temp = 999;
+					int id = -1;
+					final Vector2D point_rel = Tools.getLocalVector(robot, target);
+
+					// get direction and distance to point
+					final double point_dir = Vector2D.getDirection(point_rel);
+					final double point_dist = point_rel.getLength();
+					double turn_ang = 999;
+					for (int ii = 0; ii < sectors.length; ii++) {
+						
+						if (sectors[ii] > point_dist+Robot.LENGTH_CM/2) {	
+							double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
+							double diff = Utilities.normaliseAngle(ang-point_dir);
+							if (Math.abs(diff) < Math.abs(temp)) {
+								temp = diff;
+								id = ii;
+								turn_ang = ang;
+							}
+						}
+					}
+					
+					// get second closest
+					double temp2 = 999;
+					int id2 = -1;
+					double turn_ang2 = 999;
+					for (int ii = 0; ii < sectors.length; ii++) {
+						if (sectors[ii] > point_dist+Robot.LENGTH_CM/2) {	
+							double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
+							double diff = Utilities.normaliseAngle(ang-point_dir);
+							if (Math.abs(diff) < Math.abs(temp2) && ii != id) {
+								temp2 = diff;
+								id2 = ii;
+								turn_ang2 = ang;
+							}
+						}
+					}
+					
+					if (Math.abs(Utilities.normaliseAngle(turn_ang2-turn_ang)) > SEC_ANGLE*2 && Math.abs(turn_ang2) < Math.abs(turn_ang)) {
+						int temp3 = id;
+						id = id2;
+						id2 = temp3;
+					}
+					
+					
+					for (int ii = 0; ii < sectors.length; ii++) {
+						if (ii == id)
+							g.setColor(new Color(255, 0, 0, 200));
+						else if (ii == id2)
+							g.setColor(new Color(255, 255, 0, 200));
+						else
+							g.setColor(new Color(255, 255, 255, 10));
+						double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
+						double dista = sectors[ii];
+						Vector2D vec = Vector2D.multiply(Vector2D.rotateVector(new Vector2D(1, 0), ang), dista);
+						Vector2D coor = new Vector2D(robot.getCoords());
+						drawVector(coor, Vector2D.subtract(Tools.getGlobalVector(robot, vec), coor), true);
+					}
+				}
+				
 			}
 		}
 		// draw ball

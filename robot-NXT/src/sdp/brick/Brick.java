@@ -33,11 +33,8 @@ public class Brick {
 	private static boolean is_on = true;
 
 	private static Communicator mComm;
-	private static UltrasonicSensor sens;
 	private static boolean collision = false;
 	private static boolean can_kick = false;
-
-	private static TouchSensor kickSensor;
 
 	/**
 	 * The entry point of the program
@@ -45,59 +42,65 @@ public class Brick {
 	 */
 	public static void main(String[] args) {
 		// connect with PC and start receiving messages
-		sens = new UltrasonicSensor(SensorPort.S1);
-		sens.continuous();
-		kickSensor = new TouchSensor(SensorPort.S2);
+		
+		
+//		new Thread() {
+//			public void run() {
+//				UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
+//				sens.continuous();
+//				while (is_on) {
+//					int dist = sens.getDistance();
+//					collision = dist < coll_threshold;
+//					//					try {
+//					//						if ( collision && mComm != null){
+//					//							try {
+//					//								mComm.sendMessage(opcode.sensor, (byte) 0, (byte) dist);
+//					//								Thread.sleep(10);
+//					//							} catch (IOException e) {
+//					//								e.printStackTrace();
+//					//							}
+//					//						}
+//					//						Thread.sleep(100);
+//					//					} catch (InterruptedException e) {
+//					//						e.printStackTrace();
+//					//					}
+//				}
+//				sens.off();
+//			};
+//		}.start();
 		new Thread() {
 			public void run() {
-				while (is_on) {
-					int dist = sens.getDistance();
-					collision = dist < coll_threshold;
-					//					try {
-					//						if ( collision && mComm != null){
-					//							try {
-					//								mComm.sendMessage(opcode.sensor, (byte) 0, (byte) dist);
-					//								Thread.sleep(10);
-					//							} catch (IOException e) {
-					//								e.printStackTrace();
-					//							}
-					//						}
-					//						Thread.sleep(100);
-					//					} catch (InterruptedException e) {
-					//						e.printStackTrace();
-					//					}
-				}
-				sens.off();
-			};
-		}.start();
-		final Thread kicker_retractor = new Thread() {
-			public void run() {
+				final TouchSensor kickSensor = new TouchSensor(SensorPort.S2);
 				while (is_on) {
 					boolean initial = kickSensor.isPressed();
 					if (!initial) {
+//						LCD.clear(0);
+//						LCD.drawString("RETR", 0, 0);
 						if (can_kick) {can_kick = false;}
-						Motor.B.setSpeed((int)(Motor.B.getMaxSpeed()/2));
+						Motor.B.setSpeed((int)(Motor.B.getMaxSpeed()));
 						Motor.B.setAcceleration(6000);
 						Motor.B.backward();
 						while (!kickSensor.isPressed()) {
 							try {
-								Thread.sleep(5);
+								sleep(5);
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
 						}
-						Motor.B.stop();
 					}
+					Motor.B.setSpeed(0);
+					Motor.B.stop();
 					can_kick = true;
-
-
 					try {
-						Thread.sleep(100);						
-					} catch (InterruptedException e) {}
+						sleep(100);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+//					LCD.clear(0);
+//					LCD.drawString("OK KICK", 0, 0);
 				}
 			};
-		};
-		kicker_retractor.start();
+		}.start();
 		mComm = new BComm();
 		mComm.registerListener(new MessageListener() {
 
@@ -132,7 +135,6 @@ public class Brick {
 					try {
 						Thread.sleep(200);
 					} catch (Exception e) {}
-					sens.off();
 					NXT.shutDown();
 					break;
 
@@ -166,15 +168,15 @@ public class Brick {
 					Motor.A.forward();
 					Motor.C.forward();
 
-					while (true) { // if no other sensors interfere?
-						int dist = sens.getDistance();
-						LCD.clear(2);
-						LCD.clear(3);
-						LCD.drawString(String.valueOf(dist), 0, 2);
-						LCD.drawString(sens.getUnits(), 0, 3);
-						if (dist < 30)
-							break;
-					}
+//					while (true) { // if no other sensors interfere?
+//						int dist = sens.getDistance();
+//						LCD.clear(2);
+//						LCD.clear(3);
+//						LCD.drawString(String.valueOf(dist), 0, 2);
+//						LCD.drawString(sens.getUnits(), 0, 3);
+//						if (dist < 30)
+					//		break;
+//					}
 					Motor.A.setSpeed(0);
 					Motor.C.setSpeed(0);
 					Motor.C.stop();
@@ -208,8 +210,8 @@ public class Brick {
 						} else if (Math.abs(speed_c) > Motor.C.getMaxSpeed()){
 							corr = Math.abs(speed_c) - Motor.C.getMaxSpeed();
 						}
-						LCD.clear();
-						LCD.drawString("corr " + corr, 0, 0);
+//						LCD.clear();
+//						LCD.drawString("corr " + corr, 0, 0);
 						// change speed according to turning
 						Motor.A.setSpeed(Math.abs(speed_a)-corr);
 						Motor.C.setSpeed(Math.abs(speed_c)-corr);
@@ -220,7 +222,8 @@ public class Brick {
 							acceleration = args[2];
 							acc = (int) (acceleration/(0.017453292519943295*WHEELR));
 							turn_acceleration = acc*WHEELR/ROBOTR;
-						}
+						} else
+							acc = 1000;
 						if (old_a == 0 || old_a*speed_a < 0) {
 							Motor.A.setAcceleration(acc);
 							if (speed_a > 0)
