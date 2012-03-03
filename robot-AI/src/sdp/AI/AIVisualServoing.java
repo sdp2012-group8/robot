@@ -9,7 +9,7 @@ import sdp.common.Vector2D;
 
 public class AIVisualServoing extends AI {
 	
-	private final static int COLL_SECS_COUNT = 46;
+	private final static int COLL_SECS_COUNT = 110;
 	private final static double SEC_ANGLE = 360d/COLL_SECS_COUNT;
 	private final static int COLL_ANGLE = 25;
 	private final static int CORNER_COLL_THRESHOLD = 3;
@@ -19,9 +19,9 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Commands chaseBall() throws IOException {
 		Commands comm = null;
-		//Vector2D target = new Vector2D(ai_world_state.getOptimalPointBehindBall());
-		 double dist = 2*Robot.LENGTH_CM;
-		 Vector2D target = new Vector2D(ai_world_state.getBallCoords().getX() + (ai_world_state.getMyGoalLeft() ? - dist : dist), ai_world_state.getBallCoords().getY());
+		Vector2D target = new Vector2D(ai_world_state.getOptimalPointBehindBall());
+		// double dist = 2*Robot.LENGTH_CM;
+		//Vector2D target = new Vector2D(ai_world_state.getBallCoords().getX() + (ai_world_state.getMyGoalLeft() ? - dist : dist), ai_world_state.getBallCoords().getY());
 		double targ_dist = distanceTo(target);
 		if (!chase_ball_chase_target) {
 			if (ai_world_state.getDistanceToBall() > 4*Robot.LENGTH_CM) {
@@ -33,7 +33,11 @@ public class AIVisualServoing extends AI {
 			chase_ball_chase_target = false;
 
 		if (chase_ball_chase_target) {
-			comm = goTowardsPoint(target, true, false);
+			double enemy_goal_x = ai_world_state.getEnemyGoal().getCentre().getX(),
+					my_x = ai_world_state.getRobot().getCoords().getX(),
+					ball_x = ai_world_state.getBallCoords().getX();
+			boolean between_boal_enemy_goal = Math.abs(enemy_goal_x-ball_x) > Math.abs(enemy_goal_x-my_x);
+			comm = goTowardsPoint(target, true, !between_boal_enemy_goal);
 			if (targ_dist < 10) {
 				comm.turning_speed = 0;
 				comm.acceleration = 127;
@@ -49,6 +53,10 @@ public class AIVisualServoing extends AI {
 			System.out.println("GO TO BALL");
 		}
 		
+		// debugging restrictions
+		comm.turning_speed *= 0.5;
+		comm.speed *= 0.5;
+		
 		return comm;
 
 	}
@@ -56,7 +64,7 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Commands gotBall() throws IOException {
 		chase_ball_chase_target = true;
-		return null;//new Commands(0,0,true);
+		return new Commands(0,0,true);
 	}
 
 	@Override
@@ -115,23 +123,45 @@ public class AIVisualServoing extends AI {
 				// if point is not visible
 				// find the sector that is closest to the point but has a collision distance greater than the point_coll_dist
 				for (int i = 0; i < sectors.length; i++) {
-					if (sectors[i] > point_coll_dist+Robot.LENGTH_CM/2) {
+					
+					if (sectors[i] > point_dist+Robot.LENGTH_CM/2) {	
 						double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
 						double diff = Utilities.normaliseAngle(ang-point_dir);
 						if (Math.abs(diff) < Math.abs(temp)) {
 							temp = diff;
-							command.turning_speed = ang + (point_left_coll_dist < point_right_coll_dist ? turn_ang_more : -turn_ang_more);
+							command.turning_speed = ang;
 						}
 					}
 				}
-
+				double temp2 = 999;
+				double ang2 = 999;
+				for (int i = 0; i < sectors.length; i++) {
+					if (sectors[i] > point_dist+Robot.LENGTH_CM/2) {	
+						double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
+						double diff = Utilities.normaliseAngle(ang-point_dir);
+						if (Math.abs(diff) < Math.abs(temp)) {
+							temp2 = diff;
+							ang2 = Utilities.normaliseAngle(ang);
+						}
+					}
+				}
+				System.out.println("Orig min "+command.turning_speed+" sec min "+ang2);
+				if (ang2*command.turning_speed < 0) {
+					if (Math.abs(temp2) < Math.abs(temp))
+						command.turning_speed = temp2;
+				}
+				
+				command.turning_speed += point_dir < 0 ? turn_ang_more : -turn_ang_more;
+				
 			} else {
 				// if point is visible
-				command.turning_speed = point_dir + (point_left_coll_dist < point_right_coll_dist ? turn_ang_more : -turn_ang_more);
+				command.turning_speed = Utilities.normaliseAngle(point_dir + (point_left_coll_dist < point_right_coll_dist ? turn_ang_more : -turn_ang_more));
+				System.out.println("Visible angle "+command.turning_speed);
 			}
 		} else {
 			// if the point is visible and reachable go towards it
-			command.turning_speed = point_dir;
+			command.turning_speed = Utilities.normaliseAngle(point_dir);
+			System.out.println("Reachable angle "+command.turning_speed);
 		}
 
 		// if we have no way of reaching the point go into the most free direction
@@ -141,27 +171,31 @@ public class AIVisualServoing extends AI {
 				if (sectors[i] > temp) {
 					temp = sectors[i];
 					double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
-					command.turning_speed = ang + (point_left_coll_dist < point_right_coll_dist ? turn_ang_more : -turn_ang_more);
+					command.turning_speed = Utilities.normaliseAngle(- ang - (point_left_coll_dist < point_right_coll_dist ? turn_ang_more : -turn_ang_more));
 				}
 			}
 		} 
 
 		// set forward speed
+		command.speed = MAX_SPEED_CM_S;
+		
 		if (command.turning_speed > 90 || command.turning_speed < -90)
 			command.speed = -MAX_SPEED_CM_S;
-		else if (Math.abs(command.turning_speed) < 90)
-			command.speed = MAX_SPEED_CM_S;
+		
+		if (!facing_point) { // go backwards towards the point
+			command.turning_speed = Utilities.normaliseAngle(-180+command.turning_speed);
+			command.speed = -MAX_SPEED_CM_S;
+			if (command.turning_speed > 90 || command.turning_speed < -90)
+				command.speed = MAX_SPEED_CM_S;
+		}
+		
+			
 
 		// if we get within too close (within coll_start) of an obstacle
 		backAwayIfTooClose(command, sectors);
 
 		// check if either of the corners are in collision
 		nearCollisionCheck(command);
-		command.turning_speed *= 2;
-		if (facing_point && command.speed < 0)
-			command.turning_speed = - command.turning_speed;
-		
-	
 
 		return command;
 	}
@@ -220,6 +254,7 @@ public class AIVisualServoing extends AI {
 			command.speed = front_left_coll || front_right_coll ? -MAX_SPEED_CM_S : MAX_SPEED_CM_S;
 			command.turning_speed += front_left_coll || back_left_coll ? -10 : 10;
 		}
+		command.turning_speed = Utilities.normaliseAngle(command.turning_speed);
 	}
 	
 	/**
