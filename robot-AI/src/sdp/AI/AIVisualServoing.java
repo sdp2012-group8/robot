@@ -8,55 +8,64 @@ import sdp.common.Utilities;
 import sdp.common.Vector2D;
 
 public class AIVisualServoing extends AI {
-	
+
 	private final static int COLL_SECS_COUNT = 110;
 	private final static double SEC_ANGLE = 360d/COLL_SECS_COUNT;
 	private final static int COLL_ANGLE = 25;
 	private final static int CORNER_COLL_THRESHOLD = 3;
-	private final static int NEAR_TARGET = 5;
+	private final static int NEAR_TARGET = 2;
 	private boolean chase_ball_chase_target = true;
+
+	private Commands prev = null;
 
 	@Override
 	protected Commands chaseBall() throws IOException {
 		Commands comm = null;
 		Vector2D target = new Vector2D(ai_world_state.getOptimalPointBehindBall());
-		// double dist = 2*Robot.LENGTH_CM;
+		//double dist = 2*Robot.LENGTH_CM;
 		//Vector2D target = new Vector2D(ai_world_state.getBallCoords().getX() + (ai_world_state.getMyGoalLeft() ? - dist : dist), ai_world_state.getBallCoords().getY());
+
+//		if (true) {
+//			comm = goTowardsPoint(target, true, true);
+//			comm.speed = 0;
+//			return comm;
+//		}
+
 		double targ_dist = distanceTo(target);
-		if (!chase_ball_chase_target) {
-			if (ai_world_state.getDistanceToBall() > 4*Robot.LENGTH_CM) {
-				System.out.println("Ball too far away, switch back to go to target");
-				chase_ball_chase_target = true;
-			}
-		}
-		if (chase_ball_chase_target && targ_dist < NEAR_TARGET)
-			chase_ball_chase_target = false;
+
 
 		if (chase_ball_chase_target) {
-			double enemy_goal_x = ai_world_state.getEnemyGoal().getCentre().getX(),
-					my_x = ai_world_state.getRobot().getCoords().getX(),
-					ball_x = ai_world_state.getBallCoords().getX();
-			boolean between_boal_enemy_goal = Math.abs(enemy_goal_x-ball_x) > Math.abs(enemy_goal_x-my_x);
-			comm = goTowardsPoint(target, true, !between_boal_enemy_goal);
-			if (targ_dist < 10) {
-				comm.turning_speed = 0;
-				comm.acceleration = 127;
+			comm = goTowardsPoint(target, true, false);
+			if (prev != null) {
+				if (prev.getByteSpeed() * comm.getByteSpeed() < 0)
+					chase_ball_chase_target = false;
 			}
+			double dir = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), target), -ai_world_state.getRobot().getAngle()));
+			if (Math.abs(dir) > 20) {
+				slowDownSpeed(targ_dist, 20, comm, 30);
+			}
+			if (targ_dist < 20)
+				comm.turning_speed = 0;
 		}
-		else {
+
+		if (!chase_ball_chase_target) {
 			Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
-			
-			comm = goTowardsPoint(ball, false, true);
-			if (Math.abs(comm.turning_speed)>20)
-				slowDownSpeed(targ_dist, 10, comm, 2);
+			double ball_dist = ai_world_state.getDistanceToBall();
+			if (ball_dist > 20 && ball_dist < 50) {
+				double dir = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(ball, target), -ai_world_state.getRobot().getAngle()));
+				comm = new Commands(Math.abs(dir) < 10 ? MAX_SPEED_CM_S : 0, dir, false);
+			} else
+				comm = goTowardsPoint(ball, false, true);
 			slowDownSpeed(ai_world_state.getDistanceToBall(), 10, comm, 2);
-			System.out.println("GO TO BALL");
+			System.out.print("B");
 		}
-		
+
 		// debugging restrictions
-		comm.turning_speed *= 0.5;
-		comm.speed *= 0.5;
-		
+		//comm.turning_speed *= 0.5;
+		//comm.speed *= 0;
+
+
+		prev = comm;
 		return comm;
 
 	}
@@ -64,6 +73,7 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Commands gotBall() throws IOException {
 		chase_ball_chase_target = true;
+		prev = null;
 		return new Commands(0,0,true);
 	}
 
@@ -84,7 +94,7 @@ public class AIVisualServoing extends AI {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	/**
 	 * Makes robot proceed towards a point avoiding obstacles on its way
 	 * @param point
@@ -112,57 +122,45 @@ public class AIVisualServoing extends AI {
 
 		// sectors[0] starts at at -90
 		double temp = 999;
-		command.turning_speed = 999;
-
-		// path planning if obstacle is away
-		
-		if (!Tools.reachability(ai_world_state, point, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle))
-		{
-
-			if (point_vis_dist < point_dist) {
-				// if point is not visible
-				// find the sector that is closest to the point but has a collision distance greater than the point_coll_dist
-				for (int i = 0; i < sectors.length; i++) {
-					
-					if (sectors[i] > point_dist+Robot.LENGTH_CM/2) {	
-						double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
-						double diff = Utilities.normaliseAngle(ang-point_dir);
-						if (Math.abs(diff) < Math.abs(temp)) {
-							temp = diff;
-							command.turning_speed = ang;
-						}
-					}
+		double turn_ang = 999;
+		int id = -1;
+		for (int i = 0; i < sectors.length; i++) {
+			if (sectors[i] > point_dist+Robot.LENGTH_CM/2) {	
+				double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
+				double diff = Utilities.normaliseAngle(ang-point_dir);
+				if (Math.abs(diff) < Math.abs(temp)) {
+					temp = diff;
+					turn_ang = ang;
+					id = i;
 				}
-				double temp2 = 999;
-				double ang2 = 999;
-				for (int i = 0; i < sectors.length; i++) {
-					if (sectors[i] > point_dist+Robot.LENGTH_CM/2) {	
-						double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
-						double diff = Utilities.normaliseAngle(ang-point_dir);
-						if (Math.abs(diff) < Math.abs(temp)) {
-							temp2 = diff;
-							ang2 = Utilities.normaliseAngle(ang);
-						}
-					}
-				}
-				System.out.println("Orig min "+command.turning_speed+" sec min "+ang2);
-				if (ang2*command.turning_speed < 0) {
-					if (Math.abs(temp2) < Math.abs(temp))
-						command.turning_speed = temp2;
-				}
-				
-				command.turning_speed += point_dir < 0 ? turn_ang_more : -turn_ang_more;
-				
-			} else {
-				// if point is visible
-				command.turning_speed = Utilities.normaliseAngle(point_dir + (point_left_coll_dist < point_right_coll_dist ? turn_ang_more : -turn_ang_more));
-				System.out.println("Visible angle "+command.turning_speed);
 			}
-		} else {
-			// if the point is visible and reachable go towards it
-			command.turning_speed = Utilities.normaliseAngle(point_dir);
-			System.out.println("Reachable angle "+command.turning_speed);
 		}
+		
+		double temp2 = 999;
+		double turn_ang2 = 999;
+		for (int i = 0; i < sectors.length; i++) {
+			if (sectors[i] > point_dist+Robot.LENGTH_CM/2) {	
+				double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
+				double diff = Utilities.normaliseAngle(ang-point_dir);
+				if (Math.abs(diff) < Math.abs(temp) && i != id) {
+					temp2 = diff;
+					turn_ang2 = ang;
+				}
+			}
+		}
+
+		if (Math.abs(Utilities.normaliseAngle(turn_ang2-turn_ang)) > SEC_ANGLE*2 && Math.abs(turn_ang2) < Math.abs(turn_ang)) {
+			command.turning_speed = turn_ang2;
+		} else
+			command.turning_speed = turn_ang;
+		
+		//System.out.println(String.format("%.2f l="+point_left_coll_dist+" r="+point_right_coll_dist+" d="+point_dist,command.turning_speed));
+		
+		if (point_left_coll_dist < point_dist || point_right_coll_dist < point_dist)
+			command.turning_speed += point_left_coll_dist > point_right_coll_dist ? turn_ang_more : -turn_ang_more;
+		
+
+
 
 		// if we have no way of reaching the point go into the most free direction
 		if (command.turning_speed == 999) {
@@ -178,18 +176,18 @@ public class AIVisualServoing extends AI {
 
 		// set forward speed
 		command.speed = MAX_SPEED_CM_S;
-		
+
 		if (command.turning_speed > 90 || command.turning_speed < -90)
 			command.speed = -MAX_SPEED_CM_S;
-		
-		if (!facing_point) { // go backwards towards the point
-			command.turning_speed = Utilities.normaliseAngle(-180+command.turning_speed);
-			command.speed = -MAX_SPEED_CM_S;
-			if (command.turning_speed > 90 || command.turning_speed < -90)
-				command.speed = MAX_SPEED_CM_S;
+
+		if (!facing_point) { // go fastest to a point regardless of direction
+
+			command.speed = MAX_SPEED_CM_S;
+			if (command.turning_speed > 90 || command.turning_speed < -90) {
+				command.speed = -MAX_SPEED_CM_S;
+				command.turning_speed = Utilities.normaliseAngle(-180+command.turning_speed);
+			}
 		}
-		
-			
 
 		// if we get within too close (within coll_start) of an obstacle
 		backAwayIfTooClose(command, sectors);
@@ -199,7 +197,7 @@ public class AIVisualServoing extends AI {
 
 		return command;
 	}
-	
+
 	/**
 	 * If too close to an obstacle from sectors, back away
 	 * @param command
@@ -231,7 +229,7 @@ public class AIVisualServoing extends AI {
 			}
 		}
 	}
-	
+
 	/**
 	 * Checks whether there is a collision with either corner and tries to react to it
 	 * @param command
@@ -256,7 +254,7 @@ public class AIVisualServoing extends AI {
 		}
 		command.turning_speed = Utilities.normaliseAngle(command.turning_speed);
 	}
-	
+
 	/**
 	 * Gives the ID of a given angle. Angle is wrt to (1, 0) local vector on robot (i.e. 0 is forward)
 	 * @param angle should not exceed
@@ -282,7 +280,7 @@ public class AIVisualServoing extends AI {
 				min = array[i];
 		return min;
 	}
-	
+
 	/**
 	 * Distance from front of robot to a given point on table
 	 * @param global
@@ -291,7 +289,7 @@ public class AIVisualServoing extends AI {
 	private double frontDistanceTo(Vector2D global) {
 		return Tools.getDistanceBetweenPoint(Tools.getGlobalVector(ai_world_state.getRobot(), new Vector2D(Robot.LENGTH_CM/2, 0)), global);
 	}
-	
+
 	/**
 	 * Distance from centre of robot to a given point on table
 	 * @param global
@@ -300,7 +298,12 @@ public class AIVisualServoing extends AI {
 	private double distanceTo(Vector2D global) {
 		return Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), global).getLength();
 	}
-	
+
+	private double directionTo(Vector2D global) {
+		final Vector2D point_rel = Tools.getLocalVector(ai_world_state.getRobot(), global);
+		return Vector2D.getDirection(point_rel);
+	}
+
 	private void slowDownSpeed(double distance, double threshold, Commands current_speed, double slow_speed) {
 		if (distance >= threshold)
 			return;
