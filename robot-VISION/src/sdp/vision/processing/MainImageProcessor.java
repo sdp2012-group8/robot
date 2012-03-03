@@ -75,19 +75,25 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 */
 	@Override
 	public synchronized WorldState extractWorldState(BufferedImage frame) {
-		frame = preprocessFrame(frame);		
+		frame = preprocessFrame(frame);
+		
+		IplImage frame_ipl = IplImage.createFrom(frame);
+		cvSetImageROI(frame_ipl, getCurrentROI());
+
 		worldImage = Utilities.deepBufferedImageCopy(frame);
 		
 		BufferedImage thresholds[] = thresholdFrame(frame);
-		IplImage frame_ipl = IplImage.createFrom(thresholds[0]);
-		IplImage ballThreshold = IplImage.createFrom(thresholds[1]);		
-		IplImage blueThreshold = IplImage.createFrom(thresholds[2]);
-		IplImage yellowThreshold = IplImage.createFrom(thresholds[3]);	
-		cvSetImageROI(frame_ipl, getCurrentROI());
+		BufferedImage ball = thresholds[0];
+		BufferedImage blue = thresholds[1];
+		BufferedImage yellow = thresholds[2];
+		
+		IplImage ball_ipl = IplImage.createFrom(ball);		
+		IplImage blue_ipl = IplImage.createFrom(blue);
+		IplImage yellow_ipl = IplImage.createFrom(yellow);	
 
-		Point2D.Double ballPos = findBall(frame_ipl, ballThreshold);
-		Robot blueRobot = findRobot(frame_ipl, blueThreshold, config.getBlueThreshs());
-		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold, config.getYellowThreshs());
+		Point2D.Double ballPos = findBall(ball_ipl);
+		Robot blueRobot = findRobot(frame, blue_ipl, config.getBlueThreshs());
+		Robot yellowRobot = findRobot(frame, yellow_ipl, config.getYellowThreshs());
 		finaliseWorldImage(frame_ipl, ballPos, blueRobot, yellowRobot);
 		
 		return new WorldState(ballPos, blueRobot, yellowRobot, worldImage);
@@ -114,8 +120,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 * Threshold the image for the different features.
 	 * 
 	 * The thresholded components are returned as an array, which contains
-	 * the original frame, ball, blue T and yellow T components, in that 
-	 * order.
+	 * the ball, blue T and yellow T components, in that order.
 	 * 
 	 * The reason I have used BufferedImage here instead of opencv's IplImage
 	 * is because opencv's thresholding functions are somewhat limited and
@@ -198,7 +203,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 			}
 		}
 		
-		BufferedImage retValue[] = { frame, ball, blue, yellow };
+		BufferedImage retValue[] = { ball, blue, yellow };
 		return retValue;
 	}
 	
@@ -206,12 +211,11 @@ public class MainImageProcessor extends BaseImageProcessor {
 	/**
 	 * Locate the ball in the world.
 	 * 
-	 * @param frame_ipl The original frame.
-	 * @param ballThresh Thresholded image to search in.
+	 * @param thresh Thresholded image to search in.
 	 * @return The position of the ball.
 	 */
-	private Point2D.Double findBall(IplImage frame_ipl, IplImage ballThresh) {
-		CvSeq fullBallContour = findAllContours(ballThresh);		
+	private Point2D.Double findBall(IplImage thresh) {
+		CvSeq fullBallContour = findAllContours(thresh);		
 		ArrayList<CvSeq> ballShapes = sizeFilterContours(fullBallContour,
 				config.getBallThreshs().getSizeMin(), config.getBallThreshs().getSizeMax());
 		
@@ -245,13 +249,13 @@ public class MainImageProcessor extends BaseImageProcessor {
 	/**
 	 * Locate a robot in the world.
 	 * 
-	 * @param frame_ipl The original frame.
-	 * @param robotThresh Thresholded image to search for the robot's T.
+	 * @param frame The original frame.
+	 * @param thresh_ipl Thresholded image to search for the robot's T.
 	 * @param bounds Thresholding bounds.
 	 * @return The position of the ball.
 	 */
-	private Robot findRobot(IplImage frame_ipl, IplImage robotThresh, ThresholdBounds bounds) {
-		CvSeq fullRobotContour = findAllContours(robotThresh);
+	private Robot findRobot(BufferedImage frame, IplImage thresh_ipl, ThresholdBounds bounds) {
+		CvSeq fullRobotContour = findAllContours(thresh_ipl);
 		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour,
 				bounds.getSizeMin(), bounds.getSizeMax());
 		
@@ -296,13 +300,13 @@ public class MainImageProcessor extends BaseImageProcessor {
             int roiWidth = roiXOff + Math.min(config.getFieldWidth() - robotX, idealTSize.width() / 2);
             int roiHeight = roiYOff + Math.min(config.getFieldHeight() - robotY, idealTSize.height() / 2);
             
-            IplImage shapeImage = IplImage.create(roiWidth, roiHeight, IPL_DEPTH_8U, 1);
-            cvFillPoly(shapeImage, ProcUtils.cvSeqToArray(bestRobotShape),
+            IplImage shapeImage_ipl = IplImage.create(roiWidth, roiHeight, IPL_DEPTH_8U, 1);
+            cvFillPoly(shapeImage_ipl, ProcUtils.cvSeqToArray(bestRobotShape),
             		new int[] { bestRobotShape.total() }, 1, CvScalar.WHITE, LINE_TYPE, 0);
       
             // Find the robot direction.
             CvRect threshROI = cvRect(robotX - roiXOff, robotY - roiYOff, roiWidth, roiHeight);
-            cvSetImageROI(robotThresh, threshROI);
+            cvSetImageROI(thresh_ipl, threshROI);
             
             int angle = 0;
             int bestArea = -1;
@@ -314,7 +318,7 @@ public class MainImageProcessor extends BaseImageProcessor {
             			idealTSize.height() / 2 - roiYOff, roiWidth, roiHeight);
             	cvSetImageROI(rotShape, rotShapeROI);
           
-            	cvAnd(rotShape, robotThresh, rotShape, null);
+            	cvAnd(rotShape, thresh_ipl, rotShape, null);
             	int curArea = cvCountNonZero(rotShape);
             	
             	if (curArea > bestArea) {
