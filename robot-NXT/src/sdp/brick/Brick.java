@@ -53,19 +53,19 @@ public class Brick {
 				while (is_on) {
 					int dist = sens.getDistance();
 					collision = dist < coll_threshold;
-					try {
-						if ( collision && mComm != null){
-							try {
-								mComm.sendMessage(opcode.sensor, (byte) 0, (byte) dist);
-								Thread.sleep(10);
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-						Thread.sleep(100);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
+					//					try {
+					//						if ( collision && mComm != null){
+					//							try {
+					//								mComm.sendMessage(opcode.sensor, (byte) 0, (byte) dist);
+					//								Thread.sleep(10);
+					//							} catch (IOException e) {
+					//								e.printStackTrace();
+					//							}
+					//						}
+					//						Thread.sleep(100);
+					//					} catch (InterruptedException e) {
+					//						e.printStackTrace();
+					//					}
 				}
 				sens.off();
 			};
@@ -76,12 +76,12 @@ public class Brick {
 					boolean initial = kickSensor.isPressed();
 					if (!initial) {
 						if (can_kick) {can_kick = false;}
-						Motor.B.setSpeed(Motor.B.getMaxSpeed());
-						Motor.B.setAcceleration(10000);
+						Motor.B.setSpeed((int)(Motor.B.getMaxSpeed()/2));
+						Motor.B.setAcceleration(6000);
 						Motor.B.backward();
 						while (!kickSensor.isPressed()) {
 							try {
-								Thread.sleep(10);
+								Thread.sleep(5);
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
@@ -188,10 +188,10 @@ public class Brick {
 					// args[2] - acceleration in cm/s/s
 					if (args.length > 0) {
 						// collision detection
-//						if (collision && Math.abs(args[1]) >= angle_threshold) {
-//							args[0] = back_speed;
-//							args[1] += args[1] > 0 ? turning_boost : -turning_boost;
-//						}
+						//						if (collision && Math.abs(args[1]) >= angle_threshold) {
+						//							args[0] = back_speed;
+						//							args[1] += args[1] > 0 ? turning_boost : -turning_boost;
+						//						}
 						float old_a = speed_a;
 						float old_c = speed_c;
 						// convert the degrees per second around robot
@@ -202,9 +202,17 @@ public class Brick {
 						// set desired speed
 						speed_a = speed_angle+conv_angle;
 						speed_c = speed_angle-conv_angle;
+						float corr = 0;
+						if (Math.abs(speed_a) > Motor.A.getMaxSpeed()) {
+							corr = Math.abs(speed_a) - Motor.A.getMaxSpeed();
+						} else if (Math.abs(speed_c) > Motor.C.getMaxSpeed()){
+							corr = Math.abs(speed_c) - Motor.C.getMaxSpeed();
+						}
+						LCD.clear();
+						LCD.drawString("corr " + corr, 0, 0);
 						// change speed according to turning
-						Motor.A.setSpeed(Math.abs(speed_a));
-						Motor.C.setSpeed(Math.abs(speed_c));
+						Motor.A.setSpeed(Math.abs(speed_a)-corr);
+						Motor.C.setSpeed(Math.abs(speed_c)-corr);
 
 						// check if we need to start motors or turn their direction
 						if (args.length > 2) {
