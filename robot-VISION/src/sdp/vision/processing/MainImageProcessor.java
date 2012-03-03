@@ -52,6 +52,9 @@ public class MainImageProcessor extends BaseImageProcessor {
 	
 	/** OpenCV memory storage. */
 	private CvMemStorage storage;
+	
+	/** World image of the current state. */
+	private BufferedImage worldImage;
 
 	
 	/**
@@ -72,7 +75,8 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 */
 	@Override
 	public synchronized WorldState extractWorldState(BufferedImage frame) {
-		frame = preprocessFrame(frame);
+		frame = preprocessFrame(frame);		
+		worldImage = Utilities.deepBufferedImageCopy(frame);
 		
 		BufferedImage thresholds[] = thresholdFrame(frame);
 		IplImage frame_ipl = IplImage.createFrom(thresholds[0]);
@@ -82,11 +86,9 @@ public class MainImageProcessor extends BaseImageProcessor {
 		cvSetImageROI(frame_ipl, getCurrentROI());
 
 		Point2D.Double ballPos = findBall(frame_ipl, ballThreshold);
-		Robot blueRobot = findRobot(frame_ipl, blueThreshold,
-				config.getBlueThreshs().getSizeMin(), config.getBlueThreshs().getSizeMax());
-		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold,
-				config.getYellowThreshs().getSizeMin(), config.getYellowThreshs().getSizeMax());
-		BufferedImage worldImage = finaliseWorldImage(frame_ipl, ballPos, blueRobot, yellowRobot);
+		Robot blueRobot = findRobot(frame_ipl, blueThreshold, config.getBlueThreshs());
+		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold, config.getYellowThreshs());
+		finaliseWorldImage(frame_ipl, ballPos, blueRobot, yellowRobot);
 		
 		return new WorldState(ballPos, blueRobot, yellowRobot, worldImage);
 	}
@@ -149,7 +151,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 				
 				// Whether to hide current pixel.
 				if (!config.isShowWorld()) {
-					frame.setRGB(ox, oy, Color.black.getRGB());
+					worldImage.setRGB(ox, oy, Color.black.getRGB());
 				}
 				
 				// Ball thresholding.
@@ -162,7 +164,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 					
 					ball.setRGB(x, y, Color.white.getRGB());
 					if (config.isShowThresholds()) {
-						frame.setRGB(ox, oy, Color.red.getRGB());
+						worldImage.setRGB(ox, oy, Color.red.getRGB());
 					}
 				}
 				
@@ -177,7 +179,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 					
 					blue.setRGB(x, y, Color.white.getRGB());
 					if (config.isShowThresholds()) {
-						frame.setRGB(ox, oy, Color.blue.getRGB());
+						worldImage.setRGB(ox, oy, Color.blue.getRGB());
 					}
 			    }
 				
@@ -191,7 +193,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 					
 			    	yellow.setRGB(x, y, Color.white.getRGB());
 			    	if (config.isShowThresholds()) {
-			    		frame.setRGB(ox, oy, Color.orange.getRGB());
+			    		worldImage.setRGB(ox, oy, Color.orange.getRGB());
 			    	}
 			    }
 			}
@@ -226,12 +228,15 @@ public class MainImageProcessor extends BaseImageProcessor {
             int bH = ballBoundingRect.height();
             
             if (config.isShowContours()) {
-            	cvDrawContours(frame_ipl, curBallShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, LINE_TYPE);
+            	IplImage worldImage_ipl = IplImage.createFrom(worldImage);
+            	cvSetImageROI(worldImage_ipl, getCurrentROI());
+            	cvDrawContours(worldImage_ipl, curBallShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, LINE_TYPE);
+            	worldImage = worldImage_ipl.getBufferedImage();
             }            
             if (config.isShowBoundingBoxes()) {
-	            CvPoint pt1 = new CvPoint(bX, bY);
-	            CvPoint pt2 = new CvPoint(bX + bW, bY + bH);
-	            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, LINE_TYPE, 0);
+            	Graphics2D g = worldImage.createGraphics();
+            	g.setColor(Color.white);
+            	g.drawRect(bX + config.getFieldLowX(), bY + config.getFieldLowY(), bW, bH);
             }
             
             return ProcUtils.frameToNormalCoordinates(config, bX + bW / 2, bY + bH / 2, true);
@@ -243,13 +248,13 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 * 
 	 * @param frame_ipl The original frame.
 	 * @param robotThresh Thresholded image to search for the robot's T.
-	 * @param markerThresh Thresholded image to search for direction marker.
+	 * @param bounds Thresholding bounds.
 	 * @return The position of the ball.
 	 */
-	private Robot findRobot(IplImage frame_ipl, IplImage robotThresh,
-			int minSize, int maxSize) {
+	private Robot findRobot(IplImage frame_ipl, IplImage robotThresh, ThresholdBounds bounds) {
 		CvSeq fullRobotContour = findAllContours(robotThresh);
-		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour, minSize, maxSize);
+		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour,
+				bounds.getSizeMin(), bounds.getSizeMax());
 		
 		if (robotShapes.size() == 0) {
 			return new Robot(new Point2D.Double(-1.0, -1.0), -1.0);
@@ -259,7 +264,10 @@ public class MainImageProcessor extends BaseImageProcessor {
 			
             // Extra output.
             if (config.isShowContours()) {
-            	cvDrawContours(frame_ipl, bestRobotShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, LINE_TYPE);
+            	IplImage worldImage_ipl = IplImage.createFrom(worldImage);
+            	cvSetImageROI(worldImage_ipl, getCurrentROI());
+            	cvDrawContours(worldImage_ipl, bestRobotShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, LINE_TYPE);
+            	worldImage = worldImage_ipl.getBufferedImage();
             }
             if (config.isShowBoundingBoxes()) {
             	CvRect robotBoundingRect = cvBoundingRect(bestRobotShape, 0);
@@ -268,11 +276,10 @@ public class MainImageProcessor extends BaseImageProcessor {
                 int rY = robotBoundingRect.y();
                 int rW = robotBoundingRect.width();
                 int rH = robotBoundingRect.height();
-            	
-	            CvPoint pt1 = new CvPoint(rX, rY);
-	            CvPoint pt2 = new CvPoint(rX + rW, rY + rH);
-	            
-	            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, LINE_TYPE, 0);
+            		            
+            	Graphics2D g = worldImage.createGraphics();
+            	g.setColor(Color.white);
+            	g.drawRect(rX + config.getFieldLowX(), rY + config.getFieldLowY(), rW, rH);
             }
             
             // Find robot position.
@@ -324,15 +331,12 @@ public class MainImageProcessor extends BaseImageProcessor {
 	
 	
 	/**
-	 * Add finishing details to frame.
+	 * Add final details to the world image.
 	 * 
 	 * @param frame_ipl Frame to process.
-	 * @return Final world image.
 	 */
-	private BufferedImage finaliseWorldImage(IplImage frame_ipl,
-			Point2D.Double ball, Robot blueRobot, Robot yellowRobot) {
-		BufferedImage finalFrame = frame_ipl.getBufferedImage();		
-		Graphics2D g = finalFrame.createGraphics();
+	private void finaliseWorldImage(IplImage frame_ipl, Point2D.Double ball, Robot blueRobot, Robot yellowRobot) {		
+		Graphics2D g = worldImage.createGraphics();
 		g.setColor(Color.white);
 		
 		g.drawRect(config.getFieldLowX(), config.getFieldLowY(),
@@ -359,8 +363,6 @@ public class MainImageProcessor extends BaseImageProcessor {
 					yellowRobot.getAngle());
 			drawPositionMarker(g, Color.orange, pt1, pt2);
 		}
-		
-		return finalFrame;
 	}
 	
 	
