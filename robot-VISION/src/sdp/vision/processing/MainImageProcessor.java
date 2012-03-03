@@ -118,9 +118,8 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 * order.
 	 * 
 	 * The reason I have used BufferedImage here instead of opencv's IplImage
-	 * is because opencv's thresholding functions are somewhat limited. I do 
-	 * know of a way to threshold by both RGB and HSV values, for instance.
-	 * One cannot use arbitrary conditions either.
+	 * is because opencv's thresholding functions are somewhat limited and
+	 * iterating over IplImages via javacpp is an even bigger mess.
 	 * 
 	 * @param frame Frame to threshold.
 	 * @return Thresholded components.
