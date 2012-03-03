@@ -5,9 +5,15 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
+import javax.imageio.ImageIO;
+
 import com.googlecode.javacpp.Loader;
+import com.googlecode.javacv.cpp.opencv_core.CvPoint2D32f;
+import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 import static com.googlecode.javacv.cpp.opencv_core.*;
 import static com.googlecode.javacv.cpp.opencv_imgproc.*;
@@ -41,6 +47,8 @@ public class MainImageProcessor extends BaseImageProcessor {
 	
 	/** OpenCV memory storage. */
 	private CvMemStorage storage;
+	
+	private IplImage tShapeImage;
 
 	
 	/**
@@ -49,10 +57,19 @@ public class MainImageProcessor extends BaseImageProcessor {
 	public MainImageProcessor() {
 		super();		
 		storage = CvMemStorage.create();
+		
+		try {
+			IplImage ss = IplImage.createFrom(ImageIO.read(new File("../robot-VISION/data/tShape.png")));
+			tShapeImage = IplImage.create(51, 51, IPL_DEPTH_8U, 1);
+			cvCvtColor(ss, tShapeImage, CV_RGB2GRAY);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 
-	/* (non-Javadoc)
+	/**
 	 * @see sdp.vision.processing.ImageProcessor#extractWorldState(java.awt.image.BufferedImage)
 	 */
 	@Override
@@ -262,8 +279,40 @@ public class MainImageProcessor extends BaseImageProcessor {
             
             double massCenterX = moments.m10() / moments.m00();
             double massCenterY = moments.m01() / moments.m00();
-            Point2D.Double robotPos = ProcUtils.frameToNormalCoordinates(config, massCenterX, massCenterY, true);            
+            Point2D.Double robotPos = ProcUtils.frameToNormalCoordinates(config, massCenterX, massCenterY, true); 
             
+            
+            int angle = 0;
+            int bestArea = -1;
+            
+            BufferedImage t = robotThresh.getBufferedImage();
+            
+            for (int i = 0; i < OUTLINE_ANGLE_COUNT; ++i) {
+            	BufferedImage rotShape = getRotatedTShape(i).getBufferedImage();
+            	
+            	int s = 0;
+            	for (int x = -25; x <= 25; ++x) {
+            		for (int y = -25; y <= 25; ++y) {
+            			int a = (int)massCenterX + x;
+            			int b = (int)massCenterY + y;
+            			if ((a >= 0) && (a < 640) && (b >= 0) && (b < 640)) {
+            				if (rotShape.getRGB(x + 25, y + 25) != Color.black.getRGB()) {
+            					if (t.getRGB(a, b) != Color.black.getRGB()) {
+            						++s;
+            					}
+            				}
+            			}
+            		}
+            	}
+            	
+            	if (s > bestArea) {
+            		angle = i;
+            		bestArea = s;
+            	}
+            }
+            
+            
+            /*
             // Find the contour's outline distances.
             double[] dists = getContourOutlineDistances(bestRobotShape, massCenterX, massCenterY);
             
@@ -285,6 +334,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 	            	angle = i;
 	            }
             }
+            */
         
             return new Robot(robotPos, angle);
 		}
@@ -300,10 +350,10 @@ public class MainImageProcessor extends BaseImageProcessor {
 	private BufferedImage finaliseWorldImage(IplImage frame_ipl,
 			Point2D.Double ball, Robot blueRobot, Robot yellowRobot) {
 		BufferedImage finalFrame = frame_ipl.getBufferedImage();		
-		Graphics2D graphics = finalFrame.createGraphics();
-		graphics.setColor(Color.white);
+		Graphics2D g = finalFrame.createGraphics();
+		g.setColor(Color.white);
 		
-		graphics.drawRect(config.getFieldLowX(), config.getFieldLowY(),
+		g.drawRect(config.getFieldLowX(), config.getFieldLowY(),
 				config.getFieldWidth(), config.getFieldHeight());
 		
 		if (config.isShowStateData()) {
@@ -311,23 +361,25 @@ public class MainImageProcessor extends BaseImageProcessor {
 			
 			// Draw ball position.
 			pt1 = ProcUtils.normalToFrameCoordinatesInt(config, ball.x, ball.y, false);
-			drawPositionMarker(graphics, Color.red, pt1, null);
+			drawPositionMarker(g, Color.red, pt1, null);
 			
 			// Draw blue robot position and direction.
 			pt1 = ProcUtils.normalToFrameCoordinatesInt(config, blueRobot.getCoords().x,
 					blueRobot.getCoords().y, false);
 			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
 					blueRobot.getAngle());
-			drawPositionMarker(graphics, Color.blue, pt1, pt2);
+			drawPositionMarker(g, Color.blue, pt1, pt2);
 			
 			// Draw yellow robot position and direction.
 			pt1 = ProcUtils.normalToFrameCoordinatesInt(config, yellowRobot.getCoords().x,
 					yellowRobot.getCoords().y, false);
 			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
 					yellowRobot.getAngle());
-			drawPositionMarker(graphics, Color.orange, pt1, pt2);
+			drawPositionMarker(g, Color.orange, pt1, pt2);
+			
+			
 		}
-
+		
 		return finalFrame;
 	}
 	
@@ -468,6 +520,16 @@ public class MainImageProcessor extends BaseImageProcessor {
         }
 		
 		return distances;
+	}
+	
+	
+	private IplImage getRotatedTShape(int angle) {
+		angle = (angle + 270) % 360;
+		IplImage rotatedShape = IplImage.createCompatible(tShapeImage);
+		CvMat rotMatrix = CvMat.create(2, 3);
+		cv2DRotationMatrix(new CvPoint2D32f(25.0, 25.0), angle, 1.0, rotMatrix);
+		cvWarpAffine(tShapeImage, rotatedShape, rotMatrix);
+		return rotatedShape;
 	}
 	
 
