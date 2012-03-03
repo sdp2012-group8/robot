@@ -83,9 +83,9 @@ public class MainImageProcessor extends BaseImageProcessor {
 
 		Point2D.Double ballPos = findBall(frame_ipl, ballThreshold);
 		Robot blueRobot = findRobot(frame_ipl, blueThreshold,
-				config.getBlueSizeMinValue(), config.getBlueSizeMaxValue());
+				config.getBlueThreshs().getSizeMin(), config.getBlueThreshs().getSizeMax());
 		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold,
-				config.getYellowSizeMinValue(), config.getYellowSizeMaxValue());
+				config.getYellowThreshs().getSizeMin(), config.getYellowThreshs().getSizeMax());
 		BufferedImage worldImage = finaliseWorldImage(frame_ipl, ballPos, blueRobot, yellowRobot);
 		
 		return new WorldState(ballPos, blueRobot, yellowRobot, worldImage);
@@ -153,12 +153,12 @@ public class MainImageProcessor extends BaseImageProcessor {
 				}
 				
 				// Ball thresholding.
-				if (Utilities.valueWithinBounds(h, config.getBallHueMinValue(), 
-								config.getBallHueMaxValue())
-						&& Utilities.valueWithinBounds(s, config.getBallSatMinValue(),
-								config.getBallSatMaxValue())
-						&& Utilities.valueWithinBounds(v, config.getBallValMinValue(),
-								config.getBallValMaxValue())) {	
+				if (Utilities.valueWithinBounds(h, config.getBallThreshs().getHueMin(), 
+								config.getBallThreshs().getHueMax())
+						&& Utilities.valueWithinBounds(s, config.getBallThreshs().getSatMin(),
+								config.getBallThreshs().getSatMax())
+						&& Utilities.valueWithinBounds(v, config.getBallThreshs().getValMin(),
+								config.getBallThreshs().getValMax())) {	
 					
 					ball.setRGB(x, y, Color.white.getRGB());
 					if (config.isShowThresholds()) {
@@ -167,12 +167,12 @@ public class MainImageProcessor extends BaseImageProcessor {
 				}
 				
 				// Blue T thresholding.
-				if (Utilities.valueWithinBounds(h, config.getBlueHueMinValue(), 
-								config.getBlueHueMaxValue())
-						&& Utilities.valueWithinBounds(s, config.getBlueSatMinValue(),
-								config.getBlueSatMaxValue())
-						&& Utilities.valueWithinBounds(v, config.getBlueValMinValue(),
-								config.getBlueValMaxValue())
+				if (Utilities.valueWithinBounds(h, config.getBlueThreshs().getHueMin(), 
+								config.getBlueThreshs().getHueMax())
+						&& Utilities.valueWithinBounds(s, config.getBlueThreshs().getSatMin(),
+								config.getBlueThreshs().getSatMax())
+						&& Utilities.valueWithinBounds(v, config.getBlueThreshs().getValMin(),
+								config.getBlueThreshs().getValMax())
 						&& (g < (int)(b * 1.5))) {
 					
 					blue.setRGB(x, y, Color.white.getRGB());
@@ -182,12 +182,12 @@ public class MainImageProcessor extends BaseImageProcessor {
 			    }
 				
 				// Yellow T thresholding.
-				if (Utilities.valueWithinBounds(h, config.getYellowHueMinValue(), 
-								config.getYellowHueMaxValue())
-						&& Utilities.valueWithinBounds(s, config.getYellowSatMinValue(),
-								config.getYellowSatMaxValue())
-						&& Utilities.valueWithinBounds(v, config.getYellowValMinValue(),
-								config.getYellowValMaxValue())) {
+				if (Utilities.valueWithinBounds(h, config.getYellowThreshs().getHueMin(), 
+								config.getYellowThreshs().getHueMax())
+						&& Utilities.valueWithinBounds(s, config.getYellowThreshs().getSatMin(),
+								config.getYellowThreshs().getSatMax())
+						&& Utilities.valueWithinBounds(v, config.getYellowThreshs().getValMin(),
+								config.getYellowThreshs().getValMax())) {
 					
 			    	yellow.setRGB(x, y, Color.white.getRGB());
 			    	if (config.isShowThresholds()) {
@@ -212,7 +212,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 	private Point2D.Double findBall(IplImage frame_ipl, IplImage ballThresh) {
 		CvSeq fullBallContour = findAllContours(ballThresh);		
 		ArrayList<CvSeq> ballShapes = sizeFilterContours(fullBallContour,
-				config.getBallSizeMinValue(), config.getBallSizeMaxValue());
+				config.getBallThreshs().getSizeMin(), config.getBallThreshs().getSizeMax());
 		
 		if (ballShapes.size() == 0) {
 			return new Point2D.Double(-1.0, -1.0);

@@ -39,56 +39,12 @@ public class ImageProcessorConfig {
 	/** The position of the right wall of the field (y high). */
 	private double fieldHighY = 0.8;
 	
-	/** Lower bound of the ball threshold's hue value. */
-	private int ballHueMinValue = 350;
-	/** Upper bound of the ball threshold's hue value. */
-	private int ballHueMaxValue = 20;
-	/** Lower bound of the ball threshold's saturation value. */
-	private int ballSatMinValue = 60;
-	/** Upper bound of the ball threshold's saturation value. */
-	private int ballSatMaxValue = 100;
-	/** Lower bound of the ball threshold's value value. */
-	private int ballValMinValue = 40;
-	/** Upper bound of the ball threshold's value value. */
-	private int ballValMaxValue = 100;
-	/** Lower bound of the ball contour size. */
-	private int ballSizeMinValue = 5;
-	/** Upper bound of the ball contour size. */
-	private int ballSizeMaxValue = 25;
-	
-	/** Lower bound of the Blue threshold's hue value. */
-	private int blueHueMinValue = 150;
-	/** Upper bound of the Blue threshold's hue value. */
-	private int blueHueMaxValue = 210;
-	/** Lower bound of the Blue threshold's saturation value. */
-	private int blueSatMinValue = 0;
-	/** Upper bound of the Blue threshold's saturation value. */
-	private int blueSatMaxValue = 100;
-	/** Lower bound of the Blue threshold's value value. */
-	private int blueValMinValue = 30;
-	/** Upper bound of the Blue threshold's value value. */
-	private int blueValMaxValue = 100;
-	/** Lower bound of the Blue contour size. */
-	private int blueSizeMinValue = 10;
-	/** Upper bound of the Blue contour size. */
-	private int blueSizeMaxValue = 50;
-	
-	/** Lower bound of the Yellow threshold's hue value. */
-	private int yellowHueMinValue = 25;
-	/** Upper bound of the Yellow threshold's hue value. */
-	private int yellowHueMaxValue = 75;
-	/** Lower bound of the Yellow threshold's saturation value. */
-	private int yellowSatMinValue = 0;
-	/** Upper bound of the Yellow threshold's saturation value. */
-	private int yellowSatMaxValue = 50;
-	/** Lower bound of the Yellow threshold's value value. */
-	private int yellowValMinValue = 55;
-	/** Upper bound of the Yellow threshold's value value. */
-	private int yellowValMaxValue = 75;
-	/** Lower bound of the Yellow contour size. */
-	private int yellowSizeMinValue = 15;
-	/** Upper bound of the Yellow contour size. */
-	private int yellowSizeMaxValue = 50;
+	/** Ball threshold bound container. */
+	private ThresholdBounds ballThresholds = new ThresholdBounds();
+	/** Blue robot threshold bound container. */
+	private ThresholdBounds blueThresholds = new ThresholdBounds();
+	/** Yellow robot threshold bound container. */
+	private ThresholdBounds yellowThresholds = new ThresholdBounds();
 	
 	/** Image undistortion coefficient f_x. */
 	private double undistort_fx = 1.0;
@@ -317,462 +273,36 @@ public class ImageProcessorConfig {
 			throw new IllegalArgumentException("Tried to set negative frame width.");
 		}
 	}
-
-
-	/**
-	 * Get the lower bound of the ball threshold's hue value.
-	 * 
-	 * @return Minimum ball hue value.
-	 */
-	public int getBallHueMinValue() {
-		return ballHueMinValue;
-	}
-
-	/**
-	 * Set the lower bound of the ball threshold's hue value.
-	 * 
-	 * @param ballHueMinValue The minimum ball hue value.
-	 */
-	public void setBallHueMinValue(int ballHueMinValue) {
-		this.ballHueMinValue = ballHueMinValue;
-	}
-
-
-	/**
-	 * Get the lower bound of the ball threshold's saturation value.
-	 * 
-	 * @return Minimum ball saturation value.
-	 */
-	public int getBallSatMinValue() {
-		return ballSatMinValue;
-	}
-
-	/**
-	 * Set the lower bound of the ball threshold's saturation value.
-	 * 
-	 * @param ballSatMinValue The minimum ball saturation value.
-	 */
-	public void setBallSatMinValue(int ballSatMinValue) {
-		this.ballSatMinValue = ballSatMinValue;
-	}
-
-
-	/**
-	 * Get the lower bound of the ball threshold's value value.
-	 * 
-	 * @return Minimum ball value value.
-	 */
-	public int getBallValMinValue() {
-		return ballValMinValue;
-	}
-
-	/**
-	 * Set the lower bound of the ball threshold's value value.
-	 * 
-	 * @param ballValMinValue The minimum ball value value.
-	 */
-	public void setBallValMinValue(int ballValMinValue) {
-		this.ballValMinValue = ballValMinValue;
-	}
 	
 	
 	/**
-	 * Get the lower bound of the ball contour's size.
+	 * Get the ball threshold bounds.
 	 * 
-	 * @return Minimum ball contour size.
+	 * @return Ball threshold bounds.
 	 */
-	public int getBallSizeMinValue() {
-		return ballSizeMinValue;
+	public ThresholdBounds getBallThreshs() {
+		return ballThresholds;
 	}
 
 	/**
-	 * Set the lower bound of the ball contour's size.
+	 * Get the blue robot threshold bounds.
 	 * 
-	 * @param ballSizeMinValue Minimum ball contour size.
+	 * @return Blue robot threshold bounds.
 	 */
-	public void setBallSizeMinValue(int ballSizeMinValue) {
-		this.ballSizeMinValue = ballSizeMinValue;
-	}
-
-
-	/**
-	 * Get the upper bound of the ball threshold's hue value.
-	 * 
-	 * @return Maximum ball hue value.
-	 */
-	public int getBallHueMaxValue() {
-		return ballHueMaxValue;
+	public ThresholdBounds getBlueThreshs() {
+		return blueThresholds;
 	}
 
 	/**
-	 * Set the upper bound of the ball threshold's hue value.
+	 * Get the yellow robot threshold bounds.
 	 * 
-	 * @param ballHueMaxValue The maximum ball hue value.
+	 * @return Yellow robot threshold bounds.
 	 */
-	public void setBallHueMaxValue(int ballHueMaxValue) {
-		this.ballHueMaxValue = ballHueMaxValue;
+	public ThresholdBounds getYellowThreshs() {
+		return yellowThresholds;
 	}
 
 
-	/**
-	 * Get the upper bound of the ball threshold's saturation value.
-	 * 
-	 * @return Maximum ball saturation value.
-	 */
-	public int getBallSatMaxValue() {
-		return ballSatMaxValue;
-	}
-
-	/**
-	 * Set the upper bound of the ball threshold's saturation value.
-	 * 
-	 * @param ballSatMaxValue The maximum ball saturation value.
-	 */
-	public void setBallSatMaxValue(int ballSatMaxValue) {
-		this.ballSatMaxValue = ballSatMaxValue;
-	}
-
-
-	/**
-	 * Get the upper bound of the ball threshold's value value.
-	 * 
-	 * @return Maximum ball value value.
-	 */
-	public int getBallValMaxValue() {
-		return ballValMaxValue;
-	}
-
-	/**
-	 * Set the upper bound of the ball threshold's value value.
-	 * 
-	 * @param ballValMaxValue The maximum ball value value.
-	 */
-	public void setBallValMaxValue(int ballValMaxValue) {
-		this.ballValMaxValue = ballValMaxValue;
-	}
-
-	/**
-	 * Get the upper bound of the ball contour's size.
-	 * 
-	 * @return Maximum ball contour size.
-	 */
-	public int getBallSizeMaxValue() {
-		return ballSizeMaxValue;
-	}
-
-	/**
-	 * Set the upper bound of the ball contour's size.
-	 * 
-	 * @param ballSizeMaxValue Maximum ball contour size.
-	 */
-	public void setBallSizeMaxValue(int ballSizeMaxValue) {
-		this.ballSizeMaxValue = ballSizeMaxValue;
-	}
-	
-	
-	/**
-	 * Get the lower bound of the blue threshold's hue value.
-	 * 
-	 * @return Minimum blue hue value.
-	 */
-	public int getBlueHueMinValue() {
-		return blueHueMinValue;
-	}
-
-	/**
-	 * Set the lower bound of the blue threshold's hue value.
-	 * 
-	 * @param blueHueMinValue The minimum blue hue value.
-	 */
-	public void setBlueHueMinValue(int blueHueMinValue) {
-		this.blueHueMinValue = blueHueMinValue;
-	}
-
-
-	/**
-	 * Get the lower bound of the blue threshold's saturation value.
-	 * 
-	 * @return Minimum blue saturation value.
-	 */
-	public int getBlueSatMinValue() {
-		return blueSatMinValue;
-	}
-
-	/**
-	 * Set the lower bound of the blue threshold's saturation value.
-	 * 
-	 * @param blueSatMinValue The minimum blue saturation value.
-	 */
-	public void setBlueSatMinValue(int blueSatMinValue) {
-		this.blueSatMinValue = blueSatMinValue;
-	}
-
-
-	/**
-	 * Get the lower bound of the blue threshold's value value.
-	 * 
-	 * @return Minimum blue value value.
-	 */
-	public int getBlueValMinValue() {
-		return blueValMinValue;
-	}
-
-	/**
-	 * Set the lower bound of the blue threshold's value value.
-	 * 
-	 * @param blueValMinValue The minimum blue value value.
-	 */
-	public void setBlueValMinValue(int blueValMinValue) {
-		this.blueValMinValue = blueValMinValue;
-	}
-	
-	
-	/**
-	 * Get the lower bound of the blue contour's size.
-	 * 
-	 * @return Minimum blue contour size.
-	 */
-	public int getBlueSizeMinValue() {
-		return blueSizeMinValue;
-	}
-
-	/**
-	 * Set the lower bound of the blue contour's size.
-	 * 
-	 * @param blueSizeMinValue Minimum blue contour size.
-	 */
-	public void setBlueSizeMinValue(int blueSizeMinValue) {
-		this.blueSizeMinValue = blueSizeMinValue;
-	}
-
-
-	/**
-	 * Get the upper bound of the blue threshold's hue value.
-	 * 
-	 * @return Maximum blue hue value.
-	 */
-	public int getBlueHueMaxValue() {
-		return blueHueMaxValue;
-	}
-
-	/**
-	 * Set the upper bound of the blue threshold's hue value.
-	 * 
-	 * @param blueHueMaxValue The maximum blue hue value.
-	 */
-	public void setBlueHueMaxValue(int blueHueMaxValue) {
-		this.blueHueMaxValue = blueHueMaxValue;
-	}
-
-
-	/**
-	 * Get the upper bound of the blue threshold's saturation value.
-	 * 
-	 * @return Maximum blue saturation value.
-	 */
-	public int getBlueSatMaxValue() {
-		return blueSatMaxValue;
-	}
-
-	/**
-	 * Set the upper bound of the blue threshold's saturation value.
-	 * 
-	 * @param blueSatMaxValue The maximum blue saturation value.
-	 */
-	public void setBlueSatMaxValue(int blueSatMaxValue) {
-		this.blueSatMaxValue = blueSatMaxValue;
-	}
-
-
-	/**
-	 * Get the upper bound of the blue threshold's value value.
-	 * 
-	 * @return Maximum blue value value.
-	 */
-	public int getBlueValMaxValue() {
-		return blueValMaxValue;
-	}
-
-	/**
-	 * Set the upper bound of the blue threshold's value value.
-	 * 
-	 * @param blueValMaxValue The maximum blue value value.
-	 */
-	public void setBlueValMaxValue(int blueValMaxValue) {
-		this.blueValMaxValue = blueValMaxValue;
-	}
-
-	/**
-	 * Get the upper bound of the blue contour's size.
-	 * 
-	 * @return Maximum blue contour size.
-	 */
-	public int getBlueSizeMaxValue() {
-		return blueSizeMaxValue;
-	}
-
-	/**
-	 * Set the upper bound of the blue contour's size.
-	 * 
-	 * @param blueSizeMaxValue Maximum blue contour size.
-	 */
-	public void setBlueSizeMaxValue(int blueSizeMaxValue) {
-		this.blueSizeMaxValue = blueSizeMaxValue;
-	}
-	
-	
-
-	/**
-	 * Get the lower bound of the yellow threshold's hue value.
-	 * 
-	 * @return Minimum yellow hue value.
-	 */
-	public int getYellowHueMinValue() {
-		return yellowHueMinValue;
-	}
-
-	/**
-	 * Set the lower bound of the yellow threshold's hue value.
-	 * 
-	 * @param yellowHueMinValue The minimum yellow hue value.
-	 */
-	public void setYellowHueMinValue(int yellowHueMinValue) {
-		this.yellowHueMinValue = yellowHueMinValue;
-	}
-
-
-	/**
-	 * Get the lower bound of the yellow threshold's saturation value.
-	 * 
-	 * @return Minimum yellow saturation value.
-	 */
-	public int getYellowSatMinValue() {
-		return yellowSatMinValue;
-	}
-
-	/**
-	 * Set the lower bound of the yellow threshold's saturation value.
-	 * 
-	 * @param yellowSatMinValue The minimum yellow saturation value.
-	 */
-	public void setYellowSatMinValue(int yellowSatMinValue) {
-		this.yellowSatMinValue = yellowSatMinValue;
-	}
-
-
-	/**
-	 * Get the lower bound of the yellow threshold's value value.
-	 * 
-	 * @return Minimum yellow value value.
-	 */
-	public int getYellowValMinValue() {
-		return yellowValMinValue;
-	}
-
-	/**
-	 * Set the lower bound of the yellow threshold's value value.
-	 * 
-	 * @param yellowValMinValue The minimum yellow value value.
-	 */
-	public void setYellowValMinValue(int yellowValMinValue) {
-		this.yellowValMinValue = yellowValMinValue;
-	}
-	
-	
-	/**
-	 * Get the lower bound of the yellow contour's size.
-	 * 
-	 * @return Minimum yellow contour size.
-	 */
-	public int getYellowSizeMinValue() {
-		return yellowSizeMinValue;
-	}
-
-	/**
-	 * Set the lower bound of the yellow contour's size.
-	 * 
-	 * @param yellowSizeMinValue Minimum yellow contour size.
-	 */
-	public void setYellowSizeMinValue(int yellowSizeMinValue) {
-		this.yellowSizeMinValue = yellowSizeMinValue;
-	}
-
-
-	/**
-	 * Get the upper bound of the yellow threshold's hue value.
-	 * 
-	 * @return Maximum yellow hue value.
-	 */
-	public int getYellowHueMaxValue() {
-		return yellowHueMaxValue;
-	}
-
-	/**
-	 * Set the upper bound of the yellow threshold's hue value.
-	 * 
-	 * @param yellowHueMaxValue The maximum yellow hue value.
-	 */
-	public void setYellowHueMaxValue(int yellowHueMaxValue) {
-		this.yellowHueMaxValue = yellowHueMaxValue;
-	}
-
-
-	/**
-	 * Get the upper bound of the yellow threshold's saturation value.
-	 * 
-	 * @return Maximum yellow saturation value.
-	 */
-	public int getYellowSatMaxValue() {
-		return yellowSatMaxValue;
-	}
-
-	/**
-	 * Set the upper bound of the yellow threshold's saturation value.
-	 * 
-	 * @param yellowSatMaxValue The maximum yellow saturation value.
-	 */
-	public void setYellowSatMaxValue(int yellowSatMaxValue) {
-		this.yellowSatMaxValue = yellowSatMaxValue;
-	}
-
-
-	/**
-	 * Get the upper bound of the yellow threshold's value value.
-	 * 
-	 * @return Maximum yellow value value.
-	 */
-	public int getYellowValMaxValue() {
-		return yellowValMaxValue;
-	}
-
-	/**
-	 * Set the upper bound of the yellow threshold's value value.
-	 * 
-	 * @param yellowValMaxValue The maximum yellow value value.
-	 */
-	public void setYellowValMaxValue(int yellowValMaxValue) {
-		this.yellowValMaxValue = yellowValMaxValue;
-	}
-
-	/**
-	 * Get the upper bound of the yellow contour's size.
-	 * 
-	 * @return Maximum yellow contour size.
-	 */
-	public int getYellowSizeMaxValue() {
-		return yellowSizeMaxValue;
-	}
-
-	/**
-	 * Set the upper bound of the yellow contour's size.
-	 * 
-	 * @param yellowSizeMaxValue Maximum yellow contour size.
-	 */
-	public void setYellowSizeMaxValue(int yellowSizeMaxValue) {
-		this.yellowSizeMaxValue = yellowSizeMaxValue;
-	}
-	
-	
 	/**
 	 * Get whether to show the captured frame.
 	 * 
@@ -1057,34 +587,34 @@ public class ImageProcessorConfig {
 		config.setRawFieldHighY(XmlUtils.getChildDouble(fieldElement, "highY"));
 		
 		Element ballElement = (Element)rootElement.getElementsByTagName("ball").item(0);
-		config.setBallHueMinValue(XmlUtils.getChildInt(ballElement, "hueMin"));
-		config.setBallHueMaxValue(XmlUtils.getChildInt(ballElement, "hueMax"));
-		config.setBallSatMinValue(XmlUtils.getChildInt(ballElement, "satMin"));
-		config.setBallSatMaxValue(XmlUtils.getChildInt(ballElement, "satMax"));
-		config.setBallValMinValue(XmlUtils.getChildInt(ballElement, "valMin"));
-		config.setBallValMaxValue(XmlUtils.getChildInt(ballElement, "valMax"));
-		config.setBallSizeMinValue(XmlUtils.getChildInt(ballElement, "sizeMin"));
-		config.setBallSizeMaxValue(XmlUtils.getChildInt(ballElement, "sizeMax"));
+		config.getBallThreshs().setHueMin(XmlUtils.getChildInt(ballElement, "hueMin"));
+		config.getBallThreshs().setHueMax(XmlUtils.getChildInt(ballElement, "hueMax"));
+		config.getBallThreshs().setSatMin(XmlUtils.getChildInt(ballElement, "satMin"));
+		config.getBallThreshs().setSatMax(XmlUtils.getChildInt(ballElement, "satMax"));
+		config.getBallThreshs().setValMin(XmlUtils.getChildInt(ballElement, "valMin"));
+		config.getBallThreshs().setValMax(XmlUtils.getChildInt(ballElement, "valMax"));
+		config.getBallThreshs().setSizeMin(XmlUtils.getChildInt(ballElement, "sizeMin"));
+		config.getBallThreshs().setSizeMax(XmlUtils.getChildInt(ballElement, "sizeMax"));
 		
 		Element blueElement = (Element)rootElement.getElementsByTagName("blue").item(0);
-		config.setBlueHueMinValue(XmlUtils.getChildInt(blueElement, "hueMin"));
-		config.setBlueHueMaxValue(XmlUtils.getChildInt(blueElement, "hueMax"));
-		config.setBlueSatMinValue(XmlUtils.getChildInt(blueElement, "satMin"));
-		config.setBlueSatMaxValue(XmlUtils.getChildInt(blueElement, "satMax"));
-		config.setBlueValMinValue(XmlUtils.getChildInt(blueElement, "valMin"));
-		config.setBlueValMaxValue(XmlUtils.getChildInt(blueElement, "valMax"));
-		config.setBlueSizeMinValue(XmlUtils.getChildInt(blueElement, "sizeMin"));
-		config.setBlueSizeMaxValue(XmlUtils.getChildInt(blueElement, "sizeMax"));
+		config.getBlueThreshs().setHueMin(XmlUtils.getChildInt(blueElement, "hueMin"));
+		config.getBlueThreshs().setHueMax(XmlUtils.getChildInt(blueElement, "hueMax"));
+		config.getBlueThreshs().setSatMin(XmlUtils.getChildInt(blueElement, "satMin"));
+		config.getBlueThreshs().setSatMax(XmlUtils.getChildInt(blueElement, "satMax"));
+		config.getBlueThreshs().setValMin(XmlUtils.getChildInt(blueElement, "valMin"));
+		config.getBlueThreshs().setValMax(XmlUtils.getChildInt(blueElement, "valMax"));
+		config.getBlueThreshs().setSizeMin(XmlUtils.getChildInt(blueElement, "sizeMin"));
+		config.getBlueThreshs().setSizeMax(XmlUtils.getChildInt(blueElement, "sizeMax"));
 		
 		Element yellowElement = (Element)rootElement.getElementsByTagName("yellow").item(0);
-		config.setYellowHueMinValue(XmlUtils.getChildInt(yellowElement, "hueMin"));
-		config.setYellowHueMaxValue(XmlUtils.getChildInt(yellowElement, "hueMax"));
-		config.setYellowSatMinValue(XmlUtils.getChildInt(yellowElement, "satMin"));
-		config.setYellowSatMaxValue(XmlUtils.getChildInt(yellowElement, "satMax"));
-		config.setYellowValMinValue(XmlUtils.getChildInt(yellowElement, "valMin"));
-		config.setYellowValMaxValue(XmlUtils.getChildInt(yellowElement, "valMax"));
-		config.setYellowSizeMinValue(XmlUtils.getChildInt(yellowElement, "sizeMin"));
-		config.setYellowSizeMaxValue(XmlUtils.getChildInt(yellowElement, "sizeMax"));
+		config.getYellowThreshs().setHueMin(XmlUtils.getChildInt(yellowElement, "hueMin"));
+		config.getYellowThreshs().setHueMax(XmlUtils.getChildInt(yellowElement, "hueMax"));
+		config.getYellowThreshs().setSatMin(XmlUtils.getChildInt(yellowElement, "satMin"));
+		config.getYellowThreshs().setSatMax(XmlUtils.getChildInt(yellowElement, "satMax"));
+		config.getYellowThreshs().setValMin(XmlUtils.getChildInt(yellowElement, "valMin"));
+		config.getYellowThreshs().setValMax(XmlUtils.getChildInt(yellowElement, "valMax"));
+		config.getYellowThreshs().setSizeMin(XmlUtils.getChildInt(yellowElement, "sizeMin"));
+		config.getYellowThreshs().setSizeMax(XmlUtils.getChildInt(yellowElement, "sizeMax"));
 		
 		return config;
 	}
@@ -1121,36 +651,36 @@ public class ImageProcessorConfig {
 		rootElement.appendChild(fieldElement);
 		
 		Element ballElement = doc.createElement("ball");
-		XmlUtils.addChildInt(doc, ballElement, "hueMin", config.getBallHueMinValue());
-		XmlUtils.addChildInt(doc, ballElement, "hueMax", config.getBallHueMaxValue());
-		XmlUtils.addChildInt(doc, ballElement, "satMin", config.getBallSatMinValue());
-		XmlUtils.addChildInt(doc, ballElement, "satMax", config.getBallSatMaxValue());
-		XmlUtils.addChildInt(doc, ballElement, "valMin", config.getBallValMinValue());
-		XmlUtils.addChildInt(doc, ballElement, "valMax", config.getBallValMaxValue());
-		XmlUtils.addChildInt(doc, ballElement, "sizeMin", config.getBallSizeMinValue());
-		XmlUtils.addChildInt(doc, ballElement, "sizeMax", config.getBallSizeMaxValue());
+		XmlUtils.addChildInt(doc, ballElement, "hueMin", config.getBallThreshs().getHueMin());
+		XmlUtils.addChildInt(doc, ballElement, "hueMax", config.getBallThreshs().getHueMax());
+		XmlUtils.addChildInt(doc, ballElement, "satMin", config.getBallThreshs().getSatMin());
+		XmlUtils.addChildInt(doc, ballElement, "satMax", config.getBallThreshs().getSatMax());
+		XmlUtils.addChildInt(doc, ballElement, "valMin", config.getBallThreshs().getValMin());
+		XmlUtils.addChildInt(doc, ballElement, "valMax", config.getBallThreshs().getValMax());
+		XmlUtils.addChildInt(doc, ballElement, "sizeMin", config.getBallThreshs().getSizeMin());
+		XmlUtils.addChildInt(doc, ballElement, "sizeMax", config.getBallThreshs().getSizeMax());
 		rootElement.appendChild(ballElement);
 		
 		Element blueElement = doc.createElement("blue");
-		XmlUtils.addChildInt(doc, blueElement, "hueMin", config.getBlueHueMinValue());
-		XmlUtils.addChildInt(doc, blueElement, "hueMax", config.getBlueHueMaxValue());
-		XmlUtils.addChildInt(doc, blueElement, "satMin", config.getBlueSatMinValue());
-		XmlUtils.addChildInt(doc, blueElement, "satMax", config.getBlueSatMaxValue());
-		XmlUtils.addChildInt(doc, blueElement, "valMin", config.getBlueValMinValue());
-		XmlUtils.addChildInt(doc, blueElement, "valMax", config.getBlueValMaxValue());
-		XmlUtils.addChildInt(doc, blueElement, "sizeMin", config.getBlueSizeMinValue());
-		XmlUtils.addChildInt(doc, blueElement, "sizeMax", config.getBlueSizeMaxValue());
+		XmlUtils.addChildInt(doc, blueElement, "hueMin", config.getBlueThreshs().getHueMin());
+		XmlUtils.addChildInt(doc, blueElement, "hueMax", config.getBlueThreshs().getHueMax());
+		XmlUtils.addChildInt(doc, blueElement, "satMin", config.getBlueThreshs().getSatMin());
+		XmlUtils.addChildInt(doc, blueElement, "satMax", config.getBlueThreshs().getSatMax());
+		XmlUtils.addChildInt(doc, blueElement, "valMin", config.getBlueThreshs().getValMin());
+		XmlUtils.addChildInt(doc, blueElement, "valMax", config.getBlueThreshs().getValMax());
+		XmlUtils.addChildInt(doc, blueElement, "sizeMin", config.getBlueThreshs().getSizeMin());
+		XmlUtils.addChildInt(doc, blueElement, "sizeMax", config.getBlueThreshs().getSizeMax());
 		rootElement.appendChild(blueElement);
 		
 		Element yellowElement = doc.createElement("yellow");
-		XmlUtils.addChildInt(doc, yellowElement, "hueMin", config.getYellowHueMinValue());
-		XmlUtils.addChildInt(doc, yellowElement, "hueMax", config.getYellowHueMaxValue());
-		XmlUtils.addChildInt(doc, yellowElement, "satMin", config.getYellowSatMinValue());
-		XmlUtils.addChildInt(doc, yellowElement, "satMax", config.getYellowSatMaxValue());
-		XmlUtils.addChildInt(doc, yellowElement, "valMin", config.getYellowValMinValue());
-		XmlUtils.addChildInt(doc, yellowElement, "valMax", config.getYellowValMaxValue());
-		XmlUtils.addChildInt(doc, yellowElement, "sizeMin", config.getYellowSizeMinValue());
-		XmlUtils.addChildInt(doc, yellowElement, "sizeMax", config.getYellowSizeMaxValue());
+		XmlUtils.addChildInt(doc, yellowElement, "hueMin", config.getYellowThreshs().getHueMin());
+		XmlUtils.addChildInt(doc, yellowElement, "hueMax", config.getYellowThreshs().getHueMax());
+		XmlUtils.addChildInt(doc, yellowElement, "satMin", config.getYellowThreshs().getSatMin());
+		XmlUtils.addChildInt(doc, yellowElement, "satMax", config.getYellowThreshs().getSatMax());
+		XmlUtils.addChildInt(doc, yellowElement, "valMin", config.getYellowThreshs().getValMin());
+		XmlUtils.addChildInt(doc, yellowElement, "valMax", config.getYellowThreshs().getValMax());
+		XmlUtils.addChildInt(doc, yellowElement, "sizeMin", config.getYellowThreshs().getSizeMin());
+		XmlUtils.addChildInt(doc, yellowElement, "sizeMax", config.getYellowThreshs().getSizeMax());
 		rootElement.appendChild(yellowElement);
 		
 		XmlUtils.writeXmlDocument(doc, filename);
