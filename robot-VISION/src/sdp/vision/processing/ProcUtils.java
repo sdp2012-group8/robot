@@ -4,6 +4,7 @@ import static com.googlecode.javacv.cpp.opencv_core.*;
 
 import java.awt.Point;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 
 import sdp.common.Robot;
 import sdp.common.Tools;
@@ -11,6 +12,7 @@ import sdp.common.Utilities;
 import sdp.common.WorldState;
 
 import com.googlecode.javacv.cpp.opencv_core.CvPoint;
+import com.googlecode.javacv.cpp.opencv_core.CvSeq;
 
 
 /**
@@ -19,6 +21,46 @@ import com.googlecode.javacv.cpp.opencv_core.CvPoint;
  * @author Gediminas Liktaras
  */
 public class ProcUtils {
+	
+	/**
+	 * Convert a sequence points into an array.
+	 * 
+	 * @param seq Sequence of points in question.
+	 * @return Sequence of points as an array.
+	 */
+	public static CvPoint[] cvSeqToArray(CvSeq seq) {
+		CvPoint points[] = new CvPoint[seq.total()];
+		for (int i = 0; i < seq.total(); ++i) {
+			points[i] = new CvPoint(cvGetSeqElem(seq, i));
+		}
+		return points;
+	}
+	
+	/**
+	 * Find the shape with the largest area in the given array.
+	 * 
+	 * @param shapes A list of shapes to examine.
+	 * @return The polygon with the largest area.
+	 */
+	public static CvSeq getLargestShape(ArrayList<CvSeq> shapes) {
+		if (shapes.size() == 0) {
+			return null;
+		} else {
+			CvSeq largestShape = shapes.get(0);
+			double largestArea = ProcUtils.getPolygonArea(largestShape);
+			
+			for (int i = 1; i < shapes.size(); ++i) {
+				double curArea = ProcUtils.getPolygonArea(shapes.get(i));
+				if (curArea > largestArea) {
+					largestArea = curArea;
+					largestShape = shapes.get(i);
+				}
+			}
+			
+			return largestShape;
+		}
+	}
+	
 
 	/**
 	 * Compute the area of an OpenCV polygon.

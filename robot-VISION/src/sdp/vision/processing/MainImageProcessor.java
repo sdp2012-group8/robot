@@ -5,17 +5,15 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
 
-import javax.imageio.ImageIO;
+import java.util.ArrayList;
 
 import com.googlecode.javacpp.Loader;
 import com.googlecode.javacv.cpp.opencv_core.CvPoint2D32f;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 import static com.googlecode.javacv.cpp.opencv_core.*;
+import static com.googlecode.javacv.cpp.opencv_highgui.*;
 import static com.googlecode.javacv.cpp.opencv_imgproc.*;
 
 import sdp.common.Robot;
@@ -31,11 +29,13 @@ import sdp.common.WorldState;
  */
 public class MainImageProcessor extends BaseImageProcessor {
 	
-	/** How many directions the outline distance calculations will use. */
-	private static final int OUTLINE_ANGLE_COUNT = 360;
-	/** The size of the direction cone angle. */
-	private static final int DIRECTION_CONE_ANGLE = 30;
+	/** Path to the image of the ideal T shape. */
+	private static final String IDEAL_T_PATH = "../robot-VISION/data/tShape.png";
 	
+	/** Gaussian smoothing mask size. */
+	private static final int GAUSSIAN_SMOOTH_MASK_SIZE = 5;
+	/** Preferred line type for OpenCV drawing functions. */
+	private static final int LINE_TYPE = 8;
 	/** Polygon approximation error (arg in cvApproxPoly). */
 	private static final double POLY_APPROX_ERROR = 0.0001;
 	
@@ -45,27 +45,25 @@ public class MainImageProcessor extends BaseImageProcessor {
 	private static final int POSITION_MARKER_SIZE = 4;
 	
 	
+	/** An image with the ideal expected T shape on robot plates. */
+	private IplImage idealTShape;
+	/** Size of the ideal T shape. */
+	private CvSize idealTSize;
+	
 	/** OpenCV memory storage. */
 	private CvMemStorage storage;
-	
-	private IplImage tShapeImage;
 
 	
 	/**
 	 * The main constructor.
 	 */
 	public MainImageProcessor() {
-		super();		
-		storage = CvMemStorage.create();
+		super();
 		
-		try {
-			IplImage ss = IplImage.createFrom(ImageIO.read(new File("../robot-VISION/data/tShape.png")));
-			tShapeImage = IplImage.create(51, 51, IPL_DEPTH_8U, 1);
-			cvCvtColor(ss, tShapeImage, CV_RGB2GRAY);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		idealTShape = cvLoadImage(IDEAL_T_PATH, CV_LOAD_IMAGE_GRAYSCALE);
+		idealTSize = idealTShape.cvSize();
+		
+		storage = CvMemStorage.create();
 	}
 	
 
@@ -101,9 +99,11 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 */
 	private BufferedImage preprocessFrame(BufferedImage frame) {
 		IplImage frame_ipl = IplImage.createFrom(frame);
+		
 		frame_ipl = undistortImage(frame_ipl);
 		cvSetImageROI(frame_ipl, getCurrentROI());		
-		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, 5);
+		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, GAUSSIAN_SMOOTH_MASK_SIZE);
+		
 		return frame_ipl.getBufferedImage();
 	}
 	
@@ -211,7 +211,8 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 */
 	private Point2D.Double findBall(IplImage frame_ipl, IplImage ballThresh) {
 		CvSeq fullBallContour = findAllContours(ballThresh);		
-		ArrayList<CvSeq> ballShapes = sizeFilterContours(fullBallContour, config.getBallSizeMinValue(), config.getBallSizeMaxValue());
+		ArrayList<CvSeq> ballShapes = sizeFilterContours(fullBallContour,
+				config.getBallSizeMinValue(), config.getBallSizeMaxValue());
 		
 		if (ballShapes.size() == 0) {
 			return new Point2D.Double(-1.0, -1.0);
@@ -225,12 +226,12 @@ public class MainImageProcessor extends BaseImageProcessor {
             int bH = ballBoundingRect.height();
             
             if (config.isShowContours()) {
-            	cvDrawContours(frame_ipl, curBallShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+            	cvDrawContours(frame_ipl, curBallShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, LINE_TYPE);
             }            
             if (config.isShowBoundingBoxes()) {
 	            CvPoint pt1 = new CvPoint(bX, bY);
 	            CvPoint pt2 = new CvPoint(bX + bW, bY + bH);
-	            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
+	            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, LINE_TYPE, 0);
             }
             
             return ProcUtils.frameToNormalCoordinates(config, bX + bW / 2, bY + bH / 2, true);
@@ -253,90 +254,71 @@ public class MainImageProcessor extends BaseImageProcessor {
 		if (robotShapes.size() == 0) {
 			return new Robot(new Point2D.Double(-1.0, -1.0), -1.0);
 		} else {
-			// Find the best marching T shape.
-			CvSeq bestRobotShape = getLargestShape(robotShapes);
+			// Find the best matching T shape.
+			CvSeq bestRobotShape = ProcUtils.getLargestShape(robotShapes);
 			
-			// Find shape's bounding box dimensions.
-            CvRect robotBoundingRect = cvBoundingRect(bestRobotShape, 0);
-            int rX = robotBoundingRect.x();
-            int rY = robotBoundingRect.y();
-            int rW = robotBoundingRect.width();
-            int rH = robotBoundingRect.height();
-            
-            // Debug output.
+            // Extra output.
             if (config.isShowContours()) {
-            	cvDrawContours(frame_ipl, bestRobotShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+            	cvDrawContours(frame_ipl, bestRobotShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, LINE_TYPE);
             }
             if (config.isShowBoundingBoxes()) {
+            	CvRect robotBoundingRect = cvBoundingRect(bestRobotShape, 0);
+            	
+                int rX = robotBoundingRect.x();
+                int rY = robotBoundingRect.y();
+                int rW = robotBoundingRect.width();
+                int rH = robotBoundingRect.height();
+            	
 	            CvPoint pt1 = new CvPoint(rX, rY);
 	            CvPoint pt2 = new CvPoint(rX + rW, rY + rH);
-	            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
+	            
+	            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, LINE_TYPE, 0);
             }
             
-            // Find the shape's (and robot's) mass center.
+            // Find robot position.
             CvMoments moments = new CvMoments();
             cvMoments(bestRobotShape, moments, 1);
             
-            double massCenterX = moments.m10() / moments.m00();
-            double massCenterY = moments.m01() / moments.m00();
-            Point2D.Double robotPos = ProcUtils.frameToNormalCoordinates(config, massCenterX, massCenterY, true); 
+            int robotX = (int)(moments.m10() / moments.m00());
+            int robotY = (int)(moments.m01() / moments.m00());
             
+            Point2D.Double normRobotPos = ProcUtils.frameToNormalCoordinates(config, robotX, robotY, true);
+            
+            // Find surrounding rectangle and isolate robot shape properly.
+            int roiXOff = Math.min(robotX, idealTSize.width() / 2);
+            int roiYOff = Math.min(robotY, idealTSize.height() / 2);
+            int roiWidth = roiXOff + Math.min(config.getFieldWidth() - robotX, idealTSize.width() / 2);
+            int roiHeight = roiYOff + Math.min(config.getFieldHeight() - robotY, idealTSize.height() / 2);
+            
+            IplImage shapeImage = IplImage.create(roiWidth, roiHeight, IPL_DEPTH_8U, 1);
+            cvFillPoly(shapeImage, ProcUtils.cvSeqToArray(bestRobotShape),
+            		new int[] { bestRobotShape.total() }, 1, CvScalar.WHITE, LINE_TYPE, 0);
+      
+            // Find the robot direction.
+            CvRect threshROI = cvRect(robotX - roiXOff, robotY - roiYOff, roiWidth, roiHeight);
+            cvSetImageROI(robotThresh, threshROI);
             
             int angle = 0;
             int bestArea = -1;
             
-            BufferedImage t = robotThresh.getBufferedImage();
-            
-            for (int i = 0; i < OUTLINE_ANGLE_COUNT; ++i) {
-            	BufferedImage rotShape = getRotatedTShape(i).getBufferedImage();
+            for (int i = 0; i < 360; ++i) {
+            	IplImage rotShape = getRotatedIdealT(i);
             	
-            	int s = 0;
-            	for (int x = -25; x <= 25; ++x) {
-            		for (int y = -25; y <= 25; ++y) {
-            			int a = (int)massCenterX + x;
-            			int b = (int)massCenterY + y;
-            			if ((a >= 0) && (a < 640) && (b >= 0) && (b < 640)) {
-            				if (rotShape.getRGB(x + 25, y + 25) != Color.black.getRGB()) {
-            					if (t.getRGB(a, b) != Color.black.getRGB()) {
-            						++s;
-            					}
-            				}
-            			}
-            		}
-            	}
+            	CvRect rotShapeROI = cvRect(idealTSize.width() / 2 - roiXOff,
+            			idealTSize.height() / 2 - roiYOff, roiWidth, roiHeight);
+            	cvSetImageROI(rotShape, rotShapeROI);
+          
+            	cvAnd(rotShape, robotThresh, rotShape, null);
+            	int curArea = cvCountNonZero(rotShape);
             	
-            	if (s > bestArea) {
+            	if (curArea > bestArea) {
             		angle = i;
-            		bestArea = s;
+            		bestArea = curArea;
             	}
             }
             
-            
-            /*
-            // Find the contour's outline distances.
-            double[] dists = getContourOutlineDistances(bestRobotShape, massCenterX, massCenterY);
-            
-            // Find the robot's direction.
-            int angle = 0;
-            double bestArea = 0.0;
-            
-            for (int i = 0; i < OUTLINE_ANGLE_COUNT; ++i) {
-            	double curArea = 0.0;
-            	
-	            for (int j = -(DIRECTION_CONE_ANGLE / 2); j <= (DIRECTION_CONE_ANGLE / 2); ++j) {
-	            	int k = (i + j + OUTLINE_ANGLE_COUNT) % OUTLINE_ANGLE_COUNT;
-	            	int w = DIRECTION_CONE_ANGLE / 2 - Math.abs(j);
-	            	curArea += dists[k] * w;
-	            }
-	            
-	            if (curArea > bestArea) {
-	            	bestArea = curArea;
-	            	angle = i;
-	            }
-            }
-            */
-        
-            return new Robot(robotPos, angle);
+            // Return the robot data.
+            return new Robot(normRobotPos, angle);
 		}
 	}
 	
@@ -376,8 +358,6 @@ public class MainImageProcessor extends BaseImageProcessor {
 			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
 					yellowRobot.getAngle());
 			drawPositionMarker(g, Color.orange, pt1, pt2);
-			
-			
 		}
 		
 		return finalFrame;
@@ -435,100 +415,20 @@ public class MainImageProcessor extends BaseImageProcessor {
 	
 	
 	/**
-	 * Find the shape with the largest area in the given array.
+	 * Get the ideal T shape, rotated to the given angle.
 	 * 
-	 * @param shapes A list of shapes to examine.
-	 * @return The polygon with the largest area.
+	 * @param angle Target angle in degrees.
+	 * @return Appropriately rotated ideal T.
 	 */
-	private CvSeq getLargestShape(ArrayList<CvSeq> shapes) {
-		if (shapes.size() == 0) {
-			return null;
-		} else {
-			CvSeq largestShape = shapes.get(0);
-			double largestArea = ProcUtils.getPolygonArea(largestShape);
-			
-			for (int i = 1; i < shapes.size(); ++i) {
-				double curArea = ProcUtils.getPolygonArea(shapes.get(i));
-				if (curArea > largestArea) {
-					largestArea = curArea;
-					largestShape = shapes.get(i);
-				}
-			}
-			
-			return largestShape;
-		}
-	}
-	
-	
-	/**
-	 * Get contour outline distances.
-	 * 
-	 * These are distances from the given center of the contour to its border
-	 * at each direction. The definition of "center" is up to the caller of
-	 * the function.
-	 * 
-	 * @param contour Contour of interest.
-	 * @param centerX X coordinate of the contour's center.
-	 * @param centerY Y coordinate of the contour's center.
-	 * @return Contour's outline distances.
-	 */
-	private double[] getContourOutlineDistances(CvSeq contour, double centerX, double centerY) {
-		double countFactor = OUTLINE_ANGLE_COUNT / 360.0;
-		
-		double[] distances = new double[OUTLINE_ANGLE_COUNT];
-		for (int i = 0; i < OUTLINE_ANGLE_COUNT; ++i) {
-			distances[i] = Double.MAX_VALUE;
-		}
-		
-		for (int i = 0; i < contour.total(); ++i) {
-        	CvPoint point1 = new CvPoint(cvGetSeqElem(contour, i));
-        	CvPoint point2 = new CvPoint(cvGetSeqElem(contour, (i + 1) % contour.total()));
-        	
-        	double angle1 = Math.atan2(point1.y() - centerY, centerX - point1.x());
-        	int dirIdx1 = (int) ((Math.toDegrees(angle1) + 179) * countFactor);
-        	
-        	double angle2 = Math.atan2(point2.y() - centerY, centerX - point2.x());
-        	int dirIdx2 = (int) ((Math.toDegrees(angle2) + 179) * countFactor);
-        	
-        	if (dirIdx1 > dirIdx2) {
-        		int x = dirIdx1;
-        		dirIdx1 = dirIdx2;
-        		dirIdx2 = x;
-        	}
-        	
-        	double dist1 = Point.distance(centerX, centerY, point1.x(), point1.y());
-        	double dist2 = Point.distance(centerX, centerY, point2.x(), point2.y());
-        	
-        	int dirSize = dirIdx2 - dirIdx1;
-        	int revDirSize = OUTLINE_ANGLE_COUNT - dirSize;
-        	
-        	if (revDirSize < dirSize) {
-        		for (int j = dirIdx2; j < OUTLINE_ANGLE_COUNT; ++j) {
-        			double d = dist2 + ((dist1 - dist2) * (j - dirIdx2)) / revDirSize;
-        			distances[j] = Math.min(distances[j], d);
-        		}
-        		for (int j = 0; j < dirIdx1; ++j) {
-        			double d = dist2 + ((dist1 - dist2) * (j - dirIdx2 + OUTLINE_ANGLE_COUNT)) / revDirSize;
-        			distances[j] = Math.min(distances[j], d);
-        		}
-        	} else {
-        		for (int j = dirIdx1; j < dirIdx2; ++j) {
-        			double d = dist1 + ((dist2 - dist1) * (j - dirIdx1)) / dirSize;
-        			distances[j] = Math.min(distances[j], d);
-        		}
-        	}
-        }
-		
-		return distances;
-	}
-	
-	
-	private IplImage getRotatedTShape(int angle) {
+	private IplImage getRotatedIdealT(int angle) {
 		angle = (angle + 270) % 360;
-		IplImage rotatedShape = IplImage.createCompatible(tShapeImage);
+		
+		IplImage rotatedShape = IplImage.createCompatible(idealTShape);
 		CvMat rotMatrix = CvMat.create(2, 3);
-		cv2DRotationMatrix(new CvPoint2D32f(25.0, 25.0), angle, 1.0, rotMatrix);
-		cvWarpAffine(tShapeImage, rotatedShape, rotMatrix);
+		
+		cv2DRotationMatrix(new CvPoint2D32f(idealTSize.width() / 2, idealTSize.height() / 2), angle, 1.0, rotMatrix);
+		cvWarpAffine(idealTShape, rotatedShape, rotMatrix);
+		
 		return rotatedShape;
 	}
 	
