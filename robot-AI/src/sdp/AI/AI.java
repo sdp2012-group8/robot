@@ -95,6 +95,11 @@ public abstract class AI {
 		public boolean isDefaultAcc() {
 			return acceleration == default_acceleration;
 		}
+		
+		@Override
+		public String toString() {
+			return "spd: "+getByteSpeed()+", tspd: "+getByteTurnSpeed()+", kick "+kick+", acc: "+getByteAcc();
+		}
 	}
 
 }

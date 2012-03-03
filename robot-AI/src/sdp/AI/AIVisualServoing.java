@@ -61,8 +61,8 @@ public class AIVisualServoing extends AI {
 		}
 
 		// debugging restrictions
-		//comm.turning_speed *= 0.5;
-		//comm.speed *= 0;
+		comm.turning_speed *= 0.2;
+		comm.speed *= 0.2;
 
 
 		prev = comm;

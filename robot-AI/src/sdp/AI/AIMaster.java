@@ -62,6 +62,7 @@ public class AIMaster extends AIListener {
 				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed());
 			else
 				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed(), command.getByteAcc());
+			System.out.print(command);
 			if (command.kick) mComm.sendMessage(opcode.kick);
 		} catch (IOException e) {
 			e.printStackTrace();
