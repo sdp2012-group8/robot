@@ -66,11 +66,7 @@ public abstract class AI {
 		if (speed < -MAX_SPEED_CM_S) speed = -MAX_SPEED_CM_S;
 		return speed;
 	}
-	
-	public Point2D.Double getOptimalTargetPoint() {
-		return this.ai_world_state.getOptimalPointBehindBall();
-	}
-	
+
 	public static class Command {
 		
 		public static final double default_acceleration = 69.81317d;

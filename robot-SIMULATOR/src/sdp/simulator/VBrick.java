@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import sdp.common.Communicator;
 import sdp.common.MessageListener;
 import sdp.common.Robot;
+import sdp.common.Utilities;
 import sdp.common.Vector2D;
 
 /**
@@ -26,8 +27,8 @@ public class VBrick implements Communicator {
 	// acceleration set on brick
 	public double acc = 1000; // acc in degrees/s/s
 	// robot size
-	public static final double ROBOT_WIDTH = Robot.WIDTH*Simulator.PITCH_WIDTH_CM; // in cm
-	public static final double ROBOT_LENGTH = Robot.LENGTH*Simulator.PITCH_WIDTH_CM; // in cm
+	public static final double ROBOT_WIDTH = Robot.WIDTH*Utilities.PITCH_WIDTH_CM; // in cm
+	public static final double ROBOT_LENGTH = Robot.LENGTH*Utilities.PITCH_WIDTH_CM; // in cm
 	
 	public static final Vector2D front_left = new Vector2D(ROBOT_LENGTH / 2, ROBOT_WIDTH / 2);
 	public static final Vector2D front_right = new Vector2D(ROBOT_LENGTH / 2, -ROBOT_WIDTH / 2);

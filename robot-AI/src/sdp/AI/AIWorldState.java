@@ -31,12 +31,12 @@ public class AIWorldState extends WorldState {
 
 	//imaginary top pitch
 	private Point2D.Double[] imaginaryTopPitch = {new Point2D.Double(0,0),
-			new Point2D.Double(WorldState.PITCH_WIDTH_CM,0),new Point2D.Double(WorldState.PITCH_WIDTH_CM,-WorldState.PITCH_HEIGHT_CM),
-			new Point2D.Double(0,-WorldState.PITCH_HEIGHT_CM)};
+			new Point2D.Double(Utilities.PITCH_WIDTH_CM,0),new Point2D.Double(Utilities.PITCH_WIDTH_CM,-Utilities.PITCH_HEIGHT_CM),
+			new Point2D.Double(0,-Utilities.PITCH_HEIGHT_CM)};
 	//imaginary bottom pitch
-	private Point2D.Double[] imaginaryBottomPitch = {new Point2D.Double(0,WorldState.PITCH_HEIGHT_CM),
-			new Point2D.Double(WorldState.PITCH_WIDTH_CM,WorldState.PITCH_HEIGHT_CM),new Point2D.Double(WorldState.PITCH_WIDTH_CM,2*WorldState.PITCH_HEIGHT_CM),
-			new Point2D.Double(0,2*WorldState.PITCH_HEIGHT_CM)};
+	private Point2D.Double[] imaginaryBottomPitch = {new Point2D.Double(0,Utilities.PITCH_HEIGHT_CM),
+			new Point2D.Double(Utilities.PITCH_WIDTH_CM,Utilities.PITCH_HEIGHT_CM),new Point2D.Double(Utilities.PITCH_WIDTH_CM,2*Utilities.PITCH_HEIGHT_CM),
+			new Point2D.Double(0,2*Utilities.PITCH_HEIGHT_CM)};
 	//imaginary top enemy goal
 	private Point2D.Double[] imaginaryTopEnemyGoal = {new Point2D.Double(0,0), new Point2D.Double(0,0)};
 	private Point2D.Double[] imaginaryBottomEnemyGoal = {new Point2D.Double(0,0), new Point2D.Double(0,0)};
@@ -55,11 +55,11 @@ public class AIWorldState extends WorldState {
 		this.my_goal_left = my_goal_left;
 
 		if (my_goal_left) {
-			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
-			my_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
+			enemy_goal = new Goal(new Point2D.Double(Utilities.PITCH_WIDTH_CM , Utilities.GOAL_Y_CM ));
+			my_goal = new Goal(new Point2D.Double(0 , Utilities.GOAL_Y_CM ));
 		} else {
-			enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
-			my_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
+			enemy_goal = new Goal(new Point2D.Double(0 , Utilities.GOAL_Y_CM ));
+			my_goal = new Goal(new Point2D.Double(Utilities.PITCH_WIDTH_CM , Utilities.GOAL_Y_CM ));
 		}
 
 		super.update(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
@@ -73,8 +73,8 @@ public class AIWorldState extends WorldState {
 		}
 
 
-		distance_to_ball = Tools.getDistanceBetweenPoint(Tools.getGlobalVector(robot, new Vector2D(Robot.LENGTH_CM/2, 0)), getBallCoords());
-		distance_to_goal = Tools.getDistanceBetweenPoint(robot.getCoords(), enemy_goal.getCentre());
+		distance_to_ball = Utilities.getDistanceBetweenPoint(Utilities.getGlobalVector(robot, new Vector2D(Robot.LENGTH_CM/2, 0)), getBallCoords());
+		distance_to_goal = Utilities.getDistanceBetweenPoint(robot.getCoords(), enemy_goal.getCentre());
 
 		// check and set flags
 		if (getBallCoords() == new Point2D.Double(-1,-1)) {
@@ -136,26 +136,26 @@ public class AIWorldState extends WorldState {
 	 */
 	protected boolean goalImage(){
 		if (my_goal_left){
-			imaginaryTopEnemyGoal[0] = new Point2D.Double(WorldState.PITCH_WIDTH_CM,-WorldState.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
-			imaginaryTopEnemyGoal[1] = new Point2D.Double(WorldState.PITCH_WIDTH_CM,-WorldState.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
-			imaginaryBottomEnemyGoal[0] = new Point2D.Double(WorldState.PITCH_WIDTH_CM,3*WorldState.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
-			imaginaryBottomEnemyGoal[1] = new Point2D.Double(WorldState.PITCH_WIDTH_CM,3*WorldState.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
+			imaginaryTopEnemyGoal[0] = new Point2D.Double(Utilities.PITCH_WIDTH_CM,-Utilities.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
+			imaginaryTopEnemyGoal[1] = new Point2D.Double(Utilities.PITCH_WIDTH_CM,-Utilities.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
+			imaginaryBottomEnemyGoal[0] = new Point2D.Double(Utilities.PITCH_WIDTH_CM,3*Utilities.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
+			imaginaryBottomEnemyGoal[1] = new Point2D.Double(Utilities.PITCH_WIDTH_CM,3*Utilities.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
 
 		}
 		else {
-			imaginaryTopEnemyGoal[0] = new Point2D.Double(0,-WorldState.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
-			imaginaryTopEnemyGoal[1] = new Point2D.Double(0,-WorldState.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
-			imaginaryBottomEnemyGoal[0] = new Point2D.Double(0,3*WorldState.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
-			imaginaryBottomEnemyGoal[1] = new Point2D.Double(0,3*WorldState.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
+			imaginaryTopEnemyGoal[0] = new Point2D.Double(0,-Utilities.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
+			imaginaryTopEnemyGoal[1] = new Point2D.Double(0,-Utilities.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
+			imaginaryBottomEnemyGoal[0] = new Point2D.Double(0,3*Utilities.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
+			imaginaryBottomEnemyGoal[1] = new Point2D.Double(0,3*Utilities.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
 		}
 
 		//robot in upper half of pitch, play ball with top wall
-		if (getRobot().getCoords().y < WorldState.PITCH_HEIGHT_CM/2){ 
+		if (getRobot().getCoords().y < Utilities.PITCH_HEIGHT_CM/2){ 
 			Point2D.Double intersection = Utilities.intersection(getBallCoords(), getRobot().getCoords(), imaginaryTopEnemyGoal[0], imaginaryTopEnemyGoal[1]);
 			if (!intersection.equals(null)){
 				if (intersection.y > imaginaryTopEnemyGoal[0].y && intersection.y < imaginaryTopEnemyGoal[1].y){
 					boolean clear = Utilities.isPathClear(getBallCoords(),intersection, getEnemyRobot());
-					//System.out.println("intersection "+Vector2D.add(new Vector2D(intersection),new Vector2D(new Point2D.Double(0,Tools.PITCH_HEIGHT_CM))));
+					//System.out.println("intersection "+Vector2D.add(new Vector2D(intersection),new Vector2D(new Point2D.Double(0,Utilities.PITCH_HEIGHT_CM))));
 					if (clear)
 						return true;
 				}
@@ -166,7 +166,7 @@ public class AIWorldState extends WorldState {
 			if (!intersection.equals(null)){
 				if (intersection.y > imaginaryBottomEnemyGoal[0].y && intersection.y < imaginaryBottomEnemyGoal[1].y){
 					boolean clear = Utilities.isPathClear(getBallCoords(),intersection, getEnemyRobot());
-					//System.out.println("intersection "+Vector2D.add(new Vector2D(intersection),new Vector2D(new Point2D.Double(0,-Tools.PITCH_HEIGHT_CM))));
+					//System.out.println("intersection "+Vector2D.add(new Vector2D(intersection),new Vector2D(new Point2D.Double(0,-Utilities.PITCH_HEIGHT_CM))));
 					if (clear)
 						return true;
 				}
@@ -186,10 +186,6 @@ public class AIWorldState extends WorldState {
 		return (180*Math.atan2(-B.getY()+A.getY(), B.getX()-A.getX()))/Math.PI;
 	}
 
-
-	
-	
-	
 
 	////////////////////////////////////////////////////////
 	// getters and setters
