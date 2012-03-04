@@ -24,8 +24,8 @@ public class Simulator extends WorldStateProvider {
 
 	private static final float MAX_FPS = 25; // simulation speed
 	private static final double ITERATION_TIME = 1000 / MAX_FPS; // in ms
-	public final static double PITCH_WIDTH_CM = Tools.PITCH_WIDTH_CM;
-	public final static double PITCH_HEIGHT_CM = Tools.PITCH_HEIGHT_CM;
+	public final static double PITCH_WIDTH_CM = WorldState.PITCH_WIDTH_CM;
+	public final static double PITCH_HEIGHT_CM = WorldState.PITCH_HEIGHT_CM;
 	private final static Vector2D PITCH_MIDDLE = new Vector2D(0.5,
 			PITCH_HEIGHT_CM / (2 * PITCH_WIDTH_CM));
 	private final static double BALL_MAX_SPEED = 350; // cm/s
@@ -1134,10 +1134,10 @@ public class Simulator extends WorldStateProvider {
 	 *            in cm
 	 */
 	private void drawVector(Vector2D origin, Vector2D vector, boolean draw_point_in_end) {
-		double ex = (origin.getX()+vector.getX())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM, ey = (origin.getY()+vector.getY())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM;
+		double ex = (origin.getX()+vector.getX())*IMAGE_WIDTH/WorldState.PITCH_WIDTH_CM, ey = (origin.getY()+vector.getY())*IMAGE_WIDTH/WorldState.PITCH_WIDTH_CM;
 		drawLine(
-				(int)(origin.getX()*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
-				(int)(origin.getY()*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
+				(int)(origin.getX()*IMAGE_WIDTH/WorldState.PITCH_WIDTH_CM),
+				(int)(origin.getY()*IMAGE_WIDTH/WorldState.PITCH_WIDTH_CM),
 				(int)(ex),
 				(int)(ey));
 		if (draw_point_in_end) {

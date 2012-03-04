@@ -14,7 +14,6 @@ import static com.googlecode.javacv.cpp.opencv_imgproc.*;
 
 
 import sdp.common.Robot;
-import sdp.common.Tools;
 import sdp.common.Utilities;
 import sdp.common.WorldState;
 
@@ -392,7 +391,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	}
 
 	private final void drawThings() {
-		final double height_coeff = height*Tools.PITCH_WIDTH_CM/Tools.PITCH_HEIGHT_CM;
+		final double height_coeff = height*WorldState.PITCH_WIDTH_CM/WorldState.PITCH_HEIGHT_CM;
 		// draw ball
 		if (state.getBallCoords().getX() != -1 && state.getBallCoords().getY() != -1) {
 			int ball_y = (int) (state.getBallCoords().getY()*height_coeff+start_y);
@@ -805,7 +804,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 		height = config.getFieldHeight();
 		stop_y = start_y+height;
 		pixels_count = width * height;
-		final double cmtopix = width / Tools.PITCH_WIDTH_CM;
+		final double cmtopix = width / WorldState.PITCH_WIDTH_CM;
 		area_ball_px = area_ball_cm * cmtopix * cmtopix;
 		area_T_px = area_T_cm * cmtopix * cmtopix;
 	}
@@ -876,7 +875,7 @@ public class SecondaryImageProcessor extends BaseImageProcessor {
 	private final Point2D.Double convertTo1(final Point2D.Double global) {
 		if (global.getX() == -1 && global.getY() == -1)
 			return global;
-		return new Point2D.Double((global.x-start_x)/width, ((global.y-start_y)/height)*Tools.PITCH_HEIGHT_CM/Tools.PITCH_WIDTH_CM);
+		return new Point2D.Double((global.x-start_x)/width, ((global.y-start_y)/height)*WorldState.PITCH_HEIGHT_CM/WorldState.PITCH_WIDTH_CM);
 	}
 
 	//	// low pass filtering

@@ -39,7 +39,7 @@ public class NNetTools {
 					}
 					);
 		case 1:
-			Vector2D goal = my_goal_left ? new Vector2D(Tools.PITCH_WIDTH_CM , Tools.GOAL_Y_CM ) : new Vector2D(0 , Tools.GOAL_Y_CM );
+			Vector2D goal = my_goal_left ? new Vector2D(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ) : new Vector2D(0 , WorldState.GOAL_Y_CM );
 			Vector2D goal_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), goal);
 			return Tools.concat(
 					Tools.getSectors(worldState, am_i_blue, 5, 22, true, false),
@@ -59,7 +59,7 @@ public class NNetTools {
 			start_angle = end_angle;
 			end_angle = temp;
 		}
-		return Utilities.normaliseAngle(ang - start_angle) >= 0 && Utilities.normaliseAngle(ang - end_angle) < 0 ? relative : new Vector2D(5*Tools.PITCH_WIDTH_CM, 0);
+		return Utilities.normaliseAngle(ang - start_angle) >= 0 && Utilities.normaliseAngle(ang - end_angle) < 0 ? relative : new Vector2D(5*WorldState.PITCH_WIDTH_CM, 0);
 	}
 	
 

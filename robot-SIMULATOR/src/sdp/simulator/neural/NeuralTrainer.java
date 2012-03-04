@@ -20,7 +20,6 @@ import sdp.AI.AIMaster.mode;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.Robot;
-import sdp.common.Tools;
 import sdp.common.Utilities;
 import sdp.common.Vector2D;
 import sdp.common.WorldState;
@@ -591,24 +590,24 @@ public class NeuralTrainer {
 				Random r = new Random();
 				Vector2D ballpos, robot2;
 				Vector2D robot1 = new Vector2D(
-						(25 + r.nextDouble()*(Tools.PITCH_WIDTH_CM-50))/Tools.PITCH_WIDTH_CM,
-						(25 + r.nextDouble()*(Tools.PITCH_HEIGHT_CM-50))/Tools.PITCH_WIDTH_CM);
+						(25 + r.nextDouble()*(WorldState.PITCH_WIDTH_CM-50))/WorldState.PITCH_WIDTH_CM,
+						(25 + r.nextDouble()*(WorldState.PITCH_HEIGHT_CM-50))/WorldState.PITCH_WIDTH_CM);
 				while (true) {
 					robot2 = new Vector2D(
-							(25 + r.nextDouble()*(Tools.PITCH_WIDTH_CM-50))/Tools.PITCH_WIDTH_CM,
-							(25 + r.nextDouble()*(Tools.PITCH_HEIGHT_CM-50))/Tools.PITCH_WIDTH_CM);
-					if (Vector2D.subtract(robot1, robot2).getLength() > 35/Tools.PITCH_WIDTH_CM)
+							(25 + r.nextDouble()*(WorldState.PITCH_WIDTH_CM-50))/WorldState.PITCH_WIDTH_CM,
+							(25 + r.nextDouble()*(WorldState.PITCH_HEIGHT_CM-50))/WorldState.PITCH_WIDTH_CM);
+					if (Vector2D.subtract(robot1, robot2).getLength() > 35/WorldState.PITCH_WIDTH_CM)
 						break;
 				}
 				mSim.putAt(robot1.getX(), robot1.getY(), 0, 180-r.nextInt(360));
 				mSim.putAt(robot2.getX(), robot2.getY(), 1, 180-r.nextInt(360));
 				while (true) {
 					ballpos = new Vector2D(
-							(7.5 + r.nextDouble()*(Tools.PITCH_WIDTH_CM-30))/Tools.PITCH_WIDTH_CM,
-							(7.5 + r.nextDouble()*(Tools.PITCH_HEIGHT_CM-30))/Tools.PITCH_WIDTH_CM);
-					if (Vector2D.subtract(robot1, ballpos).getLength() > 45/Tools.PITCH_WIDTH_CM &&
-							Vector2D.subtract(robot1, ballpos).getLength() > 45/Tools.PITCH_WIDTH_CM &&
-							mSim.isInsideRobot(ballpos.getX()/Tools.PITCH_WIDTH_CM, ballpos.getY()/Tools.PITCH_WIDTH_CM) == -1)
+							(7.5 + r.nextDouble()*(WorldState.PITCH_WIDTH_CM-30))/WorldState.PITCH_WIDTH_CM,
+							(7.5 + r.nextDouble()*(WorldState.PITCH_HEIGHT_CM-30))/WorldState.PITCH_WIDTH_CM);
+					if (Vector2D.subtract(robot1, ballpos).getLength() > 45/WorldState.PITCH_WIDTH_CM &&
+							Vector2D.subtract(robot1, ballpos).getLength() > 45/WorldState.PITCH_WIDTH_CM &&
+							mSim.isInsideRobot(ballpos.getX()/WorldState.PITCH_WIDTH_CM, ballpos.getY()/WorldState.PITCH_WIDTH_CM) == -1)
 						break;
 				}
 

@@ -29,11 +29,11 @@ public abstract class AI {
 	protected AIWorldState ai_world_state= null;
 	protected AIWorldState old_ai_world_state = null;
 	
-	protected abstract Commands chaseBall() throws IOException;
-	protected abstract Commands gotBall() throws IOException;
-	protected abstract Commands defendGoal() throws IOException;
-	protected abstract Commands penaltiesDefend() throws IOException;
-	protected abstract Commands penaltiesAttack() throws IOException;
+	protected abstract Command chaseBall() throws IOException;
+	protected abstract Command gotBall() throws IOException;
+	protected abstract Command defendGoal() throws IOException;
+	protected abstract Command penaltiesDefend() throws IOException;
+	protected abstract Command penaltiesAttack() throws IOException;
 	
 	/**
 	 * Initialise the AI
@@ -44,8 +44,8 @@ public abstract class AI {
 	public AI() {
 	}
 	
-	public Commands sit() throws IOException {
-		return new Commands(0, 0, false);
+	public Command sit() throws IOException {
+		return new Command(0, 0, false);
 	}
 
 	
@@ -71,14 +71,14 @@ public abstract class AI {
 		return this.ai_world_state.getOptimalPointBehindBall();
 	}
 	
-	public static class Commands {
+	public static class Command {
 		
 		public static final double default_acceleration = 69.81317d;
 		
 		public double speed, turning_speed, acceleration = default_acceleration;
 		public boolean kick;
 		
-		public Commands(double speed, double turning_speed, boolean kick) {
+		public Command(double speed, double turning_speed, boolean kick) {
 			this.speed = speed;
 			this.turning_speed = turning_speed;
 			this.kick = kick;

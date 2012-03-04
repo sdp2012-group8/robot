@@ -21,6 +21,10 @@ public class WorldState {
 	/** Picture of the world. */
 	private BufferedImage worldImage;
 	
+	// pitch constants
+	public final static double PITCH_WIDTH_CM = 244;
+	public final static double PITCH_HEIGHT_CM = 113.7;
+	public final static double GOAL_Y_CM = PITCH_HEIGHT_CM/2;
 	
 	/**
 	 * The main constructor.

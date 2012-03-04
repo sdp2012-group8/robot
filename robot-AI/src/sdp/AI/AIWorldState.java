@@ -14,8 +14,6 @@ import sdp.common.WorldState;
 
 public class AIWorldState extends WorldState {
 
-	private static final double POINT_OFFSET = 2*Robot.LENGTH_CM;
-
 	private boolean my_team_blue;
 	private boolean my_goal_left;
 	private Goal enemy_goal;
@@ -33,12 +31,12 @@ public class AIWorldState extends WorldState {
 
 	//imaginary top pitch
 	private Point2D.Double[] imaginaryTopPitch = {new Point2D.Double(0,0),
-			new Point2D.Double(Tools.PITCH_WIDTH_CM,0),new Point2D.Double(Tools.PITCH_WIDTH_CM,-Tools.PITCH_HEIGHT_CM),
-			new Point2D.Double(0,-Tools.PITCH_HEIGHT_CM)};
+			new Point2D.Double(WorldState.PITCH_WIDTH_CM,0),new Point2D.Double(WorldState.PITCH_WIDTH_CM,-WorldState.PITCH_HEIGHT_CM),
+			new Point2D.Double(0,-WorldState.PITCH_HEIGHT_CM)};
 	//imaginary bottom pitch
-	private Point2D.Double[] imaginaryBottomPitch = {new Point2D.Double(0,Tools.PITCH_HEIGHT_CM),
-			new Point2D.Double(Tools.PITCH_WIDTH_CM,Tools.PITCH_HEIGHT_CM),new Point2D.Double(Tools.PITCH_WIDTH_CM,2*Tools.PITCH_HEIGHT_CM),
-			new Point2D.Double(0,2*Tools.PITCH_HEIGHT_CM)};
+	private Point2D.Double[] imaginaryBottomPitch = {new Point2D.Double(0,WorldState.PITCH_HEIGHT_CM),
+			new Point2D.Double(WorldState.PITCH_WIDTH_CM,WorldState.PITCH_HEIGHT_CM),new Point2D.Double(WorldState.PITCH_WIDTH_CM,2*WorldState.PITCH_HEIGHT_CM),
+			new Point2D.Double(0,2*WorldState.PITCH_HEIGHT_CM)};
 	//imaginary top enemy goal
 	private Point2D.Double[] imaginaryTopEnemyGoal = {new Point2D.Double(0,0), new Point2D.Double(0,0)};
 	private Point2D.Double[] imaginaryBottomEnemyGoal = {new Point2D.Double(0,0), new Point2D.Double(0,0)};
@@ -57,11 +55,11 @@ public class AIWorldState extends WorldState {
 		this.my_goal_left = my_goal_left;
 
 		if (my_goal_left) {
-			enemy_goal = new Goal(new Point2D.Double(Tools.PITCH_WIDTH_CM , Tools.GOAL_Y_CM ));
-			my_goal = new Goal(new Point2D.Double(0 , Tools.GOAL_Y_CM ));
+			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
+			my_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
 		} else {
-			enemy_goal = new Goal(new Point2D.Double(0 , Tools.GOAL_Y_CM ));
-			my_goal = new Goal(new Point2D.Double(Tools.PITCH_WIDTH_CM , Tools.GOAL_Y_CM ));
+			enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
+			my_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
 		}
 
 		super.update(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
@@ -138,21 +136,21 @@ public class AIWorldState extends WorldState {
 	 */
 	protected boolean goalImage(){
 		if (my_goal_left){
-			imaginaryTopEnemyGoal[0] = new Point2D.Double(Tools.PITCH_WIDTH_CM,-Tools.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
-			imaginaryTopEnemyGoal[1] = new Point2D.Double(Tools.PITCH_WIDTH_CM,-Tools.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
-			imaginaryBottomEnemyGoal[0] = new Point2D.Double(Tools.PITCH_WIDTH_CM,3*Tools.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
-			imaginaryBottomEnemyGoal[1] = new Point2D.Double(Tools.PITCH_WIDTH_CM,3*Tools.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
+			imaginaryTopEnemyGoal[0] = new Point2D.Double(WorldState.PITCH_WIDTH_CM,-WorldState.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
+			imaginaryTopEnemyGoal[1] = new Point2D.Double(WorldState.PITCH_WIDTH_CM,-WorldState.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
+			imaginaryBottomEnemyGoal[0] = new Point2D.Double(WorldState.PITCH_WIDTH_CM,3*WorldState.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
+			imaginaryBottomEnemyGoal[1] = new Point2D.Double(WorldState.PITCH_WIDTH_CM,3*WorldState.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
 
 		}
 		else {
-			imaginaryTopEnemyGoal[0] = new Point2D.Double(0,-Tools.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
-			imaginaryTopEnemyGoal[1] = new Point2D.Double(0,-Tools.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
-			imaginaryBottomEnemyGoal[0] = new Point2D.Double(0,3*Tools.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
-			imaginaryBottomEnemyGoal[1] = new Point2D.Double(0,3*Tools.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
+			imaginaryTopEnemyGoal[0] = new Point2D.Double(0,-WorldState.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
+			imaginaryTopEnemyGoal[1] = new Point2D.Double(0,-WorldState.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
+			imaginaryBottomEnemyGoal[0] = new Point2D.Double(0,3*WorldState.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
+			imaginaryBottomEnemyGoal[1] = new Point2D.Double(0,3*WorldState.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
 		}
 
 		//robot in upper half of pitch, play ball with top wall
-		if (getRobot().getCoords().y < Tools.PITCH_HEIGHT_CM/2){ 
+		if (getRobot().getCoords().y < WorldState.PITCH_HEIGHT_CM/2){ 
 			Point2D.Double intersection = Utilities.intersection(getBallCoords(), getRobot().getCoords(), imaginaryTopEnemyGoal[0], imaginaryTopEnemyGoal[1]);
 			if (!intersection.equals(null)){
 				if (intersection.y > imaginaryTopEnemyGoal[0].y && intersection.y < imaginaryTopEnemyGoal[1].y){
@@ -189,97 +187,9 @@ public class AIWorldState extends WorldState {
 	}
 
 
-	/**
-	 * Returns the point the robot should go to behind the ball.
-	 * Distance behind the ball set by POINT_OFFSET
-	 * @param point The target point on the goal the robot should be aligned to.
-	 * @return Point2D.Double behind the ball
-	 */
-	public Point2D.Double getPointBehindBall(Point2D.Double point) {
-		Point2D.Double ball = getBallCoords();
-
-		if (point.getY() == ball.getY()) {
-			return new Point2D.Double(my_goal_left ? ball.getX() - POINT_OFFSET : ball.getX() + POINT_OFFSET, ball.getY());
-		} else {
-			double x, y, a, b;
-			a = point.getY() - ball.getY();
-			b = point.getX() - ball.getX();
-
-			if (my_goal_left) {
-				y = ball.getY() - POINT_OFFSET*a/(Math.sqrt(b*b + a*a));
-				x = ball.getX() + (b*(y - ball.getY())/a);
-			} else {
-				y = ball.getY() + POINT_OFFSET*a/(Math.sqrt(b*b + a*a));
-				x = ball.getX() - (b*(y - ball.getY())/a);
-			}
-
-			//x = ball.getX() + (b*(y - ball.getY())/a);
-
-			return new Point2D.Double(x,y);
-		}
-	}
-
-
-	/**
-	 * Calculates all the points behind the ball that would align the robot to shoot and
-	 * returns the point closest to the robot.
-	 * @return The point closest to the robot that would allow it to shoot.
-	 * @throws NullPointerException Throws exception when the robot can't see a goal.
-	 */
-	public Point2D.Double getOptimalPointBehindBall() throws NullPointerException {
-		ArrayList<Point2D.Double> goal_points = new ArrayList<Point2D.Double>();
-		Point2D.Double min_point = null;
-		double min_distance = Tools.PITCH_WIDTH_CM*2;
-
-		goal_points.add(enemy_goal.getCentre());
-		goal_points.add(enemy_goal.getTop());
-		goal_points.add(enemy_goal.getBottom());
-		goal_points.add(new Point2D.Double(enemy_goal.getCentre().x, enemy_goal.getCentre().y - Tools.PITCH_HEIGHT_CM));
-		goal_points.add(new Point2D.Double(enemy_goal.getCentre().x, enemy_goal.getCentre().y + Tools.PITCH_HEIGHT_CM));
-
-		Iterator<Point2D.Double> itr = goal_points.iterator();
-		while (itr.hasNext()) {
-			Point2D.Double point = itr.next();
-			if (!Utilities.isPathClear(point, getBallCoords(), enemy_robot)) {
-				itr.remove();
-			}
-		}
-
-		itr = goal_points.iterator();
-		while (itr.hasNext()) {
-			Point2D.Double point = itr.next();
-			Point2D.Double temp_point = getPointBehindBall(point);
-			
-			if (Utilities.isPointInField(temp_point)) { 
-				if (!isPointInRobot(temp_point)) {
-					//System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
-					//System.out.println("Min distance: "+min_distance);
-					if (Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength() < min_distance) {
-						min_point = temp_point;
-						min_distance = Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength();
-					}
-				}
-			}
-		}
-		
-		//System.out.println(min_point);
-
-		return min_point;
-	}
 	
-	/**
-	 * Helper function to find if a specific point is within the enemy robot.
-	 * @param point The point to check.
-	 * @return Returns true if the point is within the enemy robot.
-	 */
-	public boolean isPointInRobot(Point2D.Double point) {
-		if (Utilities.pointInTriangle(point, enemy_robot.getFrontLeft(), enemy_robot.getFrontRight(), enemy_robot.getBackLeft()) && 
-				Utilities.pointInTriangle(point, enemy_robot.getBackLeft(), enemy_robot.getBackRight(), enemy_robot.getFrontRight())){
-			return true;
-		}
-		return false;
-	}
-
+	
+	
 
 	////////////////////////////////////////////////////////
 	// getters and setters

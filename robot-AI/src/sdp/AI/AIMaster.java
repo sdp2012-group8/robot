@@ -3,7 +3,7 @@ package sdp.AI;
 import java.io.IOException;
 
 //import sdp.AI.neural.AINeuralNetwork;
-import sdp.AI.AI.Commands;
+import sdp.AI.AI.Command;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.WorldStateProvider;
@@ -50,14 +50,14 @@ public class AIMaster extends AIListener {
 	 * The methods called are in all types of the AI.
 	 */
 	protected synchronized void worldChanged() {
-		AI.Commands command;
+		AI.Command command;
 		
 		checkState();
 		ai.update(ai_world_state);
 		try {
 			command = getCommand();
 			if (command == null)
-				command = new Commands(0, 0, false);
+				command = new Command(0, 0, false);
 			if (command.isDefaultAcc())
 				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed());
 			else
@@ -70,7 +70,7 @@ public class AIMaster extends AIListener {
 		
 	}
 	
-	private AI.Commands getCommand() throws IOException {
+	private AI.Command getCommand() throws IOException {
 		switch (getState()) {
 		case chase_ball:
 			return ai.chaseBall();
