@@ -1,12 +1,17 @@
 package sdp.AI;
 
+import java.awt.Canvas;
+import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+
 import sdp.common.Tools;
 import sdp.common.Utilities;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.common.Robot;
 import sdp.common.WorldStateProvider;
+import sdp.vision.processing.ImageProcessorConfig;
 
 /**
  * 
@@ -25,7 +30,9 @@ public abstract class AIListener extends WorldStateProvider {
 	protected WorldState world_state = null;
 	
 	protected AIWorldState ai_world_state;
-	private boolean my_goal_left, my_team_blue;
+	private boolean my_goal_left, my_team_blue, override_vision = false;
+	
+	private ImageProcessorConfig config;
 	
 	// this is the amount of filtering to be done
 	// higher values mean that the new data will "weigh more"
@@ -42,6 +49,14 @@ public abstract class AIListener extends WorldStateProvider {
 	 */
 	public AIListener(WorldStateProvider Obs) {
 		this.mObs = new WorldStateObserver(Obs);
+	}
+	
+	public void switchOverrideVision() {
+		override_vision = ! override_vision;
+	}
+	
+	public void setConfiguration(ImageProcessorConfig config) {
+		this.config = config;
 	}
 
 	/**
@@ -64,12 +79,15 @@ public abstract class AIListener extends WorldStateProvider {
 						world_state = state;
 						ai_world_state = new AIWorldState(world_state, my_team_blue, my_goal_left);
 					} else {
+						BufferedImage im = state.getWorldImage();
+						if (override_vision) {
+							ai_world_state.onDraw(im, config);
+						}
 						world_state = new WorldState(checkBall(state.getBallCoords(), world_state.getBallCoords()),
 								lowPass(world_state.getBlueRobot(), state.getBlueRobot()),
 								lowPass(world_state.getYellowRobot(), state.getYellowRobot()),
-								state.getWorldImage());
+								im);
 					}
-					
 					ai_world_state.update(world_state, my_team_blue, my_goal_left);
 					
 					// pass coordinates to decision making logic

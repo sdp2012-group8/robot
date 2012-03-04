@@ -8,13 +8,16 @@ import sdp.common.Communicator.sensorType;
 import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 
+import lejos.nxt.ColorSensor;
 import lejos.nxt.LCD;
+import lejos.nxt.LightSensor;
 import lejos.nxt.Motor;
 import lejos.nxt.NXT;
 import lejos.nxt.SensorPort;
 import lejos.nxt.Sound;
 import lejos.nxt.TouchSensor;
 import lejos.nxt.UltrasonicSensor;
+import lejos.robotics.Color;
 
 /**
  * This is the program that should be uploaded to the NXT Brick.
@@ -41,8 +44,7 @@ public class Brick {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// connect with PC and start receiving messages
-		
+		// connect with PC and start receiving messages	
 		
 //		new Thread() {
 //			public void run() {

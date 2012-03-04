@@ -1,13 +1,9 @@
 package sdp.simulator;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
-import sdp.common.NNetTools;
+import sdp.common.Painter;
 import sdp.common.Robot;
 import sdp.common.Utilities;
 import sdp.common.Vector2D;
@@ -39,14 +35,12 @@ public class Simulator extends WorldStateProvider {
 	private final static double WALL_BOUNCINESS = 0.4; // 0 - inelastic, 1 -
 	// elastic
 	private final static double ROBOT_BOUNCINESS = 0.3; // 0 - 1
-	private final static double FLIPPER_BOUNCINESS = 0.8; // 0 - 1
 	private final static double GOAL_SIZE = 60; // cm
 
 	private final static double KICKER_RANGE = 10; // cm
 	private final static double KICKER_MAX_SPEED = 300; // cm/s
 	private final static double KICKER_MIN_SPEED = 50; // cm/s
 
-	private final static double FLIPPER_SIZE = 2; // cm
 
 	private final static int IMAGE_WIDTH = 640,
 			IMAGE_HEIGHT = (int) (IMAGE_WIDTH * PITCH_HEIGHT_CM / PITCH_WIDTH_CM),
@@ -89,7 +83,6 @@ public class Simulator extends WorldStateProvider {
 					PITCH_WIDTH_CM), future_ball_velocity = Vector2D.ZERO();
 	// define graphics
 	private BufferedImage im = null;
-	private Graphics2D g = null;
 
 	private boolean paused = false;
 	private boolean running = true;
@@ -352,7 +345,6 @@ public class Simulator extends WorldStateProvider {
 	 */
 	public void stop() {
 		running = false;
-		g.dispose();
 	}
 
 	/**
@@ -805,237 +797,45 @@ public class Simulator extends WorldStateProvider {
 		setChanged();
 		notifyObservers(state);
 	}
-
-	/**
-	 * Creates visualization
-	 * 
-	 * @return
-	 */
+	
 	private void image(double dt) {
-		// create image if not existing
 		if (im == null) {
 			im = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT
-					+ IMAGE_INFO_SEC_HEIGHT, BufferedImage.TYPE_INT_RGB);
-			g = im.createGraphics();
-			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-					RenderingHints.VALUE_ANTIALIAS_ON);
+			+ IMAGE_INFO_SEC_HEIGHT, BufferedImage.TYPE_INT_RGB);
 		}
 		// draw table
-		g.setColor(Color.BLACK);
-		g.fillRect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT + IMAGE_INFO_SEC_HEIGHT);
-		g.setColor(new Color(10, 80, 0));
-		fillRect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
+		WorldState state_cm = Utilities.toCentimeters(state);
+		Painter p = new Painter(im, state_cm);
+		p.setOffsets(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
+		p.MOUSE_OVER_BALL = MOUSE_OVER_BALL;
+		p.MOUSE_OVER_ROBOT = MOUSE_OVER_ROBOT;
+		p.reference_robot_id = reference_robot_id;
+		p.g.setColor(Color.BLACK);
+		p.g.fillRect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT + IMAGE_INFO_SEC_HEIGHT);
+		p.g.setColor(new Color(10, 80, 0));
+		p.fillRect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
 		// draw goals
-		g.setColor(new Color(180, 180, 180));
+		p.g.setColor(new Color(180, 180, 180));
 
-		fillRect(0,
+		p.fillRect(0,
 				(int) (IMAGE_WIDTH*(PITCH_HEIGHT_CM/2-GOAL_SIZE/2)/PITCH_WIDTH_CM),
 				(int) (IMAGE_WIDTH*2/PITCH_WIDTH_CM),
 				(int) (IMAGE_WIDTH*GOAL_SIZE/PITCH_WIDTH_CM));
-		fillRect((int) (IMAGE_WIDTH - IMAGE_WIDTH*2/PITCH_WIDTH_CM),
+		p.fillRect((int) (IMAGE_WIDTH - IMAGE_WIDTH*2/PITCH_WIDTH_CM),
 				(int) (IMAGE_WIDTH*(PITCH_HEIGHT_CM/2-GOAL_SIZE/2)/PITCH_WIDTH_CM),
 				(int) (IMAGE_WIDTH*2/PITCH_WIDTH_CM),
 				(int) (IMAGE_WIDTH*GOAL_SIZE/PITCH_WIDTH_CM));
-
-		// draw robots
-		WorldState state_cm = null;
-		if (state != null)
-			state_cm = Utilities.toCentimeters(state);
-		for (int i = 0; i < robot.length; i++) {
-			Robot robot;
-			Color color = Color.gray;
-			// chose robot color
-			switch (i) {
-			case 0:
-				color = Color.blue;
-				break;
-			case 1:
-				color = new Color(220, 220, 0);
-				break;
-			}
-			if (i == MOUSE_OVER_ROBOT)
-				g.setColor(brighter(color));
-			else
-				g.setColor(color);
-			g.setStroke(new BasicStroke(1.0f));
-			robot = new Robot(Vector2D.divide(positions[i], PITCH_WIDTH_CM),
-					directions[i]);
-			// draw body of robot
-
-			fillPolygon(new int[] {
-					(int)(robot.getFrontLeft().getX()*IMAGE_WIDTH),
-					(int)(robot.getFrontRight().getX()*IMAGE_WIDTH),
-					(int)(robot.getBackRight().getX()*IMAGE_WIDTH),
-					(int)(robot.getBackLeft().getX()*IMAGE_WIDTH),
-					(int)(robot.getFrontLeft().getX()*IMAGE_WIDTH)
-			}, new int[] {
-					(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH),
-					(int)(robot.getFrontRight().getY()*IMAGE_WIDTH),
-					(int)(robot.getBackRight().getY()*IMAGE_WIDTH),
-					(int)(robot.getBackLeft().getY()*IMAGE_WIDTH),
-					(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH)
-			}, 5);
-			// draw flipper's
-			g.setStroke(new BasicStroke(3.0f));
-			double dir_x = FLIPPER_SIZE*Math.cos(robot.getAngle()*Math.PI/180d)/PITCH_WIDTH_CM;
-			double dir_y = -FLIPPER_SIZE*Math.sin(robot.getAngle()*Math.PI/180d)/PITCH_WIDTH_CM;
-			//			drawLine(
-			//					(int)(robot.getFrontLeft().getX()*IMAGE_WIDTH),
-			//					(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH),
-			//					(int)((robot.getFrontLeft().getX()+dir_x)*IMAGE_WIDTH),
-			//					(int)((robot.getFrontLeft().getY()+dir_y)*IMAGE_WIDTH));
-			//			drawLine(
-			//					(int)(robot.getFrontRight().getX()*IMAGE_WIDTH),
-			//					(int)(robot.getFrontRight().getY()*IMAGE_WIDTH),
-			//					(int)((robot.getFrontRight().getX()+dir_x)*IMAGE_WIDTH),
-			//					(int)((robot.getFrontRight().getY()+dir_y)*IMAGE_WIDTH));
-
-			// draw direction pointer
-			double shift_x = 0.01 * Math.cos(robot.getAngle() * Math.PI / 180d);
-			double shift_y = -0.01
-					* Math.sin(robot.getAngle() * Math.PI / 180d);
-			g.setColor(Color.white);
-			g.setStroke(new BasicStroke(10.0f));
-
-			dir_x = 0.04*Math.cos(robot.getAngle()*Math.PI/180d);
-			dir_y = -0.04*Math.sin(robot.getAngle()*Math.PI/180d);
-			drawLine(
-					(int)((robot.getCoords().getX()-shift_x)*IMAGE_WIDTH),
-					(int)((robot.getCoords().getY()-shift_y)*IMAGE_WIDTH),
-					(int)((robot.getCoords().getX()+dir_x-shift_x)*IMAGE_WIDTH),
-					(int)((robot.getCoords().getY()+dir_y-shift_y)*IMAGE_WIDTH));
-			dir_x = 0.03*Math.cos((robot.getAngle()+90)*Math.PI/180d);
-			dir_y = -0.03*Math.sin((robot.getAngle()+90)*Math.PI/180d);
-			drawLine(
-					(int)((robot.getCoords().getX()-dir_x/2-shift_x)*IMAGE_WIDTH),
-					(int)((robot.getCoords().getY()-dir_y/2-shift_y)*IMAGE_WIDTH),
-					(int)((robot.getCoords().getX()+dir_x/2-shift_x)*IMAGE_WIDTH),
-					(int)((robot.getCoords().getY()+dir_y/2-shift_y)*IMAGE_WIDTH));
-
-			// draw nearest points of collision
-			if (i < 2 && state_cm != null) {
-				color = brighter(color);
-				g.setColor(new Color(color.getRed(), color.getGreen(), color
-						.getBlue(), 50));
-				g.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_BUTT,
-						BasicStroke.JOIN_MITER, 10.0f, new float[] { 10.0f },
-						0.0f));
-				boolean am_i_blue = i == 0;
-				robot = am_i_blue ? state_cm.getBlueRobot() : state_cm
-						.getYellowRobot();
-				Vector2D local_origin = new Vector2D(Robot.LENGTH_CM/2+2,0);
-				drawVector(Utilities.getGlobalVector(robot, local_origin),  Utilities.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0), true), true);
-				if (i == 0) {
-					Point2D.Double p_target = Utilities.getOptimalPointBehindBall(state_cm, true, true);
-
-					if (p_target != null) {
-
-
-						Vector2D target = new Vector2D(p_target);
-
-
-						Vector2D startPt = new Vector2D(robot.getCoords());
-						Vector2D dir =  Vector2D.subtract(target, startPt);
-						double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
-						final double length = Robot.LENGTH_CM/2;
-						double cos = Math.cos(angle)*length;
-						double sin = Math.sin(angle)*length;
-						Vector2D right = new Vector2D(cos, sin);
-						Vector2D left = new Vector2D(-cos, -sin);
-						drawVector(Vector2D.add(startPt, right),  Utilities.raytraceVector(state_cm, Vector2D.add(startPt, right), dir, am_i_blue, true), true);
-						drawVector(Vector2D.add(startPt, left), Utilities.raytraceVector(state_cm, Vector2D.add(startPt, left), dir, am_i_blue, true), true);
-
-						g.setColor(new Color(255, 255, 255, 200));
-						fillOval((int)(target.x* IMAGE_WIDTH / PITCH_WIDTH_CM-3), (int) (target.y* IMAGE_WIDTH / PITCH_WIDTH_CM-3), 6, 6);
-
-
-						g.setStroke(new BasicStroke(8.0f));
-						final int COLL_SECS_COUNT = 110;
-						final double SEC_ANGLE = 360d/COLL_SECS_COUNT;
-
-						final double[] sectors = Utilities.getSectors(state_cm, true, 5, COLL_SECS_COUNT, false, true);
-
-						// find desired
-						double temp = 999;
-						int id = -1;
-						final Vector2D point_rel = Utilities.getLocalVector(robot, target);
-
-						// get direction and distance to point
-						final double point_dir = Vector2D.getDirection(point_rel);
-						final double point_dist = point_rel.getLength();
-						double turn_ang = 999;
-						for (int ii = 0; ii < sectors.length; ii++) {
-
-							if (sectors[ii] > point_dist+Robot.LENGTH_CM/2) {	
-								double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
-								double diff = Utilities.normaliseAngle(ang-point_dir);
-								if (Math.abs(diff) < Math.abs(temp)) {
-									temp = diff;
-									id = ii;
-									turn_ang = ang;
-								}
-							}
-						}
-
-						// get second closest
-						double temp2 = 999;
-						int id2 = -1;
-						double turn_ang2 = 999;
-						for (int ii = 0; ii < sectors.length; ii++) {
-							if (sectors[ii] > point_dist+Robot.LENGTH_CM/2) {	
-								double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
-								double diff = Utilities.normaliseAngle(ang-point_dir);
-								if (Math.abs(diff) < Math.abs(temp2) && ii != id) {
-									temp2 = diff;
-									id2 = ii;
-									turn_ang2 = ang;
-								}
-							}
-						}
-
-						if (Math.abs(Utilities.normaliseAngle(turn_ang2-turn_ang)) > SEC_ANGLE*2 && Math.abs(turn_ang2) < Math.abs(turn_ang)) {
-							int temp3 = id;
-							id = id2;
-							id2 = temp3;
-						}
-
-
-						for (int ii = 0; ii < sectors.length; ii++) {
-							if (ii == id)
-								g.setColor(new Color(255, 0, 0, 200));
-							else if (ii == id2)
-								g.setColor(new Color(255, 255, 0, 200));
-							else
-								g.setColor(new Color(255, 255, 255, 10));
-							double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
-							double dista = sectors[ii];
-							Vector2D vec = Vector2D.multiply(Vector2D.rotateVector(new Vector2D(1, 0), ang), dista);
-							Vector2D coor = new Vector2D(robot.getCoords());
-							drawVector(coor, Vector2D.subtract(Utilities.getGlobalVector(robot, vec), coor), true);
-						}
-					}
-				}
-			}
-		}
-		// draw ball
-		g.setColor(Color.red);
-		if (MOUSE_OVER_BALL)
-			g.setColor(brighter(g.getColor()));
-		g.setStroke(new BasicStroke(1.0f));
-		fillOval(
-
-				(int) ((ball.getX() - BALL_RADIUS) * IMAGE_WIDTH / PITCH_WIDTH_CM),
-				(int) ((ball.getY() - BALL_RADIUS) * IMAGE_WIDTH / PITCH_WIDTH_CM),
-				(int) (2 * BALL_RADIUS * IMAGE_WIDTH / PITCH_WIDTH_CM),
-				(int) (2 * BALL_RADIUS * IMAGE_WIDTH / PITCH_WIDTH_CM));
+		
+		p.image();
+		
 		// draw Strings
-		g.setColor(Color.BLACK);
-		g.fillRect(0, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_INFO_SEC_HEIGHT);
-		g.setColor(Color.white);
-		g.drawString((int) (1 / dt) + " fps", IMAGE_WIDTH - 50, 20);
-		g.drawString("Score: " + SCORE_LEFT + " : " + SCORE_RIGHT,
+		p.g.setColor(Color.BLACK);
+		p.g.fillRect(0, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_INFO_SEC_HEIGHT);
+		p.g.setColor(Color.white);
+		p.g.drawString((int) (1 / dt) + " fps", IMAGE_WIDTH - 50, 20);
+		p.g.drawString("Score: " + SCORE_LEFT + " : " + SCORE_RIGHT,
 				IMAGE_WIDTH / 2, 20);
-		g.drawString(
+		p.g.drawString(
 				"blue - ball: "
 						+ String.format("%.1f", (Vector2D.subtract(ball,
 								positions[0]).getLength()))
@@ -1043,11 +843,11 @@ public class Simulator extends WorldStateProvider {
 								+ String.format("%.1f",
 										Vector2D.getAngle(ball, positions[0])) + "°",
 										20, IMAGE_HEIGHT + 20);
-		g.drawString(
+		p.g.drawString(
 				"blue : " + positions[0] + "; "
 						+ String.format("%.1f", directions[0]) + "°", 20,
 						IMAGE_HEIGHT + 40);
-		g.drawString(
+		p.g.drawString(
 				"yellow - ball: "
 						+ String.format("%.1f", (Vector2D.subtract(ball,
 								positions[1]).getLength()))
@@ -1055,113 +855,12 @@ public class Simulator extends WorldStateProvider {
 								+ String.format("%.1f",
 										Vector2D.getAngle(ball, positions[1])) + "°",
 										20, IMAGE_HEIGHT + 60);
-		g.drawString(
+		p.g.drawString(
 				"yellow : " + positions[1] + "; "
 						+ String.format("%.1f", directions[1]) + "°", 20,
 						IMAGE_HEIGHT + 80);
-		g.drawString("ball : " + ball, IMAGE_WIDTH - 150, IMAGE_HEIGHT + 20);
-	}
-
-	// helpers
-
-
-	private void fillRect(int x, int y, int w, int h) {
-		fillPolygon(new int[] {
-				x,
-				x+w,
-				x+w,
-				x,
-				x
-		}, new int[] {
-				y,
-				y,
-				y+h,
-				y+h,
-				y
-		}, 5);
-	}
-
-	/**
-	 * Use instead of g.fillOval
-	 * @param x
-	 * @param y
-	 * @param w
-	 * @param h
-	 */
-	private void fillOval(int x, int y, int w, int h) {
-		Vector2D l_r = transformScreenVectorToLocalOne(x-w/2, y-h/2);
-		Vector2D t_r = transformScreenVectorToLocalOne(x+w/2, y+h/2);
-		Vector2D cent = Vector2D.divide(Vector2D.add(l_r, t_r), 2);
-		g.fillOval((int) cent.getX(), (int) cent.getY(), w, h);
-	}
-
-	/**
-	 * Use instead of g.fillPolygon
-	 * @param xs
-	 * @param ys
-	 * @param size number of points
-	 */
-	private void fillPolygon(int[] xs, int[] ys, int size) {
-		Vector2D[] points = new Vector2D[size];
-		int[] newxs = new int[size], newys = new int[size];
-		for (int i = 0; i < size; i++) {
-			points[i] = transformScreenVectorToLocalOne(xs[i], ys[i]);
-			newxs[i] = (int) points[i].getX();
-			newys[i] = (int) points[i].getY();
-		}
-		g.fillPolygon(newxs, newys, size);
-	}
-
-
-	/**
-	 * Use instead of g.DrawLine
-	 * 
-	 * @param x1
-	 * @param y1
-	 * @param x2
-	 * @param y2
-	 */
-	private void drawLine(int x1, int y1, int x2, int y2) {
-		if (reference_robot_id != null) {
-
-			Vector2D start = transformScreenVectorToLocalOne(x1, y1);
-			Vector2D end = transformScreenVectorToLocalOne(x2, y2);
-			g.drawLine((int) start.getX(), (int) start.getY(),
-					(int) end.getX(), (int) end.getY());
-		} else
-			g.drawLine(x1, y1, x2, y2);
-	}
-
-	/**
-	 * Draw vecrtor
-	 * 
-	 * @param origin
-	 *            in cm
-	 * @param vector
-	 *            in cm
-	 */
-	private void drawVector(Vector2D origin, Vector2D vector, boolean draw_point_in_end) {
-
-		double ex = (origin.getX()+vector.getX())*IMAGE_WIDTH/PITCH_WIDTH_CM, ey = (origin.getY()+vector.getY())*IMAGE_WIDTH/PITCH_WIDTH_CM;
-		drawLine(
-				(int)(origin.getX()*IMAGE_WIDTH/PITCH_WIDTH_CM),
-				(int)(origin.getY()*IMAGE_WIDTH/PITCH_WIDTH_CM),
-				(int)(ex),
-				(int)(ey));
-		if (draw_point_in_end) {
-			fillOval((int) ex-3, (int) ey-3, 6, 6);
-		}
-
-	}
-
-	private Vector2D transformScreenVectorToLocalOne(int x, int y) {
-
-		if (reference_robot_id == null)
-			return new Vector2D(x, y);
-		Robot rob = new Robot(Vector2D.multiply(positions[reference_robot_id], IMAGE_WIDTH/PITCH_WIDTH_CM), directions[reference_robot_id]);
-		Vector2D centre_pitch = new Vector2D(0.5*IMAGE_WIDTH, 0.5*PITCH_HEIGHT_CM*IMAGE_WIDTH/PITCH_WIDTH_CM);
-		return Vector2D.add(centre_pitch, Utilities.getLocalVector(rob, new Vector2D(x, y)));
-
+		p.g.drawString("ball : " + ball, IMAGE_WIDTH - 150, IMAGE_HEIGHT + 20);
+		p.dispose();
 	}
 
 	/**
@@ -1177,30 +876,16 @@ public class Simulator extends WorldStateProvider {
 	 *            collision at this position
 	 * @param rot_speed
 	 *            the speed in deg/sec at which the body is rotating
-	 * @param time
+	 * @param timeprivate
 	 *            passed until now (usually just dt, not 2*dt)
 	 * @return the velocity in the same reference frame that should be added to
 	 *         the point at the current position
 	 */
-	private Vector2D getPointOfContactVel(Vector2D curr_position,
+	private  Vector2D getPointOfContactVel(Vector2D curr_position,
 			Vector2D new_position, double rot_speed, double dt) {
 		return Vector2D.divide(
 				Vector2D.subtract(curr_position,
 						Vector2D.rotateVector(new_position, -rot_speed * dt)),
 						dt);
 	}
-
-	/**
-	 * Gets a brighter color, suitable for highlighting
-	 */
-	private Color brighter(Color a) {
-		double dr = a.getRed() + 0.6 * (255 - a.getRed());
-		double dg = a.getGreen() + 0.6 * (255 - a.getGreen());
-		double db = a.getBlue() + 0.6 * (255 - a.getBlue());
-		int r = dr < 255 ? (int) dr : 255;
-		int g = dg < 255 ? (int) dg : 255;
-		int b = db < 255 ? (int) db : 255;
-		return new Color(r, g, b);
-	}
-
 }
