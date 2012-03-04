@@ -74,6 +74,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	public static String className = null;
 	
 	
+	/** Path to the default vision configuration file. */
+	private static final String DEFAULT_CONFIG_PATH = "../robot-VISION/data/configs/Default.xml";
+	
 	/** In what integer range will floats be represented in spinners. */
 	private static final int SPINNER_FLOAT_RANGE = 1000;	
 	/** The window title. */
@@ -154,7 +157,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		initComponents();
 		
 		if (vision != null) {
-			getVisionConfiguration();
+			ImageProcessorConfig defaultConfig = ImageProcessorConfig.loadConfiguration(DEFAULT_CONFIG_PATH);
+			setGUIConfiguration(defaultConfig);
+			setVisionConfiguration();
 		} else {
 			robotControlTabbedPanel.remove(visionSettingPanel);
 		}
