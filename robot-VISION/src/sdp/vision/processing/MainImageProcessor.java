@@ -89,6 +89,12 @@ public class MainImageProcessor extends BaseImageProcessor {
 		Robot yellowRobot = findRobot(frame, yellow_ipl, config.getYellowSizeMin(), config.getYellowSizeMax());
 		finaliseWorldImage(frame_ipl, ballPos, blueRobot, yellowRobot);
 		
+		if (yellowRobot.getCoords().x >= 0.0) {		// TODO
+			Point yp = ProcUtils.normalToFrameCoordinatesInt(config, yellowRobot.getCoords().x, yellowRobot.getCoords().y, true);
+			ThresholdBounds yb = findMatchingThresholds(frame, 0, yp.x, yp.y, yellowRobot.getAngle());
+			config.setYellowThreshs(yb);
+		}
+		
 		return new WorldState(ballPos, blueRobot, yellowRobot, worldImage);
 	}
 	
@@ -422,6 +428,91 @@ public class MainImageProcessor extends BaseImageProcessor {
 		return (Utilities.valueWithinBounds(h, bounds.getHueMin(), bounds.getHueMax())
 				&& Utilities.valueWithinBounds(s, bounds.getSatMin(), bounds.getSatMax())
 				&& Utilities.valueWithinBounds(v, bounds.getValMin(), bounds.getValMax()));
+	}
+	
+	
+	/**
+	 * Perform binary search on the given threshold bound and set it to the
+	 * best value.
+	 * 
+	 * @param frame Image of the frame with the robot.
+	 * @param shapeMask Robot shape mask.
+	 * @param bounds Threshold bound container to use.
+	 * @param type Which value type to search.
+	 * @param heuristics Which heuristics to use in static thresholding.
+	 * @param initLower Initial lower bound of the value.
+	 * @param initUpper Initial upper bound of the value.
+	 */
+	private void thresholdBinarySearch(BufferedImage frame, IplImage shapeMask, ThresholdBounds bounds,
+			ThresholdBounds.ValueType type, int heuristics, int initLower, int initUpper) {		
+		boolean highOverflows = false;
+		if ((type.equals(ThresholdBounds.ValueType.HUE_MAX))
+				|| (type.equals(ThresholdBounds.ValueType.SAT_MAX))
+				|| (type.equals(ThresholdBounds.ValueType.VAL_MAX))) {
+			highOverflows = true;
+		}
+		
+		int lower = initLower;
+		int upper = initUpper;
+		
+		while (lower < upper) {
+			int middle = (lower + upper) / 2;
+			bounds.setValue(type, middle);
+			
+			BufferedImage thresh = staticThreshold(frame, bounds, heuristics, null);
+			IplImage thresh_ipl = IplImage.createFrom(thresh);
+			
+        	cvAnd(shapeMask, thresh_ipl, thresh_ipl, null);
+        	int curArea = cvCountNonZero(thresh_ipl);
+        	
+        	int dir = -1;
+        	if (highOverflows) {
+        		dir *= -1;
+        	}
+        	if (curArea < 50) {
+        		dir *= -1;
+        	}
+        	
+        	if (dir > 0) {
+        		lower = middle + 1;
+        	} else {
+        		upper = middle - 1;
+        	}
+		}
+		
+		bounds.setValue(type, lower);
+	}
+	
+	/**
+	 * Find matching thresholds for a robot T at the given location.
+	 * 
+	 * @param frame Frame in which to perform search.
+	 * @param heuristics Heuristics to use in static thresholding.
+	 * @param x X coordinate of the robot position, in frame coordinates.
+	 * @param y Y coordinate of the robot position, in frame coordinates.
+	 * @param angle The direction the robot is facing.
+	 * @return Thresholds that isolate the robot at the given location.
+	 */
+	private ThresholdBounds findMatchingThresholds(BufferedImage frame, int heuristics, int x, int y, double angle) {
+		ThresholdBounds bounds = new ThresholdBounds();
+		
+		IplImage shapeMask = idealTShape.getFrameImage(config.getFieldWidth(),
+				config.getFieldHeight(), x, y, angle);
+		
+		thresholdBinarySearch(frame, shapeMask, bounds, ThresholdBounds.ValueType.HUE_MIN,
+				heuristics, 0, 360);
+		thresholdBinarySearch(frame, shapeMask, bounds, ThresholdBounds.ValueType.HUE_MAX,
+				heuristics, bounds.getHueMin(), 360);
+		thresholdBinarySearch(frame, shapeMask, bounds, ThresholdBounds.ValueType.SAT_MIN,
+				heuristics, 0, 100);
+		thresholdBinarySearch(frame, shapeMask, bounds, ThresholdBounds.ValueType.SAT_MAX,
+				heuristics, bounds.getSatMin(), 100);
+		thresholdBinarySearch(frame, shapeMask, bounds, ThresholdBounds.ValueType.VAL_MIN,
+				heuristics, 0, 100);
+		thresholdBinarySearch(frame, shapeMask, bounds, ThresholdBounds.ValueType.VAL_MAX,
+				heuristics, bounds.getValMin(), 100);
+		
+		return bounds;
 	}
 	
 	

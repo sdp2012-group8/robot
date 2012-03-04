@@ -28,14 +28,17 @@ public class TShapeTemplate {
 	private IplImage shapeImage;
 	
 	/** Coordinates of the shape's center. */
-	private Point center = new Point(25, 25);
+	private Point center;
 	/** Coordinates of the shape's center in OpenCV point object. */
-	private CvPoint2D32f cvCenter = new CvPoint2D32f(center.x, center.y);
+	private CvPoint2D32f cvCenter;
 	
 	/** Height of the shape. */
-	private int height = 51;
+	private int height;
 	/** Width of the shape. */
-	private int width = 51;
+	private int width;
+	
+	/** Area of the shape. */
+	private int area;
 	
 	
 	/**
@@ -43,6 +46,15 @@ public class TShapeTemplate {
 	 */
 	public TShapeTemplate() {
 		shapeImage = cvLoadImage(T_TEMPLATE_PATH, CV_LOAD_IMAGE_GRAYSCALE);
+		
+		CvSize shapeSize = shapeImage.cvSize();
+		height = shapeSize.height();
+		width = shapeSize.width();
+		
+		center = new Point(height / 2, width / 2);
+		cvCenter = new CvPoint2D32f(center.x, center.y);
+		
+		area = cvCountNonZero(shapeImage);
 	}
 	
 	
@@ -52,7 +64,7 @@ public class TShapeTemplate {
 	 * @param angle Orientation of the shape in degrees.
 	 * @return IplImage of the shape.
 	 */
-	public IplImage getShapeImage(int angle) {
+	public IplImage getShapeImage(double angle) {
 		angle = (angle + 270) % 360;
 		
 		IplImage rotatedShape = IplImage.createCompatible(shapeImage);
@@ -69,7 +81,8 @@ public class TShapeTemplate {
 	 * Create a black image of the specified size and place the T at the
 	 * specified location and orientation.
 	 * 
-	 * Use this function to generate frame-sized masks.
+	 * Use this function to generate frame-sized masks. Also, make sure that
+	 * the object is actually on the field (so no out of bounds arguments).
 	 * 
 	 * @param fieldW Width of the frame.
 	 * @param fieldH Height of the frame.
@@ -78,7 +91,7 @@ public class TShapeTemplate {
 	 * @param angle T's orientation.
 	 * @return Image as described above.
 	 */
-	public IplImage getFrameImage(int fieldW, int fieldH, int x, int y, int angle) {
+	public IplImage getFrameImage(int fieldW, int fieldH, int x, int y, double angle) {
 		CvRect[] roiRects = ProcUtils.getOverlappingRect(fieldW, fieldH, x, y, width, height);
         CvRect frameRoiRect = roiRects[0];
         CvRect tShapeRoiRect = roiRects[1];
@@ -97,6 +110,15 @@ public class TShapeTemplate {
 		return frameImage;
 	}
 	
+	
+	/**
+	 * Get the area of the shape.
+	 * 
+	 * @return Shape's area.
+	 */
+	public int getArea() {
+		return area;
+	}
 	
 	/**
 	 * Get the shape's center coordinates.

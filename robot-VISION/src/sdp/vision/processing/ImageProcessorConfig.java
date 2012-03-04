@@ -297,6 +297,15 @@ public class ImageProcessorConfig {
 	public ThresholdBounds getBallThreshs() {
 		return ballThresholds;
 	}
+	
+	/**
+	 * Set the ball threshold bounds.
+	 * 
+	 * @param bounds Ball threshold bounds.
+	 */
+	public void setBallThreshs(ThresholdBounds bounds) {
+		ballThresholds = bounds;
+	}
 
 	
 	/**
@@ -346,6 +355,15 @@ public class ImageProcessorConfig {
 		return blueThresholds;
 	}
 	
+	/**
+	 * Set the blue robot threshold bounds.
+	 * 
+	 * @param bounds Blue robot threshold bounds.
+	 */
+	public void setBlueThreshs(ThresholdBounds bounds) {
+		blueThresholds = bounds;
+	}
+	
 	
 	/**
 	 * Get the lower bound of the blue robot contour size.
@@ -392,6 +410,15 @@ public class ImageProcessorConfig {
 	 */
 	public ThresholdBounds getYellowThreshs() {
 		return yellowThresholds;
+	}
+	
+	/**
+	 * Set the yellow robot threshold bounds.
+	 * 
+	 * @param bounds Yellow robot threshold bounds.
+	 */
+	public void setYellowThreshs(ThresholdBounds bounds) {
+		yellowThresholds = bounds;
 	}
 	
 	
