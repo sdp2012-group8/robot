@@ -44,6 +44,9 @@ public class MainImageProcessor extends BaseImageProcessor {
 	/** Size of the position marker. */
 	private static final int POSITION_MARKER_SIZE = 4;
 	
+	/** Blue color heuristic flag. */
+	private static final int BLUE_HEURISTIC = 0x1;
+	
 	
 	/** An image with the ideal expected T shape on robot plates. */
 	private IplImage idealTShape;
@@ -126,6 +129,9 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 * is because opencv's thresholding functions are somewhat limited and
 	 * iterating over IplImages via javacpp is an even bigger mess.
 	 * 
+	 * Also, this is used instead of staticThreshold function due to
+	 * performance reasons.
+	 * 
 	 * @param frame Frame to threshold.
 	 * @return Thresholded components.
 	 */
@@ -136,6 +142,13 @@ public class MainImageProcessor extends BaseImageProcessor {
 				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
 		BufferedImage yellow = new BufferedImage(config.getFieldWidth(),
 				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
+		
+		if (!config.isShowWorld()) {
+			Graphics2D g = worldImage.createGraphics();
+			g.setColor(Color.black);
+			g.fillRect(config.getFieldLowX(), config.getFieldLowY(),
+					config.getFieldWidth(), config.getFieldHeight());
+		}
 		
 		for (int x = 0; x < config.getFieldWidth(); ++x) {
 			for (int y = 0; y < config.getFieldHeight(); ++y) {
@@ -152,11 +165,6 @@ public class MainImageProcessor extends BaseImageProcessor {
 				int h = (int) (hsv[0] * 360);
 				int s = (int) (hsv[1] * 100);
 				int v = (int) (hsv[2] * 100);
-				
-				// Whether to hide current pixel.
-				if (!config.isShowWorld()) {
-					worldImage.setRGB(ox, oy, Color.black.getRGB());
-				}
 				
 				// Ball thresholding.
 				if (Utilities.valueWithinBounds(h, config.getBallThreshs().getHueMin(), 
@@ -202,9 +210,6 @@ public class MainImageProcessor extends BaseImageProcessor {
 			    }
 			}
 		}
-		
-		BufferedImage retValue[] = { ball, blue, yellow };
-		return retValue;
 	}
 	
 	
@@ -366,6 +371,72 @@ public class MainImageProcessor extends BaseImageProcessor {
 					yellowRobot.getAngle());
 			drawPositionMarker(g, Color.orange, pt1, pt2);
 		}
+	}
+	
+	
+	/**
+	 * Threshold the given image using fixed thresholding bounds.
+	 * 
+	 * @param image Image to threshold.
+	 * @param bounds Thresholding bounds to use.
+	 * @param heuristics Bitfield, specifying which heuristics to use.
+	 * @param worldColor If not null, draw thresholded image into the world
+	 * 		image with it.
+	 * @return Thresholded image.
+	 */
+	private BufferedImage staticThreshold(BufferedImage image, ThresholdBounds bounds,
+			int heuristics, Color worldColor) {
+		BufferedImage thresh = new BufferedImage(config.getFieldWidth(),
+				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
+		
+		for (int x = 0; x < config.getFieldWidth(); ++x) {
+			for (int y = 0; y < config.getFieldHeight(); ++y) {
+				int ox = x + config.getFieldLowX();
+				int oy = y + config.getFieldLowY();
+				
+				Color px = new Color(image.getRGB(ox, oy));				
+				int r = px.getRed();
+				int g = px.getGreen();
+				int b = px.getBlue();
+				
+				float hsv[] = Color.RGBtoHSB(r, g, b, null);
+				int h = (int) (hsv[0] * 360);
+				int s = (int) (hsv[1] * 100);
+				int v = (int) (hsv[2] * 100);
+				
+				if (!isPixelInBounds(bounds, h, s, v)) {
+					continue;
+				}				
+				if ((heuristics & BLUE_HEURISTIC) > 0) {
+					if (g > (int)(b * 1.5)) {
+						continue;
+					}
+				}
+					
+				thresh.setRGB(x, y, Color.white.getRGB());
+				if (worldColor != null) {
+					worldImage.setRGB(ox, oy, worldColor.getRGB());
+				}
+			}
+		}
+		
+		return thresh;
+	}
+	
+	
+	/**
+	 * Check if the given color is within the specified thresholding bounds.
+	 * 
+	 * @param bounds Thresholding bounds.
+	 * @param h Hue component of the color.
+	 * @param s Saturation component of the color.
+	 * @param v Value component of the color.
+	 * @return Whether the color is within thresholding bounds.
+	 */
+	private boolean isPixelInBounds(ThresholdBounds bounds, int h, int s, int v) {
+		return (Utilities.valueWithinBounds(h, bounds.getHueMin(), bounds.getHueMax())
+				&& Utilities.valueWithinBounds(s, bounds.getSatMin(), bounds.getSatMax())
+				&& Utilities.valueWithinBounds(v, bounds.getValMin(), bounds.getValMax()));
 	}
 	
 	
