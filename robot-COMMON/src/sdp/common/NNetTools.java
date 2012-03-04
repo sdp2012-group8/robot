@@ -29,23 +29,23 @@ public class NNetTools {
 		switch (id) {
 		case 0:
 			Vector2D ball = new Vector2D(worldState.getBallCoords());
-			Vector2D ball_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
-			double reach = Tools.reachability(worldState, ball, am_i_blue, false) ? 1 : -1;
-			return Tools.concat(
-					Tools.getSectors(worldState, am_i_blue, 5, 22, true, false),
-					Tools.getTargetInSectors(ball_rel, 22),
+			Vector2D ball_rel = Utilities.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
+			double reach = Utilities.reachability(worldState, ball, am_i_blue, false) ? 1 : -1;
+			return Utilities.concat(
+					Utilities.getSectors(worldState, am_i_blue, 5, 22, true, false),
+					Utilities.getTargetInSectors(ball_rel, 22),
 					new double[] {
 						reach
 					}
 					);
 		case 1:
-			Vector2D goal = my_goal_left ? new Vector2D(Tools.PITCH_WIDTH_CM , Tools.GOAL_Y_CM ) : new Vector2D(0 , Tools.GOAL_Y_CM );
-			Vector2D goal_rel = Tools.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), goal);
-			return Tools.concat(
-					Tools.getSectors(worldState, am_i_blue, 5, 22, true, false),
-					Tools.getTargetInSectors(goal_rel, 22),
+			Vector2D goal = my_goal_left ? new Vector2D(Utilities.PITCH_WIDTH_CM , Utilities.GOAL_Y_CM ) : new Vector2D(0 , Utilities.GOAL_Y_CM );
+			Vector2D goal_rel = Utilities.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), goal);
+			return Utilities.concat(
+					Utilities.getSectors(worldState, am_i_blue, 5, 22, true, false),
+					Utilities.getTargetInSectors(goal_rel, 22),
 					new double[] {
-						Tools.visibility(worldState, goal, am_i_blue, false) ? 1 : -1
+						Utilities.visibility(worldState, goal, am_i_blue, false) ? 1 : -1
 					}
 					);
 		}
@@ -59,7 +59,7 @@ public class NNetTools {
 			start_angle = end_angle;
 			end_angle = temp;
 		}
-		return Utilities.normaliseAngle(ang - start_angle) >= 0 && Utilities.normaliseAngle(ang - end_angle) < 0 ? relative : new Vector2D(5*Tools.PITCH_WIDTH_CM, 0);
+		return Utilities.normaliseAngle(ang - start_angle) >= 0 && Utilities.normaliseAngle(ang - end_angle) < 0 ? relative : new Vector2D(5*Utilities.PITCH_WIDTH_CM, 0);
 	}
 	
 

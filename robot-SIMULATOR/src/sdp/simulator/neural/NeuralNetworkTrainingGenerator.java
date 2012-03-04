@@ -17,7 +17,7 @@ import sdp.AI.AIMaster;
 import sdp.AI.AIMaster.mode;
 import sdp.common.NNetTools;
 import sdp.common.Robot;
-import sdp.common.Tools;
+import sdp.common.Utilities;
 import sdp.common.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
@@ -173,9 +173,9 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 		new Thread() {
 			public void run() {
 				while (recording) {
-					WorldState worldState = Tools.toCentimeters(mObs.getNextState());
+					WorldState worldState = Utilities.toCentimeters(mObs.getNextState());
 					if (!pause && mAi.getState() == mode.sit) {
-						if (oldWorldState != null && Tools.delta(oldWorldState, worldState) > 0.1) {
+						if (oldWorldState != null && Utilities.delta(oldWorldState, worldState) > 0.1) {
 							// outputs normalized to 1
 							//boolean
 							//is_it_kicking = is_kicking;
@@ -221,7 +221,7 @@ public class NeuralNetworkTrainingGenerator extends VBrick {
 
 	private mode getAiMode(WorldState ws, boolean am_i_blue) {
 		Vector2D ball = new Vector2D(ws.getBallCoords());
-		Vector2D ball_rel = Tools.getLocalVector(am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(), ball);
+		Vector2D ball_rel = Utilities.getLocalVector(am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(), ball);
 		ball_rel.setX(ball_rel.getX()-Robot.LENGTH_CM/2);
 		return null; // TODO! FIX!
 		//return ball_rel.getLength() < AINeuralNetwork.got_ball_dist ? mode.got_ball : mode.chase_ball;

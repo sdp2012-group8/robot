@@ -2,6 +2,7 @@ package sdp.AI;
 
 import java.awt.geom.Point2D;
 import sdp.common.Tools;
+import sdp.common.Utilities;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.common.Robot;
@@ -57,7 +58,7 @@ public abstract class AIListener extends WorldStateProvider {
 			@Override
 			public void run() {
 				while (!isInterrupted()) {
-					WorldState state = Tools.toCentimeters(mObs.getNextState());
+					WorldState state = Utilities.toCentimeters(mObs.getNextState());
 					// do low pass filtering
 					if (world_state == null) {
 						world_state = state;

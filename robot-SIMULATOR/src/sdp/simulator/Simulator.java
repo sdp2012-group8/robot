@@ -24,8 +24,8 @@ public class Simulator extends WorldStateProvider {
 
 	private static final float MAX_FPS = 25; // simulation speed
 	private static final double ITERATION_TIME = 1000 / MAX_FPS; // in ms
-	public final static double PITCH_WIDTH_CM = Tools.PITCH_WIDTH_CM;
-	public final static double PITCH_HEIGHT_CM = Tools.PITCH_HEIGHT_CM;
+	public final static double PITCH_WIDTH_CM = Utilities.PITCH_WIDTH_CM;
+	public final static double PITCH_HEIGHT_CM = Utilities.PITCH_HEIGHT_CM;
 	private final static Vector2D PITCH_MIDDLE = new Vector2D(0.5,
 			PITCH_HEIGHT_CM / (2 * PITCH_WIDTH_CM));
 	private final static double BALL_MAX_SPEED = 350; // cm/s
@@ -838,7 +838,7 @@ public class Simulator extends WorldStateProvider {
 		// draw robots
 		WorldState state_cm = null;
 		if (state != null)
-			state_cm = Tools.toCentimeters(state);
+			state_cm = Utilities.toCentimeters(state);
 		for (int i = 0; i < robot.length; i++) {
 			Robot robot;
 			Color color = Color.gray;
@@ -922,7 +922,7 @@ public class Simulator extends WorldStateProvider {
 				robot = am_i_blue ? state_cm.getBlueRobot() : state_cm
 						.getYellowRobot();
 				Vector2D local_origin = new Vector2D(Robot.LENGTH_CM/2+2,0);
-				drawVector(Tools.getGlobalVector(robot, local_origin),  Tools.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0), true), true);
+				drawVector(Utilities.getGlobalVector(robot, local_origin),  Utilities.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0), true), true);
 				if (i == 0) {
 
 					double dist = 2*Robot.LENGTH_CM;
@@ -935,8 +935,8 @@ public class Simulator extends WorldStateProvider {
 					double sin = Math.sin(angle)*length;
 					Vector2D right = new Vector2D(cos, sin);
 					Vector2D left = new Vector2D(-cos, -sin);
-					drawVector(Vector2D.add(startPt, right),  Tools.raytraceVector(state_cm, Vector2D.add(startPt, right), dir, am_i_blue, true), true);
-					drawVector(Vector2D.add(startPt, left), Tools.raytraceVector(state_cm, Vector2D.add(startPt, left), dir, am_i_blue, true), true);
+					drawVector(Vector2D.add(startPt, right),  Utilities.raytraceVector(state_cm, Vector2D.add(startPt, right), dir, am_i_blue, true), true);
+					drawVector(Vector2D.add(startPt, left), Utilities.raytraceVector(state_cm, Vector2D.add(startPt, left), dir, am_i_blue, true), true);
 
 					g.setColor(new Color(255, 255, 255, 200));
 					fillOval((int)(target.x* IMAGE_WIDTH / PITCH_WIDTH_CM-3), (int) (target.y* IMAGE_WIDTH / PITCH_WIDTH_CM-3), 6, 6);
@@ -946,12 +946,12 @@ public class Simulator extends WorldStateProvider {
 					final int COLL_SECS_COUNT = 110;
 					final double SEC_ANGLE = 360d/COLL_SECS_COUNT;
 
-					final double[] sectors = Tools.getSectors(state_cm, true, 5, COLL_SECS_COUNT, false, true);
+					final double[] sectors = Utilities.getSectors(state_cm, true, 5, COLL_SECS_COUNT, false, true);
 					
 					// find desired
 					double temp = 999;
 					int id = -1;
-					final Vector2D point_rel = Tools.getLocalVector(robot, target);
+					final Vector2D point_rel = Utilities.getLocalVector(robot, target);
 
 					// get direction and distance to point
 					final double point_dir = Vector2D.getDirection(point_rel);
@@ -1004,7 +1004,7 @@ public class Simulator extends WorldStateProvider {
 						double dista = sectors[ii];
 						Vector2D vec = Vector2D.multiply(Vector2D.rotateVector(new Vector2D(1, 0), ang), dista);
 						Vector2D coor = new Vector2D(robot.getCoords());
-						drawVector(coor, Vector2D.subtract(Tools.getGlobalVector(robot, vec), coor), true);
+						drawVector(coor, Vector2D.subtract(Utilities.getGlobalVector(robot, vec), coor), true);
 					}
 				}
 				
@@ -1134,10 +1134,10 @@ public class Simulator extends WorldStateProvider {
 	 *            in cm
 	 */
 	private void drawVector(Vector2D origin, Vector2D vector, boolean draw_point_in_end) {
-		double ex = (origin.getX()+vector.getX())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM, ey = (origin.getY()+vector.getY())*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM;
+		double ex = (origin.getX()+vector.getX())*IMAGE_WIDTH/Utilities.PITCH_WIDTH_CM, ey = (origin.getY()+vector.getY())*IMAGE_WIDTH/Utilities.PITCH_WIDTH_CM;
 		drawLine(
-				(int)(origin.getX()*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
-				(int)(origin.getY()*IMAGE_WIDTH/Tools.PITCH_WIDTH_CM),
+				(int)(origin.getX()*IMAGE_WIDTH/Utilities.PITCH_WIDTH_CM),
+				(int)(origin.getY()*IMAGE_WIDTH/Utilities.PITCH_WIDTH_CM),
 				(int)(ex),
 				(int)(ey));
 		if (draw_point_in_end) {
@@ -1152,7 +1152,7 @@ public class Simulator extends WorldStateProvider {
 			return new Vector2D(x, y);
 		Robot rob = new Robot(Vector2D.multiply(positions[reference_robot_id], IMAGE_WIDTH/PITCH_WIDTH_CM), directions[reference_robot_id]);
 		Vector2D centre_pitch = new Vector2D(0.5*IMAGE_WIDTH, 0.5*PITCH_HEIGHT_CM*IMAGE_WIDTH/PITCH_WIDTH_CM);
-		return Vector2D.add(centre_pitch, Tools.getLocalVector(rob, new Vector2D(x, y)));
+		return Vector2D.add(centre_pitch, Utilities.getLocalVector(rob, new Vector2D(x, y)));
 
 	}
 

@@ -118,25 +118,25 @@ public class AIVisualServoing extends AI {
 	private Commands goTowardsPoint(Vector2D point, boolean include_ball_as_obstacle, boolean chasing_target) {
 		Commands command = new Commands(0, 0, false);
 		// get relative ball coordinates
-		final Vector2D point_rel = Tools.getLocalVector(ai_world_state.getRobot(), point);
+		final Vector2D point_rel = Utilities.getLocalVector(ai_world_state.getRobot(), point);
 
 		// get direction and distance to point
 		final double point_dir = Vector2D.getDirection(point_rel);
 		final double point_dist = point_rel.getLength();
 
 		// if you go directly towards the point, at which closest point are we going to be in a collision
-		final double point_left_coll_dist = Tools.reachabilityLeft2(ai_world_state, point, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle);
-		final double point_right_coll_dist = Tools.reachabilityRight2(ai_world_state, point, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle);
+		final double point_left_coll_dist = Utilities.reachabilityLeft2(ai_world_state, point, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle);
+		final double point_right_coll_dist = Utilities.reachabilityRight2(ai_world_state, point, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle);
 		final double point_coll_dist = Math.min(point_left_coll_dist, point_right_coll_dist);
-		final double point_vis_dist = Tools.visibility2(ai_world_state, point, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle);
+		final double point_vis_dist = Utilities.visibility2(ai_world_state, point, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle);
 
 		// the angle that we need to turn in order to avoid hitting our left or right corner at the obstacle
 		final double turn_ang_more = Math.toDegrees(Math.atan2(Robot.LENGTH_CM, point_coll_dist));
 
 		// get the sectors
-		final double[] sectors = Tools.getSectors(ai_world_state, ai_world_state.getMyTeamBlue(), 5, COLL_SECS_COUNT, false, include_ball_as_obstacle);
+		final double[] sectors = Utilities.getSectors(ai_world_state, ai_world_state.getMyTeamBlue(), 5, COLL_SECS_COUNT, false, include_ball_as_obstacle);
 
-		// sectors[0] starts at at -90
+		// sectors[0] starts at -90
 		double temp = 999;
 		double turn_ang = 999;
 		int id = -1;
@@ -253,10 +253,10 @@ public class AIVisualServoing extends AI {
 	 */
 	private void nearCollisionCheck(Commands command) {
 		final Vector2D
-		front_left = Tools.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getBackLeft()),Tools.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
-		front_right = Tools.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getBackRight()),Tools.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
-		back_left = Tools.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontLeft()),Tools.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
-		back_right = Tools.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontRight()),Tools.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords())));
+		front_left = Utilities.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getBackLeft()),Utilities.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
+		front_right = Utilities.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getBackRight()),Utilities.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
+		back_left = Utilities.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontLeft()),Utilities.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
+		back_right = Utilities.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontRight()),Utilities.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords())));
 		final boolean
 		front_left_coll = front_left.getLength() <= CORNER_COLL_THRESHOLD,
 		front_right_coll = front_right.getLength() <= CORNER_COLL_THRESHOLD,
@@ -304,7 +304,7 @@ public class AIVisualServoing extends AI {
 	 * @return
 	 */
 	private double frontDistanceTo(Vector2D global) {
-		return Tools.getDistanceBetweenPoint(Tools.getGlobalVector(ai_world_state.getRobot(), new Vector2D(Robot.LENGTH_CM/2, 0)), global);
+		return Utilities.getDistanceBetweenPoint(Utilities.getGlobalVector(ai_world_state.getRobot(), new Vector2D(Robot.LENGTH_CM/2, 0)), global);
 	}
 
 	/**
@@ -317,7 +317,7 @@ public class AIVisualServoing extends AI {
 	}
 
 	private double directionTo(Vector2D global) {
-		final Vector2D point_rel = Tools.getLocalVector(ai_world_state.getRobot(), global);
+		final Vector2D point_rel = Utilities.getLocalVector(ai_world_state.getRobot(), global);
 		return Vector2D.getDirection(point_rel);
 	}
 
