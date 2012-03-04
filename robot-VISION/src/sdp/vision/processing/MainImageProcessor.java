@@ -9,11 +9,9 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 import com.googlecode.javacpp.Loader;
-import com.googlecode.javacv.cpp.opencv_core.CvPoint2D32f;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 import static com.googlecode.javacv.cpp.opencv_core.*;
-import static com.googlecode.javacv.cpp.opencv_highgui.*;
 import static com.googlecode.javacv.cpp.opencv_imgproc.*;
 
 import sdp.common.Robot;
@@ -28,9 +26,6 @@ import sdp.common.WorldState;
  * @author Gediminas Liktaras
  */
 public class MainImageProcessor extends BaseImageProcessor {
-	
-	/** Path to the image of the ideal T shape. */
-	private static final String IDEAL_T_PATH = "../robot-VISION/data/tShape.png";
 	
 	/** Gaussian smoothing mask size. */
 	private static final int GAUSSIAN_SMOOTH_MASK_SIZE = 5;
@@ -48,10 +43,8 @@ public class MainImageProcessor extends BaseImageProcessor {
 	private static final int BLUE_HEURISTIC = 0x1;
 	
 	
-	/** An image with the ideal expected T shape on robot plates. */
-	private IplImage idealTShape;
-	/** Size of the ideal T shape. */
-	private CvSize idealTSize;
+	/** Expected T shape container. */
+	private TShapeTemplate idealTShape = new TShapeTemplate();
 	
 	/** OpenCV memory storage. */
 	private CvMemStorage storage;
@@ -65,9 +58,6 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 */
 	public MainImageProcessor() {
 		super();
-		
-		idealTShape = cvLoadImage(IDEAL_T_PATH, CV_LOAD_IMAGE_GRAYSCALE);
-		idealTSize = idealTShape.cvSize();
 		
 		storage = CvMemStorage.create();
 	}
@@ -303,33 +293,33 @@ public class MainImageProcessor extends BaseImageProcessor {
             Point2D.Double normRobotPos = ProcUtils.frameToNormalCoordinates(config, robotX, robotY, true);
             
             // Find surrounding rectangle and isolate robot shape properly.
-            int roiXOff = Math.min(robotX, idealTSize.width() / 2);
-            int roiYOff = Math.min(robotY, idealTSize.height() / 2);
-            int roiWidth = roiXOff + Math.min(config.getFieldWidth() - robotX, idealTSize.width() / 2);
-            int roiHeight = roiYOff + Math.min(config.getFieldHeight() - robotY, idealTSize.height() / 2);
+            int roiXOff = Math.min(robotX, idealTShape.getWidth() / 2);
+            int roiYOff = Math.min(robotY, idealTShape.getHeight() / 2);
+            int roiWidth = roiXOff + Math.min(config.getFieldWidth() - robotX, idealTShape.getWidth() / 2);
+            int roiHeight = roiYOff + Math.min(config.getFieldHeight() - robotY, idealTShape.getHeight() / 2);
             
             IplImage shapeImage_ipl = IplImage.create(roiWidth, roiHeight, IPL_DEPTH_8U, 1);
             cvFillPoly(shapeImage_ipl, ProcUtils.cvSeqToArray(bestRobotShape),
-            		new int[] { bestRobotShape.total() }, 1, CvScalar.WHITE, LINE_TYPE, 0);
+            		new int[] { bestRobotShape.total() }, 1, CvScalar.WHITE, 8, 0);
       
             // Find the robot direction.
             CvRect threshROI = cvRect(robotX - roiXOff, robotY - roiYOff, roiWidth, roiHeight);
             cvSetImageROI(thresh_ipl, threshROI);
             
             int angle = 0;
-            int bestArea = -1;
+            int bestArea = Integer.MAX_VALUE;
             
             for (int i = 0; i < 360; ++i) {
-            	IplImage rotShape = getRotatedIdealT(i);
+            	IplImage rotShape = idealTShape.getIplImage(i);
             	
-            	CvRect rotShapeROI = cvRect(idealTSize.width() / 2 - roiXOff,
-            			idealTSize.height() / 2 - roiYOff, roiWidth, roiHeight);
+            	CvRect rotShapeROI = cvRect(idealTShape.getWidth() / 2 - roiXOff,
+            			idealTShape.getHeight() / 2 - roiYOff, roiWidth, roiHeight);
             	cvSetImageROI(rotShape, rotShapeROI);
           
-            	cvAnd(rotShape, thresh_ipl, rotShape, null);
+            	cvXor(rotShape, thresh_ipl, rotShape, null);
             	int curArea = cvCountNonZero(rotShape);
             	
-            	if (curArea > bestArea) {
+            	if (curArea < bestArea) {
             		angle = i;
             		bestArea = curArea;
             	}
@@ -490,25 +480,6 @@ public class MainImageProcessor extends BaseImageProcessor {
         }
 		
 		return shapes;
-	}
-	
-	
-	/**
-	 * Get the ideal T shape, rotated to the given angle.
-	 * 
-	 * @param angle Target angle in degrees.
-	 * @return Appropriately rotated ideal T.
-	 */
-	private IplImage getRotatedIdealT(int angle) {
-		angle = (angle + 270) % 360;
-		
-		IplImage rotatedShape = IplImage.createCompatible(idealTShape);
-		CvMat rotMatrix = CvMat.create(2, 3);
-		
-		cv2DRotationMatrix(new CvPoint2D32f(idealTSize.width() / 2, idealTSize.height() / 2), angle, 1.0, rotMatrix);
-		cvWarpAffine(idealTShape, rotatedShape, rotMatrix);
-		
-		return rotatedShape;
 	}
 	
 
