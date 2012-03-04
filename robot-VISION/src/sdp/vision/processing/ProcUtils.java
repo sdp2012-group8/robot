@@ -83,6 +83,35 @@ public class ProcUtils {
 		return Math.abs(area);
 	}
 	
+
+	/**
+	 * Get rectangles that overlaps both the field and the given object box.
+	 * 
+	 * @param fieldW Width of the frame.
+	 * @param fieldH Height of the frame.
+	 * @param objX X coordinate of the object's center.
+	 * @param objY Y coordinate of the object's center.
+	 * @param objW Width of the object's bounding box.
+	 * @param objH Height of the object's bounding box.
+	 * @return Union of the field and the object box. First element of the
+	 * 		array is a rectangle in field coordinates, the second one is in
+	 * 		the object coordinates.
+	 */
+	public static CvRect[] getOverlappingRect(int fieldW, int fieldH, int objX, int objY,
+			int objW, int objH)
+	{
+	    int westExtents = Math.min(objX, objW / 2);
+	    int northExtents = Math.min(objY, objH / 2);
+	    int rectWidth = westExtents + Math.min(fieldW - objX, objW / 2);
+	    int rectHeight = northExtents + Math.min(fieldH - objY, objH / 2);
+	    
+	    CvRect fieldRect = cvRect(objX - westExtents, objY - northExtents, rectWidth, rectHeight);
+	    CvRect objRect = cvRect(objW / 2 - westExtents, objH / 2 - northExtents, rectWidth, rectHeight);
+	    CvRect rects[] = { fieldRect, objRect };
+	    
+	    return rects;
+	}
+	
 	
 	/**
 	 * Convert frame coordinates to normal ones.

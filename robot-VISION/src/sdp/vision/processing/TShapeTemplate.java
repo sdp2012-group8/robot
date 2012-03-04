@@ -1,14 +1,14 @@
 package sdp.vision.processing;
 
-import static com.googlecode.javacv.cpp.opencv_highgui.CV_LOAD_IMAGE_GRAYSCALE;
-import static com.googlecode.javacv.cpp.opencv_highgui.cvLoadImage;
-import static com.googlecode.javacv.cpp.opencv_imgproc.cv2DRotationMatrix;
-import static com.googlecode.javacv.cpp.opencv_imgproc.cvWarpAffine;
+import static com.googlecode.javacv.cpp.opencv_core.*;
+import static com.googlecode.javacv.cpp.opencv_highgui.*;
+import static com.googlecode.javacv.cpp.opencv_imgproc.*;
 
 import java.awt.Point;
 
 import com.googlecode.javacv.cpp.opencv_core.CvMat;
 import com.googlecode.javacv.cpp.opencv_core.CvPoint2D32f;
+import com.googlecode.javacv.cpp.opencv_core.CvRect;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 
@@ -47,12 +47,12 @@ public class TShapeTemplate {
 	
 	
 	/**
-	 * Get a copy of the T's IplImage at the given orientation.
+	 * Get a copy of T's IplImage at the given orientation.
 	 * 
 	 * @param angle Orientation of the shape in degrees.
 	 * @return IplImage of the shape.
 	 */
-	public IplImage getIplImage(int angle) {
+	public IplImage getShapeImage(int angle) {
 		angle = (angle + 270) % 360;
 		
 		IplImage rotatedShape = IplImage.createCompatible(shapeImage);
@@ -62,6 +62,39 @@ public class TShapeTemplate {
 		cvWarpAffine(shapeImage, rotatedShape, rotMatrix);
 		
 		return rotatedShape; 
+	}
+	
+	
+	/**
+	 * Create a black image of the specified size and place the T at the
+	 * specified location and orientation.
+	 * 
+	 * Use this function to generate frame-sized masks.
+	 * 
+	 * @param fieldW Width of the frame.
+	 * @param fieldH Height of the frame.
+	 * @param x X coordinate of the T's center.
+	 * @param y Y coordinate of the T's center.
+	 * @param angle T's orientation.
+	 * @return Image as described above.
+	 */
+	public IplImage getFrameImage(int fieldW, int fieldH, int x, int y, int angle) {
+		CvRect[] roiRects = ProcUtils.getOverlappingRect(fieldW, fieldH, x, y, width, height);
+        CvRect frameRoiRect = roiRects[0];
+        CvRect tShapeRoiRect = roiRects[1];
+
+		IplImage frameImage = IplImage.create(fieldW, fieldH, IPL_DEPTH_8U, 1);
+		cvSetZero(frameImage);
+		cvSetImageROI(frameImage, frameRoiRect);
+		
+		IplImage tShape = getShapeImage(angle);
+		cvSetImageROI(tShape, tShapeRoiRect);
+		
+		cvCopy(tShape, frameImage);
+		
+		cvResetImageROI(frameImage);
+		
+		return frameImage;
 	}
 	
 	

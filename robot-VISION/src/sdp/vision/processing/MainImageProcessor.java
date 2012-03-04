@@ -293,28 +293,20 @@ public class MainImageProcessor extends BaseImageProcessor {
             Point2D.Double normRobotPos = ProcUtils.frameToNormalCoordinates(config, robotX, robotY, true);
             
             // Find surrounding rectangle and isolate robot shape properly.
-            int roiXOff = Math.min(robotX, idealTShape.getWidth() / 2);
-            int roiYOff = Math.min(robotY, idealTShape.getHeight() / 2);
-            int roiWidth = roiXOff + Math.min(config.getFieldWidth() - robotX, idealTShape.getWidth() / 2);
-            int roiHeight = roiYOff + Math.min(config.getFieldHeight() - robotY, idealTShape.getHeight() / 2);
-            
-            IplImage shapeImage_ipl = IplImage.create(roiWidth, roiHeight, IPL_DEPTH_8U, 1);
-            cvFillPoly(shapeImage_ipl, ProcUtils.cvSeqToArray(bestRobotShape),
-            		new int[] { bestRobotShape.total() }, 1, CvScalar.WHITE, 8, 0);
+            CvRect[] roiRects = ProcUtils.getOverlappingRect(config.getFieldWidth(), config.getFieldHeight(),
+            		robotX, robotY, idealTShape.getWidth(), idealTShape.getHeight());
+            CvRect frameRoiRect = roiRects[0];
+            CvRect tShapeRoiRect = roiRects[1];
       
-            // Find the robot direction.
-            CvRect threshROI = cvRect(robotX - roiXOff, robotY - roiYOff, roiWidth, roiHeight);
-            cvSetImageROI(thresh_ipl, threshROI);
+            cvSetImageROI(thresh_ipl, frameRoiRect);
             
+            // Find robot direction.
             int angle = 0;
             int bestArea = Integer.MAX_VALUE;
             
             for (int i = 0; i < 360; ++i) {
-            	IplImage rotShape = idealTShape.getIplImage(i);
-            	
-            	CvRect rotShapeROI = cvRect(idealTShape.getWidth() / 2 - roiXOff,
-            			idealTShape.getHeight() / 2 - roiYOff, roiWidth, roiHeight);
-            	cvSetImageROI(rotShape, rotShapeROI);
+            	IplImage rotShape = idealTShape.getShapeImage(i);
+            	cvSetImageROI(rotShape, tShapeRoiRect);
           
             	cvXor(rotShape, thresh_ipl, rotShape, null);
             	int curArea = cvCountNonZero(rotShape);
