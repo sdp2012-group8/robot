@@ -210,6 +210,9 @@ public class MainImageProcessor extends BaseImageProcessor {
 			    }
 			}
 		}
+		
+		BufferedImage retValue[] = { ball, blue, yellow };
+		return retValue;
 	}
 	
 	
