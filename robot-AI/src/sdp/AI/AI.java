@@ -1,11 +1,7 @@
 package sdp.AI;
 
-import java.awt.geom.Point2D;
 import java.io.IOException;
 
-import sdp.common.Communicator;
-import sdp.common.MessageQueue;
-import sdp.common.Communicator.opcode;
 import sdp.common.Utilities;
 
 /**

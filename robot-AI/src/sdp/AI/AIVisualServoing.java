@@ -35,8 +35,7 @@ public class AIVisualServoing extends AI {
 			// Robot can't see a goal
 			// TODO: decide on what to do when the robot can't see the goal.
 			System.out.println("Can't see a goal");
-			double dist = 2*Robot.LENGTH_CM;
-			target = new Vector2D(ai_world_state.getBallCoords().getX() + (ai_world_state.getMyGoalLeft() ? - dist : dist), ai_world_state.getBallCoords().getY());
+			target = new Vector2D(ai_world_state.getBallCoords());
 		}
 
 		//		double dist = 2*Robot.LENGTH_CM;
