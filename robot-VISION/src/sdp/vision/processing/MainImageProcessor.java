@@ -85,8 +85,8 @@ public class MainImageProcessor extends BaseImageProcessor {
 		IplImage yellow_ipl = IplImage.createFrom(yellow);	
 
 		Point2D.Double ballPos = findBall(ball_ipl);
-		Robot blueRobot = findRobot(frame, blue_ipl, config.getBlueThreshs());
-		Robot yellowRobot = findRobot(frame, yellow_ipl, config.getYellowThreshs());
+		Robot blueRobot = findRobot(frame, blue_ipl, config.getBlueSizeMin(), config.getBlueSizeMax());
+		Robot yellowRobot = findRobot(frame, yellow_ipl, config.getYellowSizeMin(), config.getYellowSizeMax());
 		finaliseWorldImage(frame_ipl, ballPos, blueRobot, yellowRobot);
 		
 		return new WorldState(ballPos, blueRobot, yellowRobot, worldImage);
@@ -215,7 +215,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 	private Point2D.Double findBall(IplImage thresh) {
 		CvSeq fullBallContour = findAllContours(thresh);		
 		ArrayList<CvSeq> ballShapes = sizeFilterContours(fullBallContour,
-				config.getBallThreshs().getSizeMin(), config.getBallThreshs().getSizeMax());
+				config.getBallSizeMin(), config.getBallSizeMax());
 		
 		if (ballShapes.size() == 0) {
 			return new Point2D.Double(-1.0, -1.0);
@@ -249,13 +249,13 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 * 
 	 * @param frame The original frame.
 	 * @param thresh_ipl Thresholded image to search for the robot's T.
-	 * @param bounds Thresholding bounds.
+	 * @param sizeMin Lower bound of the robot's contour size.
+	 * @param sizeMax Upper bound of the robot's contour size.
 	 * @return The position of the ball.
 	 */
-	private Robot findRobot(BufferedImage frame, IplImage thresh_ipl, ThresholdBounds bounds) {
+	private Robot findRobot(BufferedImage frame, IplImage thresh_ipl, int sizeMin, int sizeMax) {
 		CvSeq fullRobotContour = findAllContours(thresh_ipl);
-		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour,
-				bounds.getSizeMin(), bounds.getSizeMax());
+		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour, sizeMin, sizeMax);
 		
 		if (robotShapes.size() == 0) {
 			return new Robot(new Point2D.Double(-1.0, -1.0), -1.0);

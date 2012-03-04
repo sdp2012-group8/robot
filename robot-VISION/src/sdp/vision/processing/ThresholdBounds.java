@@ -8,6 +8,9 @@ package sdp.vision.processing;
  */
 public class ThresholdBounds {
 	
+	/** Different types of values that can be set. */
+	public enum ValueType { HUE_MIN, HUE_MAX, SAT_MIN, SAT_MAX, VAL_MIN, VAL_MAX };
+	
 	/** Lower bound of the hue threshold. */
 	private int hueMin = 0;
 	/** Upper bound of the hue threshold. */
@@ -20,10 +23,6 @@ public class ThresholdBounds {
 	private int valMin = 0;
 	/** Upper bound of the value threshold. */
 	private int valMax = 100;
-	/** Lower bound of the bounding box size threshold. */
-	private int sizeMin = 1;
-	/** Upper bound of the bounding box size threshold. */
-	private int sizeMax = 100;
 	
 	
 	/**
@@ -120,35 +119,62 @@ public class ThresholdBounds {
 	public void setValMax(int valMax) {
 		this.valMax = valMax;
 	}
-
-
+	
+	
 	/**
-	 * @return the sizeMin
+	 * Get one of the threshold bound values.
+	 * 
+	 * @param type The type of value to return.
+	 * @return The requested value.
 	 */
-	public int getSizeMin() {
-		return sizeMin;
+	public int getValue(ValueType type) {
+		switch (type) {
+		case HUE_MIN :
+			return getHueMin();
+		case HUE_MAX :
+			return getHueMax();
+		case SAT_MIN :
+			return getSatMin();
+		case SAT_MAX :
+			return getSatMax();
+		case VAL_MIN :
+			return getValMin();
+		case VAL_MAX :
+			return getValMax();
+		default :
+			return -1;
+		}
 	}
-
+	
 	/**
-	 * @param sizeMin the sizeMin to set
+	 * Set one of the threshold bound values.
+	 * 
+	 * @param type The type of value to set.
+	 * @param value Value to set the value to (sigh).
 	 */
-	public void setSizeMin(int sizeMin) {
-		this.sizeMin = sizeMin;
-	}
-
-
-	/**
-	 * @return the sizeMax
-	 */
-	public int getSizeMax() {
-		return sizeMax;
-	}
-
-	/**
-	 * @param sizeMax the sizeMax to set
-	 */
-	public void setSizeMax(int sizeMax) {
-		this.sizeMax = sizeMax;
+	public void setValue(ValueType type, int value) {
+		switch (type) {
+		case HUE_MIN :
+			setHueMin(value);
+			break;
+		case HUE_MAX :
+			setHueMax(value);
+			break;
+		case SAT_MIN :
+			setSatMin(value);
+			break;
+		case SAT_MAX :
+			setSatMax(value);
+			break;
+		case VAL_MIN :
+			setValMin(value);
+			break;
+		case VAL_MAX :
+			setValMax(value);
+			break;
+		default :
+			break;
+		}
 	}
 
 }

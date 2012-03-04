@@ -41,10 +41,24 @@ public class ImageProcessorConfig {
 	
 	/** Ball threshold bound container. */
 	private ThresholdBounds ballThresholds = new ThresholdBounds();
+	/** Lower bound of ball contour size. */
+	private int ballSizeMin = 5;
+	/** Upper bound of ball contour size. */
+	private int ballSizeMax = 25;
+	
 	/** Blue robot threshold bound container. */
 	private ThresholdBounds blueThresholds = new ThresholdBounds();
+	/** Lower bound of ball contour size. */
+	private int blueSizeMin = 10;
+	/** Upper bound of ball contour size. */
+	private int blueSizeMax = 60;
+	
 	/** Yellow robot threshold bound container. */
 	private ThresholdBounds yellowThresholds = new ThresholdBounds();
+	/** Lower bound of ball contour size. */
+	private int yellowSizeMin = 10;
+	/** Upper bound of ball contour size. */
+	private int yellowSizeMax = 60;
 	
 	/** Image undistortion coefficient f_x. */
 	private double undistort_fx = 1.0;
@@ -284,6 +298,45 @@ public class ImageProcessorConfig {
 		return ballThresholds;
 	}
 
+	
+	/**
+	 * Get the lower bound of the ball contour size.
+	 * 
+	 * @return Lower bound of ball contour size.
+	 */
+	public int getBallSizeMin() {
+		return ballSizeMin;
+	}
+
+	/**
+	 * Set the lower bound of the ball contour size.
+	 * 
+	 * @param ballSizeMin Lower bound of ball contour size.
+	 */
+	public void setBallSizeMin(int ballSizeMin) {
+		this.ballSizeMin = ballSizeMin;
+	}
+
+
+	/**
+	 * Get the upper bound of the ball contour size.
+	 * 
+	 * @return Upper bound of ball contour size.
+	 */
+	public int getBallSizeMax() {
+		return ballSizeMax;
+	}
+
+	/**
+	 * Set the upper bound of the ball contour size.
+	 * 
+	 * @param ballSizeMax Upper bound of ball contour size.
+	 */
+	public void setBallSizeMax(int ballSizeMax) {
+		this.ballSizeMax = ballSizeMax;
+	}
+
+
 	/**
 	 * Get the blue robot threshold bounds.
 	 * 
@@ -292,6 +345,45 @@ public class ImageProcessorConfig {
 	public ThresholdBounds getBlueThreshs() {
 		return blueThresholds;
 	}
+	
+	
+	/**
+	 * Get the lower bound of the blue robot contour size.
+	 * 
+	 * @return Lower bound of blue robot contour size.
+	 */
+	public int getBlueSizeMin() {
+		return blueSizeMin;
+	}
+
+	/**
+	 * Set the lower bound of the blue robot contour size.
+	 * 
+	 * @param blueSizeMin Lower bound of blue robot contour size.
+	 */
+	public void setBlueSizeMin(int blueSizeMin) {
+		this.blueSizeMin = blueSizeMin;
+	}
+
+
+	/**
+	 * Get the upper bound of the blue robot contour size.
+	 * 
+	 * @return Upper bound of blue robot contour size.
+	 */
+	public int getBlueSizeMax() {
+		return blueSizeMax;
+	}
+
+	/**
+	 * Set the upper bound of the blue robot contour size.
+	 * 
+	 * @param blueSizeMax Upper bound of blue robot contour size.
+	 */
+	public void setBlueSizeMax(int blueSizeMax) {
+		this.blueSizeMax = blueSizeMax;
+	}
+	
 
 	/**
 	 * Get the yellow robot threshold bounds.
@@ -300,6 +392,44 @@ public class ImageProcessorConfig {
 	 */
 	public ThresholdBounds getYellowThreshs() {
 		return yellowThresholds;
+	}
+	
+	
+	/**
+	 * Get the lower bound of the yellow robot contour size.
+	 * 
+	 * @return Lower bound of yellow robot contour size.
+	 */
+	public int getYellowSizeMin() {
+		return yellowSizeMin;
+	}
+
+	/**
+	 * Set the lower bound of the yellow robot contour size.
+	 * 
+	 * @param yellowSizeMin Lower bound of yellow robot contour size.
+	 */
+	public void setYellowSizeMin(int yellowSizeMin) {
+		this.yellowSizeMin = yellowSizeMin;
+	}
+
+
+	/**
+	 * Get the upper bound of the yellow robot contour size.
+	 * 
+	 * @return Upper bound of yellow robot contour size.
+	 */
+	public int getYellowSizeMax() {
+		return yellowSizeMax;
+	}
+
+	/**
+	 * Set the upper bound of the yellow robot contour size.
+	 * 
+	 * @param yellowSizeMax Upper bound of yellow robot contour size.
+	 */
+	public void setYellowSizeMax(int yellowSizeMax) {
+		this.yellowSizeMax = yellowSizeMax;
 	}
 
 
@@ -593,8 +723,8 @@ public class ImageProcessorConfig {
 		config.getBallThreshs().setSatMax(XmlUtils.getChildInt(ballElement, "satMax"));
 		config.getBallThreshs().setValMin(XmlUtils.getChildInt(ballElement, "valMin"));
 		config.getBallThreshs().setValMax(XmlUtils.getChildInt(ballElement, "valMax"));
-		config.getBallThreshs().setSizeMin(XmlUtils.getChildInt(ballElement, "sizeMin"));
-		config.getBallThreshs().setSizeMax(XmlUtils.getChildInt(ballElement, "sizeMax"));
+		config.setBallSizeMin(XmlUtils.getChildInt(ballElement, "sizeMin"));
+		config.setBallSizeMax(XmlUtils.getChildInt(ballElement, "sizeMax"));
 		
 		Element blueElement = (Element)rootElement.getElementsByTagName("blue").item(0);
 		config.getBlueThreshs().setHueMin(XmlUtils.getChildInt(blueElement, "hueMin"));
@@ -603,8 +733,8 @@ public class ImageProcessorConfig {
 		config.getBlueThreshs().setSatMax(XmlUtils.getChildInt(blueElement, "satMax"));
 		config.getBlueThreshs().setValMin(XmlUtils.getChildInt(blueElement, "valMin"));
 		config.getBlueThreshs().setValMax(XmlUtils.getChildInt(blueElement, "valMax"));
-		config.getBlueThreshs().setSizeMin(XmlUtils.getChildInt(blueElement, "sizeMin"));
-		config.getBlueThreshs().setSizeMax(XmlUtils.getChildInt(blueElement, "sizeMax"));
+		config.setBlueSizeMin(XmlUtils.getChildInt(blueElement, "sizeMin"));
+		config.setBlueSizeMax(XmlUtils.getChildInt(blueElement, "sizeMax"));
 		
 		Element yellowElement = (Element)rootElement.getElementsByTagName("yellow").item(0);
 		config.getYellowThreshs().setHueMin(XmlUtils.getChildInt(yellowElement, "hueMin"));
@@ -613,8 +743,8 @@ public class ImageProcessorConfig {
 		config.getYellowThreshs().setSatMax(XmlUtils.getChildInt(yellowElement, "satMax"));
 		config.getYellowThreshs().setValMin(XmlUtils.getChildInt(yellowElement, "valMin"));
 		config.getYellowThreshs().setValMax(XmlUtils.getChildInt(yellowElement, "valMax"));
-		config.getYellowThreshs().setSizeMin(XmlUtils.getChildInt(yellowElement, "sizeMin"));
-		config.getYellowThreshs().setSizeMax(XmlUtils.getChildInt(yellowElement, "sizeMax"));
+		config.setYellowSizeMin(XmlUtils.getChildInt(yellowElement, "sizeMin"));
+		config.setYellowSizeMax(XmlUtils.getChildInt(yellowElement, "sizeMax"));
 		
 		return config;
 	}
@@ -657,8 +787,8 @@ public class ImageProcessorConfig {
 		XmlUtils.addChildInt(doc, ballElement, "satMax", config.getBallThreshs().getSatMax());
 		XmlUtils.addChildInt(doc, ballElement, "valMin", config.getBallThreshs().getValMin());
 		XmlUtils.addChildInt(doc, ballElement, "valMax", config.getBallThreshs().getValMax());
-		XmlUtils.addChildInt(doc, ballElement, "sizeMin", config.getBallThreshs().getSizeMin());
-		XmlUtils.addChildInt(doc, ballElement, "sizeMax", config.getBallThreshs().getSizeMax());
+		XmlUtils.addChildInt(doc, ballElement, "sizeMin", config.getBallSizeMin());
+		XmlUtils.addChildInt(doc, ballElement, "sizeMax", config.getBallSizeMax());
 		rootElement.appendChild(ballElement);
 		
 		Element blueElement = doc.createElement("blue");
@@ -668,8 +798,8 @@ public class ImageProcessorConfig {
 		XmlUtils.addChildInt(doc, blueElement, "satMax", config.getBlueThreshs().getSatMax());
 		XmlUtils.addChildInt(doc, blueElement, "valMin", config.getBlueThreshs().getValMin());
 		XmlUtils.addChildInt(doc, blueElement, "valMax", config.getBlueThreshs().getValMax());
-		XmlUtils.addChildInt(doc, blueElement, "sizeMin", config.getBlueThreshs().getSizeMin());
-		XmlUtils.addChildInt(doc, blueElement, "sizeMax", config.getBlueThreshs().getSizeMax());
+		XmlUtils.addChildInt(doc, blueElement, "sizeMin", config.getBlueSizeMin());
+		XmlUtils.addChildInt(doc, blueElement, "sizeMax", config.getBlueSizeMax());
 		rootElement.appendChild(blueElement);
 		
 		Element yellowElement = doc.createElement("yellow");
@@ -679,8 +809,8 @@ public class ImageProcessorConfig {
 		XmlUtils.addChildInt(doc, yellowElement, "satMax", config.getYellowThreshs().getSatMax());
 		XmlUtils.addChildInt(doc, yellowElement, "valMin", config.getYellowThreshs().getValMin());
 		XmlUtils.addChildInt(doc, yellowElement, "valMax", config.getYellowThreshs().getValMax());
-		XmlUtils.addChildInt(doc, yellowElement, "sizeMin", config.getYellowThreshs().getSizeMin());
-		XmlUtils.addChildInt(doc, yellowElement, "sizeMax", config.getYellowThreshs().getSizeMax());
+		XmlUtils.addChildInt(doc, yellowElement, "sizeMin", config.getYellowSizeMin());
+		XmlUtils.addChildInt(doc, yellowElement, "sizeMax", config.getYellowSizeMax());
 		rootElement.appendChild(yellowElement);
 		
 		XmlUtils.writeXmlDocument(doc, filename);

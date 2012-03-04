@@ -310,29 +310,29 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		config.getBallThreshs().setHueMin(((Integer)ballHueMinSpinner.getValue()).intValue());
 		config.getBallThreshs().setSatMin(((Integer)ballSatMinSpinner.getValue()).intValue());
 		config.getBallThreshs().setValMin(((Integer)ballValMinSpinner.getValue()).intValue());
-		config.getBallThreshs().setSizeMin(((Integer)ballSizeMinSpinner.getValue()).intValue());
+		config.setBallSizeMin(((Integer)ballSizeMinSpinner.getValue()).intValue());
 		config.getBallThreshs().setHueMax(((Integer)ballHueMaxSpinner.getValue()).intValue());
 		config.getBallThreshs().setSatMax(((Integer)ballSatMaxSpinner.getValue()).intValue());
 		config.getBallThreshs().setValMax(((Integer)ballValMaxSpinner.getValue()).intValue());
-		config.getBallThreshs().setSizeMax(((Integer)ballSizeMaxSpinner.getValue()).intValue());
+		config.setBallSizeMax(((Integer)ballSizeMaxSpinner.getValue()).intValue());
 		
 		config.getBlueThreshs().setHueMin(((Integer)blueHueMinSpinner.getValue()).intValue());
 		config.getBlueThreshs().setSatMin(((Integer)blueSatMinSpinner.getValue()).intValue());
 		config.getBlueThreshs().setValMin(((Integer)blueValMinSpinner.getValue()).intValue());
-		config.getBlueThreshs().setSizeMin(((Integer)blueSizeMinSpinner.getValue()).intValue());
+		config.setBlueSizeMin(((Integer)blueSizeMinSpinner.getValue()).intValue());
 		config.getBlueThreshs().setHueMax(((Integer)blueHueMaxSpinner.getValue()).intValue());
 		config.getBlueThreshs().setSatMax(((Integer)blueSatMaxSpinner.getValue()).intValue());
 		config.getBlueThreshs().setValMax(((Integer)blueValMaxSpinner.getValue()).intValue());
-		config.getBlueThreshs().setSizeMax(((Integer)blueSizeMaxSpinner.getValue()).intValue());
+		config.setBlueSizeMax(((Integer)blueSizeMaxSpinner.getValue()).intValue());
 		
 		config.getYellowThreshs().setHueMin(((Integer)yellowHueMinSpinner.getValue()).intValue());
 		config.getYellowThreshs().setSatMin(((Integer)yellowSatMinSpinner.getValue()).intValue());
 		config.getYellowThreshs().setValMin(((Integer)yellowValMinSpinner.getValue()).intValue());
-		config.getYellowThreshs().setSizeMin(((Integer)yellowSizeMinSpinner.getValue()).intValue());
+		config.setYellowSizeMin(((Integer)yellowSizeMinSpinner.getValue()).intValue());
 		config.getYellowThreshs().setHueMax(((Integer)yellowHueMaxSpinner.getValue()).intValue());
 		config.getYellowThreshs().setSatMax(((Integer)yellowSatMaxSpinner.getValue()).intValue());
 		config.getYellowThreshs().setValMax(((Integer)yellowValMaxSpinner.getValue()).intValue());
-		config.getYellowThreshs().setSizeMax(((Integer)yellowSizeMaxSpinner.getValue()).intValue());
+		config.setYellowSizeMax(((Integer)yellowSizeMaxSpinner.getValue()).intValue());
 		
 		try {
 			config.setUndistort_cx(Double.valueOf(cxTextfield.getText()));
@@ -381,29 +381,29 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		ballHueMinSpinner.setValue(new Integer(config.getBallThreshs().getHueMin()));
 		ballSatMinSpinner.setValue(new Integer(config.getBallThreshs().getSatMin()));
 		ballValMinSpinner.setValue(new Integer(config.getBallThreshs().getValMin()));
-		ballSizeMinSpinner.setValue(new Integer(config.getBallThreshs().getSizeMin()));
+		ballSizeMinSpinner.setValue(new Integer(config.getBallSizeMin()));
 		ballHueMaxSpinner.setValue(new Integer(config.getBallThreshs().getHueMax()));
 		ballSatMaxSpinner.setValue(new Integer(config.getBallThreshs().getSatMax()));
 		ballValMaxSpinner.setValue(new Integer(config.getBallThreshs().getValMax()));
-		ballSizeMaxSpinner.setValue(new Integer(config.getBallThreshs().getSizeMax()));
+		ballSizeMaxSpinner.setValue(new Integer(config.getBallSizeMax()));
 		
 		blueHueMinSpinner.setValue(new Integer(config.getBlueThreshs().getHueMin()));
 		blueSatMinSpinner.setValue(new Integer(config.getBlueThreshs().getSatMin()));
 		blueValMinSpinner.setValue(new Integer(config.getBlueThreshs().getValMin()));
-		blueSizeMinSpinner.setValue(new Integer(config.getBlueThreshs().getSizeMin()));
+		blueSizeMinSpinner.setValue(new Integer(config.getBlueSizeMin()));
 		blueHueMaxSpinner.setValue(new Integer(config.getBlueThreshs().getHueMax()));
 		blueSatMaxSpinner.setValue(new Integer(config.getBlueThreshs().getSatMax()));
 		blueValMaxSpinner.setValue(new Integer(config.getBlueThreshs().getValMax()));
-		blueSizeMaxSpinner.setValue(new Integer(config.getBlueThreshs().getSizeMax()));
+		blueSizeMaxSpinner.setValue(new Integer(config.getBlueSizeMax()));
 		
 		yellowHueMinSpinner.setValue(new Integer(config.getYellowThreshs().getHueMin()));
 		yellowSatMinSpinner.setValue(new Integer(config.getYellowThreshs().getSatMin()));
 		yellowValMinSpinner.setValue(new Integer(config.getYellowThreshs().getValMin()));
-		yellowSizeMinSpinner.setValue(new Integer(config.getYellowThreshs().getSizeMin()));
+		yellowSizeMinSpinner.setValue(new Integer(config.getYellowSizeMin()));
 		yellowHueMaxSpinner.setValue(new Integer(config.getYellowThreshs().getHueMax()));
 		yellowSatMaxSpinner.setValue(new Integer(config.getYellowThreshs().getSatMax()));
 		yellowValMaxSpinner.setValue(new Integer(config.getYellowThreshs().getValMax()));
-		yellowSizeMaxSpinner.setValue(new Integer(config.getYellowThreshs().getSizeMax()));
+		yellowSizeMaxSpinner.setValue(new Integer(config.getYellowSizeMax()));
 		
 		cxTextfield.setText(Double.toString(config.getUndistort_cx()));
 		cyTextfield.setText(Double.toString(config.getUndistort_cy()));
