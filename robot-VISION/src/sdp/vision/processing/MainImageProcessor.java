@@ -302,16 +302,16 @@ public class MainImageProcessor extends BaseImageProcessor {
             
             // Find robot direction.
             int angle = 0;
-            int bestArea = Integer.MAX_VALUE;
+            int bestArea = -1;
             
             for (int i = 0; i < 360; ++i) {
             	IplImage rotShape = idealTShape.getShapeImage(i);
             	cvSetImageROI(rotShape, tShapeRoiRect);
           
-            	cvXor(rotShape, thresh_ipl, rotShape, null);
+            	cvAnd(rotShape, thresh_ipl, rotShape, null);
             	int curArea = cvCountNonZero(rotShape);
             	
-            	if (curArea < bestArea) {
+            	if (curArea > bestArea) {
             		angle = i;
             		bestArea = curArea;
             	}
