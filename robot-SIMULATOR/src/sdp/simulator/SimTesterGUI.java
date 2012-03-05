@@ -18,7 +18,6 @@ import sdp.AI.AIMaster;
 import sdp.AI.AIMaster.mode;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
-import sdp.common.Utilities;
 import sdp.common.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
@@ -44,7 +43,7 @@ import javax.swing.DefaultComboBoxModel;
 public class SimTesterGUI {
 
 	private static final double PLACEMENT_LEFT = 20; // in cm
-	private static final double PLACEMENT_RIGHT = Utilities.PITCH_WIDTH_CM - PLACEMENT_LEFT; // in cm
+	private static final double PLACEMENT_RIGHT = WorldState.PITCH_WIDTH_CM - PLACEMENT_LEFT; // in cm
 	
 	private JFrame frmAlphaTeamSimulator;
 	
@@ -354,11 +353,11 @@ public class SimTesterGUI {
 		
 		mSim.registerBlue(blue_selected ? (VBrick) mComm : (VBrick) opponentComm,
 				blue_placement,
-				Utilities.PITCH_HEIGHT_CM/2,
+				WorldState.PITCH_HEIGHT_CM/2,
 				blue_placement == PLACEMENT_LEFT ? 0 : 180);
 		mSim.registerYellow(blue_selected ? (VBrick) opponentComm : (VBrick) mComm,
 				yellow_placement,
-				Utilities.PITCH_HEIGHT_CM/2,
+				WorldState.PITCH_HEIGHT_CM/2,
 				yellow_placement == PLACEMENT_LEFT ? 0 : 180);
 		
 
@@ -384,8 +383,8 @@ public class SimTesterGUI {
 	 */
 	private void resetField() {
 		mSim.putBallAt();
-		mSim.putAt(blue_placement/Utilities.PITCH_WIDTH_CM, Utilities.PITCH_HEIGHT_CM/(2*Utilities.PITCH_WIDTH_CM), 0, blue_placement == PLACEMENT_LEFT ?  0 : 180);
-		mSim.putAt(yellow_placement/Utilities.PITCH_WIDTH_CM, Utilities.PITCH_HEIGHT_CM/(2*Utilities.PITCH_WIDTH_CM), 1, yellow_placement == PLACEMENT_LEFT ?  0 : 180);
+		mSim.putAt(blue_placement/WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM), 0, blue_placement == PLACEMENT_LEFT ?  0 : 180);
+		mSim.putAt(yellow_placement/WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM), 1, yellow_placement == PLACEMENT_LEFT ?  0 : 180);
 	}
 	
 	/**
@@ -435,21 +434,21 @@ public class SimTesterGUI {
 		Random r = new Random();
 		Vector2D ballpos, robot2;
 		Vector2D robot1 = new Vector2D(
-				(25 + r.nextDouble()*(Utilities.PITCH_WIDTH_CM-50))/Utilities.PITCH_WIDTH_CM,
-				(25 + r.nextDouble()*(Utilities.PITCH_HEIGHT_CM-50))/Utilities.PITCH_WIDTH_CM);
+				(25 + r.nextDouble()*(WorldState.PITCH_WIDTH_CM-50))/WorldState.PITCH_WIDTH_CM,
+				(25 + r.nextDouble()*(WorldState.PITCH_HEIGHT_CM-50))/WorldState.PITCH_WIDTH_CM);
 		while (true) {
 			robot2 = new Vector2D(
-					(25 + r.nextDouble()*(Utilities.PITCH_WIDTH_CM-50))/Utilities.PITCH_WIDTH_CM,
-					(25 + r.nextDouble()*(Utilities.PITCH_HEIGHT_CM-50))/Utilities.PITCH_WIDTH_CM);
-			if (Vector2D.subtract(robot1, robot2).getLength() > 35/Utilities.PITCH_WIDTH_CM)
+					(25 + r.nextDouble()*(WorldState.PITCH_WIDTH_CM-50))/WorldState.PITCH_WIDTH_CM,
+					(25 + r.nextDouble()*(WorldState.PITCH_HEIGHT_CM-50))/WorldState.PITCH_WIDTH_CM);
+			if (Vector2D.subtract(robot1, robot2).getLength() > 35/WorldState.PITCH_WIDTH_CM)
 				break;
 		}
 		while (true) {
 			ballpos = new Vector2D(
-					(7.5 + r.nextDouble()*(Utilities.PITCH_WIDTH_CM-30))/Utilities.PITCH_WIDTH_CM,
-					(7.5 + r.nextDouble()*(Utilities.PITCH_HEIGHT_CM-30))/Utilities.PITCH_WIDTH_CM);
-			if (Vector2D.subtract(robot1, ballpos).getLength() > 35/Utilities.PITCH_WIDTH_CM &&
-					Vector2D.subtract(robot1, ballpos).getLength() > 35/Utilities.PITCH_WIDTH_CM)
+					(7.5 + r.nextDouble()*(WorldState.PITCH_WIDTH_CM-30))/WorldState.PITCH_WIDTH_CM,
+					(7.5 + r.nextDouble()*(WorldState.PITCH_HEIGHT_CM-30))/WorldState.PITCH_WIDTH_CM);
+			if (Vector2D.subtract(robot1, ballpos).getLength() > 35/WorldState.PITCH_WIDTH_CM &&
+					Vector2D.subtract(robot1, ballpos).getLength() > 35/WorldState.PITCH_WIDTH_CM)
 				break;
 		}
 		mSim.putAt(robot1.getX(), robot1.getY(), 0, 180-r.nextInt(360));
