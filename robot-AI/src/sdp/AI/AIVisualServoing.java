@@ -14,15 +14,15 @@ public class AIVisualServoing extends AI {
 	private final static int COLL_ANGLE = 25;
 	private final static int CORNER_COLL_THRESHOLD = 3;
 	private final static int NEAR_TARGET = 2;
-	private final static int POINT_ACCURACY = 4;
+	private final static int POINT_ACCURACY = 10;
+	
+	private final static int MAX_TURN_ANG = 127;
 
 	/**
 	 * True if the robot is chasing the target.
 	 * False if the robot is chasing the real ball.
 	 */
 	private boolean chasing_target = true;
-
-	private Command prev = null;
 
 	@Override
 	protected Command chaseBall() throws IOException {
@@ -35,8 +35,7 @@ public class AIVisualServoing extends AI {
 			// Robot can't see a goal
 			// TODO: decide on what to do when the robot can't see the goal.
 			System.out.println("Can't see a goal");
-			double dist = 2*Robot.LENGTH_CM;
-			target = new Vector2D(ai_world_state.getBallCoords().getX() + (ai_world_state.getMyGoalLeft() ? - dist : dist), ai_world_state.getBallCoords().getY());
+			target = new Vector2D(ai_world_state.getBallCoords());
 		}
 
 		//		double dist = 2*Robot.LENGTH_CM;
@@ -77,12 +76,12 @@ public class AIVisualServoing extends AI {
 			//System.out.print("B");
 		}
 
+		normalizeRatio(comm);
+		
 		// debugging restrictions
-		comm.turning_speed *= 1;
-		comm.speed *= 1;
-
-
-		prev = comm;
+		//comm.turning_speed *= 10;
+		//comm.speed *= 1;
+		
 		return comm;
 
 	}
@@ -90,7 +89,6 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Command gotBall() throws IOException {
 		chasing_target = true;
-		prev = null;
 		return new Command(0,0,true);
 	}
 
@@ -340,6 +338,15 @@ public class AIVisualServoing extends AI {
 		}
 		double coeff = distance / threshold;
 		current_speed.speed = slow_speed+coeff*(current_speed.speed-slow_speed);
+	}
+	
+	public void normalizeRatio(Command comm) {
+		if (Math.abs(comm.turning_speed) > MAX_TURNING_SPEED) {
+			comm.speed = MAX_SPEED_CM_S;
+			return;
+		}
+		double rat = 1 - Math.abs(comm.turning_speed)/MAX_SPEED_CM_S;
+		comm.speed *= rat;
 	}
 
 }

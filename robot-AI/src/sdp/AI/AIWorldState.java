@@ -1,16 +1,16 @@
 package sdp.AI;
 
+import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.awt.image.BufferedImage;
 
 import sdp.common.Goal;
+import sdp.common.Painter;
 import sdp.common.Robot;
-import sdp.common.Tools;
 import sdp.common.Utilities;
 import sdp.common.Vector2D;
 import sdp.common.WorldState;
+import sdp.vision.processing.ImageProcessorConfig;
 
 public class AIWorldState extends WorldState {
 
@@ -184,6 +184,13 @@ public class AIWorldState extends WorldState {
 	 */
 	protected double anglebetween(Point2D.Double A, Point2D.Double B) {
 		return (180*Math.atan2(-B.getY()+A.getY(), B.getX()-A.getX()))/Math.PI;
+	}
+	
+	public void onDraw(BufferedImage im, ImageProcessorConfig config) {
+		Painter p = new Painter(im, this);
+		p.setOffsets(config.getFieldLowX(), config.getFieldLowY(), config.getFieldWidth(), config.getFieldHeight());
+		p.image();
+		p.dispose();
 	}
 
 
