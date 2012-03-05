@@ -3,7 +3,6 @@ package sdp.AI;
 import java.io.IOException;
 
 import sdp.common.Robot;
-import sdp.common.Tools;
 import sdp.common.Utilities;
 import sdp.common.Vector2D;
 
