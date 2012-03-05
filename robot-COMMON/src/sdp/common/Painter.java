@@ -1,8 +1,5 @@
 package sdp.common;
 
-import static sdp.common.Utilities.PITCH_HEIGHT_CM;
-import static sdp.common.Utilities.PITCH_WIDTH_CM;
-
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -30,7 +27,7 @@ public class Painter {
 				RenderingHints.VALUE_ANTIALIAS_ON);
 		width = im.getWidth();
 		height = im.getHeight();
-		ratio = (PITCH_WIDTH_CM/(double) PITCH_HEIGHT_CM) * (height/(double) width);
+		ratio = (WorldState.PITCH_WIDTH_CM/(double) WorldState.PITCH_HEIGHT_CM) * (height/(double) width);
 		state_cm = ws;
 		robots = new Robot[]{state_cm.getBlueRobot(), state_cm.getYellowRobot()};
 	}
@@ -44,7 +41,7 @@ public class Painter {
 		off_y = y;
 		width = w;
 		height = h;
-		ratio = (PITCH_WIDTH_CM/(double) PITCH_HEIGHT_CM) * (height/(double) width);
+		ratio = (WorldState.PITCH_WIDTH_CM/(double) WorldState.PITCH_HEIGHT_CM) * (height/(double) width);
 	}
 	
 	/**
@@ -70,7 +67,7 @@ public class Painter {
 			else
 				g.setColor(color);
 			g.setStroke(new BasicStroke(1.0f));
-			robot = new Robot(Vector2D.divide(new Vector2D(robots[i].getCoords()), PITCH_WIDTH_CM),
+			robot = new Robot(Vector2D.divide(new Vector2D(robots[i].getCoords()), WorldState.PITCH_WIDTH_CM),
 					robots[i].getAngle());
 			// draw body of robot
 
@@ -226,7 +223,7 @@ public class Painter {
 						}
 						
 						g.setColor(new Color(255, 255, 255, 255));
-						fillOval((int)(target.x* width / PITCH_WIDTH_CM-3), (int) (target.y* width / PITCH_WIDTH_CM-3), 6, 6);
+						fillOval((int)(target.x* width / WorldState.PITCH_WIDTH_CM-3), (int) (target.y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6);
 					}
 				}
 			}
@@ -238,10 +235,10 @@ public class Painter {
 		g.setStroke(new BasicStroke(1.0f));
 		fillOval(
 
-				(int) ((state_cm.getBallCoords().getX() - BALL_RADIUS) * width / PITCH_WIDTH_CM),
-				(int) ((state_cm.getBallCoords().getY() - BALL_RADIUS) * width / PITCH_WIDTH_CM),
-				(int) (2 * BALL_RADIUS * width / PITCH_WIDTH_CM),
-				(int) (2 * BALL_RADIUS * width / PITCH_WIDTH_CM));
+				(int) ((state_cm.getBallCoords().getX() - BALL_RADIUS) * width / WorldState.PITCH_WIDTH_CM),
+				(int) ((state_cm.getBallCoords().getY() - BALL_RADIUS) * width / WorldState.PITCH_WIDTH_CM),
+				(int) (2 * BALL_RADIUS * width / WorldState.PITCH_WIDTH_CM),
+				(int) (2 * BALL_RADIUS * width / WorldState.PITCH_WIDTH_CM));
 	}
 
 	// helpers
@@ -324,10 +321,10 @@ public class Painter {
 	 */
 	private  void drawVector(Vector2D origin, Vector2D vector, boolean draw_point_in_end) {
 
-		double ex = (origin.getX()+vector.getX())*width/PITCH_WIDTH_CM, ey = (origin.getY()+vector.getY())*width/PITCH_WIDTH_CM;
+		double ex = (origin.getX()+vector.getX())*width/WorldState.PITCH_WIDTH_CM, ey = (origin.getY()+vector.getY())*width/WorldState.PITCH_WIDTH_CM;
 		drawLine(
-				(int)(origin.getX()*width/PITCH_WIDTH_CM),
-				(int)(origin.getY()*width/PITCH_WIDTH_CM),
+				(int)(origin.getX()*width/WorldState.PITCH_WIDTH_CM),
+				(int)(origin.getY()*width/WorldState.PITCH_WIDTH_CM),
 				(int)(ex),
 				(int)(ey));
 		if (draw_point_in_end) {
@@ -340,8 +337,8 @@ public class Painter {
 
 		if (reference_robot_id == null)
 			return new Vector2D(x, y);
-		Robot rob = new Robot(Vector2D.multiply(new Vector2D(robots[reference_robot_id].getCoords()), width/PITCH_WIDTH_CM), robots[reference_robot_id].getAngle());
-		Vector2D centre_pitch = new Vector2D(0.5*width, 0.5*PITCH_HEIGHT_CM*width/PITCH_WIDTH_CM);
+		Robot rob = new Robot(Vector2D.multiply(new Vector2D(robots[reference_robot_id].getCoords()), width/WorldState.PITCH_WIDTH_CM), robots[reference_robot_id].getAngle());
+		Vector2D centre_pitch = new Vector2D(0.5*width, 0.5*WorldState.PITCH_HEIGHT_CM*width/WorldState.PITCH_WIDTH_CM);
 		return Vector2D.add(centre_pitch, Utilities.getLocalVector(rob, new Vector2D(x, y)));
 
 	}

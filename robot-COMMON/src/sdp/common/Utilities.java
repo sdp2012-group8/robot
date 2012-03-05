@@ -16,11 +16,7 @@ public class Utilities {
 	
 
 	private static final double POINT_OFFSET = 2*Robot.LENGTH_CM;
-	public final static double PITCH_WIDTH_CM = 244;
-	public final static double PITCH_HEIGHT_CM = 113.7;
-	public final static double GOAL_Y_CM = PITCH_HEIGHT_CM/2;
-	
-	public final static double size_of_ball_obstacle = Robot.LENGTH_CM;
+	public final static double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
 
 
 	/**
@@ -337,7 +333,7 @@ public class Utilities {
 	}
 	
 	private static Point2D.Double toCentimeters(Point2D.Double original) {
-		return new Point2D.Double(original.getX()*PITCH_WIDTH_CM, original.getY()*PITCH_WIDTH_CM);
+		return new Point2D.Double(original.getX()*WorldState.PITCH_WIDTH_CM, original.getY()*WorldState.PITCH_WIDTH_CM);
 	}
 
 	private static Robot toCentimeters(Robot orig) {
@@ -392,9 +388,19 @@ public class Utilities {
 		Iterator<Point2D.Double> itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
-			if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot)) {
-				itr.remove();
-			}
+			
+			if (point.y < 0){
+				if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot.getTopImage()))
+					itr.remove();
+			} else
+				if (point.y > WorldState.PITCH_HEIGHT_CM){
+					if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot.getBottomImage()))
+						itr.remove();
+				} 
+				else
+					if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot)) {
+						itr.remove();
+					}
 		}
 
 		itr = goal_points.iterator();
@@ -462,7 +468,7 @@ public class Utilities {
 				new Vector2D(enemy.getBackRight())
 		};
 		// top wall test
-		Vector2D temp = Vector2D.subtract(new Vector2D(0, PITCH_HEIGHT_CM), new Vector2D(0, point.getY()));
+		Vector2D temp = Vector2D.subtract(new Vector2D(0, WorldState.PITCH_HEIGHT_CM), new Vector2D(0, point.getY()));
 		Vector2D min = temp;
 		// bottom wall test
 		temp = Vector2D.subtract(new Vector2D(0, 0), new Vector2D(0, point.getY()));
@@ -473,7 +479,7 @@ public class Utilities {
 		if (temp.getLength() < min.getLength())
 			min = temp;
 		// right wall test
-		temp = Vector2D.subtract(new Vector2D(PITCH_WIDTH_CM, 0), new Vector2D(point.getX(), 0));
+		temp = Vector2D.subtract(new Vector2D(WorldState.PITCH_WIDTH_CM, 0), new Vector2D(point.getX(), 0));
 		if (temp.getLength() < min.getLength())
 			min = temp;
 		// closest distance to enemy
@@ -550,18 +556,18 @@ public class Utilities {
 	 * @return a {@link Vector2D} in the same direction as direction but with greater length (distance from origin to the nearest collision point, raytraced along direction's direction)
 	 */
 	public static Vector2D raytraceVector(WorldState ws, Vector2D origin, Vector2D direction, Boolean ignore_blue, boolean include_ball_as_obstacle) {
-		if (origin.getX() <= 0 || origin.getY() <= 0 || origin.getX() >= PITCH_WIDTH_CM || origin.getY() >= PITCH_HEIGHT_CM)
+		if (origin.getX() <= 0 || origin.getY() <= 0 || origin.getX() >= WorldState.PITCH_WIDTH_CM || origin.getY() >= WorldState.PITCH_HEIGHT_CM)
 			return Vector2D.ZERO();
 		Vector2D near;
-		Vector2D temp = vectorLineIntersection(origin, direction, new Vector2D(0, 0), new Vector2D(PITCH_WIDTH_CM, 0));
+		Vector2D temp = vectorLineIntersection(origin, direction, new Vector2D(0, 0), new Vector2D(WorldState.PITCH_WIDTH_CM, 0));
 		near = temp;
-		temp = vectorLineIntersection(origin, direction, new Vector2D(PITCH_WIDTH_CM, 0), new Vector2D(PITCH_WIDTH_CM, PITCH_HEIGHT_CM));
+		temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM, 0), new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM));
 		if (temp != null && (near == null || temp.getLength() < near.getLength()))
 			near = temp;
-		temp = vectorLineIntersection(origin, direction, new Vector2D(PITCH_WIDTH_CM, PITCH_HEIGHT_CM), new Vector2D(0, PITCH_HEIGHT_CM));
+		temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM), new Vector2D(0, WorldState.PITCH_HEIGHT_CM));
 		if (temp != null && (near == null || temp.getLength() < near.getLength()))
 			near = temp;
-		temp = vectorLineIntersection(origin, direction, new Vector2D(0, PITCH_HEIGHT_CM), new Vector2D(0, 0));
+		temp = vectorLineIntersection(origin, direction, new Vector2D(0, WorldState.PITCH_HEIGHT_CM), new Vector2D(0, 0));
 		if (temp != null && (near == null || temp.getLength() < near.getLength()))
 			near = temp;
 		// collision with a Robot
@@ -585,14 +591,14 @@ public class Utilities {
 		// collision with ball
 		if (include_ball_as_obstacle) {
 			Vector2D ball = new Vector2D(ws.getBallCoords());
-			temp = vectorLineIntersection(origin, direction, new Vector2D(ball.getX(), ball.getY()-size_of_ball_obstacle/2), new Vector2D(ball.getX(), ball.getY()+size_of_ball_obstacle/2));
+			temp = vectorLineIntersection(origin, direction, new Vector2D(ball.getX(), ball.getY()-SIZE_OF_BALL_OBSTACLE/2), new Vector2D(ball.getX(), ball.getY()+SIZE_OF_BALL_OBSTACLE/2));
 			if (temp != null && (near == null || temp.getLength() < near.getLength()))
 				near = temp;
 		}
 		if (near != null) 
 			return near;
 		return
-				Vector2D.change_length(direction, PITCH_WIDTH_CM);
+				Vector2D.change_length(direction, WorldState.PITCH_WIDTH_CM);
 	}
 	
 	/**
@@ -876,7 +882,7 @@ public class Utilities {
 		double sec_angle = 360d/sector_count;
 		for (int i = 0; i < sector_count; i++)
 			ans[i] = normalize_to_1 ?
-					NNetTools.AI_normalizeDistanceTo1(getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle), PITCH_WIDTH_CM) :
+					NNetTools.AI_normalizeDistanceTo1(getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle), WorldState.PITCH_WIDTH_CM) :
 					getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle).getLength();
 		return ans;
 	}
@@ -889,7 +895,7 @@ public class Utilities {
 		double[] ans = new double[sector_count];
 		double sec_angle = 360d/sector_count;
 		for (int i = 0; i < sector_count; i++)
-			ans[i] = NNetTools.AI_normalizeDistanceTo1(NNetTools.targetInSector(relative, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle)), PITCH_WIDTH_CM);
+			ans[i] = NNetTools.AI_normalizeDistanceTo1(NNetTools.targetInSector(relative, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle)), WorldState.PITCH_WIDTH_CM);
 		return ans;
 	}
 
