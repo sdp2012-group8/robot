@@ -388,9 +388,19 @@ public class Utilities {
 		Iterator<Point2D.Double> itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
-			if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot)) {
-				itr.remove();
-			}
+			
+			if (point.y < 0){
+				if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot.getTopImage()))
+					itr.remove();
+			} else
+				if (point.y > WorldState.PITCH_HEIGHT_CM){
+					if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot.getBottomImage()))
+						itr.remove();
+				} 
+				else
+					if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot)) {
+						itr.remove();
+					}
 		}
 
 		itr = goal_points.iterator();
