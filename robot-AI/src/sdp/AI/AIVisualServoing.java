@@ -1,7 +1,9 @@
 package sdp.AI;
 
+import java.awt.geom.Point2D;
 import java.io.IOException;
 
+import sdp.common.Goal;
 import sdp.common.Robot;
 import sdp.common.Utilities;
 import sdp.common.Vector2D;
@@ -35,6 +37,7 @@ public class AIVisualServoing extends AI {
 			// TODO: decide on what to do when the robot can't see the goal.
 			System.out.println("Can't see a goal");
 			target = new Vector2D(ai_world_state.getBallCoords());
+			
 		}
 
 		//		double dist = 2*Robot.LENGTH_CM;
@@ -105,13 +108,26 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Command defendGoal() throws IOException {
 		// TODO Auto-generated method stub
-		return null;
+		//NOT TESTED YET!
+		//Looks for an intersection point between our goal and the enemy direction
+		Point2D.Double intercept= Utilities.intersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getMyGoal().getTop(), ai_world_state.getMyGoal().getBottom());
+		//Looks for an intersection between two lines defined by (1)the ball and an the centre of the goal and (2) the bottom and top of the goal
+		Point2D.Double point= Utilities.intersection(ai_world_state.getBallCoords(), ai_world_state.getMyGoal().getCentre(), ai_world_state.getMyGoal().getTop(), ai_world_state.getMyGoal().getBottom()); 
+		Vector2D reach_point=new Vector2D(point);
+		if (!intercept.equals(null)){
+			//get between our goal and the ball
+			return goTowardsPoint(reach_point, false, true);
+		}
+		else 
+			//else just puts the robot in the centre of the goal
+			return goTowardsPoint(new Vector2D(ai_world_state.getMyGoal().getCentre()), false, false);
+		
 	}
 
 	@Override
 	protected Command penaltiesDefend() throws IOException {
-		// TODO Auto-generated method stub
 		return null;
+		
 	}
 
 	@Override
