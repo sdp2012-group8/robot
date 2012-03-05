@@ -1,6 +1,5 @@
 package sdp.AI;
 
-import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
@@ -18,7 +17,6 @@ public class AIWorldState extends WorldState {
 	private boolean my_goal_left;
 	private Goal enemy_goal;
 	private Goal my_goal;
-	private final static double GOAL_SIZE = 60; // cm
 
 	//changing variables
 	private Robot robot = null;
@@ -28,19 +26,7 @@ public class AIWorldState extends WorldState {
 
 	//flags
 	boolean f_ball_on_field = false;
-
-	//imaginary top pitch
-	private Point2D.Double[] imaginaryTopPitch = {new Point2D.Double(0,0),
-			new Point2D.Double(WorldState.PITCH_WIDTH_CM,0),new Point2D.Double(WorldState.PITCH_WIDTH_CM,-WorldState.PITCH_HEIGHT_CM),
-			new Point2D.Double(0,-WorldState.PITCH_HEIGHT_CM)};
-	//imaginary bottom pitch
-	private Point2D.Double[] imaginaryBottomPitch = {new Point2D.Double(0,WorldState.PITCH_HEIGHT_CM),
-			new Point2D.Double(WorldState.PITCH_WIDTH_CM,WorldState.PITCH_HEIGHT_CM),new Point2D.Double(WorldState.PITCH_WIDTH_CM,2*WorldState.PITCH_HEIGHT_CM),
-			new Point2D.Double(0,2*WorldState.PITCH_HEIGHT_CM)};
-	//imaginary top enemy goal
-	private Point2D.Double[] imaginaryTopEnemyGoal = {new Point2D.Double(0,0), new Point2D.Double(0,0)};
-	private Point2D.Double[] imaginaryBottomEnemyGoal = {new Point2D.Double(0,0), new Point2D.Double(0,0)};
-
+	
 
 	public AIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
 		super(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
@@ -126,54 +112,6 @@ public class AIWorldState extends WorldState {
 			return botmin;
 		}
 
-	}
-
-	/**
-	 * This checks if the robot can see the imaginary goals
-	 * If it returns true, the robot can kick the ball into the wall and it should reflect towards the enemy goal
-	 * This can be done more elegantly by using a rotation matrix, will look into that later(Laura)
-	 * @return if you can shoot into the imaginary goal
-	 */
-	protected boolean goalImage(){
-		if (my_goal_left){
-			imaginaryTopEnemyGoal[0] = new Point2D.Double(WorldState.PITCH_WIDTH_CM,-WorldState.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
-			imaginaryTopEnemyGoal[1] = new Point2D.Double(WorldState.PITCH_WIDTH_CM,-WorldState.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
-			imaginaryBottomEnemyGoal[0] = new Point2D.Double(WorldState.PITCH_WIDTH_CM,3*WorldState.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
-			imaginaryBottomEnemyGoal[1] = new Point2D.Double(WorldState.PITCH_WIDTH_CM,3*WorldState.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
-
-		}
-		else {
-			imaginaryTopEnemyGoal[0] = new Point2D.Double(0,-WorldState.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
-			imaginaryTopEnemyGoal[1] = new Point2D.Double(0,-WorldState.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
-			imaginaryBottomEnemyGoal[0] = new Point2D.Double(0,3*WorldState.PITCH_HEIGHT_CM/2-GOAL_SIZE/2); //top point
-			imaginaryBottomEnemyGoal[1] = new Point2D.Double(0,3*WorldState.PITCH_HEIGHT_CM/2+GOAL_SIZE/2); //bottom point
-		}
-
-		//robot in upper half of pitch, play ball with top wall
-		if (getRobot().getCoords().y < WorldState.PITCH_HEIGHT_CM/2){ 
-			Point2D.Double intersection = Utilities.intersection(getBallCoords(), getRobot().getCoords(), imaginaryTopEnemyGoal[0], imaginaryTopEnemyGoal[1]);
-			if (!intersection.equals(null)){
-				if (intersection.y > imaginaryTopEnemyGoal[0].y && intersection.y < imaginaryTopEnemyGoal[1].y){
-					boolean clear = Utilities.isPathClear(getBallCoords(),intersection, getEnemyRobot());
-					//System.out.println("intersection "+Vector2D.add(new Vector2D(intersection),new Vector2D(new Point2D.Double(0,Utilities.PITCH_HEIGHT_CM))));
-					if (clear)
-						return true;
-				}
-			}	
-		}
-		else {//robot in lower half of pitch, play ball with bottom wall
-			Point2D.Double intersection = Utilities.intersection(getBallCoords(), getRobot().getCoords(), imaginaryBottomEnemyGoal[0], imaginaryBottomEnemyGoal[1]);
-			if (!intersection.equals(null)){
-				if (intersection.y > imaginaryBottomEnemyGoal[0].y && intersection.y < imaginaryBottomEnemyGoal[1].y){
-					boolean clear = Utilities.isPathClear(getBallCoords(),intersection, getEnemyRobot());
-					//System.out.println("intersection "+Vector2D.add(new Vector2D(intersection),new Vector2D(new Point2D.Double(0,-Utilities.PITCH_HEIGHT_CM))));
-					if (clear)
-						return true;
-				}
-			}	
-		}
-
-		return false;
 	}
 
 	/**

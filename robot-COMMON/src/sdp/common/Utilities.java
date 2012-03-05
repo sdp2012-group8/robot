@@ -425,6 +425,75 @@ public class Utilities {
 		return min_point;
 	}
 	
+	
+	/**
+	 * Calculates all the points behind the ball that would align the robot to shoot and
+	 * returns the point closest to the robot.
+	 * It does not take into account the image goals
+	 * @return The point closest to the robot that would allow it to shoot.
+	 * @throws NullPointerException Throws exception when the robot can't see a goal.
+	 */
+	public static Point2D.Double getOptimalPointBehindBallNoWalls(WorldState ws, boolean my_goal_left, boolean my_team_blue) throws NullPointerException {
+		Goal enemy_goal;
+		Robot robot, enemy_robot;
+		
+		if (my_goal_left) {
+			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
+		} else {
+			enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
+		}
+
+		//update variables
+		if (my_team_blue) {
+			robot = ws.getBlueRobot();
+			enemy_robot = ws.getYellowRobot();
+		} else {
+			robot = (ws.getYellowRobot());
+			enemy_robot = (ws.getBlueRobot());
+		}
+		ArrayList<Point2D.Double> goal_points = new ArrayList<Point2D.Double>();
+		Point2D.Double min_point = null;
+		double min_distance = WorldState.PITCH_WIDTH_CM*2;
+		double offset = enemy_goal.getBottom().y - enemy_goal.getTop().y; //offset>0
+		offset = offset/5;
+		
+		goal_points.add(enemy_goal.getCentre());
+		goal_points.add(enemy_goal.getTop());
+		goal_points.add(enemy_goal.getBottom());
+		
+		for (int i=0; i<4; i++)
+			goal_points.add(new Point2D.Double(enemy_goal.getTop().x, enemy_goal.getTop().y - (i+1)*offset));
+
+		Iterator<Point2D.Double> itr = goal_points.iterator();
+		while (itr.hasNext()) {
+			Point2D.Double point = itr.next();
+			
+			if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot)) 
+						itr.remove();
+					
+		}
+
+		itr = goal_points.iterator();
+		while (itr.hasNext()) {
+			Point2D.Double point = itr.next();
+			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(), my_goal_left);
+			
+			if (Utilities.isPointInField(temp_point)) { 
+				if (!isPointInRobot(temp_point, enemy_robot)) {
+					//System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
+					//System.out.println("Min distance: "+min_distance);
+					if (Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength() < min_distance) {
+						min_point = temp_point;
+						min_distance = Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength();
+					}
+				}
+			}
+		}
+
+			
+		return min_point;
+	}	
+	
 	/**
 	 * Helper function to find if a specific point is within the enemy robot.
 	 * @param point The point to check.
