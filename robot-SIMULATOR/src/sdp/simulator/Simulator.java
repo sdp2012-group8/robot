@@ -816,13 +816,13 @@ public class Simulator extends WorldStateProvider {
 		// draw goals
 		p.g.setColor(new Color(180, 180, 180));
 		p.fillRect(0,
-				(int) (IMAGE_WIDTH*(PITCH_HEIGHT_CM/2-GOAL_SIZE/2)/PITCH_WIDTH_CM),
-				(int) (IMAGE_WIDTH*2/PITCH_WIDTH_CM),
-				(int) (IMAGE_WIDTH*GOAL_SIZE/PITCH_WIDTH_CM));
-		p.fillRect((int) (IMAGE_WIDTH - IMAGE_WIDTH*2/PITCH_WIDTH_CM),
-				(int) (IMAGE_WIDTH*(PITCH_HEIGHT_CM/2-GOAL_SIZE/2)/PITCH_WIDTH_CM),
-				(int) (IMAGE_WIDTH*2/PITCH_WIDTH_CM),
-				(int) (IMAGE_WIDTH*GOAL_SIZE/PITCH_WIDTH_CM));
+				(int) (IMAGE_WIDTH*(WorldState.PITCH_HEIGHT_CM/2-GOAL_SIZE/2)/WorldState.PITCH_WIDTH_CM),
+				(int) (IMAGE_WIDTH*2/WorldState.PITCH_WIDTH_CM),
+				(int) (IMAGE_WIDTH*GOAL_SIZE/WorldState.PITCH_WIDTH_CM));
+		p.fillRect((int) (IMAGE_WIDTH - IMAGE_WIDTH*2/WorldState.PITCH_WIDTH_CM),
+				(int) (IMAGE_WIDTH*(WorldState.PITCH_HEIGHT_CM/2-GOAL_SIZE/2)/WorldState.PITCH_WIDTH_CM),
+				(int) (IMAGE_WIDTH*2/WorldState.PITCH_WIDTH_CM),
+				(int) (IMAGE_WIDTH*GOAL_SIZE/WorldState.PITCH_WIDTH_CM));
 		
 		p.image();
 		
