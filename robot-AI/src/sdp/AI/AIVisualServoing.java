@@ -16,7 +16,7 @@ public class AIVisualServoing extends AI {
 	private final static int NEAR_TARGET = 2;
 	private final static int POINT_ACCURACY = 10;
 	
-	private final static int MAX_TURN_ANG = 127;
+	private final static int MAX_TURN_ANG = 200;
 
 	/**
 	 * True if the robot is chasing the target.
@@ -69,9 +69,12 @@ public class AIVisualServoing extends AI {
 			double ball_dist = ai_world_state.getDistanceToBall();
 			if (ball_dist > 20 && ball_dist < 50) {
 				double dir = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(ball, target), -ai_world_state.getRobot().getAngle()));
-				comm = new Command(Math.abs(dir) < 10 ? MAX_SPEED_CM_S : 0, dir, false);
+				comm = new Command(Math.abs(dir) < 10 ? MAX_SPEED_CM_S : 0, dir*3, false);
 			} else
 				comm = goTowardsPoint(ball, false, true);
+			if (comm.getByteSpeed() == 0 && comm.getByteSpeed() == 0)
+				comm = goTowardsPoint(ball, false, true);
+			
 			slowDownSpeed(ai_world_state.getDistanceToBall(), 10, comm, 2);
 			//System.out.print("B");
 		}
@@ -140,7 +143,7 @@ public class AIVisualServoing extends AI {
 		double turn_ang = 999;
 		int id = -1;
 		for (int i = 0; i < sectors.length; i++) {
-			if (sectors[i] > point_dist+Robot.LENGTH_CM/2) {	
+			if (sectors[i] >= point_dist) {	
 				double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
 				double diff = Utilities.normaliseAngle(ang-point_dir);
 				if (Math.abs(diff) < Math.abs(temp)) {
@@ -154,7 +157,7 @@ public class AIVisualServoing extends AI {
 		double temp2 = 999;
 		double turn_ang2 = 999;
 		for (int i = 0; i < sectors.length; i++) {
-			if (sectors[i] > point_dist+Robot.LENGTH_CM/2) {	
+			if (sectors[i] >= point_dist) {	
 				double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
 				double diff = Utilities.normaliseAngle(ang-point_dir);
 				if (Math.abs(diff) < Math.abs(temp) && i != id) {
@@ -171,21 +174,20 @@ public class AIVisualServoing extends AI {
 
 		//System.out.println(String.format("%.2f l="+point_left_coll_dist+" r="+point_right_coll_dist+" d="+point_dist,command.turning_speed));
 
+		// if we have no way of reaching the point go into the most free direction
+		if (command.turning_speed == 999) {
+			temp = 0;
+			for (int i = 0; i < sectors.length; i++) {
+				if (sectors[i] > temp) {
+					temp = sectors[i];
+					double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
+					command.turning_speed = ang;
+				}
+			}
+		} 
+		
 		if (point_left_coll_dist < point_dist || point_right_coll_dist < point_dist)
 			command.turning_speed += point_left_coll_dist > point_right_coll_dist ? turn_ang_more : -turn_ang_more;
-
-
-			// if we have no way of reaching the point go into the most free direction
-			if (command.turning_speed == 999) {
-				temp = 0;
-				for (int i = 0; i < sectors.length; i++) {
-					if (sectors[i] > temp) {
-						temp = sectors[i];
-						double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
-						command.turning_speed = Utilities.normaliseAngle(- ang - (point_left_coll_dist < point_right_coll_dist ? turn_ang_more : -turn_ang_more));
-					}
-				}
-			} 
 
 
 			if (need_to_face_point) { 
@@ -342,7 +344,7 @@ public class AIVisualServoing extends AI {
 	
 	public void normalizeRatio(Command comm) {
 		if (Math.abs(comm.turning_speed) > MAX_TURNING_SPEED) {
-			comm.speed = MAX_SPEED_CM_S;
+			comm.speed = 0;
 			return;
 		}
 		double rat = 1 - Math.abs(comm.turning_speed)/MAX_SPEED_CM_S;

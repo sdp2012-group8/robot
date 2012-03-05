@@ -155,13 +155,16 @@ public class Painter {
 						int id = -1;
 						final Vector2D point_rel = Utilities.getLocalVector(robot, target);
 
+						
+						
 						// get direction and distance to point
 						final double point_dir = Vector2D.getDirection(point_rel);
 						final double point_dist = point_rel.getLength();
+						final double point_vis_dist = Utilities.visibility2(state_cm, target, true, true);
 						double turn_ang = 999;
 						for (int ii = 0; ii < sectors.length; ii++) {
 
-							if (sectors[ii] > point_dist+Robot.LENGTH_CM/2) {	
+							if (sectors[ii] >= point_dist) {	
 								double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
 								double diff = Utilities.normaliseAngle(ang-point_dir);
 								if (Math.abs(diff) < Math.abs(temp)) {
@@ -177,7 +180,7 @@ public class Painter {
 						int id2 = -1;
 						double turn_ang2 = 999;
 						for (int ii = 0; ii < sectors.length; ii++) {
-							if (sectors[ii] > point_dist+Robot.LENGTH_CM/2) {	
+							if (sectors[ii] >= point_dist) {	
 								double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
 								double diff = Utilities.normaliseAngle(ang-point_dir);
 								if (Math.abs(diff) < Math.abs(temp2) && ii != id) {
@@ -187,6 +190,19 @@ public class Painter {
 								}
 							}
 						}
+						
+						// if we have no way of reaching the point go into the most free direction
+						if (turn_ang == 999) {
+							temp = 0;
+							for (int ii = 0; ii < sectors.length; ii++) {
+								if (sectors[ii] > temp) {
+									temp = sectors[ii];
+									double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
+									turn_ang = ang;
+									id = ii;
+								}
+							}
+						} 
 
 						if (Math.abs(Utilities.normaliseAngle(turn_ang2-turn_ang)) > SEC_ANGLE*2 && Math.abs(turn_ang2) < Math.abs(turn_ang)) {
 							int temp3 = id;
