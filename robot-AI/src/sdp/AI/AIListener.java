@@ -84,8 +84,8 @@ public abstract class AIListener extends WorldStateProvider {
 							ai_world_state.onDraw(im, config);
 						}
 						world_state = new WorldState(checkBall(state.getBallCoords(), world_state.getBallCoords()),
-								lowPass(world_state.getBlueRobot(), state.getBlueRobot()),
-								lowPass(world_state.getYellowRobot(), state.getYellowRobot()),
+								state.getBlueRobot(),//lowPass(world_state.getBlueRobot(), state.getBlueRobot()),
+								state.getYellowRobot(),//lowPass(world_state.getYellowRobot(), state.getYellowRobot()),
 								im);
 					}
 					ai_world_state.update(world_state, my_team_blue, my_goal_left);
@@ -172,7 +172,7 @@ public abstract class AIListener extends WorldStateProvider {
 	 */
 	private Robot lowPass(Robot old_value, Robot new_value) {
 		Robot a = new Robot(
-				lowPass(old_value.getCoords(), new_value.getCoords()),
+				new_value.getCoords(),
 				lowPass(old_value.getAngle(), new_value.getAngle()));
 		a.setCoords(true);
 		return a;

@@ -79,7 +79,7 @@ public class Brick {
 //						LCD.clear(0);
 //						LCD.drawString("RETR", 0, 0);
 						if (can_kick) {can_kick = false;}
-						Motor.B.setSpeed((int)(Motor.B.getMaxSpeed()));
+						Motor.B.setSpeed((int)(Motor.B.getMaxSpeed()/2));
 						Motor.B.setAcceleration(6000);
 						Motor.B.backward();
 						while (!kickSensor.isPressed()) {
@@ -89,9 +89,9 @@ public class Brick {
 								e.printStackTrace();
 							}
 						}
+						Motor.B.stop();
 					}
-					Motor.B.setSpeed(0);
-					Motor.B.stop();
+					//Motor.B.setSpeed(0);
 					can_kick = true;
 					try {
 						sleep(100);
