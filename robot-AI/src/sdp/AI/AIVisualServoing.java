@@ -63,19 +63,27 @@ public class AIVisualServoing extends AI {
 //			if (targ_dist < 20)
 //				comm.turning_speed = 0;
 		}
-
 		if (!chasing_target) {
 			Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
 			double ball_dist = ai_world_state.getDistanceToBall();
 			if (ball_dist > 20 && ball_dist < 50) {
 				double dir = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(ball, target), -ai_world_state.getRobot().getAngle()));
 				comm = new Command(Math.abs(dir) < 10 ? MAX_SPEED_CM_S : 0, dir*3, false);
+				comm.acceleration = 200;
 			} else
 				comm = goTowardsPoint(ball, false, true);
 			if (comm.getByteSpeed() == 0 && comm.getByteSpeed() == 0)
 				comm = goTowardsPoint(ball, false, true);
 			
 			slowDownSpeed(ai_world_state.getDistanceToBall(), 10, comm, 2);
+			
+			if (ai_world_state.getMyGoalLeft()) {
+				if (ball.getX() < ai_world_state.getRobot().getCoords().getX())
+					chasing_target = true;
+			}  else {
+				if (ball.getX() > ai_world_state.getRobot().getCoords().getX())
+					chasing_target = true;
+			}
 			//System.out.print("B");
 		}
 
@@ -83,7 +91,7 @@ public class AIVisualServoing extends AI {
 		
 		// debugging restrictions
 		//comm.turning_speed *= 10;
-		//comm.speed *= 1;
+		comm.speed *= 0.7;
 		
 		return comm;
 
@@ -347,8 +355,8 @@ public class AIVisualServoing extends AI {
 			comm.speed = 0;
 			return;
 		}
-		double rat = 1 - Math.abs(comm.turning_speed)/MAX_SPEED_CM_S;
-		comm.speed *= rat;
+		double rat = Math.abs(comm.turning_speed)/MAX_TURNING_SPEED;
+		comm.speed *= 1-Math.sqrt(rat);
 	}
 
 }
