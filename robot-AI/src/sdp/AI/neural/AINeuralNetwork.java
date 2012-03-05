@@ -104,4 +104,10 @@ public class AINeuralNetwork extends AI {
 		
 	}
 
+	@Override
+	protected void penaltiesAttack() throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
