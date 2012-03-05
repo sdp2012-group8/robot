@@ -491,16 +491,14 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			fpsCounter.tick();
 			setTitle(String.format("%s - %.1f FPS", WINDOW_TITLE, fpsCounter.getFPS()));
 			if (visionChangesEnabled) {
-				//setVisionConfiguration();
-			}
+				setVisionConfiguration();
+			} 
 			
 			if (imageMousePos != null) {
 				Graphics g = imageCanvasPanel.getGraphics();
 				g.setColor(Color.white);
 				g.drawRect(imageMousePos.x - 3, imageMousePos.y - 3, 7, 7);
 			}
-			
-			getVisionConfiguration();	// TODO: Proper integration of this.
 			
 //			System.out.println(String.format(
 //					"NEXT STATE: Ball at (%.4f, %.4f), Blue at (%.4f, %.4f, %.4f), Yellow at (%.4f, %.4f, %.4f).",

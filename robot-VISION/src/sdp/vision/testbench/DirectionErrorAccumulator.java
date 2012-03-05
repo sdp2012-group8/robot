@@ -44,15 +44,15 @@ public class DirectionErrorAccumulator {
 	 * @param actualDir Actual direction in degrees.
 	 */
 	public void addRecord(double expectedDir, double actualDir) {
+		expectedDir = Math.toDegrees(expectedDir) + 179;
+
 		int validFlag = 1;
 		if (expectedDir < 0) {
 			validFlag *= -1;
 		}
 		if (actualDir < 0) {
 			validFlag *= -1;
-		}
-		
-		expectedDir = Math.toDegrees(expectedDir) + 179;
+		}		
 		
 		double error = 0.0;
 		if (validFlag > 0) {
