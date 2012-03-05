@@ -119,7 +119,7 @@ public final class Robot {
 	 * @return
 	 */
 	public final Robot getTopImage(){
-		return new Robot(new Point2D.Double(coords.x, coords.y-WorldState.PITCH_HEIGHT_CM),-angle,true);
+		return new Robot(new Point2D.Double(coords.x, -coords.y),-angle,true);
 	}
 	
 	/**
@@ -127,7 +127,7 @@ public final class Robot {
 	 * @return
 	 */
 	public final Robot getBottomImage(){
-		return new Robot(new Point2D.Double(coords.x, coords.y+WorldState.PITCH_HEIGHT_CM),-angle,true);
+		return new Robot(new Point2D.Double(coords.x, 2*WorldState.PITCH_HEIGHT_CM-coords.y),-angle,true);
 	}
 	
 	/**
