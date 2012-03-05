@@ -8,13 +8,16 @@ import sdp.common.Communicator.sensorType;
 import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 
+import lejos.nxt.ColorSensor;
 import lejos.nxt.LCD;
+import lejos.nxt.LightSensor;
 import lejos.nxt.Motor;
 import lejos.nxt.NXT;
 import lejos.nxt.SensorPort;
 import lejos.nxt.Sound;
 import lejos.nxt.TouchSensor;
 import lejos.nxt.UltrasonicSensor;
+import lejos.robotics.Color;
 
 /**
  * This is the program that should be uploaded to the NXT Brick.
@@ -33,71 +36,73 @@ public class Brick {
 	private static boolean is_on = true;
 
 	private static Communicator mComm;
-	private static UltrasonicSensor sens;
 	private static boolean collision = false;
 	private static boolean can_kick = false;
-
-	private static TouchSensor kickSensor;
 
 	/**
 	 * The entry point of the program
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// connect with PC and start receiving messages
-		sens = new UltrasonicSensor(SensorPort.S1);
-		sens.continuous();
-		kickSensor = new TouchSensor(SensorPort.S2);
+		// connect with PC and start receiving messages	
+		
+//		new Thread() {
+//			public void run() {
+//				UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
+//				sens.continuous();
+//				while (is_on) {
+//					int dist = sens.getDistance();
+//					collision = dist < coll_threshold;
+//					//					try {
+//					//						if ( collision && mComm != null){
+//					//							try {
+//					//								mComm.sendMessage(opcode.sensor, (byte) 0, (byte) dist);
+//					//								Thread.sleep(10);
+//					//							} catch (IOException e) {
+//					//								e.printStackTrace();
+//					//							}
+//					//						}
+//					//						Thread.sleep(100);
+//					//					} catch (InterruptedException e) {
+//					//						e.printStackTrace();
+//					//					}
+//				}
+//				sens.off();
+//			};
+//		}.start();
 		new Thread() {
 			public void run() {
-				while (is_on) {
-					int dist = sens.getDistance();
-					collision = dist < coll_threshold;
-//					try {
-//						if ( collision && mComm != null){
-//							try {
-//								mComm.sendMessage(opcode.sensor, (byte) 0, (byte) dist);
-//								Thread.sleep(10);
-//							} catch (IOException e) {
-//								e.printStackTrace();
-//							}
-//						}
-//						Thread.sleep(100);
-//					} catch (InterruptedException e) {
-//						e.printStackTrace();
-//					}
-				}
-				sens.off();
-			};
-		}.start();
-		final Thread kicker_retractor = new Thread() {
-			public void run() {
+				final TouchSensor kickSensor = new TouchSensor(SensorPort.S2);
 				while (is_on) {
 					boolean initial = kickSensor.isPressed();
 					if (!initial) {
+//						LCD.clear(0);
+//						LCD.drawString("RETR", 0, 0);
 						if (can_kick) {can_kick = false;}
 						Motor.B.setSpeed((int)(Motor.B.getMaxSpeed()/2));
 						Motor.B.setAcceleration(6000);
 						Motor.B.backward();
 						while (!kickSensor.isPressed()) {
 							try {
-								Thread.sleep(5);
+								sleep(5);
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
 						}
 						Motor.B.stop();
 					}
+					//Motor.B.setSpeed(0);
 					can_kick = true;
-
-
 					try {
-						Thread.sleep(100);						
-					} catch (InterruptedException e) {}
+						sleep(100);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+//					LCD.clear(0);
+//					LCD.drawString("OK KICK", 0, 0);
 				}
 			};
-		};
-		kicker_retractor.start();
+		}.start();
 		mComm = new BComm();
 		mComm.registerListener(new MessageListener() {
 
@@ -132,7 +137,6 @@ public class Brick {
 					try {
 						Thread.sleep(200);
 					} catch (Exception e) {}
-					sens.off();
 					NXT.shutDown();
 					break;
 
@@ -166,15 +170,15 @@ public class Brick {
 					Motor.A.forward();
 					Motor.C.forward();
 
-					while (true) { // if no other sensors interfere?
-						int dist = sens.getDistance();
-						LCD.clear(2);
-						LCD.clear(3);
-						LCD.drawString(String.valueOf(dist), 0, 2);
-						LCD.drawString(sens.getUnits(), 0, 3);
-						if (dist < 30)
-							break;
-					}
+//					while (true) { // if no other sensors interfere?
+//						int dist = sens.getDistance();
+//						LCD.clear(2);
+//						LCD.clear(3);
+//						LCD.drawString(String.valueOf(dist), 0, 2);
+//						LCD.drawString(sens.getUnits(), 0, 3);
+//						if (dist < 30)
+					//		break;
+//					}
 					Motor.A.setSpeed(0);
 					Motor.C.setSpeed(0);
 					Motor.C.stop();
@@ -188,10 +192,10 @@ public class Brick {
 					// args[2] - acceleration in cm/s/s
 					if (args.length > 0) {
 						// collision detection
-//						if (collision && Math.abs(args[1]) >= angle_threshold) {
-//							args[0] = back_speed;
-//							args[1] += args[1] > 0 ? turning_boost : -turning_boost;
-//						}
+						//						if (collision && Math.abs(args[1]) >= angle_threshold) {
+						//							args[0] = back_speed;
+						//							args[1] += args[1] > 0 ? turning_boost : -turning_boost;
+						//						}
 						float old_a = speed_a;
 						float old_c = speed_c;
 						// convert the degrees per second around robot
@@ -202,9 +206,17 @@ public class Brick {
 						// set desired speed
 						speed_a = speed_angle+conv_angle;
 						speed_c = speed_angle-conv_angle;
+						float corr = 0;
+						if (Math.abs(speed_a) > Motor.A.getMaxSpeed()) {
+							corr = Math.abs(speed_a) - Motor.A.getMaxSpeed();
+						} else if (Math.abs(speed_c) > Motor.C.getMaxSpeed()){
+							corr = Math.abs(speed_c) - Motor.C.getMaxSpeed();
+						}
+//						LCD.clear();
+//						LCD.drawString("corr " + corr, 0, 0);
 						// change speed according to turning
-						Motor.A.setSpeed(Math.abs(speed_a));
-						Motor.C.setSpeed(Math.abs(speed_c));
+						Motor.A.setSpeed(Math.abs(speed_a)-corr);
+						Motor.C.setSpeed(Math.abs(speed_c)-corr);
 
 						// check if we need to start motors or turn their direction
 						if (args.length > 2) {
@@ -212,7 +224,8 @@ public class Brick {
 							acceleration = args[2];
 							acc = (int) (acceleration/(0.017453292519943295*WHEELR));
 							turn_acceleration = acc*WHEELR/ROBOTR;
-						}
+						} else
+							acc = 1000;
 						if (old_a == 0 || old_a*speed_a < 0) {
 							Motor.A.setAcceleration(acc);
 							if (speed_a > 0)

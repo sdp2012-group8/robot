@@ -15,7 +15,6 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.JTabbedPane;
 
 import sdp.AI.AIMaster;
-import sdp.AI.AIWorldState.mode;
 import sdp.common.Communicator;
 import sdp.common.FPSCounter;
 import sdp.common.Utilities;
@@ -42,11 +41,7 @@ import javax.swing.ButtonGroup;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FilePermission;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -160,8 +155,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			robotControlTabbedPanel.remove(testBenchPanel);
 		}
 		
-		for (int i = 0; i < mode.values().length; i++) {
-			aiStateCombobox.addItem(mode.values()[i]);
+		for (int i = 0; i < AIMaster.mode.values().length; i++) {
+			aiStateCombobox.addItem(AIMaster.mode.values()[i]);
 		}
 	}
 	
@@ -210,7 +205,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 * Disconnect from our robot.
 	 */
 	private void disconnectFromRobot() {
-		aiInstance.close();
 		aiInstance = null;
 		
 		robotRunning = false;
@@ -322,6 +316,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		} else {
 			ImageProcessorConfig config = getGUIConfiguration();
 			vision.setConfiguration(config);
+			if (aiInstance != null)
+				aiInstance.setConfiguration(config);
 		}
 	}
 	
@@ -1303,6 +1299,20 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_robotConnectButton.gridy = 7;
 		robotSettingPanel.add(robotConnectButton, gbc_robotConnectButton);
 		
+		robotOverrideVision = new JButton("Vision on/off");
+		robotOverrideVision.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if (aiInstance != null)
+					aiInstance.switchOverrideVision();
+			}
+		});
+		GridBagConstraints gbc_robotOverrideButton = new GridBagConstraints();
+		gbc_robotOverrideButton.insets = new Insets(0, 0, 5, 0);
+		gbc_robotOverrideButton.gridx = 0;
+		gbc_robotOverrideButton.gridy = 11;
+		robotSettingPanel.add(robotOverrideVision, gbc_robotOverrideButton);
+		
 		robotStateLabel = new JLabel("Robot state");
 		GridBagConstraints gbc_robotStateLabel = new GridBagConstraints();
 		gbc_robotStateLabel.anchor = GridBagConstraints.WEST;
@@ -1323,7 +1333,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		JButton changeStateButton = new JButton("Change State");
 		changeStateButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				aiInstance.setMode(mode.values()[aiStateCombobox.getSelectedIndex()]);
+				aiInstance.setState(AIMaster.mode.values()[aiStateCombobox.getSelectedIndex()]);
 			}
 		});
 		changeStateButton.setBounds(662, 378, 117, 25);
@@ -1495,6 +1505,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JRadioButton robotGateRightButton;
 	private JLabel robotGateLabel;
 	private JButton robotConnectButton;
+	private JButton robotOverrideVision;
 	private final ButtonGroup robotColorButtonGroup = new ButtonGroup();
 	private final ButtonGroup robotGateButtonGroup = new ButtonGroup();
 	private JCheckBox robotDebugModeCheckbox;
