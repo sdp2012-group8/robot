@@ -1,7 +1,6 @@
 package sdp.common;
 
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
 
 
 /**
@@ -57,6 +56,16 @@ public final class Robot {
 	}
 	
 	/**
+	 * Creates a new robot, with coordinates either in 0..1 or in cm
+	 * @param coords
+	 * @param angle
+	 * @param is_in_cm
+	 */
+	public Robot(Point2D.Double coords, double angle, boolean is_in_cm) {
+		setCoords(coords, angle, is_in_cm);
+	}
+	
+	/**
 	 * Set angle
 	 * @param angle in degrees
 	 */
@@ -71,7 +80,7 @@ public final class Robot {
 	public final void setCoords(Point2D.Double coords) {
 		setCoords(coords, angle, false);
 	}
-	
+		
 	/**
 	 * Sets the coordinates of the robot
 	 * @param coords
@@ -103,6 +112,22 @@ public final class Robot {
 		backCenterPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, 0), angle);
 		Utilities.translatePoint(backCenterPoint, coords);
 		
+	}
+	
+	/**
+	 * Returns the top image of the enemy robot, coords in cm
+	 * @return
+	 */
+	public final Robot getTopImage(){
+		return new Robot(new Point2D.Double(coords.x, coords.y-WorldState.PITCH_HEIGHT_CM),-angle,true);
+	}
+	
+	/**
+	 * Returns the bottom image of the enemy robot, coords in cm
+	 * @return
+	 */
+	public final Robot getBottomImage(){
+		return new Robot(new Point2D.Double(coords.x, coords.y+WorldState.PITCH_HEIGHT_CM),-angle,true);
 	}
 	
 	/**
