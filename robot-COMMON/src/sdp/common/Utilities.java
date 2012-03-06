@@ -432,14 +432,14 @@ public class Utilities {
 
 		}
 
-		System.out.println("begin printing points");
+		//System.out.println("begin printing points");
 	
 		itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
 			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(), my_goal_left);
 
-			System.out.println(temp_point);
+			//System.out.println(temp_point);
 			
 			if (Utilities.isPointInField(temp_point)) { 
 				if (!isPointAroundRobot(temp_point, enemy_robot) && isPathClear(temp_point, ws.getBallCoords(),

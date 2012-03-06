@@ -74,8 +74,8 @@ public class AIVisualServoing extends AI {
 			comm = goTowardsPoint(ball, false, true);
 			if (Math.abs(comm.getByteTurnSpeed()) > 10)
 				comm.speed = 0;
-			if (comm.getByteSpeed() == 0 && comm.getByteSpeed() == 0)
-				comm = goTowardsPoint(ball, false, true);
+//			if (comm.getByteSpeed() == 0 && comm.getByteTurnSpeed() == 0)
+//				comm = goTowardsPoint(ball, false, true);
 			
 			slowDownSpeed(ai_world_state.getDistanceToBall(), 10, comm, 2);
 			
