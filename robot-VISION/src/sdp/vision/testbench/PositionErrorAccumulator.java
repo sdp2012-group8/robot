@@ -5,13 +5,13 @@ import java.util.ArrayList;
 
 
 /**
- * An accumulator for position measurements.
+ * An accumulator for position error measurements.
  * 
- * Collects measurements, processes them and provides useful information about
- * them. Can report the average recognition distance, the number of invalid,
- * inaccurate and acceptable recognitions. A recognition record is said to be
- * invalid if the vision system finds an object when it is not there and
- * vice-versa.
+ * Collects position measurements, processes them and provides useful
+ * information about them. Can report the average recognition distance,
+ * the number of invalid, inaccurate and acceptable recognitions. A recognition
+ * record is said to be invalid if the vision system finds an object when it
+ * is not there and vice-versa.
  * 
  * @author Aaron Cronin
  * @author Gediminas Liktaras
@@ -47,10 +47,10 @@ public class PositionErrorAccumulator {
 	 */
 	public void addRecord(Point2D.Double expectedPos, Point2D.Double actualPos) {
 		int validFlag = 1;
-		if ((expectedPos.x < 0) && (expectedPos.y < 0)) {
+		if ((expectedPos.x < 0) || (expectedPos.y < 0)) {
 			validFlag *= -1;
 		}
-		if ((actualPos.x < 0) && (actualPos.y < 0)) {
+		if ((actualPos.x < 0) || (actualPos.y < 0)) {
 			validFlag *= -1;
 		}
 		

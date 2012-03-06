@@ -8,8 +8,6 @@ import sdp.common.WorldStateObserver;
 import sdp.gui.filefilters.ImageFileFilter_IO;
 import sdp.vision.Vision;
 import sdp.vision.processing.MainImageProcessor;
-import sdp.vision.processing.SecondaryImageProcessor;
-import sdp.vision.processing.SecondaryOld;
 import sdp.vision.visualinput.CameraVisualInputProvider;
 import sdp.vision.visualinput.ImageVisualInputProvider;
 
@@ -55,7 +53,7 @@ public class Launcher extends JFrame implements Runnable {
 	 * The main constructor.
 	 */
 	public Launcher() {
-		imageDirChooser = new JFileChooser("../robot-VISION/data");
+		imageDirChooser = new JFileChooser("../robot-VISION/data/images");
 		imageDirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		
 		initComponents();
@@ -79,18 +77,7 @@ public class Launcher extends JFrame implements Runnable {
 	 * Start camera vision test. 
 	 */
 	private void startCompetitionMode() {
-		Vision vision = null;
-		switch (processorComboBox.getSelectedIndex()) {
-		case 0:
-			vision = new Vision(new MainImageProcessor());
-			break;
-		case 1:
-			vision = new Vision(new SecondaryImageProcessor());
-			break;
-		case 2:
-			vision = new Vision(new SecondaryOld());
-			break;
-		}
+		Vision vision = createVisionInstance();
 		
 		WorldStateObserver visionObserver = new WorldStateObserver(vision);		
 		CameraVisualInputProvider input = createCameraInputProvider();
@@ -113,18 +100,7 @@ public class Launcher extends JFrame implements Runnable {
 			return;
 		}
 		
-		Vision vision = null;
-		switch (processorComboBox.getSelectedIndex()) {
-		case 0:
-			vision = new Vision(new MainImageProcessor());
-			break;
-		case 1:
-			vision = new Vision(new SecondaryImageProcessor());
-			break;
-		case 2:
-			vision = new Vision(new SecondaryOld());
-			break;
-		}
+		Vision vision = createVisionInstance();
 		
 		WorldStateObserver visionObserver = new WorldStateObserver(vision);
 		
@@ -179,7 +155,7 @@ public class Launcher extends JFrame implements Runnable {
 			return null;
 		}
 		
-		if (files.length == 0) {
+		if ((files == null) || (files.length == 0)) {
 			JOptionPane.showMessageDialog(this,	"No images found in the specified directory.",
 					"No Images", JOptionPane.WARNING_MESSAGE);
 			return null;
@@ -192,6 +168,23 @@ public class Launcher extends JFrame implements Runnable {
 		
 		int fps = ((Integer)testFpsSpinner.getValue()).intValue();
 		return new ImageVisualInputProvider(filenames, fps);
+	}
+	
+	/**
+	 * Create a vision instance using the values in the GUI components.
+	 * 
+	 * @return An appropriate vision system instance.
+	 */
+	private Vision createVisionInstance() {
+		Vision vision = null;
+
+		switch (processorComboBox.getSelectedIndex()) {
+		case 0:
+			vision = new Vision(new MainImageProcessor());
+			break;
+		}
+		
+		return vision;
 	}
 
 	
@@ -228,7 +221,7 @@ public class Launcher extends JFrame implements Runnable {
 	 * Initialise GUI components.
 	 */
 	private void initComponents() {
-		setSize(new Dimension(200, 271));
+		setSize(new Dimension(250, 300));
 		setTitle("Launcher");
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 200, 0, 0};
@@ -266,7 +259,7 @@ public class Launcher extends JFrame implements Runnable {
 		gbc_processorComboBox.gridx = 1;
 		gbc_processorComboBox.gridy = 0;
 		generalSettingPanel.add(processorComboBox, gbc_processorComboBox);
-		processorComboBox.setModel(new DefaultComboBoxModel(new String[] {"Main", "Secondary", "Sec Old"}));
+		processorComboBox.setModel(new DefaultComboBoxModel(new String[] {"Main"}));
 		
 		JPanel competitionModePanel = new JPanel();
 		GridBagConstraints gbc_competitionModePanel = new GridBagConstraints();
@@ -372,7 +365,7 @@ public class Launcher extends JFrame implements Runnable {
 		testModePanel.add(testImagesLabel, gbc_testImagesLabel);
 		
 		testImageDirTextfield = new JTextField();
-		testImageDirTextfield.setText("../robot-VISION/data/friendly");
+		testImageDirTextfield.setText("../robot-VISION/data/images/friendly1");
 		GridBagConstraints gbc_testImageDirTextfield = new GridBagConstraints();
 		gbc_testImageDirTextfield.insets = new Insets(0, 0, 5, 5);
 		gbc_testImageDirTextfield.fill = GridBagConstraints.HORIZONTAL;
