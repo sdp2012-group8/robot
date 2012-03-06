@@ -51,8 +51,8 @@ public class DirectionErrorAccumulator {
 		if (actualDir < 0) {
 			validFlag *= -1;
 		}
-		
-		expectedDir = Math.toDegrees(expectedDir) + 179;
+		//System.out.printf("Expected/Actual: %f / %f \n",expectedDir,actualDir);
+		//expectedDir = Math.toDegrees(expectedDir) + 179;
 		
 		double error = 0.0;
 		if (validFlag > 0) {

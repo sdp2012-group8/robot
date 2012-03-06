@@ -61,7 +61,6 @@ public class TestBench {
 			long testExecTime = testEndTime - testStartTime;
 			
 			WorldState actualState_frame = ProcUtils.stateToFrameCoordinates(config, actualState_norm);
-			
 			errorAcc.addRecord(test.getImageFilename(), test.getExpectedState(), actualState_frame, testExecTime);
 		}
 		errorAcc.dumpMetrics(out);		
@@ -75,6 +74,6 @@ public class TestBench {
 	 */
 	public static void main(String[] args) {
 		TestBench testBench = new TestBench();
-		testBench.runTest("data/tests/friendly1.xml");
+		testBench.runTest("data/tests/friendly2.xml");
 	}
 }
