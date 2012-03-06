@@ -8,7 +8,6 @@ import sdp.common.WorldStateObserver;
 import sdp.gui.filefilters.ImageFileFilter_IO;
 import sdp.vision.Vision;
 import sdp.vision.processing.MainImageProcessor;
-import sdp.vision.processing.SecondaryImageProcessor;
 import sdp.vision.visualinput.CameraVisualInputProvider;
 import sdp.vision.visualinput.ImageVisualInputProvider;
 
@@ -78,15 +77,7 @@ public class Launcher extends JFrame implements Runnable {
 	 * Start camera vision test. 
 	 */
 	private void startCompetitionMode() {
-		Vision vision = null;
-		switch (processorComboBox.getSelectedIndex()) {
-		case 0:
-			vision = new Vision(new MainImageProcessor());
-			break;
-		case 1:
-			vision = new Vision(new SecondaryImageProcessor());
-			break;
-		}
+		Vision vision = createVisionInstance();
 		
 		WorldStateObserver visionObserver = new WorldStateObserver(vision);		
 		CameraVisualInputProvider input = createCameraInputProvider();
@@ -109,15 +100,7 @@ public class Launcher extends JFrame implements Runnable {
 			return;
 		}
 		
-		Vision vision = null;
-		switch (processorComboBox.getSelectedIndex()) {
-		case 0:
-			vision = new Vision(new MainImageProcessor());
-			break;
-		case 1:
-			vision = new Vision(new SecondaryImageProcessor());
-			break;
-		}
+		Vision vision = createVisionInstance();
 		
 		WorldStateObserver visionObserver = new WorldStateObserver(vision);
 		
@@ -185,6 +168,23 @@ public class Launcher extends JFrame implements Runnable {
 		
 		int fps = ((Integer)testFpsSpinner.getValue()).intValue();
 		return new ImageVisualInputProvider(filenames, fps);
+	}
+	
+	/**
+	 * Create a vision instance using the values in the GUI components.
+	 * 
+	 * @return An appropriate vision system instance.
+	 */
+	private Vision createVisionInstance() {
+		Vision vision = null;
+
+		switch (processorComboBox.getSelectedIndex()) {
+		case 0:
+			vision = new Vision(new MainImageProcessor());
+			break;
+		}
+		
+		return vision;
 	}
 
 	
@@ -259,7 +259,7 @@ public class Launcher extends JFrame implements Runnable {
 		gbc_processorComboBox.gridx = 1;
 		gbc_processorComboBox.gridy = 0;
 		generalSettingPanel.add(processorComboBox, gbc_processorComboBox);
-		processorComboBox.setModel(new DefaultComboBoxModel(new String[] {"Main", "Secondary"}));
+		processorComboBox.setModel(new DefaultComboBoxModel(new String[] {"Main"}));
 		
 		JPanel competitionModePanel = new JPanel();
 		GridBagConstraints gbc_competitionModePanel = new GridBagConstraints();

@@ -39,9 +39,6 @@ public class MainImageProcessor extends BaseImageProcessor {
 	/** Size of the position marker. */
 	private static final int POSITION_MARKER_SIZE = 4;
 	
-	/** Blue color heuristic flag. */
-	private static final int BLUE_HEURISTIC = 0x1;
-	
 	
 	/** Expected T shape container. */
 	private TShapeTemplate idealTShape = new TShapeTemplate();
@@ -356,22 +353,6 @@ public class MainImageProcessor extends BaseImageProcessor {
 					yellowRobot.getAngle());
 			drawPositionMarker(g, Color.orange, pt1, pt2);
 		}
-	}
-	
-	
-	/**
-	 * Check if the given color is within the specified thresholding bounds.
-	 * 
-	 * @param bounds Thresholding bounds.
-	 * @param h Hue component of the color.
-	 * @param s Saturation component of the color.
-	 * @param v Value component of the color.
-	 * @return Whether the color is within thresholding bounds.
-	 */
-	private boolean isPixelInBounds(ThresholdBounds bounds, int h, int s, int v) {
-		return (Utilities.valueWithinBounds(h, bounds.getHueMin(), bounds.getHueMax())
-				&& Utilities.valueWithinBounds(s, bounds.getSatMin(), bounds.getSatMax())
-				&& Utilities.valueWithinBounds(v, bounds.getValMin(), bounds.getValMax()));
 	}
 	
 	
