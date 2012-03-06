@@ -824,7 +824,7 @@ public class Simulator extends WorldStateProvider {
 				(int) (IMAGE_WIDTH*2/WorldState.PITCH_WIDTH_CM),
 				(int) (IMAGE_WIDTH*GOAL_SIZE/WorldState.PITCH_WIDTH_CM));
 		
-		p.image();
+		p.image(true,true);
 		
 		// draw Strings
 		p.g.setColor(Color.BLACK);
