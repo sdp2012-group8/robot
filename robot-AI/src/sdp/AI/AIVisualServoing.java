@@ -64,13 +64,16 @@ public class AIVisualServoing extends AI {
 		}
 		if (!chasing_target) {
 			Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
-			double ball_dist = ai_world_state.getDistanceToBall();
-			if (ball_dist > 20 && ball_dist < 50) {
-				double dir = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(ball, target), -ai_world_state.getRobot().getAngle()));
-				comm = new Command(Math.abs(dir) < 10 ? MAX_SPEED_CM_S : 0, dir*3, false);
-				comm.acceleration = 200;
-			} else
-				comm = goTowardsPoint(ball, false, true);
+//			double ball_dist = ai_world_state.getDistanceToBall();
+//			if (ball_dist > 20 && ball_dist < 50) {
+//				double dir = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(ball, target), -ai_world_state.getRobot().getAngle()));
+//				comm = new Command(Math.abs(dir) < 5 ? MAX_SPEED_CM_S : 0, dir*3, false);
+//				comm.acceleration = 200;
+//			} else
+//				comm = goTowardsPoint(ball, false, true);
+			comm = goTowardsPoint(ball, false, true);
+			if (Math.abs(comm.getByteTurnSpeed()) > 10)
+				comm.speed = 0;
 			if (comm.getByteSpeed() == 0 && comm.getByteSpeed() == 0)
 				comm = goTowardsPoint(ball, false, true);
 			

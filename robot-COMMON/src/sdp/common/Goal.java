@@ -11,8 +11,8 @@ public class Goal {
 	
 	public Goal(Point2D.Double a){
 		this.centre = a;
-		this.top = new Point2D.Double(centre.x, centre.y-size/2-OFFSET);
-		this.bottom = new Point2D.Double(centre.x, centre.y+size/2+OFFSET);
+		this.top = new Point2D.Double(centre.x, centre.y-size/2+OFFSET);
+		this.bottom = new Point2D.Double(centre.x, centre.y+size/2-OFFSET);
 	}
 	
 	public Point2D.Double getCentre() {
