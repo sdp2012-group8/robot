@@ -16,17 +16,17 @@ import sdp.common.WorldStateProvider;
  *
  */
 public class AIMaster extends AIListener {
-	
+
 	public enum mode {
 		chase_ball, got_ball, defend_goal, sit, defend_penalties, attack_penalties
 	}
-	
+
 	public enum AIMode {
 		visual_servoing, neural_network
 	}
-	
+
 	public static final int DIST_TO_BALL = 10;
-	
+
 	private AI ai;
 	private mode state = mode.sit;
 	private Communicator mComm;
@@ -34,7 +34,7 @@ public class AIMaster extends AIListener {
 	public AIMaster(Communicator comm, WorldStateProvider obs, AIMode ai_mode) {
 		super(obs);
 		this.mComm = comm;
-		
+
 		switch(ai_mode) {
 		case visual_servoing:
 			ai = new AIVisualServoing();
@@ -51,7 +51,7 @@ public class AIMaster extends AIListener {
 	 */
 	protected synchronized void worldChanged() {
 		AI.Command command;
-		
+
 		checkState();
 		ai.update(ai_world_state);
 		try {
@@ -68,9 +68,9 @@ public class AIMaster extends AIListener {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 	private AI.Command getCommand() throws IOException {
 		switch (getState()) {
 		case chase_ball:
@@ -84,27 +84,31 @@ public class AIMaster extends AIListener {
 			return ai.penaltiesDefend();
 		case attack_penalties:
 			return ai.penaltiesAttack();
+		case defend_goal:
+			return ai.defendGoal();
 		default:
 			return null;
 		}
 	}
-	
+
 	private void checkState() {
 		// Check the new world state and decide what state we should be in.
-		if (ai_world_state.getDistanceToBall() > DIST_TO_BALL && getState() != mode.sit) {
-			setState(mode.chase_ball);
-		} else {
-			setState(mode.got_ball);
-		}		
+		if (state != mode.defend_goal) {
+			if (ai_world_state.getDistanceToBall() > DIST_TO_BALL && getState() != mode.sit) {
+				setState(mode.chase_ball);
+			} else {
+				setState(mode.got_ball);
+			}		
+		}
 	}
-	
+
 	/**
 	 * Change mode. Can be used for penalty, freeplay, testing, etc
 	 */
 	public void setState(mode new_state) {
 		state = new_state;
 	}
-	
+
 	/**
 	 * Gets AI mode
 	 * @return

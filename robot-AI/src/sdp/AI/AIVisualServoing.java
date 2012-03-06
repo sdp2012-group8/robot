@@ -16,7 +16,7 @@ public class AIVisualServoing extends AI {
 	private final static int CORNER_COLL_THRESHOLD = 3;
 	private final static int NEAR_TARGET = 2;
 	private final static int POINT_ACCURACY = 10;
-	
+
 	private final static int MAX_TURN_ANG = 200;
 
 	/**
@@ -37,7 +37,7 @@ public class AIVisualServoing extends AI {
 			// TODO: decide on what to do when the robot can't see the goal.
 			System.out.println("Can't see a goal");
 			target = new Vector2D(ai_world_state.getBallCoords());
-			
+
 		}
 
 		//		double dist = 2*Robot.LENGTH_CM;
@@ -62,8 +62,8 @@ public class AIVisualServoing extends AI {
 			if (Math.abs(dir_angle) > 20) {
 				slowDownSpeed(targ_dist, 20, comm, 30); // limits speed to 30
 			}
-//			if (targ_dist < 20)
-//				comm.turning_speed = 0;
+			//			if (targ_dist < 20)
+			//				comm.turning_speed = 0;
 		}
 		if (!chasing_target) {
 			Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
@@ -76,9 +76,9 @@ public class AIVisualServoing extends AI {
 				comm = goTowardsPoint(ball, false, true);
 			if (comm.getByteSpeed() == 0 && comm.getByteSpeed() == 0)
 				comm = goTowardsPoint(ball, false, true);
-			
+
 			slowDownSpeed(ai_world_state.getDistanceToBall(), 10, comm, 2);
-			
+
 			if (ai_world_state.getMyGoalLeft()) {
 				if (ball.getX() < ai_world_state.getRobot().getCoords().getX())
 					chasing_target = true;
@@ -90,11 +90,11 @@ public class AIVisualServoing extends AI {
 		}
 
 		normalizeRatio(comm);
-		
+
 		// debugging restrictions
 		//comm.turning_speed *= 10;
 		comm.speed *= 0.7;
-		
+
 		return comm;
 
 	}
@@ -108,26 +108,45 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Command defendGoal() throws IOException {
 		// TODO Auto-generated method stub
-		//NOT TESTED YET!
-		//Looks for an intersection point between our goal and the enemy direction
-		Point2D.Double intercept= Utilities.intersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getMyGoal().getTop(), ai_world_state.getMyGoal().getBottom());
-		//Looks for an intersection between two lines defined by (1)the ball and an the centre of the goal and (2) the bottom and top of the goal
-		Point2D.Double point= Utilities.intersection(ai_world_state.getBallCoords(), ai_world_state.getMyGoal().getCentre(), ai_world_state.getMyGoal().getTop(), ai_world_state.getMyGoal().getBottom()); 
-		Vector2D reach_point=new Vector2D(point);
-		if (!intercept.equals(null)){
-			//get between our goal and the ball
-			return goTowardsPoint(reach_point, false, true);
-		}
-		else 
-			//else just puts the robot in the centre of the goal
-			return goTowardsPoint(new Vector2D(ai_world_state.getMyGoal().getCentre()), false, false);
+	
 		
-	}
+		Point2D.Double intercept= Utilities.intersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getMyGoal().getTop(), ai_world_state.getMyGoal().getBottom());
+		
+		
+		if (intercept != null){
+			Point2D.Double point;
+		 if((intercept.y < ai_world_state.getMyGoal().getBottom().y)  && (intercept.y > ai_world_state.getMyGoal().getTop().y))	{
+			if (ai_world_state.getMyGoalLeft()) {
+				point= new Point2D.Double(intercept.x+20 , intercept.y);
+			} else {
+				point= new Point2D.Double(intercept.x -20, intercept.y);
+			}
+			double dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(point)).getLength();
+			Command com = new Command(0, 0, false);
+			if (dist > 5)
+				com = goTowardsPoint(new Vector2D(point), false, false);
+			slowDownSpeed(dist, 20, com, 0);
+			
+			return com;
+		} else if(ai_world_state.getEnemyRobot().getAngle()<0 && ai_world_state.getEnemyRobot().getAngle()>-180) {
+
+			return goTowardsPoint(new Vector2D(ai_world_state.getMyGoal().getBottom()), false, false);
+			}
+		
+		 else if(ai_world_state.getEnemyRobot().getAngle()>0 && ai_world_state.getEnemyRobot().getAngle()<180 ){
+			 return goTowardsPoint(new Vector2D(ai_world_state.getMyGoal().getTop()), false, false);
+		 }
+		}
+		
+		return null;
+	
+}
+		
 
 	@Override
 	protected Command penaltiesDefend() throws IOException {
 		return null;
-		
+
 	}
 
 	@Override
@@ -208,7 +227,7 @@ public class AIVisualServoing extends AI {
 				}
 			}
 		} 
-		
+
 		if (point_left_coll_dist < point_dist || point_right_coll_dist < point_dist)
 			command.turning_speed += point_left_coll_dist > point_right_coll_dist ? turn_ang_more : -turn_ang_more;
 
@@ -364,7 +383,7 @@ public class AIVisualServoing extends AI {
 		double coeff = distance / threshold;
 		current_speed.speed = slow_speed+coeff*(current_speed.speed-slow_speed);
 	}
-	
+
 	public void normalizeRatio(Command comm) {
 		if (Math.abs(comm.turning_speed) > MAX_TURNING_SPEED) {
 			comm.speed = 0;
