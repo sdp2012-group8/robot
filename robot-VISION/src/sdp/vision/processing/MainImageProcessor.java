@@ -288,9 +288,11 @@ public class MainImageProcessor extends BaseImageProcessor {
             }
             
             // Adjust mass center to account for robot's height.
-            double f = config.getFrameWidth() / HEIGHT_NORM_VALUE;
-            massCenterX -= (massCenterX - config.getFieldWidth() / 2) / f;
-            massCenterY -= (massCenterY - config.getFieldHeight() / 2) / f;
+            if (config.isFixRobotHeight()) {
+	            double f = config.getFrameWidth() / HEIGHT_NORM_VALUE;
+	            massCenterX -= (massCenterX - config.getFieldWidth() / 2) / f;
+	            massCenterY -= (massCenterY - config.getFieldHeight() / 2) / f;
+            }
             
             Point2D.Double robotPos = ProcUtils.frameToNormalCoordinates(config, massCenterX, massCenterY, true);
             return new Robot(robotPos, angle);

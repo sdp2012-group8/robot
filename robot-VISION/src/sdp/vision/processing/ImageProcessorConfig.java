@@ -78,6 +78,9 @@ public class ImageProcessorConfig {
 	/** Image undistortion coefficient p_2. */
 	private double undistort_p2 = 0.0;
 	
+	/** Whether to compensate for the robot height. */
+	private boolean fixRobotHeight = true;
+	
 	/** Whether to show the captured frame itself. */
 	private boolean showWorld = true;
 	/** Whether to show thresholded pixels. */
@@ -461,12 +464,40 @@ public class ImageProcessorConfig {
 
 
 	/**
+	 * Get whether robot height correction is being applied.
+	 * 
+	 * @return Whether robot height correction is being applied.
+	 */
+	public boolean isFixRobotHeight() {
+		return fixRobotHeight;
+	}
+
+	/**
+	 * Set whether robot height correction is being applied.
+	 * 
+	 * @param fixRobotHeight Whether robot height correction should be applied.
+	 */
+	public void setFixRobotHeight(boolean fixRobotHeight) {
+		this.fixRobotHeight = fixRobotHeight;
+	}
+
+
+	/**
 	 * Get whether to show the captured frame.
 	 * 
 	 * @return Whether to show the captured frame.
 	 */
 	public boolean isShowWorld() {
 		return showWorld;
+	}
+	
+	/**
+	 * Set whether to show the captured frame.
+	 * 
+	 * @param showWorld Whether to show the captured frame.
+	 */
+	public void setShowWorld(boolean showWorld) {
+		this.showWorld = showWorld;
 	}
 
 	
@@ -619,16 +650,6 @@ public class ImageProcessorConfig {
 	 */
 	public void setUndistort_p2(double undistort_p2) {
 		this.undistort_p2 = undistort_p2;
-	}
-
-
-	/**
-	 * Set whether to show the captured frame.
-	 * 
-	 * @param showWorld Whether to show the captured frame.
-	 */
-	public void setShowWorld(boolean showWorld) {
-		this.showWorld = showWorld;
 	}
 
 

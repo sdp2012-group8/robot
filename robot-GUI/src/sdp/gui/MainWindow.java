@@ -58,6 +58,7 @@ import javax.swing.JScrollPane;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.GridLayout;
 
 
 /**
@@ -152,7 +153,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		
 		testBench = new TestBench();
 		
-		setSize(new Dimension(1050, 550));
+		setSize(new Dimension(1050, 612));
 		setTitle(WINDOW_TITLE);
 		initComponents();
 		
@@ -359,6 +360,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			config.setUndistort_p2(Double.valueOf(p2Textfield.getText()));
 		} catch (NumberFormatException e) { }
 		
+		config.setFixRobotHeight(correctHeightCheckbox.isSelected());
+		
 		config.setShowWorld(showWorldCheckbox.isSelected());
 		config.setShowThresholds(showThreshCheckbox.isSelected());
 		config.setShowContours(showContoursCheckbox.isSelected());
@@ -413,6 +416,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		k2Textfield.setText(Double.toString(config.getUndistort_k2()));
 		p1Textfield.setText(Double.toString(config.getUndistort_p1()));
 		p2Textfield.setText(Double.toString(config.getUndistort_p2()));
+		
+		correctHeightCheckbox.setSelected(config.isFixRobotHeight());
 		
 		showWorldCheckbox.setSelected(config.isShowWorld());
 		showThreshCheckbox.setSelected(config.isShowThresholds());
@@ -585,9 +590,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		visionSettingPanel.setAlignmentY(Component.TOP_ALIGNMENT);
 		GridBagLayout gbl_visionSettingPanel = new GridBagLayout();
 		gbl_visionSettingPanel.columnWidths = new int[]{200, 200, 0, 0};
-		gbl_visionSettingPanel.rowHeights = new int[]{15, 0, 0, 0, 0, 0};
-		gbl_visionSettingPanel.columnWeights = new double[]{0.0, 0.0, 1.0, Double.MIN_VALUE};
-		gbl_visionSettingPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_visionSettingPanel.rowHeights = new int[]{15, 0, 0, 0, 0, 0, 0};
+		gbl_visionSettingPanel.columnWeights = new double[]{1.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_visionSettingPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		visionSettingPanel.setLayout(gbl_visionSettingPanel);
 		
 		generalSettingPanel = new JPanel();
@@ -1269,6 +1274,28 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_yellowSizeMaxSpinner.gridy = 3;
 		yellowThreshPanel.add(yellowSizeMaxSpinner, gbc_yellowSizeMaxSpinner);
 		
+		otherVisionSettingPanel = new JPanel();
+		otherVisionSettingPanel.setBorder(new TitledBorder(null, "Other", TitledBorder.CENTER, TitledBorder.TOP, null, null));
+		GridBagConstraints gbc_otherVisionSettingPanel = new GridBagConstraints();
+		gbc_otherVisionSettingPanel.insets = new Insets(0, 0, 5, 5);
+		gbc_otherVisionSettingPanel.fill = GridBagConstraints.BOTH;
+		gbc_otherVisionSettingPanel.gridx = 0;
+		gbc_otherVisionSettingPanel.gridy = 4;
+		visionSettingPanel.add(otherVisionSettingPanel, gbc_otherVisionSettingPanel);
+		GridBagLayout gbl_otherVisionSettingPanel = new GridBagLayout();
+		gbl_otherVisionSettingPanel.columnWidths = new int[]{0, 0};
+		gbl_otherVisionSettingPanel.rowHeights = new int[]{0, 0};
+		gbl_otherVisionSettingPanel.columnWeights = new double[]{0.0, Double.MIN_VALUE};
+		gbl_otherVisionSettingPanel.rowWeights = new double[]{0.0, Double.MIN_VALUE};
+		otherVisionSettingPanel.setLayout(gbl_otherVisionSettingPanel);
+		
+		correctHeightCheckbox = new JCheckBox("Correct height");
+		correctHeightCheckbox.setSelected(false);
+		GridBagConstraints gbc_correctHeightCheckbox = new GridBagConstraints();
+		gbc_correctHeightCheckbox.gridx = 0;
+		gbc_correctHeightCheckbox.gridy = 0;
+		otherVisionSettingPanel.add(correctHeightCheckbox, gbc_correctHeightCheckbox);
+		
 		robotSettingPanel = new JPanel();
 		robotControlTabbedPanel.addTab("Robot", null, robotSettingPanel, null);
 		GridBagLayout gbl_robotSettingPanel = new GridBagLayout();
@@ -1578,4 +1605,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JPanel testBenchOutputPanel;
 	private JLabel testCaseLabel;
 	private JPanel imageCanvasPanel;
+	private JPanel otherVisionSettingPanel;
+	private JCheckBox correctHeightCheckbox;
 }
