@@ -12,6 +12,10 @@ import java.util.Iterator;
 /**
  * Contains various utility methods, which do not fit anywhere else.
  */
+/**
+ * @author mihaela_laura_ionescu
+ *
+ */
 public class Utilities {
 
 
@@ -160,6 +164,8 @@ public class Utilities {
 		boolean diagonal1 = Utilities.sameSide(robot.getBackLeft(), robot.getFrontRight(), A, B);
 		boolean diagonal2 = Utilities.sameSide(robot.getFrontLeft(), robot.getBackRight(), A, B);
 		return (diagonal1 && diagonal2);
+		
+		
 	}
 
 
@@ -180,7 +186,16 @@ public class Utilities {
 		return new Point2D.Double(xi,yi);
 	}
 
-
+	/**
+	 * This checks if 2 points are on the same side of a segment
+	 * Computes the cross product of P1A and AB and of P2A and AB
+	 * If the dot product of the resulting vectors us >=0, they have the same direction
+	 * @param p1
+	 * @param p2
+	 * @param a
+	 * @param b
+	 * @return
+	 */
 	public static boolean sameSide(Point2D.Double p1, Point2D.Double p2, Point2D.Double a, Point2D.Double b){
 		Point3D cp1 = Utilities.crossProduct(Utilities.pointSubtract(b,a), Utilities.pointSubtract(p1,a));
 		Point3D cp2 = Utilities.crossProduct(Utilities.pointSubtract(b,a), Utilities.pointSubtract(p2,a));
@@ -393,28 +408,42 @@ public class Utilities {
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
 
-			if (point.y < 0){
-				if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot.getTopImage()))
+			if (point.y < 0) {
+				if (!Utilities.isPathClear(point, ws.getBallCoords(),
+						enemy_robot.getTopImage())) {
 					itr.remove();
-			} else if (point.y > WorldState.PITCH_HEIGHT_CM){
-				if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot.getBottomImage()))
-					itr.remove();
-			} else {
-				if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot)) {
-					itr.remove();
+
 				}
-				
-			} 
-			
+			} else if (point.y > WorldState.PITCH_HEIGHT_CM) {
+				if (!Utilities.isPathClear(point, ws.getBallCoords(),
+						enemy_robot.getBottomImage())) {
+					itr.remove();
+
+				}
+			} else {
+
+				if (!Utilities.isPathClear(point, ws.getBallCoords(),
+						enemy_robot) || point.x > WorldState.PITCH_WIDTH_CM) {
+					itr.remove();
+
+				}
+
+			}
+
 		}
 
+		System.out.println("begin printing points");
+	
 		itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
 			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(), my_goal_left);
 
+			System.out.println(temp_point);
+			
 			if (Utilities.isPointInField(temp_point)) { 
-				if (!isPointAroundRobot(temp_point, enemy_robot)) {
+				if (!isPointAroundRobot(temp_point, enemy_robot) && isPathClear(temp_point, ws.getBallCoords(),
+						enemy_robot)) {
 					//System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
 					//System.out.println("Min distance: "+min_distance);
 					if (Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength() < min_distance) {
@@ -424,7 +453,7 @@ public class Utilities {
 				} 
 			} 
 		} 
-
+	//	System.out.println("min point "+min_point); //+ "enemy robot" + enemy_robot.getCoords() + "angle" + enemy_robot.getAngle() + "ball coords "+ws.getBallCoords());
 		return min_point;
 	}
 
@@ -748,6 +777,14 @@ public class Utilities {
 		return ray.getLength() >= dir.getLength();
 	}
 
+	
+	public static boolean visibility(WorldState ws, Vector2D startPoint, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
+		
+		Vector2D dir =  Vector2D.subtract(endPt, startPoint);
+		Vector2D ray = raytraceVector(ws, startPoint, dir, am_i_blue, include_ball_as_obstacle);
+		return ray.getLength() >= dir.getLength();
+	}
+	
 	/**
 	 * Returns the distance to the direct collision in a given direction.
 	 * @param ws

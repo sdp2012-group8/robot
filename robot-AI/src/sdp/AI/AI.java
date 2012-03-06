@@ -98,7 +98,7 @@ public abstract class AI {
 		public static final double default_acceleration = 69.81317d;
 		
 		public double speed, turning_speed, acceleration = default_acceleration;
-		public boolean kick;
+		public boolean kick = false;
 		
 		public Command(double speed, double turning_speed, boolean kick) {
 			this.speed = speed;

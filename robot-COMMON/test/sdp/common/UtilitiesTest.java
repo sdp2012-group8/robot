@@ -39,4 +39,14 @@ public class UtilitiesTest {
 		
 	}
 	
+	@Test
+	public void testIsPathClear(){
+		Robot robot = new Robot(new Point2D.Double(97.98125, 79.3),180.0, true);
+		assertFalse(Utilities.isPathClear(new Point2D.Double(73.3741016438359, 75.00703978582817), new Point2D.Double(108.27499999999999, 94.55), robot));
+		assertTrue(Utilities.sameSide(robot.getBackLeft(), robot.getFrontRight(), new Point2D.Double(50.527974093792345, 93.47062110637931), new Point2D.Double(87.6875, 108.27499999999999)));
+		assertTrue(Utilities.sameSide(robot.getFrontLeft(), robot.getBackRight(), new Point2D.Double(50.527974093792345, 93.47062110637931), new Point2D.Double(87.6875, 108.27499999999999)));
+
+		
+	}
+	
 }

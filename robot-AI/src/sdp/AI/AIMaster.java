@@ -5,6 +5,7 @@ import java.io.IOException;
 //import sdp.AI.neural.AINeuralNetwork;
 import sdp.AI.AI.Command;
 import sdp.common.Communicator;
+import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 import sdp.common.WorldStateProvider;
 
@@ -16,17 +17,17 @@ import sdp.common.WorldStateProvider;
  *
  */
 public class AIMaster extends AIListener {
-	
+
 	public enum mode {
 		chase_ball, got_ball, defend_goal, sit, defend_penalties, attack_penalties
 	}
-	
+
 	public enum AIMode {
 		visual_servoing, neural_network
 	}
-	
+
 	public static final int DIST_TO_BALL = 10;
-	
+
 	private AI ai;
 	private mode state = mode.sit;
 	private Communicator mComm;
@@ -34,7 +35,28 @@ public class AIMaster extends AIListener {
 	public AIMaster(Communicator comm, WorldStateProvider obs, AIMode ai_mode) {
 		super(obs);
 		this.mComm = comm;
-		
+			mComm.registerListener(new MessageListener() {
+				@Override
+				public void receiveMessage(opcode op, byte[] args, Communicator controler) {
+					System.out.println(op+" "+args[0]);
+					switch (op) {
+					case sensor_dist:
+						ai_world_state.setDist_sensor(args[0] == 1);
+						break;
+					case sensor_left:
+						ai_world_state.setLeft_sensor(args[0] == 1);
+						break;
+					case sensor_right:
+						ai_world_state.setRight_sensor(args[0] == 1);
+						break;
+					case battery:
+						ai_world_state.setBattery(args[0]);
+						break;
+					}
+
+				}
+			});
+
 		switch(ai_mode) {
 		case visual_servoing:
 			ai = new AIVisualServoing();
@@ -51,7 +73,7 @@ public class AIMaster extends AIListener {
 	 */
 	protected synchronized void worldChanged() {
 		AI.Command command;
-		
+
 		checkState();
 		ai.update(ai_world_state);
 		try {
@@ -63,14 +85,15 @@ public class AIMaster extends AIListener {
 			else
 				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed(), command.getByteAcc());
 			if (command.getByteSpeed() != 0 || command.getByteTurnSpeed() != 0)
-				System.out.println(command);
-			if (command.kick) mComm.sendMessage(opcode.kick);
+				//	System.out.println(command);
+				//System.out.println(command);
+				if (command.kick) mComm.sendMessage(opcode.kick);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 	private AI.Command getCommand() throws IOException {
 		switch (getState()) {
 		case chase_ball:
@@ -84,13 +107,16 @@ public class AIMaster extends AIListener {
 			return ai.penaltiesDefend();
 		case attack_penalties:
 			return ai.penaltiesAttack();
+		case defend_goal:
+			return ai.defendGoal();
 		default:
 			return null;
 		}
 	}
-	
+
 	private void checkState() {
 		// Check the new world state and decide what state we should be in.
+
 		// Can now change between states more easily
 		if (getState() == mode.chase_ball && ai_world_state.getDistanceToBall() > DIST_TO_BALL){
 			setState(mode.chase_ball);
@@ -101,15 +127,27 @@ public class AIMaster extends AIListener {
 		} else if(getState()== mode.sit){
 			setState(mode.sit);
 		}
+
+
+		if (state != mode.defend_goal) {
+			if (getState() != mode.sit) {
+				if (ai_world_state.getDistanceToBall() > DIST_TO_BALL) {
+					setState(mode.chase_ball);
+				} else {
+					setState(mode.got_ball);
+				}		
+			}
+
+		}
 	}
-	
+
 	/**
 	 * Change mode. Can be used for penalty, freeplay, testing, etc
 	 */
 	public void setState(mode new_state) {
 		state = new_state;
 	}
-	
+
 	/**
 	 * Gets AI mode
 	 * @return
