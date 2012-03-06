@@ -4,6 +4,7 @@ import static com.googlecode.javacv.cpp.opencv_core.*;
 
 import java.awt.Point;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 
 import sdp.common.Robot;
 import sdp.common.Tools;
@@ -11,6 +12,7 @@ import sdp.common.Utilities;
 import sdp.common.WorldState;
 
 import com.googlecode.javacv.cpp.opencv_core.CvPoint;
+import com.googlecode.javacv.cpp.opencv_core.CvSeq;
 
 
 /**
@@ -19,6 +21,47 @@ import com.googlecode.javacv.cpp.opencv_core.CvPoint;
  * @author Gediminas Liktaras
  */
 public class ProcUtils {
+	
+	/**
+	 * Convert a sequence points into an array.
+	 * 
+	 * @param seq Sequence of points in question.
+	 * @return Sequence of points as an array.
+	 */
+	public static CvPoint[] cvSeqToArray(CvSeq seq) {
+		CvPoint points[] = new CvPoint[seq.total()];
+		for (int i = 0; i < seq.total(); ++i) {
+			points[i] = new CvPoint(cvGetSeqElem(seq, i));
+		}
+		return points;
+	}
+	
+	
+	/**
+	 * Find the shape with the largest area in the given array.
+	 * 
+	 * @param shapes A list of shapes to examine.
+	 * @return The polygon with the largest area.
+	 */
+	public static CvSeq getLargestShape(ArrayList<CvSeq> shapes) {
+		if (shapes.size() == 0) {
+			return null;
+		} else {
+			CvSeq largestShape = shapes.get(0);
+			double largestArea = ProcUtils.getPolygonArea(largestShape);
+			
+			for (int i = 1; i < shapes.size(); ++i) {
+				double curArea = ProcUtils.getPolygonArea(shapes.get(i));
+				if (curArea > largestArea) {
+					largestArea = curArea;
+					largestShape = shapes.get(i);
+				}
+			}
+			
+			return largestShape;
+		}
+	}
+	
 
 	/**
 	 * Compute the area of an OpenCV polygon.
@@ -40,6 +83,35 @@ public class ProcUtils {
 		return Math.abs(area);
 	}
 	
+
+	/**
+	 * Get rectangles that overlaps both the field and the given object box.
+	 * 
+	 * @param fieldW Width of the frame.
+	 * @param fieldH Height of the frame.
+	 * @param objX X coordinate of the object's center.
+	 * @param objY Y coordinate of the object's center.
+	 * @param objW Width of the object's bounding box.
+	 * @param objH Height of the object's bounding box.
+	 * @return Union of the field and the object box. First element of the
+	 * 		array is a rectangle in field coordinates, the second one is in
+	 * 		the object coordinates.
+	 */
+	public static CvRect[] getOverlappingRect(int fieldW, int fieldH, int objX, int objY,
+			int objW, int objH)
+	{
+	    int westExtents = Math.min(objX, objW / 2);
+	    int northExtents = Math.min(objY, objH / 2);
+	    int rectWidth = westExtents + Math.min(fieldW - objX, objW / 2);
+	    int rectHeight = northExtents + Math.min(fieldH - objY, objH / 2);
+	    
+	    CvRect fieldRect = cvRect(objX - westExtents, objY - northExtents, rectWidth, rectHeight);
+	    CvRect objRect = cvRect(objW / 2 - westExtents, objH / 2 - northExtents, rectWidth, rectHeight);
+	    CvRect rects[] = { fieldRect, objRect };
+	    
+	    return rects;
+	}
+	
 	
 	/**
 	 * Convert frame coordinates to normal ones.
@@ -53,11 +125,14 @@ public class ProcUtils {
 	 */
 	public static Point2D.Double frameToNormalCoordinates(ImageProcessorConfig config,
 			double x, double y, boolean withinROI) {
+		double yFactor = Tools.PITCH_HEIGHT_CM / (Tools.PITCH_WIDTH_CM * config.getFieldHeight());
+
 		if (!withinROI) {
 			x += config.getFieldLowX();
 			y += config.getFieldLowY();
 		}
-		return new Point2D.Double(x / config.getFieldWidth(), (y / config.getFieldHeight())*(Tools.PITCH_HEIGHT_CM/Tools.PITCH_WIDTH_CM));
+		
+		return new Point2D.Double(x / config.getFieldWidth(), (y / yFactor));
 	}
 	
 	/**
@@ -72,8 +147,10 @@ public class ProcUtils {
 	 */
 	public static Point2D.Double normalToFrameCoordinates(ImageProcessorConfig config,
 			double x, double y, boolean withinROI) {
+		double yFactor = Tools.PITCH_HEIGHT_CM / (Tools.PITCH_WIDTH_CM * config.getFieldHeight());
+
 		x *= config.getFieldWidth();
-		y *= config.getFieldHeight()*(Tools.PITCH_WIDTH_CM/Tools.PITCH_HEIGHT_CM);
+		y *= yFactor;
 		
 		if (!withinROI) {
 			x += config.getFieldLowX();

@@ -54,7 +54,7 @@ public class Launcher extends JFrame implements Runnable {
 	 * The main constructor.
 	 */
 	public Launcher() {
-		imageDirChooser = new JFileChooser("../robot-VISION/data");
+		imageDirChooser = new JFileChooser("../robot-VISION/data/images");
 		imageDirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		
 		initComponents();
@@ -172,7 +172,7 @@ public class Launcher extends JFrame implements Runnable {
 			return null;
 		}
 		
-		if (files.length == 0) {
+		if ((files == null) || (files.length == 0)) {
 			JOptionPane.showMessageDialog(this,	"No images found in the specified directory.",
 					"No Images", JOptionPane.WARNING_MESSAGE);
 			return null;
@@ -365,7 +365,7 @@ public class Launcher extends JFrame implements Runnable {
 		testModePanel.add(testImagesLabel, gbc_testImagesLabel);
 		
 		testImageDirTextfield = new JTextField();
-		testImageDirTextfield.setText("../robot-VISION/data/friendly");
+		testImageDirTextfield.setText("../robot-VISION/data/images/friendly1");
 		GridBagConstraints gbc_testImageDirTextfield = new GridBagConstraints();
 		gbc_testImageDirTextfield.insets = new Insets(0, 0, 5, 5);
 		gbc_testImageDirTextfield.fill = GridBagConstraints.HORIZONTAL;

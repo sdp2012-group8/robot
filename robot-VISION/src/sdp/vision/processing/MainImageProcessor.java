@@ -5,9 +5,11 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+
 import java.util.ArrayList;
 
 import com.googlecode.javacpp.Loader;
+import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 import static com.googlecode.javacv.cpp.opencv_core.*;
 import static com.googlecode.javacv.cpp.opencv_imgproc.*;
@@ -25,11 +27,10 @@ import sdp.common.WorldState;
  */
 public class MainImageProcessor extends BaseImageProcessor {
 	
-	/** How many directions the outline distance calculations will use. */
-	private static final int OUTLINE_ANGLE_COUNT = 360;
-	/** The size of the direction cone angle. */
-	private static final int DIRECTION_CONE_ANGLE = 30;
-	
+	/** Gaussian smoothing mask size. */
+	private static final int GAUSSIAN_SMOOTH_MASK_SIZE = 5;
+	/** Preferred line type for OpenCV drawing functions. */
+	private static final int LINE_TYPE = 8;
 	/** Polygon approximation error (arg in cvApproxPoly). */
 	private static final double POLY_APPROX_ERROR = 0.0001;
 	
@@ -38,40 +39,55 @@ public class MainImageProcessor extends BaseImageProcessor {
 	/** Size of the position marker. */
 	private static final int POSITION_MARKER_SIZE = 4;
 	
+	/** Blue color heuristic flag. */
+	private static final int BLUE_HEURISTIC = 0x1;
+	
+	
+	/** Expected T shape container. */
+	private TShapeTemplate idealTShape = new TShapeTemplate();
 	
 	/** OpenCV memory storage. */
 	private CvMemStorage storage;
+	
+	/** World image of the current state. */
+	private BufferedImage worldImage;
 
 	
 	/**
 	 * The main constructor.
 	 */
 	public MainImageProcessor() {
-		super();		
+		super();
+		
 		storage = CvMemStorage.create();
 	}
 	
 
-	/* (non-Javadoc)
+	/**
 	 * @see sdp.vision.processing.ImageProcessor#extractWorldState(java.awt.image.BufferedImage)
 	 */
 	@Override
 	public synchronized WorldState extractWorldState(BufferedImage frame) {
 		frame = preprocessFrame(frame);
 		
-		BufferedImage thresholds[] = thresholdFrame(frame);
-		IplImage frame_ipl = IplImage.createFrom(thresholds[0]);
-		IplImage ballThreshold = IplImage.createFrom(thresholds[1]);		
-		IplImage blueThreshold = IplImage.createFrom(thresholds[2]);
-		IplImage yellowThreshold = IplImage.createFrom(thresholds[3]);	
+		IplImage frame_ipl = IplImage.createFrom(frame);
 		cvSetImageROI(frame_ipl, getCurrentROI());
 
-		Point2D.Double ballPos = findBall(frame_ipl, ballThreshold);
-		Robot blueRobot = findRobot(frame_ipl, blueThreshold,
-				config.getBlueSizeMinValue(), config.getBlueSizeMaxValue());
-		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold,
-				config.getYellowSizeMinValue(), config.getYellowSizeMaxValue());
-		BufferedImage worldImage = finaliseWorldImage(frame_ipl, ballPos, blueRobot, yellowRobot);
+		worldImage = Utilities.deepBufferedImageCopy(frame);
+		
+		BufferedImage thresholds[] = thresholdFrame(frame);
+		BufferedImage ball = thresholds[0];
+		BufferedImage blue = thresholds[1];
+		BufferedImage yellow = thresholds[2];
+		
+		IplImage ball_ipl = IplImage.createFrom(ball);		
+		IplImage blue_ipl = IplImage.createFrom(blue);
+		IplImage yellow_ipl = IplImage.createFrom(yellow);	
+
+		Point2D.Double ballPos = findBall(ball_ipl);
+		Robot blueRobot = findRobot(frame, blue_ipl, config.getBlueSizeMin(), config.getBlueSizeMax());
+		Robot yellowRobot = findRobot(frame, yellow_ipl, config.getYellowSizeMin(), config.getYellowSizeMax());
+		finaliseWorldImage(frame_ipl, ballPos, blueRobot, yellowRobot);
 		
 		return new WorldState(ballPos, blueRobot, yellowRobot, worldImage);
 	}
@@ -84,9 +100,11 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 */
 	private BufferedImage preprocessFrame(BufferedImage frame) {
 		IplImage frame_ipl = IplImage.createFrom(frame);
+		
 		frame_ipl = undistortImage(frame_ipl);
 		cvSetImageROI(frame_ipl, getCurrentROI());		
-		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, 5);
+		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, GAUSSIAN_SMOOTH_MASK_SIZE);
+		
 		return frame_ipl.getBufferedImage();
 	}
 	
@@ -95,13 +113,14 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 * Threshold the image for the different features.
 	 * 
 	 * The thresholded components are returned as an array, which contains
-	 * the original frame, ball, blue T and yellow T components, in that 
-	 * order.
+	 * the ball, blue T and yellow T components, in that order.
 	 * 
 	 * The reason I have used BufferedImage here instead of opencv's IplImage
-	 * is because opencv's thresholding functions are somewhat limited. I do 
-	 * know of a way to threshold by both RGB and HSV values, for instance.
-	 * One cannot use arbitrary conditions either.
+	 * is because opencv's thresholding functions are somewhat limited and
+	 * iterating over IplImages via javacpp is an even bigger mess.
+	 * 
+	 * Also, this is used instead of staticThreshold function due to
+	 * performance reasons.
 	 * 
 	 * @param frame Frame to threshold.
 	 * @return Thresholded components.
@@ -113,6 +132,13 @@ public class MainImageProcessor extends BaseImageProcessor {
 				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
 		BufferedImage yellow = new BufferedImage(config.getFieldWidth(),
 				config.getFieldHeight(), BufferedImage.TYPE_BYTE_GRAY);
+		
+		if (!config.isShowWorld()) {
+			Graphics2D g = worldImage.createGraphics();
+			g.setColor(Color.black);
+			g.fillRect(config.getFieldLowX(), config.getFieldLowY(),
+					config.getFieldWidth(), config.getFieldHeight());
+		}
 		
 		for (int x = 0; x < config.getFieldWidth(); ++x) {
 			for (int y = 0; y < config.getFieldHeight(); ++y) {
@@ -130,57 +156,52 @@ public class MainImageProcessor extends BaseImageProcessor {
 				int s = (int) (hsv[1] * 100);
 				int v = (int) (hsv[2] * 100);
 				
-				// Whether to hide current pixel.
-				if (!config.isShowWorld()) {
-					frame.setRGB(ox, oy, Color.black.getRGB());
-				}
-				
 				// Ball thresholding.
-				if (Utilities.valueWithinBounds(h, config.getBallHueMinValue(), 
-								config.getBallHueMaxValue())
-						&& Utilities.valueWithinBounds(s, config.getBallSatMinValue(),
-								config.getBallSatMaxValue())
-						&& Utilities.valueWithinBounds(v, config.getBallValMinValue(),
-								config.getBallValMaxValue())) {	
+				if (Utilities.valueWithinBounds(h, config.getBallThreshs().getHueMin(), 
+								config.getBallThreshs().getHueMax())
+						&& Utilities.valueWithinBounds(s, config.getBallThreshs().getSatMin(),
+								config.getBallThreshs().getSatMax())
+						&& Utilities.valueWithinBounds(v, config.getBallThreshs().getValMin(),
+								config.getBallThreshs().getValMax())) {	
 					
 					ball.setRGB(x, y, Color.white.getRGB());
 					if (config.isShowThresholds()) {
-						frame.setRGB(ox, oy, Color.red.getRGB());
+						worldImage.setRGB(ox, oy, Color.red.getRGB());
 					}
 				}
 				
 				// Blue T thresholding.
-				if (Utilities.valueWithinBounds(h, config.getBlueHueMinValue(), 
-								config.getBlueHueMaxValue())
-						&& Utilities.valueWithinBounds(s, config.getBlueSatMinValue(),
-								config.getBlueSatMaxValue())
-						&& Utilities.valueWithinBounds(v, config.getBlueValMinValue(),
-								config.getBlueValMaxValue())
+				if (Utilities.valueWithinBounds(h, config.getBlueThreshs().getHueMin(), 
+								config.getBlueThreshs().getHueMax())
+						&& Utilities.valueWithinBounds(s, config.getBlueThreshs().getSatMin(),
+								config.getBlueThreshs().getSatMax())
+						&& Utilities.valueWithinBounds(v, config.getBlueThreshs().getValMin(),
+								config.getBlueThreshs().getValMax())
 						&& (g < (int)(b * 1.5))) {
 					
 					blue.setRGB(x, y, Color.white.getRGB());
 					if (config.isShowThresholds()) {
-						frame.setRGB(ox, oy, Color.blue.getRGB());
+						worldImage.setRGB(ox, oy, Color.blue.getRGB());
 					}
 			    }
 				
 				// Yellow T thresholding.
-				if (Utilities.valueWithinBounds(h, config.getYellowHueMinValue(), 
-								config.getYellowHueMaxValue())
-						&& Utilities.valueWithinBounds(s, config.getYellowSatMinValue(),
-								config.getYellowSatMaxValue())
-						&& Utilities.valueWithinBounds(v, config.getYellowValMinValue(),
-								config.getYellowValMaxValue())) {
+				if (Utilities.valueWithinBounds(h, config.getYellowThreshs().getHueMin(), 
+								config.getYellowThreshs().getHueMax())
+						&& Utilities.valueWithinBounds(s, config.getYellowThreshs().getSatMin(),
+								config.getYellowThreshs().getSatMax())
+						&& Utilities.valueWithinBounds(v, config.getYellowThreshs().getValMin(),
+								config.getYellowThreshs().getValMax())) {
 					
 			    	yellow.setRGB(x, y, Color.white.getRGB());
 			    	if (config.isShowThresholds()) {
-			    		frame.setRGB(ox, oy, Color.orange.getRGB());
+			    		worldImage.setRGB(ox, oy, Color.orange.getRGB());
 			    	}
 			    }
 			}
 		}
 		
-		BufferedImage retValue[] = { frame, ball, blue, yellow };
+		BufferedImage retValue[] = { ball, blue, yellow };
 		return retValue;
 	}
 	
@@ -188,13 +209,13 @@ public class MainImageProcessor extends BaseImageProcessor {
 	/**
 	 * Locate the ball in the world.
 	 * 
-	 * @param frame_ipl The original frame.
-	 * @param ballThresh Thresholded image to search in.
+	 * @param thresh Thresholded image to search in.
 	 * @return The position of the ball.
 	 */
-	private Point2D.Double findBall(IplImage frame_ipl, IplImage ballThresh) {
-		CvSeq fullBallContour = findAllContours(ballThresh);		
-		ArrayList<CvSeq> ballShapes = sizeFilterContours(fullBallContour, config.getBallSizeMinValue(), config.getBallSizeMaxValue());
+	private Point2D.Double findBall(IplImage thresh) {
+		CvSeq fullBallContour = findAllContours(thresh);		
+		ArrayList<CvSeq> ballShapes = sizeFilterContours(fullBallContour,
+				config.getBallSizeMin(), config.getBallSizeMax());
 		
 		if (ballShapes.size() == 0) {
 			return new Point2D.Double(-1.0, -1.0);
@@ -208,12 +229,15 @@ public class MainImageProcessor extends BaseImageProcessor {
             int bH = ballBoundingRect.height();
             
             if (config.isShowContours()) {
-            	cvDrawContours(frame_ipl, curBallShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+            	IplImage worldImage_ipl = IplImage.createFrom(worldImage);
+            	cvSetImageROI(worldImage_ipl, getCurrentROI());
+            	cvDrawContours(worldImage_ipl, curBallShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, LINE_TYPE);
+            	worldImage = worldImage_ipl.getBufferedImage();
             }            
             if (config.isShowBoundingBoxes()) {
-	            CvPoint pt1 = new CvPoint(bX, bY);
-	            CvPoint pt2 = new CvPoint(bX + bW, bY + bH);
-	            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
+            	Graphics2D g = worldImage.createGraphics();
+            	g.setColor(Color.white);
+            	g.drawRect(bX + config.getFieldLowX(), bY + config.getFieldLowY(), bW, bH);
             }
             
             return ProcUtils.frameToNormalCoordinates(config, bX + bW / 2, bY + bH / 2, true);
@@ -223,87 +247,92 @@ public class MainImageProcessor extends BaseImageProcessor {
 	/**
 	 * Locate a robot in the world.
 	 * 
-	 * @param frame_ipl The original frame.
-	 * @param robotThresh Thresholded image to search for the robot's T.
-	 * @param markerThresh Thresholded image to search for direction marker.
+	 * @param frame The original frame.
+	 * @param thresh_ipl Thresholded image to search for the robot's T.
+	 * @param sizeMin Lower bound of the robot's contour size.
+	 * @param sizeMax Upper bound of the robot's contour size.
 	 * @return The position of the ball.
 	 */
-	private Robot findRobot(IplImage frame_ipl, IplImage robotThresh,
-			int minSize, int maxSize) {
-		CvSeq fullRobotContour = findAllContours(robotThresh);
-		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour, minSize, maxSize);
+	private Robot findRobot(BufferedImage frame, IplImage thresh_ipl, int sizeMin, int sizeMax) {
+		CvSeq fullRobotContour = findAllContours(thresh_ipl);
+		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour, sizeMin, sizeMax);
 		
 		if (robotShapes.size() == 0) {
 			return new Robot(new Point2D.Double(-1.0, -1.0), -1.0);
 		} else {
-			// Find the best marching T shape.
-			CvSeq bestRobotShape = getLargestShape(robotShapes);
+			// Find the best matching T shape.
+			CvSeq bestRobotShape = ProcUtils.getLargestShape(robotShapes);
 			
-			// Find shape's bounding box dimensions.
-            CvRect robotBoundingRect = cvBoundingRect(bestRobotShape, 0);
-            int rX = robotBoundingRect.x();
-            int rY = robotBoundingRect.y();
-            int rW = robotBoundingRect.width();
-            int rH = robotBoundingRect.height();
-            
-            // Debug output.
+            // Extra output.
             if (config.isShowContours()) {
-            	cvDrawContours(frame_ipl, bestRobotShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, CV_AA);
+            	IplImage worldImage_ipl = IplImage.createFrom(worldImage);
+            	cvSetImageROI(worldImage_ipl, getCurrentROI());
+            	cvDrawContours(worldImage_ipl, bestRobotShape, CvScalar.WHITE, CvScalar.WHITE, -1, 1, LINE_TYPE);
+            	worldImage = worldImage_ipl.getBufferedImage();
             }
             if (config.isShowBoundingBoxes()) {
-	            CvPoint pt1 = new CvPoint(rX, rY);
-	            CvPoint pt2 = new CvPoint(rX + rW, rY + rH);
-	            cvDrawRect(frame_ipl, pt1, pt2, CvScalar.WHITE, 1, CV_AA, 0);
+            	CvRect robotBoundingRect = cvBoundingRect(bestRobotShape, 0);
+            	
+                int rX = robotBoundingRect.x();
+                int rY = robotBoundingRect.y();
+                int rW = robotBoundingRect.width();
+                int rH = robotBoundingRect.height();
+            		            
+            	Graphics2D g = worldImage.createGraphics();
+            	g.setColor(Color.white);
+            	g.drawRect(rX + config.getFieldLowX(), rY + config.getFieldLowY(), rW, rH);
             }
             
-            // Find the shape's (and robot's) mass center.
+            // Find robot position.
             CvMoments moments = new CvMoments();
             cvMoments(bestRobotShape, moments, 1);
             
-            double massCenterX = moments.m10() / moments.m00();
-            double massCenterY = moments.m01() / moments.m00();
-            Point2D.Double robotPos = ProcUtils.frameToNormalCoordinates(config, massCenterX, massCenterY, true);            
+            int robotX = (int)(moments.m10() / moments.m00());
+            int robotY = (int)(moments.m01() / moments.m00());
             
-            // Find the contour's outline distances.
-            double[] dists = getContourOutlineDistances(bestRobotShape, massCenterX, massCenterY);
+            Point2D.Double normRobotPos = ProcUtils.frameToNormalCoordinates(config, robotX, robotY, true);
             
-            // Find the robot's direction.
+            // Find surrounding rectangle and isolate robot shape properly.
+            CvRect[] roiRects = ProcUtils.getOverlappingRect(config.getFieldWidth(), config.getFieldHeight(),
+            		robotX, robotY, idealTShape.getWidth(), idealTShape.getHeight());
+            CvRect frameRoiRect = roiRects[0];
+            CvRect tShapeRoiRect = roiRects[1];
+      
+            cvSetImageROI(thresh_ipl, frameRoiRect);
+            
+            // Find robot direction.
             int angle = 0;
-            double bestArea = 0.0;
+            int bestArea = -1;
             
-            for (int i = 0; i < OUTLINE_ANGLE_COUNT; ++i) {
-            	double curArea = 0.0;
+            for (int i = 0; i < 360; ++i) {
+            	IplImage rotShape = idealTShape.getShapeImage(i);
+            	cvSetImageROI(rotShape, tShapeRoiRect);
+          
+            	cvAnd(rotShape, thresh_ipl, rotShape, null);
+            	int curArea = cvCountNonZero(rotShape);
             	
-	            for (int j = -(DIRECTION_CONE_ANGLE / 2); j <= (DIRECTION_CONE_ANGLE / 2); ++j) {
-	            	int k = (i + j + OUTLINE_ANGLE_COUNT) % OUTLINE_ANGLE_COUNT;
-	            	int w = DIRECTION_CONE_ANGLE / 2 - Math.abs(j);
-	            	curArea += dists[k] * w;
-	            }
-	            
-	            if (curArea > bestArea) {
-	            	bestArea = curArea;
-	            	angle = i;
-	            }
+            	if (curArea > bestArea) {
+            		angle = i;
+            		bestArea = curArea;
+            	}
             }
-        
-            return new Robot(robotPos, angle);
+            
+            // Return the robot data.
+            return new Robot(normRobotPos, angle);
 		}
 	}
 	
 	
 	/**
-	 * Add finishing details to frame.
+	 * Add final details to the world image.
 	 * 
 	 * @param frame_ipl Frame to process.
-	 * @return Final world image.
 	 */
-	private BufferedImage finaliseWorldImage(IplImage frame_ipl,
-			Point2D.Double ball, Robot blueRobot, Robot yellowRobot) {
-		BufferedImage finalFrame = frame_ipl.getBufferedImage();		
-		Graphics2D graphics = finalFrame.createGraphics();
-		graphics.setColor(Color.white);
+	private void finaliseWorldImage(IplImage frame_ipl, Point2D.Double ball, Robot blueRobot, Robot yellowRobot) {		
+		Graphics2D g = worldImage.createGraphics();
+		g.setColor(Color.white);
 		
-		graphics.drawRect(config.getFieldLowX(), config.getFieldLowY(),
+		g.drawRect(config.getFieldLowX(), config.getFieldLowY(),
 				config.getFieldWidth(), config.getFieldHeight());
 		
 		if (config.isShowStateData()) {
@@ -311,24 +340,38 @@ public class MainImageProcessor extends BaseImageProcessor {
 			
 			// Draw ball position.
 			pt1 = ProcUtils.normalToFrameCoordinatesInt(config, ball.x, ball.y, false);
-			drawPositionMarker(graphics, Color.red, pt1, null);
+			drawPositionMarker(g, Color.red, pt1, null);
 			
 			// Draw blue robot position and direction.
 			pt1 = ProcUtils.normalToFrameCoordinatesInt(config, blueRobot.getCoords().x,
 					blueRobot.getCoords().y, false);
 			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
 					blueRobot.getAngle());
-			drawPositionMarker(graphics, Color.blue, pt1, pt2);
+			drawPositionMarker(g, Color.blue, pt1, pt2);
 			
 			// Draw yellow robot position and direction.
 			pt1 = ProcUtils.normalToFrameCoordinatesInt(config, yellowRobot.getCoords().x,
 					yellowRobot.getCoords().y, false);
 			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
 					yellowRobot.getAngle());
-			drawPositionMarker(graphics, Color.orange, pt1, pt2);
+			drawPositionMarker(g, Color.orange, pt1, pt2);
 		}
-
-		return finalFrame;
+	}
+	
+	
+	/**
+	 * Check if the given color is within the specified thresholding bounds.
+	 * 
+	 * @param bounds Thresholding bounds.
+	 * @param h Hue component of the color.
+	 * @param s Saturation component of the color.
+	 * @param v Value component of the color.
+	 * @return Whether the color is within thresholding bounds.
+	 */
+	private boolean isPixelInBounds(ThresholdBounds bounds, int h, int s, int v) {
+		return (Utilities.valueWithinBounds(h, bounds.getHueMin(), bounds.getHueMax())
+				&& Utilities.valueWithinBounds(s, bounds.getSatMin(), bounds.getSatMax())
+				&& Utilities.valueWithinBounds(v, bounds.getValMin(), bounds.getValMax()));
 	}
 	
 	
@@ -379,95 +422,6 @@ public class MainImageProcessor extends BaseImageProcessor {
         }
 		
 		return shapes;
-	}
-	
-	
-	/**
-	 * Find the shape with the largest area in the given array.
-	 * 
-	 * @param shapes A list of shapes to examine.
-	 * @return The polygon with the largest area.
-	 */
-	private CvSeq getLargestShape(ArrayList<CvSeq> shapes) {
-		if (shapes.size() == 0) {
-			return null;
-		} else {
-			CvSeq largestShape = shapes.get(0);
-			double largestArea = ProcUtils.getPolygonArea(largestShape);
-			
-			for (int i = 1; i < shapes.size(); ++i) {
-				double curArea = ProcUtils.getPolygonArea(shapes.get(i));
-				if (curArea > largestArea) {
-					largestArea = curArea;
-					largestShape = shapes.get(i);
-				}
-			}
-			
-			return largestShape;
-		}
-	}
-	
-	
-	/**
-	 * Get contour outline distances.
-	 * 
-	 * These are distances from the given center of the contour to its border
-	 * at each direction. The definition of "center" is up to the caller of
-	 * the function.
-	 * 
-	 * @param contour Contour of interest.
-	 * @param centerX X coordinate of the contour's center.
-	 * @param centerY Y coordinate of the contour's center.
-	 * @return Contour's outline distances.
-	 */
-	private double[] getContourOutlineDistances(CvSeq contour, double centerX, double centerY) {
-		double countFactor = OUTLINE_ANGLE_COUNT / 360.0;
-		
-		double[] distances = new double[OUTLINE_ANGLE_COUNT];
-		for (int i = 0; i < OUTLINE_ANGLE_COUNT; ++i) {
-			distances[i] = Double.MAX_VALUE;
-		}
-		
-		for (int i = 0; i < contour.total(); ++i) {
-        	CvPoint point1 = new CvPoint(cvGetSeqElem(contour, i));
-        	CvPoint point2 = new CvPoint(cvGetSeqElem(contour, (i + 1) % contour.total()));
-        	
-        	double angle1 = Math.atan2(point1.y() - centerY, centerX - point1.x());
-        	int dirIdx1 = (int) ((Math.toDegrees(angle1) + 179) * countFactor);
-        	
-        	double angle2 = Math.atan2(point2.y() - centerY, centerX - point2.x());
-        	int dirIdx2 = (int) ((Math.toDegrees(angle2) + 179) * countFactor);
-        	
-        	if (dirIdx1 > dirIdx2) {
-        		int x = dirIdx1;
-        		dirIdx1 = dirIdx2;
-        		dirIdx2 = x;
-        	}
-        	
-        	double dist1 = Point.distance(centerX, centerY, point1.x(), point1.y());
-        	double dist2 = Point.distance(centerX, centerY, point2.x(), point2.y());
-        	
-        	int dirSize = dirIdx2 - dirIdx1;
-        	int revDirSize = OUTLINE_ANGLE_COUNT - dirSize;
-        	
-        	if (revDirSize < dirSize) {
-        		for (int j = dirIdx2; j < OUTLINE_ANGLE_COUNT; ++j) {
-        			double d = dist2 + ((dist1 - dist2) * (j - dirIdx2)) / revDirSize;
-        			distances[j] = Math.min(distances[j], d);
-        		}
-        		for (int j = 0; j < dirIdx1; ++j) {
-        			double d = dist2 + ((dist1 - dist2) * (j - dirIdx2 + OUTLINE_ANGLE_COUNT)) / revDirSize;
-        			distances[j] = Math.min(distances[j], d);
-        		}
-        	} else {
-        		for (int j = dirIdx1; j < dirIdx2; ++j) {
-        			double d = dist1 + ((dist2 - dist1) * (j - dirIdx1)) / dirSize;
-        			distances[j] = Math.min(distances[j], d);
-        		}
-        	}
-        }
-		
-		return distances;
 	}
 	
 

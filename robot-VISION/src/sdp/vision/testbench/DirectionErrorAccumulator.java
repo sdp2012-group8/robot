@@ -44,6 +44,8 @@ public class DirectionErrorAccumulator {
 	 * @param actualDir Actual direction in degrees.
 	 */
 	public void addRecord(double expectedDir, double actualDir) {
+		expectedDir = Math.toDegrees(expectedDir) + 179;
+
 		int validFlag = 1;
 		if (expectedDir < 0) {
 			validFlag *= -1;
@@ -52,9 +54,6 @@ public class DirectionErrorAccumulator {
 			validFlag *= -1;
 		}
 		
-		expectedDir = Math.toDegrees(expectedDir) + 179;
-		expectedDir = (expectedDir + 90) % 360;
-		
 		double error = 0.0;
 		if (validFlag > 0) {
 			error = Math.abs(expectedDir - actualDir);
@@ -62,8 +61,6 @@ public class DirectionErrorAccumulator {
 		} else {
 			error = -1.0;
 		}
-		
-		System.err.println(expectedDir + " " + actualDir);
 		
 		errorList.add(error);
 		if (error >= 0.0) {
