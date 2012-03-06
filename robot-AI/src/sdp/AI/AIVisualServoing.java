@@ -99,7 +99,7 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Command gotBall() throws IOException {
 		chasing_target = true;
-		return new Command(0,0,true);
+		return new Command(MAX_SPEED_CM_S,0,true);
 	}
 
 	@Override
