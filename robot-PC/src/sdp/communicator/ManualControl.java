@@ -442,14 +442,6 @@ public class ManualControl {
 				while (repeat) {
 					try {
 						mComm = new AIComm();
-						mComm.registerListener(new MessageListener() {
-
-							@Override
-							public void receiveMessage(opcode op, byte[] args, Communicator controler) {
-								System.out.println("New message "+op+" from BRICK");
-
-							}
-						});
 						repeat = false;
 					} catch (Exception e) {
 						System.out.println("Connection failed. Reattempting...");

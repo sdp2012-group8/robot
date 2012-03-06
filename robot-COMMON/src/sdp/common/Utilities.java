@@ -12,8 +12,12 @@ import java.util.Iterator;
 /**
  * Contains various utility methods, which do not fit anywhere else.
  */
+/**
+ * @author mihaela_laura_ionescu
+ *
+ */
 public class Utilities {
-	
+
 
 	private static final double POINT_OFFSET = 2*Robot.LENGTH_CM;
 	public final static double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
@@ -35,7 +39,7 @@ public class Utilities {
 		return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
 	}
 
-	
+
 	/**
 	 * Convert java.awt.geom.Point2D to java.awt.Point.
 	 * @param pt
@@ -44,76 +48,76 @@ public class Utilities {
 	public static Point pointFromPoint2D(Point2D pt) {
 		return new Point((int)pt.getX(), (int)pt.getY());
 	}
-	
+
 	/**
-     * Rotate point p2 around point p1 by the given angle in degrees.
-     * 
-     * @param origin Rotation point.
-     * @param point Point to rotate.
-     * @param angle Angle of rotation in degrees.
-     * @return Rotated point.
-     */
-    public static Point2D.Double rotatePoint(Point2D.Double origin,
-    		Point2D.Double point, double degrees)
-    {
-    	double radAngle = Math.toRadians(degrees);
-    	
-    	double xDiff = point.x - origin.x;
-    	double yDiff = point.y - origin.y;
-    	
-    	double rotX = (xDiff * Math.cos(radAngle)) - (yDiff * Math.sin(-radAngle)) + origin.x;
-    	double rotY = (xDiff * Math.sin(-radAngle)) + (yDiff * Math.cos(radAngle)) + origin.y;
-    	
-    	return new Point2D.Double(rotX, rotY);
-    }
-    
-    /**
-     * Rotate point p2 around point p1 by the given angle in degrees.
-     * 
-     * @param origin Rotation point.
-     * @param point Point to rotate.
-     * @param angle Angle of rotation in degrees.
-     * @return Rotated point.
-     */
-    public static Point rotatePoint(Point origin, Point point, double angle) {
-    	Point2D.Double origin_f = new Point2D.Double(origin.x, origin.y);
-    	Point2D.Double point_f = new Point2D.Double(point.x, point.y);
-    	Point2D.Double retValue_f = rotatePoint(origin_f, point_f, angle);
-    	
-    	return new Point((int)retValue_f.x, (int)retValue_f.y);
-    }
-    
-    
-    /**
-     * Translate the given point by some offset.
-     * 
-     * @param point The point to translate.
-     * @param offset Translate offset.
-     */
-    public static void translatePoint(Point2D.Double point, Point2D.Double offset) {
-    	point.x += offset.x;
-    	point.y += offset.y;
-    }
-    
-    
-    /**
-     * Check whether the given value is within specified bounds.
-     * 
-     * If lower > upper, the function checks if the given value is within the
-     * (-INF; upper] OR [lower; +INF) interval.
-     * 
-     * @param value Value to check.
-     * @param lower Lower bound of the interval.
-     * @param upper Upper bound of the interval.
-     * @return Whether the value is within the specified interval.
-     */
-    public static boolean valueWithinBounds(int value, int lower, int upper) {
-    	if (lower > upper) {
-    		return ((value >= lower) || (value <= upper));
-    	} else {
-    		return ((value >= lower) && (value <= upper));
-    	}
-    }
+	 * Rotate point p2 around point p1 by the given angle in degrees.
+	 * 
+	 * @param origin Rotation point.
+	 * @param point Point to rotate.
+	 * @param angle Angle of rotation in degrees.
+	 * @return Rotated point.
+	 */
+	public static Point2D.Double rotatePoint(Point2D.Double origin,
+			Point2D.Double point, double degrees)
+	{
+		double radAngle = Math.toRadians(degrees);
+
+		double xDiff = point.x - origin.x;
+		double yDiff = point.y - origin.y;
+
+		double rotX = (xDiff * Math.cos(radAngle)) - (yDiff * Math.sin(-radAngle)) + origin.x;
+		double rotY = (xDiff * Math.sin(-radAngle)) + (yDiff * Math.cos(radAngle)) + origin.y;
+
+		return new Point2D.Double(rotX, rotY);
+	}
+
+	/**
+	 * Rotate point p2 around point p1 by the given angle in degrees.
+	 * 
+	 * @param origin Rotation point.
+	 * @param point Point to rotate.
+	 * @param angle Angle of rotation in degrees.
+	 * @return Rotated point.
+	 */
+	public static Point rotatePoint(Point origin, Point point, double angle) {
+		Point2D.Double origin_f = new Point2D.Double(origin.x, origin.y);
+		Point2D.Double point_f = new Point2D.Double(point.x, point.y);
+		Point2D.Double retValue_f = rotatePoint(origin_f, point_f, angle);
+
+		return new Point((int)retValue_f.x, (int)retValue_f.y);
+	}
+
+
+	/**
+	 * Translate the given point by some offset.
+	 * 
+	 * @param point The point to translate.
+	 * @param offset Translate offset.
+	 */
+	public static void translatePoint(Point2D.Double point, Point2D.Double offset) {
+		point.x += offset.x;
+		point.y += offset.y;
+	}
+
+
+	/**
+	 * Check whether the given value is within specified bounds.
+	 * 
+	 * If lower > upper, the function checks if the given value is within the
+	 * (-INF; upper] OR [lower; +INF) interval.
+	 * 
+	 * @param value Value to check.
+	 * @param lower Lower bound of the interval.
+	 * @param upper Upper bound of the interval.
+	 * @return Whether the value is within the specified interval.
+	 */
+	public static boolean valueWithinBounds(int value, int lower, int upper) {
+		if (lower > upper) {
+			return ((value >= lower) || (value <= upper));
+		} else {
+			return ((value >= lower) && (value <= upper));
+		}
+	}
 
 
 	/**
@@ -129,7 +133,7 @@ public class Utilities {
 			initial += 360;
 		return initial;
 	}
-
+	
 
 	/**
 	 * Calculates if a point p is within the triangle abc
@@ -145,6 +149,7 @@ public class Utilities {
 		} else {
 			return false;
 		}
+		
 	}
 
 
@@ -159,6 +164,8 @@ public class Utilities {
 		boolean diagonal1 = Utilities.sameSide(robot.getBackLeft(), robot.getFrontRight(), A, B);
 		boolean diagonal2 = Utilities.sameSide(robot.getFrontLeft(), robot.getBackRight(), A, B);
 		return (diagonal1 && diagonal2);
+		
+		
 	}
 
 
@@ -175,11 +182,20 @@ public class Utilities {
 		if (D == 0) return null;
 		double xi = ((c.x-d.x)*(a.x*b.y-a.y*b.x)-(a.x-b.x)*(c.x*d.y-c.y*d.x))/D;
 		double yi = ((c.y-d.y)*(a.x*b.y-a.y*b.x)-(a.y-b.y)*(c.x*d.y-c.y*d.x))/D;
-	
+
 		return new Point2D.Double(xi,yi);
 	}
 
-
+	/**
+	 * This checks if 2 points are on the same side of a segment
+	 * Computes the cross product of P1A and AB and of P2A and AB
+	 * If the dot product of the resulting vectors us >=0, they have the same direction
+	 * @param p1
+	 * @param p2
+	 * @param a
+	 * @param b
+	 * @return
+	 */
 	public static boolean sameSide(Point2D.Double p1, Point2D.Double p2, Point2D.Double a, Point2D.Double b){
 		Point3D cp1 = Utilities.crossProduct(Utilities.pointSubtract(b,a), Utilities.pointSubtract(p1,a));
 		Point3D cp2 = Utilities.crossProduct(Utilities.pointSubtract(b,a), Utilities.pointSubtract(p2,a));
@@ -223,12 +239,12 @@ public class Utilities {
 		double AB = getDistanceBetweenPoint(A,B);
 		double AC = getDistanceBetweenPoint(A,C);
 		double BC = getDistanceBetweenPoint(B,C);
-		
+
 		angle = Math.acos((AC*AC + AB*AB - BC*BC)/(2*AC*AB));
-		
+
 		return angle;
 	}
-    
+
 	/**
 	 * converts to a byte
 	 * @param angle
@@ -242,53 +258,56 @@ public class Utilities {
 		return (byte)angle;
 	}
 
-    
-    /**
-     * Strip a string from whitespace.
-     * 
-     * Adapted from http://www.java2s.com/Code/Java/Data-Type/stripstring.htm.
-     * 
-     * @param string String to strip.
-     * @return Stripped string.
-     */
-    public static String stripString(String string) {
-    	if ((string == null) || (string.length() == 0)) {
-    		return string;
-    	}
-    	        
-        int start = 0;
-        while((start < string.length()) && Character.isWhitespace(string.charAt(start))) {
-            start++;
-        }
-        
-        int end = string.length();
-        while((end > start) && Character.isWhitespace(string.charAt(end - 1))) {
-            end--;
-        }
-        
-        if (start == end) {
-        	return "";
-        } else {
-        	return string.substring(start, end);
-        }
-    }
-    
-    /**
-     * Calculates if the given point is within the field.
-     * @param point The point to be checked
-     * @return True if the point is within the bounds of the field.
-     */
-    public static boolean isPointInField(Point2D.Double point) {
-    	if (point.getX() >= 0 && point.getX() <= WorldState.PITCH_WIDTH_CM) {
-    		if (point.getY() >= 0 && point.getY() <= WorldState.PITCH_HEIGHT_CM) {
-    			return true;
-    		}
-    	}
+
+	/**
+	 * Strip a string from whitespace.
+	 * 
+	 * Adapted from http://www.java2s.com/Code/Java/Data-Type/stripstring.htm.
+	 * 
+	 * @param string String to strip.
+	 * @return Stripped string.
+	 */
+	public static String stripString(String string) {
+		if ((string == null) || (string.length() == 0)) {
+			return string;
+		}
+
+		int start = 0;
+		while((start < string.length()) && Character.isWhitespace(string.charAt(start))) {
+			start++;
+		}
+
+		int end = string.length();
+		while((end > start) && Character.isWhitespace(string.charAt(end - 1))) {
+			end--;
+		}
+
+		if (start == end) {
+			return "";
+		} else {
+			return string.substring(start, end);
+		}
+	}
+
+	/**
+	 * Calculates if the given point is within the field.
+	 * Includes an offset equal to half of the length of the robot, to allow
+	 * it to get behind the ball
+	 * @param point The point to be checked
+	 * @return True if the point is within the bounds of the field.
+	 */
+	public static boolean isPointInField(Point2D.Double point) {
+		double offset = Robot.LENGTH_CM / 2;
+		if (point.getX() >= offset && point.getX() <= (WorldState.PITCH_WIDTH_CM - offset)) {
+			if (point.getY() >= offset && point.getY() <= (WorldState.PITCH_HEIGHT_CM - offset)) {
+				return true;
+			}
+		}
 		return false;
-    }
-    
-    
-    /**
+	}
+
+
+	/**
 	 * Returns the point the robot should go to behind the ball.
 	 * Distance behind the ball set by POINT_OFFSET
 	 * @param point The target point on the goal the robot should be aligned to.
@@ -317,10 +336,10 @@ public class Utilities {
 		}
 	}
 
-    public static boolean isLeft(Point2D.Double a, Point2D.Double b, Point2D.Double c){
+	public static boolean isLeft(Point2D.Double a, Point2D.Double b, Point2D.Double c){
 		return ((b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x)) > 0;
 	}
-    
+
 	/**
 	 * Calculates distance between two points.
 	 * @param p1 start point
@@ -331,7 +350,7 @@ public class Utilities {
 	{
 		return Math.sqrt((double)(Math.pow(p1.x-p2.x,2)+(Math.pow(p1.y-p2.y,2))));
 	}
-	
+
 	private static Point2D.Double toCentimeters(Point2D.Double original) {
 		return new Point2D.Double(original.getX()*WorldState.PITCH_WIDTH_CM, original.getY()*WorldState.PITCH_WIDTH_CM);
 	}
@@ -360,7 +379,7 @@ public class Utilities {
 	public static Point2D.Double getOptimalPointBehindBall(WorldState ws, boolean my_goal_left, boolean my_team_blue) throws NullPointerException {
 		Goal enemy_goal;
 		Robot robot, enemy_robot;
-		
+
 		if (my_goal_left) {
 			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
 		} else {
@@ -388,28 +407,111 @@ public class Utilities {
 		Iterator<Point2D.Double> itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
-			
-			if (point.y < 0){
-				if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot.getTopImage()))
+
+			if (point.y < 0) {
+				if (!Utilities.isPathClear(point, ws.getBallCoords(),
+						enemy_robot.getTopImage())) {
 					itr.remove();
-			} else
-				if (point.y > WorldState.PITCH_HEIGHT_CM){
-					if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot.getBottomImage()))
-						itr.remove();
-				} 
-				else
-					if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot)) {
-						itr.remove();
+
+				}
+			} else if (point.y > WorldState.PITCH_HEIGHT_CM) {
+				if (!Utilities.isPathClear(point, ws.getBallCoords(),
+						enemy_robot.getBottomImage())) {
+					itr.remove();
+
+				}
+			} else {
+
+				if (!Utilities.isPathClear(point, ws.getBallCoords(),
+						enemy_robot) || point.x > WorldState.PITCH_WIDTH_CM) {
+					itr.remove();
+
+				}
+
+			}
+
+		}
+
+		System.out.println("begin printing points");
+	
+		itr = goal_points.iterator();
+		while (itr.hasNext()) {
+			Point2D.Double point = itr.next();
+			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(), my_goal_left);
+
+			System.out.println(temp_point);
+			
+			if (Utilities.isPointInField(temp_point)) { 
+				if (!isPointAroundRobot(temp_point, enemy_robot) && isPathClear(temp_point, ws.getBallCoords(),
+						enemy_robot)) {
+					//System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
+					//System.out.println("Min distance: "+min_distance);
+					if (Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength() < min_distance) {
+						min_point = temp_point;
+						min_distance = Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength();
 					}
+				} 
+			} 
+		} 
+	//	System.out.println("min point "+min_point); //+ "enemy robot" + enemy_robot.getCoords() + "angle" + enemy_robot.getAngle() + "ball coords "+ws.getBallCoords());
+		return min_point;
+	}
+
+
+	/**
+	 * Calculates all the points behind the ball that would align the robot to shoot and
+	 * returns the point closest to the robot.
+	 * It does not take into account the image goals
+	 * @return The point closest to the robot that would allow it to shoot.
+	 * @throws NullPointerException Throws exception when the robot can't see a goal.
+	 */
+	public static Point2D.Double getOptimalPointBehindBallNoWalls(WorldState ws, boolean my_goal_left, boolean my_team_blue) throws NullPointerException {
+		Goal enemy_goal;
+		Robot robot, enemy_robot;
+
+		if (my_goal_left) {
+			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
+		} else {
+			enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
+		}
+
+		//update variables
+		if (my_team_blue) {
+			robot = ws.getBlueRobot();
+			enemy_robot = ws.getYellowRobot();
+		} else {
+			robot = (ws.getYellowRobot());
+			enemy_robot = (ws.getBlueRobot());
+		}
+		ArrayList<Point2D.Double> goal_points = new ArrayList<Point2D.Double>();
+		Point2D.Double min_point = null;
+		double min_distance = WorldState.PITCH_WIDTH_CM*2;
+		double offset = enemy_goal.getBottom().y - enemy_goal.getTop().y; //offset>0
+		offset = offset/5;
+
+		goal_points.add(enemy_goal.getCentre());
+		goal_points.add(enemy_goal.getTop());
+		goal_points.add(enemy_goal.getBottom());
+
+		for (int i=0; i<4; i++)
+			goal_points.add(new Point2D.Double(enemy_goal.getTop().x, enemy_goal.getTop().y - (i+1)*offset));
+
+		Iterator<Point2D.Double> itr = goal_points.iterator();
+		while (itr.hasNext()) {
+			Point2D.Double point = itr.next();
+
+			if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot)) 
+				itr.remove();
+
 		}
 
 		itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
 			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(), my_goal_left);
-			
+
 			if (Utilities.isPointInField(temp_point)) { 
-				if (!isPointInRobot(temp_point, enemy_robot)) {
+				if (!isPointAroundRobot(temp_point, enemy_robot)) {
 					//System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
 					//System.out.println("Min distance: "+min_distance);
 					if (Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength() < min_distance) {
@@ -419,23 +521,53 @@ public class Utilities {
 				}
 			}
 		}
-		
-		//System.out.println(min_point);
+
 
 		return min_point;
-	}
-	
+	}	
+
 	/**
 	 * Helper function to find if a specific point is within the enemy robot.
 	 * @param point The point to check.
 	 * @return Returns true if the point is within the enemy robot.
 	 */
 	public static boolean isPointInRobot(Point2D.Double point, Robot enemy_robot) {
-		if (Utilities.pointInTriangle(point, enemy_robot.getFrontLeft(), enemy_robot.getFrontRight(), enemy_robot.getBackLeft()) && 
+		if (Utilities.pointInTriangle(point, enemy_robot.getFrontLeft(), enemy_robot.getFrontRight(), enemy_robot.getBackLeft()) || 
 				Utilities.pointInTriangle(point, enemy_robot.getBackLeft(), enemy_robot.getBackRight(), enemy_robot.getFrontRight())){
 			return true;
 		}
 		return false;
+	}
+
+
+	/**
+	 * Helper function to find if a specific point is around the enemy robot.
+	 * @param point The point to check.
+	 * @return Returns true if the point is within 1/3 of the length of the robot from the enemy robot.
+	 */
+	public static boolean isPointAroundRobot(Point2D.Double point, Robot enemy_robot){
+		double offset = Robot.LENGTH_CM/2;
+		double length = Robot.LENGTH_CM;
+		double width = Robot.WIDTH_CM;
+		double angle = enemy_robot.getAngle();
+
+		Point2D.Double frontLeftPoint = rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2 + offset, width / 2 + offset), angle);
+		translatePoint(frontLeftPoint, enemy_robot.getCoords());
+
+		Point2D.Double frontRightPoint = rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2 + offset, -width / 2 - offset), angle);
+		translatePoint(frontRightPoint, enemy_robot.getCoords());
+
+		Point2D.Double backLeftPoint = rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2 - offset, width / 2 + offset), angle);
+		translatePoint(backLeftPoint, enemy_robot.getCoords());
+
+		Point2D.Double backRightPoint = rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2 - offset, -width / 2 - offset), angle);
+		translatePoint(backRightPoint, enemy_robot.getCoords());
+
+		if (pointInTriangle(point, frontLeftPoint, frontRightPoint, backLeftPoint) || 
+				pointInTriangle(point, backLeftPoint, backRightPoint, frontRightPoint)){
+			return true;
+		}
+		return false;	
 	}
 
 	/**
@@ -449,7 +581,7 @@ public class Utilities {
 	public static Vector2D getNearestCollisionPoint(WorldState ls, boolean am_i_blue, Point2D.Double point) {
 		return getNearestCollisionPoint(ls, am_i_blue, point, true);
 	}
-	
+
 	/**
 	 * Returns the vector to the closest collision point in the world (wall or enemy)
 	 * 
@@ -484,9 +616,9 @@ public class Utilities {
 			min = temp;
 		// closest distance to enemy
 		if (include_enemy) {
-		temp = closestDistance(enemy_pts, new Vector2D(point));
-		if (temp.getLength() < min.getLength())
-			min = temp;
+			temp = closestDistance(enemy_pts, new Vector2D(point));
+			if (temp.getLength() < min.getLength())
+				min = temp;
 		}
 		// we have our point
 		return min;
@@ -520,7 +652,7 @@ public class Utilities {
 	public static double getTurningAngle(Robot me, Vector2D point) {
 		return Utilities.normaliseAngle(-me.getAngle()+Vector2D.getDirection(new Vector2D(-me.getCoords().getX()+point.getX(), -me.getCoords().getY()+point.getY())));
 	}
-	
+
 	/**
 	 * Transforms a vector from table coordinates to robot coordinates
 	 * @param me
@@ -530,7 +662,7 @@ public class Utilities {
 	public static Vector2D getLocalVector(Robot me, Vector2D vector) {
 		return Vector2D.rotateVector(Vector2D.subtract(vector, new Vector2D(me.getCoords())), -me.getAngle());
 	}
-	
+
 	/**
 	 * Converts local coordinate (generated by {@link #getLocalVector(Robot, Vector2D)}) to a table coordinate.
 	 * @param me
@@ -542,12 +674,12 @@ public class Utilities {
 				Vector2D.rotateVector(local, me.getAngle()),
 				new Vector2D(me.getCoords()));
 	}
-	
+
 	public static Vector2D getNearestCollisionPointFromMyPerspective(Robot me, Point2D.Double my_pos, WorldState worldState, boolean am_i_blue) {
 		return getLocalVector(me, Vector2D.add(new Vector2D(my_pos), getNearestCollisionPoint(worldState, am_i_blue, new Vector2D(my_pos))));
 	}
 
-	
+
 	/**
 	 * Starting from origin in the given direction, find the first point of collision in the scene
 	 * @param origin the start of the vector
@@ -600,7 +732,7 @@ public class Utilities {
 		return
 				Vector2D.change_length(direction, WorldState.PITCH_WIDTH_CM);
 	}
-	
+
 	/**
 	 * Raytrace vector with relation to a robot
 	 * @param ws
@@ -612,8 +744,8 @@ public class Utilities {
 	public static Vector2D raytraceVector(WorldState ws, Robot robot, Vector2D local_origin, Vector2D local_direction, boolean include_ball_as_obstacle) {
 		return raytraceVector(ws, robot, local_origin, local_direction, null, include_ball_as_obstacle);
 	}
-	
-	
+
+
 	/**
 	 * Raytrace vector with relation to a robot
 	 * @param ws
@@ -628,7 +760,7 @@ public class Utilities {
 		Vector2D direction = Vector2D.subtract(origin, getGlobalVector(robot, local_direction));
 		return raytraceVector(ws, origin, direction, am_i_blue, include_ball_as_obstacle);
 	}
-	
+
 	/**
 	 * Whether there is direct visibility from a point of the pitch to another one.
 	 * @param ws
@@ -642,6 +774,14 @@ public class Utilities {
 		Vector2D startPt = new Vector2D(robot.getCoords());
 		Vector2D dir =  Vector2D.subtract(endPt, startPt);
 		Vector2D ray = raytraceVector(ws, startPt, dir, am_i_blue, include_ball_as_obstacle);
+		return ray.getLength() >= dir.getLength();
+	}
+
+	
+	public static boolean visibility(WorldState ws, Vector2D startPoint, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
+		
+		Vector2D dir =  Vector2D.subtract(endPt, startPoint);
+		Vector2D ray = raytraceVector(ws, startPoint, dir, am_i_blue, include_ball_as_obstacle);
 		return ray.getLength() >= dir.getLength();
 	}
 	
@@ -660,7 +800,7 @@ public class Utilities {
 		Vector2D ray = raytraceVector(ws, startPt, dir, am_i_blue, include_ball_as_obstacle);
 		return ray.getLength();
 	}
-	
+
 	/**
 	 * Returns the distance to the collision in a given direction
 	 * @param ws
@@ -682,7 +822,7 @@ public class Utilities {
 		Vector2D ray_right = raytraceVector(ws, Vector2D.add(startPt, left), dir, am_i_blue, include_ball_as_obstacle);
 		return ray_right.getLength();
 	}
-	
+
 	/**
 	 * Returns the distance to the collision in a given direction
 	 * @param ws
@@ -700,12 +840,12 @@ public class Utilities {
 		double cos = Math.cos(angle)*length;
 		double sin = Math.sin(angle)*length;
 		Vector2D right = new Vector2D(-cos, -sin);
-		
+
 		Vector2D ray_left = raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue, include_ball_as_obstacle);
 		return ray_left.getLength();
 	}
-	
-	
+
+
 	/**
 	 * Whether you could reach this point if you turn into its direction and go into straight line.
 	 * @param ws
@@ -734,7 +874,7 @@ public class Utilities {
 		Vector2D ray_right = raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue, include_ball_as_obstacle);
 		return ray_right.getLength() >= dir_l;
 	}
-	
+
 	/**
 	 * Return the intersection of a vector in the given direction, originating from origin.
 	 * @param origin
@@ -757,9 +897,9 @@ public class Utilities {
 		} else
 			return null;
 	}
-	
 
-	
+
+
 	/**
 	 * Change in state of a robot
 	 */
@@ -779,7 +919,7 @@ public class Utilities {
 				delta(old_w.getYellowRobot(), new_w.getYellowRobot())+
 				new_w.getBallCoords().distance(old_w.getBallCoords());
 	}
-	
+
 	/**
 	 * Just for printing arrays
 	 * @param array
@@ -795,7 +935,7 @@ public class Utilities {
 			ans=ans+"\t"+array[i];
 		return ans+"]";
 	}
-	
+
 	/**
 	 * Just for printing arrays
 	 * @param array
@@ -807,7 +947,7 @@ public class Utilities {
 			ans[i] = array[i];
 		return printArray(ans);
 	}
-	
+
 	/**
 	 * Just for printing arrays
 	 * @param array
@@ -819,7 +959,7 @@ public class Utilities {
 			ans[i] = array[i];
 		return printArray(ans);
 	}
-	
+
 	/**
 	 * Join given arrays into one in the given order
 	 * @param arrays
@@ -883,8 +1023,8 @@ public class Utilities {
 		for (int i = 0; i < sector_count; i++)
 			ans[i] = normalize_to_1 ?
 					NNetTools.AI_normalizeDistanceTo1(getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle), WorldState.PITCH_WIDTH_CM) :
-					getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle).getLength();
-		return ans;
+						getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle).getLength();
+					return ans;
 	}
 
 	static double[] getTargetInSectors(Vector2D relative, int sector_count) {
@@ -899,5 +1039,5 @@ public class Utilities {
 		return ans;
 	}
 
-    
+
 }

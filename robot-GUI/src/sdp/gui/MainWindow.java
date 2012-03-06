@@ -1313,6 +1313,20 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_robotOverrideButton.gridy = 11;
 		robotSettingPanel.add(robotOverrideVision, gbc_robotOverrideButton);
 		
+		robotChangeColorGoal = new JButton("Change color/goal");
+		robotChangeColorGoal.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if (aiInstance != null)
+					aiInstance.updateGoalOrTeam(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected());
+			}
+		});
+		GridBagConstraints gbc_robotChangeColorButton = new GridBagConstraints();
+		gbc_robotChangeColorButton.insets = new Insets(0, 0, 5, 0);
+		gbc_robotChangeColorButton.gridx = 0;
+		gbc_robotChangeColorButton.gridy = 12;
+		robotSettingPanel.add(robotChangeColorGoal, gbc_robotChangeColorButton);
+		
 		robotStateLabel = new JLabel("Robot state");
 		GridBagConstraints gbc_robotStateLabel = new GridBagConstraints();
 		gbc_robotStateLabel.anchor = GridBagConstraints.WEST;
@@ -1506,6 +1520,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JLabel robotGateLabel;
 	private JButton robotConnectButton;
 	private JButton robotOverrideVision;
+	private JButton robotChangeColorGoal;
 	private final ButtonGroup robotColorButtonGroup = new ButtonGroup();
 	private final ButtonGroup robotGateButtonGroup = new ButtonGroup();
 	private JCheckBox robotDebugModeCheckbox;

@@ -49,7 +49,7 @@ public class Painter {
 	 * 
 	 * @return
 	 */
-	public  void image() {
+	public  void image(boolean my_team_blue, boolean my_goal_left) {
 		for (int i = 0; i < robots.length; i++) {
 			Robot robot;
 			Color color = Color.gray;
@@ -120,8 +120,8 @@ public class Painter {
 						.getYellowRobot();
 				Vector2D local_origin = new Vector2D(Robot.LENGTH_CM/2+2,0);
 				drawVector(Utilities.getGlobalVector(robot, local_origin),  Utilities.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0), true), true);
-				if (i == 0) {
-					Point2D.Double p_target = Utilities.getOptimalPointBehindBall(state_cm, true, true);
+				if ((my_team_blue && i == 0) || (!my_team_blue && i == 1)) {
+					Point2D.Double p_target = Utilities.getOptimalPointBehindBall(state_cm, my_goal_left, my_team_blue);
 
 					if (p_target != null) {
 
@@ -145,7 +145,7 @@ public class Painter {
 						final int COLL_SECS_COUNT = 110;
 						final double SEC_ANGLE = 360d/COLL_SECS_COUNT;
 
-						final double[] sectors = Utilities.getSectors(state_cm, true, 5, COLL_SECS_COUNT, false, true);
+						final double[] sectors = Utilities.getSectors(state_cm, my_team_blue, 5, COLL_SECS_COUNT, false, true);
 
 						// find desired
 						double temp = 999;
@@ -157,7 +157,7 @@ public class Painter {
 						// get direction and distance to point
 						final double point_dir = Vector2D.getDirection(point_rel);
 						final double point_dist = point_rel.getLength();
-						final double point_vis_dist = Utilities.visibility2(state_cm, target, true, true);
+						final double point_vis_dist = Utilities.visibility2(state_cm, target, my_team_blue, true);
 						double turn_ang = 999;
 						for (int ii = 0; ii < sectors.length; ii++) {
 

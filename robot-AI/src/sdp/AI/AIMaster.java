@@ -5,6 +5,7 @@ import java.io.IOException;
 //import sdp.AI.neural.AINeuralNetwork;
 import sdp.AI.AI.Command;
 import sdp.common.Communicator;
+import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 import sdp.common.WorldStateProvider;
 
@@ -34,6 +35,27 @@ public class AIMaster extends AIListener {
 	public AIMaster(Communicator comm, WorldStateProvider obs, AIMode ai_mode) {
 		super(obs);
 		this.mComm = comm;
+			mComm.registerListener(new MessageListener() {
+				@Override
+				public void receiveMessage(opcode op, byte[] args, Communicator controler) {
+					System.out.println(op+" "+args[0]);
+					switch (op) {
+					case sensor_dist:
+						ai_world_state.setDist_sensor(args[0] == 1);
+						break;
+					case sensor_left:
+						ai_world_state.setLeft_sensor(args[0] == 1);
+						break;
+					case sensor_right:
+						ai_world_state.setRight_sensor(args[0] == 1);
+						break;
+					case battery:
+						ai_world_state.setBattery(args[0]);
+						break;
+					}
+
+				}
+			});
 
 		switch(ai_mode) {
 		case visual_servoing:
@@ -63,8 +85,9 @@ public class AIMaster extends AIListener {
 			else
 				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed(), command.getByteAcc());
 			if (command.getByteSpeed() != 0 || command.getByteTurnSpeed() != 0)
-				System.out.println(command);
-			if (command.kick) mComm.sendMessage(opcode.kick);
+				//	System.out.println(command);
+				//System.out.println(command);
+				if (command.kick) mComm.sendMessage(opcode.kick);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -76,7 +99,7 @@ public class AIMaster extends AIListener {
 		case chase_ball:
 			return ai.chaseBall();
 		case got_ball:
-			setState(mode.sit);
+			//setState(mode.sit);
 			return ai.gotBall();
 		case sit:
 			return ai.sit();
@@ -93,12 +116,15 @@ public class AIMaster extends AIListener {
 
 	private void checkState() {
 		// Check the new world state and decide what state we should be in.
+
 		if (state != mode.defend_goal) {
-			if (ai_world_state.getDistanceToBall() > DIST_TO_BALL && getState() != mode.sit) {
-				setState(mode.chase_ball);
-			} else {
-				setState(mode.got_ball);
-			}		
+			if (getState() != mode.sit) {
+				if (ai_world_state.getDistanceToBall() > DIST_TO_BALL) {
+					setState(mode.chase_ball);
+				} else {
+					setState(mode.got_ball);
+				}		
+			}
 		}
 	}
 
