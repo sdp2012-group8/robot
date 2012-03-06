@@ -318,7 +318,7 @@ public class Utilities {
 		if (point.getY() == ball.getY()) {
 			return new Point2D.Double(my_goal_left ? ball.getX() - POINT_OFFSET : ball.getX() + POINT_OFFSET, ball.getY());
 		} else {
-			double x, y, a, b;
+			/*double x, y, a, b;
 			a = point.getY() - ball.getY();
 			b = point.getX() - ball.getX();
 
@@ -328,11 +328,13 @@ public class Utilities {
 			} else {
 				y = ball.getY() + POINT_OFFSET*a/(Math.sqrt(b*b + a*a));
 				x = ball.getX() - (b*(y - ball.getY())/a);
-			}
+			}*/
+			
+			Point2D.Double p = Vector2D.change_length(Vector2D.subtract(new Vector2D(point),new Vector2D(ball)), -POINT_OFFSET);
 
 			//x = ball.getX() + (b*(y - ball.getY())/a);
 
-			return new Point2D.Double(x,y);
+			return p;
 		}
 	}
 
