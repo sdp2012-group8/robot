@@ -64,6 +64,7 @@ public class AIMaster extends AIListener {
 				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed(), command.getByteAcc());
 			if (command.getByteSpeed() != 0 || command.getByteTurnSpeed() != 0)
 				System.out.println(command);
+			System.out.println(command);
 			if (command.kick) mComm.sendMessage(opcode.kick);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -76,7 +77,7 @@ public class AIMaster extends AIListener {
 		case chase_ball:
 			return ai.chaseBall();
 		case got_ball:
-			setState(mode.sit);
+			//setState(mode.sit);
 			return ai.gotBall();
 		case sit:
 			return ai.sit();
@@ -91,11 +92,13 @@ public class AIMaster extends AIListener {
 	
 	private void checkState() {
 		// Check the new world state and decide what state we should be in.
-		if (ai_world_state.getDistanceToBall() > DIST_TO_BALL && getState() != mode.sit) {
-			setState(mode.chase_ball);
-		} else {
-			setState(mode.got_ball);
-		}		
+		if (getState() != mode.sit) {
+			if (ai_world_state.getDistanceToBall() > DIST_TO_BALL) {
+				setState(mode.chase_ball);
+			} else {
+				setState(mode.got_ball);
+			}		
+		}
 	}
 	
 	/**
