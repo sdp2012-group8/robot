@@ -224,6 +224,22 @@ public class Painter {
 						
 						g.setColor(new Color(255, 255, 255, 255));
 						fillOval((int)(target.x* width / WorldState.PITCH_WIDTH_CM-3), (int) (target.y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6);
+						
+						g.setStroke(new BasicStroke(1.0f));
+						Vector2D dist = Utilities.raytraceVector(state_cm, target, Vector2D.change_length(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), target), 200), null, false);
+						drawVector(target, dist, false);
+						Vector2D global_dist = Vector2D.add(dist, target);
+						if (global_dist.getY() < 5) {
+							double a = Vector2D.getDirection(dist);
+							a += 180-2*(90-(180-a));
+							Vector2D dist2 = Vector2D.rotateVector(new Vector2D(200,0), a);
+							drawVector(global_dist, dist2, false);
+						} else if (global_dist.getY() > WorldState.PITCH_HEIGHT_CM-5) {
+							double a = Vector2D.getDirection(dist);
+							a -= 2*a-360;
+							Vector2D dist2 = Vector2D.rotateVector(new Vector2D(200,0), a);
+							drawVector(global_dist, dist2, false);
+						}
 					}
 				}
 			}

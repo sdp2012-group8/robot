@@ -78,6 +78,16 @@ public class AIMaster extends AIListener {
 		ai.update(ai_world_state);
 		try {
 			command = getCommand();
+			final boolean dist_sens = ai_world_state.isDist_sensor(),
+					left_sens = ai_world_state.isLeft_sensor(),
+					right_sens = ai_world_state.isRight_sensor();
+			
+			if (left_sens) {
+				command.turning_speed = 90;
+			} else if (right_sens) {
+				command.turning_speed = -90;
+			}
+			
 			if (command == null)
 				command = new Command(0, 0, false);
 			if (command.isDefaultAcc())
@@ -118,15 +128,15 @@ public class AIMaster extends AIListener {
 		// Check the new world state and decide what state we should be in.
 
 		// Can now change between states more easily
-		if (getState() == mode.chase_ball && ai_world_state.getDistanceToBall() > DIST_TO_BALL){
-			setState(mode.chase_ball);
-		} else if (getState() == mode.defend_penalties){
-			setState(mode.defend_penalties);
-		} else if(ai_world_state.getDistanceToBall() < DIST_TO_BALL){
-			setState(mode.got_ball);
-		} else if(getState()== mode.sit){
-			setState(mode.sit);
-		}
+//		if (getState() == mode.chase_ball && ai_world_state.getDistanceToBall() > DIST_TO_BALL){
+//			setState(mode.chase_ball);
+//		} else if (getState() == mode.defend_penalties){
+//			setState(mode.defend_penalties);
+//		} else if(ai_world_state.getDistanceToBall() < DIST_TO_BALL){
+//			setState(mode.got_ball);
+//		} else if(getState()== mode.sit){
+//			setState(mode.sit);
+//		}
 
 
 		if (state != mode.defend_goal) {

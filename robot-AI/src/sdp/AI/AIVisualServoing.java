@@ -13,7 +13,7 @@ public class AIVisualServoing extends AI {
 	private final static int COLL_ANGLE = 25;
 	private final static int CORNER_COLL_THRESHOLD = 3;
 	private final static int NEAR_TARGET = 2;
-	private final static int POINT_ACCURACY = 10;
+	private final static int POINT_ACCURACY = 5;
 	
 	private final static int MAX_TURN_ANG = 200;
 
@@ -33,7 +33,7 @@ public class AIVisualServoing extends AI {
 		} catch (NullPointerException e) {
 			// Robot can't see a goal
 			// TODO: decide on what to do when the robot can't see the goal.
-			System.out.println("Can't see a goal");
+			//System.out.println("Can't see a goal");
 			target = new Vector2D(ai_world_state.getBallCoords());
 		}
 
@@ -101,6 +101,7 @@ public class AIVisualServoing extends AI {
 
 	@Override
 	protected Command gotBall() throws IOException {
+		System.out.println("GOT BALL");
 		chasing_target = true;
 		return new Command(MAX_SPEED_CM_S,0,true);
 	}
@@ -242,7 +243,7 @@ public class AIVisualServoing extends AI {
 		double for_dist = getMin(sectors, anid(-10), anid(10)); // get collision distance at the front
 		double back_dist = getMin(sectors, anid(170), anid(190)); // get collision distance at the back
 
-		if (for_dist < COLL_ANGLE) {
+		if (ai_world_state.isDist_sensor()){
 			if (command.speed >= 0) {
 				// go backwards
 				double speed_coeff = -1+for_dist/COLL_ANGLE;
