@@ -13,15 +13,36 @@ def midway(a,b)
   return (a+b)/2
 end
 
-def getangle(a,b)
-  dif = (b[0]-a[0])
-  if dif == 0
-    dif = 1
-  end
-  return Math.atan((b[1]-a[1])/(dif))
+def todeg(n)
+  return (n.to_f/Math::PI)*180
 end
 
-puts xmltag("test","true")
+def getangle(a,b)
+  from = a.dup
+  from[1] = 480 - from[1]
+  to = b.dup
+  to[1] = 480 - to[1]
+  notzero = 0.0001
+  if from[0] == to[0]
+    to[0] = from[0]-notzero
+  end
+  tan = (to[1]-from[1]).to_f/(to[0]-from[0])
+  puts "tangent is #{tan}"
+  if to[0] > from[0] and to[1] > from [1]
+    angle = todeg(Math.atan(tan))
+    puts angle
+    return angle
+  elsif to[1] < from [1] and to[0] > from[0]
+    angle = 360 + todeg(Math.atan(tan))
+    puts angle
+    return angle
+  else
+    angle = 180 + todeg(Math.atan(tan))
+    puts angle
+    return angle
+  end
+end
+
 
 #current directory
 this_dir = File.dirname(__FILE__)
