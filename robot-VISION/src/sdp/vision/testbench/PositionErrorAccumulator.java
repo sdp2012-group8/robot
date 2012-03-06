@@ -47,10 +47,10 @@ public class PositionErrorAccumulator {
 	 */
 	public void addRecord(Point2D.Double expectedPos, Point2D.Double actualPos) {
 		int validFlag = 1;
-		if ((expectedPos.x < 0) && (expectedPos.y < 0)) {
+		if ((expectedPos.x < 0) || (expectedPos.y < 0)) {
 			validFlag *= -1;
 		}
-		if ((actualPos.x < 0) && (actualPos.y < 0)) {
+		if ((actualPos.x < 0) || (actualPos.y < 0)) {
 			validFlag *= -1;
 		}
 		

@@ -25,10 +25,12 @@ import sdp.common.WorldState;
  */
 public class MainImageProcessor extends BaseImageProcessor {
 	
-	/** How many directions the outline distance calculations will use. */
-	private static final int OUTLINE_ANGLE_COUNT = 360;
 	/** The size of the direction cone angle. */
 	private static final int DIRECTION_CONE_ANGLE = 30;
+	/** Robot height normalisation constant. */
+	private static final double HEIGHT_NORM_VALUE = 40.0;
+	/** How many directions the outline distance calculations will use. */
+	private static final int OUTLINE_ANGLE_COUNT = 360;
 	
 	/** Polygon approximation error (arg in cvApproxPoly). */
 	private static final double POLY_APPROX_ERROR = 0.0001;
@@ -262,7 +264,6 @@ public class MainImageProcessor extends BaseImageProcessor {
             
             double massCenterX = moments.m10() / moments.m00();
             double massCenterY = moments.m01() / moments.m00();
-            Point2D.Double robotPos = ProcUtils.frameToNormalCoordinates(config, massCenterX, massCenterY, true);            
             
             // Find the contour's outline distances.
             double[] dists = getContourOutlineDistances(bestRobotShape, massCenterX, massCenterY);
@@ -285,7 +286,13 @@ public class MainImageProcessor extends BaseImageProcessor {
 	            	angle = i;
 	            }
             }
-        
+            
+            // Adjust mass center to account for robot's height.
+            double f = config.getFrameWidth() / HEIGHT_NORM_VALUE;
+            massCenterX -= (massCenterX - config.getFieldWidth() / 2) / f;
+            massCenterY -= (massCenterY - config.getFieldHeight() / 2) / f;
+            
+            Point2D.Double robotPos = ProcUtils.frameToNormalCoordinates(config, massCenterX, massCenterY, true);
             return new Robot(robotPos, angle);
 		}
 	}
