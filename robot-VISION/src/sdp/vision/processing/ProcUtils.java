@@ -31,8 +31,8 @@ public class ProcUtils {
 	
 	/** Variable initialisation. */
 	static {
-		distortion = CvMat.create(1, 4);
-		distortion.put(0.0, 0.0, 0.0, 0.0);
+		distortion = CvMat.create(1, 5);
+		distortion.put(0.0, 0.0, 0.0, 0.0, -1.684608201740239);	// TODO
 		
 		intristic = CvMat.create(3, 3);
 		intristic.put(1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0);
@@ -225,10 +225,10 @@ public class ProcUtils {
 	 * @param config Image processor configuration to use.
 	 */
 	private static synchronized void updateUndistortMatrices(ImageProcessorConfig config) {
-		intristic.put(0, 0, config.getUndistort_cx());
-		intristic.put(0, 2, config.getUndistort_fx());
-		intristic.put(1, 1, config.getUndistort_cy());
-		intristic.put(1, 2, config.getUndistort_fy());
+		intristic.put(0, 0, config.getUndistort_fx());
+		intristic.put(0, 2, config.getUndistort_cx());
+		intristic.put(1, 1, config.getUndistort_fy());
+		intristic.put(1, 2, config.getUndistort_cy());
 		
 		distortion.put(0, config.getUndistort_k1());
 		distortion.put(1, config.getUndistort_k2());

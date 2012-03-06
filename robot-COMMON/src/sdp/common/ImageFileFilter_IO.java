@@ -1,4 +1,4 @@
-package sdp.gui.filefilters;
+package sdp.common;
 
 import java.io.File;
 
@@ -14,7 +14,7 @@ public class ImageFileFilter_IO implements FileFilter {
 	
 	/** Image extensions to accept. */
 	private static final String[] SUPPORTED_EXTENSIONS = {
-		".bmp", ".jpeg", ".jpg", ".png"
+		".bmp", ".jpeg", ".jpg", ".png", "ppm"
 	};
 	
 

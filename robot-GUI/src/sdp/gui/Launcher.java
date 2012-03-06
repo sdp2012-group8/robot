@@ -3,9 +3,9 @@ package sdp.gui;
 import javax.swing.JFrame;
 
 import au.edu.jcu.v4l4j.V4L4JConstants;
+import sdp.common.ImageFileFilter_IO;
 import sdp.common.Utilities;
 import sdp.common.WorldStateObserver;
-import sdp.gui.filefilters.ImageFileFilter_IO;
 import sdp.vision.Vision;
 import sdp.vision.processing.MainImageProcessor;
 import sdp.vision.visualinput.CameraVisualInputProvider;
