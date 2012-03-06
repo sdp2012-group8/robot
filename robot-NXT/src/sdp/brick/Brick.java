@@ -8,6 +8,7 @@ import sdp.common.Communicator.sensorType;
 import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 
+import lejos.nxt.Battery;
 import lejos.nxt.ColorSensor;
 import lejos.nxt.LCD;
 import lejos.nxt.LightSensor;
@@ -33,6 +34,8 @@ public class Brick {
 	private static final int back_speed = -10; // cm per sec
 	private static final int angle_threshold = 5; // degrees per sec
 	private static final int turning_boost = 20; // degrees per sec
+	private static final long battery_timeout = 10000;
+	private static final long sens_check_interval = 100;
 	private static boolean is_on = true;
 
 	private static Communicator mComm;
@@ -46,30 +49,45 @@ public class Brick {
 	public static void main(String[] args) {
 		// connect with PC and start receiving messages	
 		
-//		new Thread() {
-//			public void run() {
-//				UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
-//				sens.continuous();
-//				while (is_on) {
-//					int dist = sens.getDistance();
-//					collision = dist < coll_threshold;
-//					//					try {
-//					//						if ( collision && mComm != null){
-//					//							try {
-//					//								mComm.sendMessage(opcode.sensor, (byte) 0, (byte) dist);
-//					//								Thread.sleep(10);
-//					//							} catch (IOException e) {
-//					//								e.printStackTrace();
-//					//							}
-//					//						}
-//					//						Thread.sleep(100);
-//					//					} catch (InterruptedException e) {
-//					//						e.printStackTrace();
-//					//					}
-//				}
-//				sens.off();
-//			};
-//		}.start();
+		new Thread() {
+			
+			private boolean left_old = false, right_old = false, dist_old = false;
+			private int battery = 0;
+			
+			public void run() {
+				UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
+				TouchSensor left = new TouchSensor(SensorPort.S3);
+				TouchSensor right = new TouchSensor(SensorPort.S4);
+				sens.continuous();
+				while (is_on) {
+					if (mComm != null) {
+						try {
+						int dist = sens.getDistance();
+						collision = dist < coll_threshold;
+						boolean left_pressed = left.isPressed(), right_pressed = right.isPressed();
+						if (collision != dist_old)
+							mComm.sendMessage(opcode.sensor_dist, (byte) (collision ? 1 : 0));
+						if (left_old != left_pressed)
+							mComm.sendMessage(opcode.sensor_left, (byte) (left_pressed ? 1 : 0));
+						if (right_old != right_pressed)
+							mComm.sendMessage(opcode.sensor_right, (byte) (right_pressed ? 1 : 0));
+						if (battery == 0)
+							mComm.sendMessage(opcode.battery, (byte) (Battery.getVoltage()*10));
+						left_old = left_pressed;
+						right_old = right_pressed;
+						dist_old = collision;
+						battery += sens_check_interval;
+						if (battery > battery_timeout)
+							battery = 0;
+						} catch (Exception e) {}
+					}
+					try {
+						Thread.sleep(sens_check_interval);
+					} catch (InterruptedException e) {}
+				}
+				sens.off();
+			};
+		}.start();
 		new Thread() {
 			public void run() {
 				final TouchSensor kickSensor = new TouchSensor(SensorPort.S2);

@@ -105,7 +105,6 @@ public class AIComm implements sdp.common.Communicator {
 		if (b == -1)
 			throw new IOException("ERROR");
 		opcode op = opcode.values()[b];
-		System.out.println(op+" arrived");
 		int length = is.read();
 		byte[] args = new byte[length];
 		for (int i = 0; i < length; i++) {
@@ -113,8 +112,9 @@ public class AIComm implements sdp.common.Communicator {
 		}
 		// notify all listeners
 		Iterator<MessageListener> ml = mListener.iterator();
-		while (ml.hasNext())
+		while (ml.hasNext()) {
 			ml.next().receiveMessage(op, args, AIComm.this);
+		}
 	}
 
 	/**

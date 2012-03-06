@@ -23,6 +23,10 @@ public class AIWorldState extends WorldState {
 	private Robot enemy_robot = null;
 	private double distance_to_ball;
 	private double distance_to_goal;
+	
+	private boolean left_sensor = false, right_sensor = false, dist_sensor = false;
+
+	private int battery;
 
 	//flags
 	boolean f_ball_on_field = false;
@@ -165,5 +169,37 @@ public class AIWorldState extends WorldState {
 
 	public boolean getMyTeamBlue() {
 		return my_team_blue;
+	}
+	
+	public boolean isLeft_sensor() {
+		return left_sensor;
+	}
+
+	public void setLeft_sensor(boolean left_sensor) {
+		this.left_sensor = left_sensor;
+	}
+
+	public boolean isRight_sensor() {
+		return right_sensor;
+	}
+
+	public void setRight_sensor(boolean right_sensor) {
+		this.right_sensor = right_sensor;
+	}
+
+	public boolean isDist_sensor() {
+		return dist_sensor;
+	}
+
+	public void setDist_sensor(boolean dist_sensor) {
+		this.dist_sensor = dist_sensor;
+	}
+
+	public int getBattery() {
+		return battery;
+	}
+
+	public void setBattery(int battery) {
+		this.battery = battery;
 	}
 }

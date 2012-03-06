@@ -7,7 +7,7 @@ public class Goal {
 	Point2D.Double top;
 	Point2D.Double bottom;
 	double size = 60;
-	private static final int OFFSET=10;
+	private static final int OFFSET=15;
 	
 	public Goal(Point2D.Double a){
 		this.centre = a;
