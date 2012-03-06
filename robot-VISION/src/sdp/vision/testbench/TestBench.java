@@ -76,6 +76,6 @@ public class TestBench {
 	 */
 	public static void main(String[] args) {
 		TestBench testBench = new TestBench();
-		testBench.runTest("data/tests/friendly1.xml");
+		testBench.runTest("data/tests/friendly2.xml");
 	}
 }
