@@ -55,6 +55,8 @@ public class TestBench {
 		VisionSystemErrorAccumulator errorAcc = new VisionSystemErrorAccumulator();
 		
 		for (VisionTestCase test : tests) {
+			//WorldState expectedState_fixed = ProcUtils.undistortWorldState(vision.getConfiguration(), test.getExpectedState());
+			
 			long testStartTime = System.currentTimeMillis();
 			WorldState actualState_norm = vision.extractWorldState(Utilities.deepBufferedImageCopy(test.getImage()));
 			long testEndTime = System.currentTimeMillis();

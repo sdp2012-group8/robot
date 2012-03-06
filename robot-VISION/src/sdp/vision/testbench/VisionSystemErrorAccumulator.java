@@ -134,13 +134,13 @@ public class VisionSystemErrorAccumulator {
 			out.format("  Blue position error: %.4f pixels - %s\n",
 					bluePosError.getRecord(i),
 					posErrorMessage(bluePosError.getRecord(i)));
-			out.format("  Blue direction error: %.4f pixels - %s\n",
+			out.format("  Blue direction error: %.4f degrees - %s\n",
 					blueDirError.getRecord(i),
 					posErrorMessage(blueDirError.getRecord(i)));
 			out.format("  Yellow position error: %.4f pixels - %s\n",
 					yellowPosError.getRecord(i),
 					posErrorMessage(yellowPosError.getRecord(i)));
-			out.format("  Yellow direction error: %.4f pixels - %s\n",
+			out.format("  Yellow direction error: %.4f degrees - %s\n",
 					yellowDirError.getRecord(i),
 					posErrorMessage(yellowDirError.getRecord(i)));
 		}

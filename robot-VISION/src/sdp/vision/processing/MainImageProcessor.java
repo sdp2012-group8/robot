@@ -98,7 +98,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 	private BufferedImage preprocessFrame(BufferedImage frame) {
 		IplImage frame_ipl = IplImage.createFrom(frame);
 		
-		frame_ipl = undistortImage(frame_ipl);
+		frame_ipl = ProcUtils.undistortImage(config, frame_ipl);
 		cvSetImageROI(frame_ipl, getCurrentROI());		
 		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, GAUSSIAN_SMOOTH_MASK_SIZE);
 		

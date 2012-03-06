@@ -1,6 +1,7 @@
 package sdp.vision.processing;
 
 import static com.googlecode.javacv.cpp.opencv_core.*;
+import static com.googlecode.javacv.cpp.opencv_imgproc.*;
 
 import java.awt.Point;
 import java.awt.geom.Point2D;
@@ -11,8 +12,10 @@ import sdp.common.Tools;
 import sdp.common.Utilities;
 import sdp.common.WorldState;
 
+import com.googlecode.javacv.cpp.opencv_core.CvMat;
 import com.googlecode.javacv.cpp.opencv_core.CvPoint;
 import com.googlecode.javacv.cpp.opencv_core.CvSeq;
+import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 
 /**
@@ -21,6 +24,21 @@ import com.googlecode.javacv.cpp.opencv_core.CvSeq;
  * @author Gediminas Liktaras
  */
 public class ProcUtils {
+	
+	/** Distortion coefficients for the undistortion operation. */
+	private static CvMat distortion;
+	/** Intristic coefficients for the undistortion operation. */
+	private static CvMat intristic;
+	
+	/** Variable initialisation. */
+	static {
+		distortion = CvMat.create(1, 4);
+		distortion.put(0.0, 0.0, 0.0, 0.0);
+		
+		intristic = CvMat.create(3, 3);
+		intristic.put(1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0);
+	}
+	
 	
 	/**
 	 * Convert a sequence points into an array.
@@ -199,5 +217,85 @@ public class ProcUtils {
 				new Robot(bluePos, state.getBlueRobot().getAngle()),
 				new Robot(yellowPos, state.getYellowRobot().getAngle()),
 				state.getWorldImage());
+	}
+	
+	
+	/**
+	 * Put undistortion coefficients into the appropriate matrices.
+	 * 
+	 * @param config Image processor configuration to use.
+	 */
+	private static synchronized void updateUndistortMatrices(ImageProcessorConfig config) {
+		intristic.put(0, 0, config.getUndistort_cx());
+		intristic.put(0, 2, config.getUndistort_fx());
+		intristic.put(1, 1, config.getUndistort_cy());
+		intristic.put(1, 2, config.getUndistort_fy());
+		
+		distortion.put(0, config.getUndistort_k1());
+		distortion.put(1, config.getUndistort_k2());
+		distortion.put(2, config.getUndistort_p1());
+		distortion.put(3, config.getUndistort_p2());
+	}
+	
+	/**
+	 * A function to undistort images.
+	 * 
+	 * @param config Image processor configuration to use.
+	 * @param image Image to undistort.
+	 * @return Undistorted image.
+	 */
+	public static synchronized IplImage undistortImage(ImageProcessorConfig config,
+			IplImage image) {
+		updateUndistortMatrices(config);
+
+		IplImage newImage = IplImage.createCompatible(image);
+		cvUndistort2(image, newImage, intristic, distortion);	
+		return newImage;
+	}
+	
+	/**
+	 * A function to undistort a point.
+	 * 
+	 * @param config Image processor configuration to use.
+	 * @param point Point to undistort.
+	 * @return Undistorted point.
+	 */
+	public static synchronized Point2D.Double undistortPoint(ImageProcessorConfig config,
+			Point2D.Double point) {		
+		updateUndistortMatrices(config);
+
+		CvMat inPointMat = CvMat.create(1, 1, CV_32FC2);
+		CvMat outPointMat = CvMat.create(1, 1, CV_32FC2);
+		
+		inPointMat.put(0, 0, 0, point.x);
+		inPointMat.put(0, 0, 1, point.y);
+			
+		cvUndistortPoints(inPointMat, outPointMat, intristic, distortion, null, null);
+		
+		point.x = outPointMat.get(0, 0, 0);
+		point.x = point.x * config.getUndistort_fx() + config.getUndistort_cx();
+		
+		point.y = outPointMat.get(0, 0, 1);
+		point.y = point.y * config.getUndistort_fy() + config.getUndistort_cy();
+		
+		return point;
+	}
+	
+	/**
+	 * A function to undistort a world state.
+	 * 
+	 * @param config Image processor configuration to use.
+	 * @param worldState World state to undistort.
+	 * @return Correct world state.
+	 */
+	public static WorldState undistortWorldState(ImageProcessorConfig config, WorldState worldState) {
+		Point2D.Double newBallPos = undistortPoint(config, worldState.getBallCoords());
+		Point2D.Double newBluePos = undistortPoint(config, worldState.getBlueRobot().getCoords());
+		Point2D.Double newYellowPos = undistortPoint(config, worldState.getYellowRobot().getCoords());
+		
+		Robot blueRobot = new Robot(newBluePos, worldState.getBlueRobot().getAngle());
+		Robot yellowRobot = new Robot(newYellowPos, worldState.getYellowRobot().getAngle());
+		
+		return new WorldState(newBallPos, blueRobot, yellowRobot, worldState.getWorldImage());
 	}
 }
