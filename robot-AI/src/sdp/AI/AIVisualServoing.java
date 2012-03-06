@@ -13,7 +13,7 @@ public class AIVisualServoing extends AI {
 	private final static int COLL_ANGLE = 25;
 	private final static int CORNER_COLL_THRESHOLD = 3;
 	private final static int NEAR_TARGET = 2;
-	private final static int POINT_ACCURACY = 5;
+	private final static int POINT_ACCURACY = 10;
 	
 	private final static int MAX_TURN_ANG = 200;
 
@@ -72,12 +72,13 @@ public class AIVisualServoing extends AI {
 //			} else
 //				comm = goTowardsPoint(ball, false, true);
 			comm = goTowardsPoint(ball, false, true);
-			if (Math.abs(comm.getByteTurnSpeed()) > 10)
+			if (Math.abs(comm.getByteTurnSpeed()) > 3)
 				comm.speed = 0;
+			else
+				slowDownSpeed(ai_world_state.getDistanceToBall(), 10, comm, 2);
+			
 //			if (comm.getByteSpeed() == 0 && comm.getByteTurnSpeed() == 0)
 //				comm = goTowardsPoint(ball, false, true);
-			
-			slowDownSpeed(ai_world_state.getDistanceToBall(), 10, comm, 2);
 			
 			if (ai_world_state.getMyGoalLeft()) {
 				if (ball.getX() < ai_world_state.getRobot().getCoords().getX())
