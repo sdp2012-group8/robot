@@ -76,7 +76,7 @@ public class AIMaster extends AIListener {
 		case chase_ball:
 			return ai.chaseBall();
 		case got_ball:
-			setState(mode.sit);
+			//setState(mode.sit);
 			return ai.gotBall();
 		case sit:
 			return ai.sit();
@@ -91,11 +91,16 @@ public class AIMaster extends AIListener {
 	
 	private void checkState() {
 		// Check the new world state and decide what state we should be in.
-		if (ai_world_state.getDistanceToBall() > DIST_TO_BALL && getState() != mode.sit) {
+		// Can now change between states more easily
+		if (getState() == mode.chase_ball && ai_world_state.getDistanceToBall() > DIST_TO_BALL){
 			setState(mode.chase_ball);
-		} else {
+		} else if (getState() == mode.defend_penalties){
+			setState(mode.defend_penalties);
+		} else if(ai_world_state.getDistanceToBall() < DIST_TO_BALL){
 			setState(mode.got_ball);
-		}		
+		} else if(getState()== mode.sit){
+			setState(mode.sit);
+		}
 	}
 	
 	/**

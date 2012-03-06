@@ -22,6 +22,7 @@ public class AIVisualServoing extends AI {
 	 * False if the robot is chasing the real ball.
 	 */
 	private boolean chasing_target = true;
+	private boolean defending_goal = true;
 
 	@Override
 	protected Command chaseBall() throws IOException {
@@ -109,7 +110,7 @@ public class AIVisualServoing extends AI {
 	}
 
 	@Override
-	protected Command penaltiesDefend() throws IOException {
+	protected Command penaltiesDefend() throws IOException {	
 		// TODO Auto-generated method stub
 		return null;
 	}
