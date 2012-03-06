@@ -48,7 +48,7 @@ end
 this_dir = File.dirname(__FILE__)
 
 #directory for images
-subdir = '/data/the friendly'
+subdir = '/data/images/friendly2'
 
 this_dir << subdir
 
@@ -60,15 +60,18 @@ puts "#{files.size - 2 } files found"
 
 imnumber = 0
 
-File.open('./xml/imagedata.xml','w') do |f|
+numfiles = 0
+files.each{|file| numfiles+=1 if file.include? ".jpg"}
+
+File.open('./data/tests/friendly2.xml','w') do |f|
   f.puts "<annotations>"
   files.each do |file|
-    imnumber += 1
     next if (!file.include? ".jpg")
+    imnumber += 1
     f.puts "<image>"
     image = Surface.load("#{this_dir}/#{file}") 
     f.puts xmltag("filename","#{this_dir}/#{file}")
-    puts "Loading #{file}, #{imnumber} of #{files.size - 2}"
+    puts "Loading #{file}, #{imnumber} of #{numfiles}"
 
     @screen = Screen.open( image.size )
 
@@ -87,6 +90,16 @@ File.open('./xml/imagedata.xml','w') do |f|
     clickarray = []
 
     while event = @event_queue.wait
+      if event.is_a? Rubygame::Events::KeyPressed
+        if event.key == :space
+          clickarray << [-1,-1]
+          puts "#{clickarray}"
+        end
+        if event.key == :backspace
+          clickarray.pop
+          puts "#{clickarray}"
+        end
+      end
       if event.is_a? Rubygame::Events::MousePressed
         clickarray << event.pos
         puts "#{clickarray}"
@@ -94,7 +107,6 @@ File.open('./xml/imagedata.xml','w') do |f|
       end
       break if event.is_a? Rubygame::Events::QuitRequested
     end
-
     f.puts "<location-data>"
     f.puts xmltag("ball","#{xmltag('x',clickarray[0][0])}\n#{xmltag('y',clickarray[0][1])}")
     f.puts xmltag("bluerobot","#{xmltag('x',midway(clickarray[1][0],clickarray[2][0]))}\n#{xmltag('y',midway(clickarray[1][1],clickarray[2][1]))}\n#{xmltag('angle',getangle(clickarray[1],clickarray[2]))}")
