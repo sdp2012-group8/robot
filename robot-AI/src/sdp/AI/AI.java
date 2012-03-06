@@ -25,10 +25,40 @@ public abstract class AI {
 	protected AIWorldState ai_world_state= null;
 	protected AIWorldState old_ai_world_state = null;
 	
+	/**
+	 * Describes the method for getting to the ball.
+	 * Must encompass all situations such as having the ball behind the robot.
+	 * @return
+	 * @throws IOException
+	 */
 	protected abstract Command chaseBall() throws IOException;
+	
+	/**
+	 * Describes the Ball-E's behavior when he/she has the ball.
+	 * @return
+	 * @throws IOException
+	 */
 	protected abstract Command gotBall() throws IOException;
+	
+	/**
+	 * Describes the defensive behavior of Ball-E when not defending a penalty.
+	 * @return
+	 * @throws IOException
+	 */
 	protected abstract Command defendGoal() throws IOException;
+	
+	/**
+	 * Describes the defensive behavior of Ball-E when in a penalty situation.
+	 * @return
+	 * @throws IOException
+	 */
 	protected abstract Command penaltiesDefend() throws IOException;
+	
+	/**
+	 * Describes the offensive behavior of Ball-E when in a penalty situation.
+	 * @return
+	 * @throws IOException
+	 */
 	protected abstract Command penaltiesAttack() throws IOException;
 	
 	/**
