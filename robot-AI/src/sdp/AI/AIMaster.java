@@ -26,7 +26,7 @@ public class AIMaster extends AIListener {
 		visual_servoing, neural_network
 	}
 
-	public static final int DIST_TO_BALL = 10;
+	public static final int DIST_TO_BALL = 6;
 
 	private AI ai;
 	private mode state = mode.sit;

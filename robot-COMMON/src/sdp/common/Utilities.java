@@ -19,7 +19,7 @@ import java.util.Iterator;
 public class Utilities {
 
 
-	private static final double POINT_OFFSET = 2*Robot.LENGTH_CM;
+	private static final double POINT_OFFSET = 1.5*Robot.LENGTH_CM;
 	public final static double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
 
 

@@ -11,7 +11,7 @@ public class AIVisualServoing extends AI {
 	private final static int COLL_SECS_COUNT = 110;
 	private final static double SEC_ANGLE = 360d/COLL_SECS_COUNT;
 	private final static int COLL_ANGLE = 25;
-	private final static int CORNER_COLL_THRESHOLD = 3;
+	private final static int CORNER_COLL_THRESHOLD = 2;
 	private final static int NEAR_TARGET = 2;
 	private final static int POINT_ACCURACY = 5;
 	
@@ -77,8 +77,8 @@ public class AIVisualServoing extends AI {
 			else
 				slowDownSpeed(ai_world_state.getDistanceToBall(), 10, comm, 2);
 			
-//			if (comm.getByteSpeed() == 0 && comm.getByteTurnSpeed() == 0)
-//				comm = goTowardsPoint(ball, false, true);
+			if (comm.getByteSpeed() == 0 && comm.getByteTurnSpeed() == 0)
+				comm = goTowardsPoint(ball, false, true);
 			
 			if (ai_world_state.getMyGoalLeft()) {
 				if (ball.getX() < ai_world_state.getRobot().getCoords().getX())
