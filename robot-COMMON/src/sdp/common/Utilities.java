@@ -331,7 +331,7 @@ public class Utilities {
 			}*/
 			
 			Point2D.Double p = Vector2D.change_length(Vector2D.subtract(new Vector2D(point),new Vector2D(ball)), -POINT_OFFSET);
-
+			p = new Point2D.Double(ball.x + p.x, ball.y + p.y);
 			//x = ball.getX() + (b*(y - ball.getY())/a);
 
 			return p;
@@ -455,7 +455,7 @@ public class Utilities {
 				} 
 			} 
 		} 
-	//	System.out.println("min point "+min_point); //+ "enemy robot" + enemy_robot.getCoords() + "angle" + enemy_robot.getAngle() + "ball coords "+ws.getBallCoords());
+		//System.out.println("min point "+min_point); //+ "enemy robot" + enemy_robot.getCoords() + "angle" + enemy_robot.getAngle() + "ball coords "+ws.getBallCoords());
 		return min_point;
 	}
 

@@ -13,7 +13,7 @@ public class AIVisualServoing extends AI {
 	private final static int COLL_ANGLE = 25;
 	private final static int CORNER_COLL_THRESHOLD = 3;
 	private final static int NEAR_TARGET = 2;
-	private final static int POINT_ACCURACY = 10;
+	private final static int POINT_ACCURACY = 5;
 	
 	private final static int MAX_TURN_ANG = 200;
 
@@ -57,7 +57,7 @@ public class AIVisualServoing extends AI {
 
 			double dir_angle = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), target), -ai_world_state.getRobot().getAngle()));
 			if (Math.abs(dir_angle) > 20) {
-				slowDownSpeed(targ_dist, 20, comm, 30); // limits speed to 30
+				slowDownSpeed(targ_dist, 20, comm, 0); // limits speed to 30
 			}
 //			if (targ_dist < 20)
 //				comm.turning_speed = 0;
@@ -103,6 +103,14 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Command gotBall() throws IOException {
 		System.out.println("GOT BALL");
+		double angle = ai_world_state.getRobot().getAngle();
+		if (ai_world_state.getMyGoalLeft()) {
+			if (angle > 90 || angle < -90)
+				return new Command(-MAX_SPEED_CM_S, 0, false);
+		} else {
+			if (Math.abs(angle) <= 90)
+				return new Command(-MAX_SPEED_CM_S, 0, false);
+		}
 		chasing_target = true;
 		return new Command(MAX_SPEED_CM_S,0,true);
 	}

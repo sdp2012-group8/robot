@@ -88,16 +88,17 @@ public class AIMaster extends AIListener {
 				command.turning_speed = -90;
 			}
 			
-			if (command == null)
+			if (command == null){
 				command = new Command(0, 0, false);
+			}
+
 			if (command.isDefaultAcc())
 				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed());
 			else
 				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed(), command.getByteAcc());
-			if (command.getByteSpeed() != 0 || command.getByteTurnSpeed() != 0)
-				//	System.out.println(command);
-				//System.out.println(command);
-				if (command.kick) mComm.sendMessage(opcode.kick);
+			
+			if (command.kick) mComm.sendMessage(opcode.kick);
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
