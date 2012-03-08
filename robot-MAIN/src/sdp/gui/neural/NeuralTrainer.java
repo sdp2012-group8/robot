@@ -405,7 +405,7 @@ public class NeuralTrainer {
 	
 	private void Connect() {
 		
-		mSim = new Simulator();
+		mSim = new Simulator(true);
 		trainer = new NeuralNetworkTrainingGenerator(mSim, "data");
 		mComm = (Communicator) trainer;
 		final WorldStateObserver obs = new WorldStateObserver(mSim);

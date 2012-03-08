@@ -9,9 +9,13 @@ import sdp.common.Robot;
 import sdp.common.Utilities;
 import sdp.common.Vector2D;
 import sdp.common.WorldState;
+import sdp.simulator.Simulator;
 import sdp.vision.processing.ImageProcessorConfig;
 
 public class AIWorldState extends WorldState {
+	
+	private static final long PREDICTION_TIME = 500; // in ms
+	private static final int PREDICTION_FPS = 20;
 
 	private boolean my_team_blue;
 	private boolean my_goal_left;
@@ -31,16 +35,19 @@ public class AIWorldState extends WorldState {
 	//flags
 	boolean f_ball_on_field = false;
 	
+	private Simulator sim;
 
 	public AIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
 		super(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
-
+		sim = new Simulator(false);
 
 		update(world_state, my_team_blue, my_goal_left);
 	}
 
 	public void update(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
 
+		world_state = predict(world_state, PREDICTION_TIME, PREDICTION_FPS);
+		
 		this.my_team_blue = my_team_blue;
 		this.my_goal_left = my_goal_left;
 
@@ -70,6 +77,13 @@ public class AIWorldState extends WorldState {
 		if (getBallCoords() == new Point2D.Double(-1,-1)) {
 			f_ball_on_field = false;
 		}
+	}
+	
+	private WorldState predict(WorldState input, long time_ms, int fps) {
+		double sec = time_ms / 1000d;
+		double dt = sec / fps;
+		sim.setWorldState(input, dt, true);
+		return sim.simulateWs(time_ms, fps);
 	}
 
 

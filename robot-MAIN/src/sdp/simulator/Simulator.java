@@ -2,6 +2,7 @@ package sdp.simulator;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 import sdp.common.Painter;
 import sdp.common.Robot;
@@ -9,6 +10,7 @@ import sdp.common.Utilities;
 import sdp.common.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
+import sdp.common.Communicator.opcode;
 
 
 /**
@@ -86,40 +88,101 @@ public class Simulator extends WorldStateProvider {
 	private boolean running = true;
 
 	private Integer reference_robot_id = null;
+	private WorldState old_st = null;
 
-	public Simulator() {
+	/**
+	 * Initializes a simulator
+	 * @param realtime_simulation true if you plan to use the simulator as a world state provider and simulate realtime. False otherwise.
+	 */
+	public Simulator(boolean realtime_simulation) {
 		registerBlue(new VBrick(), 40, WorldState.PITCH_HEIGHT_CM / 2);
 		registerYellow(new VBrick(), WorldState.PITCH_WIDTH_CM - 40, WorldState.PITCH_HEIGHT_CM / 2);
-		new Thread() {
+		if (realtime_simulation) {
+			new Thread() {
 
-			public void run() {
-				long delta_time = 0;
-				long old_time = System.currentTimeMillis();
-				long curr_time;
-				while (running) {
-					// call simulation giving time elapsed
-					if (!paused)
-						simulate(delta_time / 1000d);
-					// calculate time required for simulation to return
-					curr_time = System.currentTimeMillis();
-					delta_time = curr_time - old_time;
-					// if smaller than fps value, sleep for the remaining time
-					if (delta_time < ITERATION_TIME)
-						try {
-							Thread.sleep((long) ITERATION_TIME - delta_time);
-						} catch (Exception e) {
+				public void run() {
+					long delta_time = 0;
+					long old_time = System.currentTimeMillis();
+					long curr_time;
+					while (running) {
+						// call simulation giving time elapsed
+						if (!paused) {
+							double dt = delta_time / 1000d;
+							state = simulate(dt);
+							image(dt);
+							setChanged();
+							notifyObservers(state);
 						}
-					// recalculate delta
-					curr_time = System.currentTimeMillis();
-					delta_time = curr_time - old_time;
-					old_time = curr_time;
+						// calculate time required for simulation to return
+						curr_time = System.currentTimeMillis();
+						delta_time = curr_time - old_time;
+						// if smaller than fps value, sleep for the remaining time
+						if (delta_time < ITERATION_TIME)
+							try {
+								Thread.sleep((long) ITERATION_TIME - delta_time);
+							} catch (Exception e) {
+							}
+						// recalculate delta
+						curr_time = System.currentTimeMillis();
+						delta_time = curr_time - old_time;
+						old_time = curr_time;
 
-				}
+					}
 
-			};
+				};
 
-		}.start();
+			}.start();
+		}
 	}
+	
+	/**
+	 * Sets the simulator so that it matches the current world state.
+	 * @param ws the state that needs to be matched
+	 * @param dt time passed since last setting of worldstate (in order to calculate velocities). Set to 0 if you don't need velocities.
+	 * @param is_ws_in_cm is the world state in centimeters
+	 */
+	public void setWorldState(WorldState ws, double dt, boolean is_ws_in_cm) {
+		if (!is_ws_in_cm)
+			ws = Utilities.toCentimeters(ws);
+		boolean first_run = old_st == null || dt == 0;
+		for (int id = 0; id < 2; id++) {
+			Robot rob = id == 0 ? ws.getBlueRobot() : ws.getYellowRobot();
+			Robot old_rob = null;
+			if (old_st != null)
+				old_rob = id == 0 ? old_st.getBlueRobot() : old_st.getYellowRobot();
+			positions[id] = new Vector2D(rob.getCoords());
+			velocities[id] = first_run ? Vector2D.ZERO() : Vector2D.subtract(new Vector2D(rob.getCoords()), new Vector2D(old_rob.getCoords()));
+			directions[id] = rob.getAngle();
+			speeds[id] = velocities[id].getLength();
+			turning_speeds[id] = first_run ? 0 : rob.getAngle() - old_rob.getAngle();
+			will_be_in_collision[id] = false;
+			try {
+				robot[id].sendMessage(opcode.operate, (byte) speeds[id], (byte) turning_speeds[id]);
+			} catch (IOException e) {}
+		}
+		ball = new Vector2D(ws.getBallCoords());
+		ball_velocity = first_run ? Vector2D.ZERO() : Vector2D.subtract(new Vector2D(ws.getBallCoords()), new Vector2D(ws.getBallCoords()));
+		
+		old_st = ws;
+	}
+	
+	/**
+	 * Simulate this amount of time with this framerate according to the iternal state of the simulator.
+	 * 
+	 * @param time_ms the time in future to simulate in milliseconds
+	 * @param fps expected emulated simulation frames per seconds
+	 * @return what the world is expected to be after this amount of time
+	 */
+	public WorldState simulateWs(long time_ms, int fps) {
+		double sec = time_ms / 1000d;
+		double dt = sec / fps;
+		WorldState ws = null;
+		for (double t = 0; t <= sec; t+=dt) {
+			ws = simulate(dt);
+		}
+		return ws;
+	}
+	
 
 	/**
 	 * 
@@ -353,7 +416,7 @@ public class Simulator extends WorldStateProvider {
 	 * @param dt
 	 *            time elapsed since last call in s
 	 */
-	public void simulate(double dt) {
+	private WorldState simulate(double dt) {
 		// calculate for a future
 		for (int i = 0; i < robot.length; i++)
 			if (robot[i] != null) {
@@ -787,14 +850,11 @@ public class Simulator extends WorldStateProvider {
 
 
 			}
-		// notify that we have change
-		state = new WorldState(Vector2D.divide(ball, WorldState.PITCH_WIDTH_CM),
+		return new WorldState(Vector2D.divide(ball, WorldState.PITCH_WIDTH_CM),
 				new Robot(Vector2D.divide(positions[0], WorldState.PITCH_WIDTH_CM),
 						directions[0]), new Robot(Vector2D.divide(positions[1],
 						WorldState.PITCH_WIDTH_CM), directions[1]), im);
-		image(dt);
-		setChanged();
-		notifyObservers(state);
+
 	}
 	
 	private void image(double dt) {

@@ -331,7 +331,7 @@ public class SimTesterGUI {
 	private void Connect(boolean blue_selected, boolean my_goal_left) {
 		mComm = new VBrick();
 		opponentComm = new VBrick();
-		mSim = new Simulator();
+		mSim = new Simulator(true);
 
 		final WorldStateObserver obs = new WorldStateObserver(mSim);
 		
