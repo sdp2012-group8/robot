@@ -1,5 +1,6 @@
 package sdp.AI;
 
+import java.awt.geom.Point2D;
 import java.io.IOException;
 
 import sdp.common.Robot;
@@ -118,6 +119,49 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Command defendGoal() throws IOException {
 		// TODO Auto-generated method stub
+
+
+		Point2D.Double intercept= Utilities.intersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getMyGoal().getTop(), ai_world_state.getMyGoal().getBottom());
+
+
+		if (intercept != null){
+			Point2D.Double point;
+			Point2D.Double point2 ;
+			Point2D.Double point3;
+			Command com = new Command(0, 0, false);
+			if (ai_world_state.getMyGoalLeft()){
+				point= new Point2D.Double(intercept.x+20 , intercept.y);
+				point2= new Point2D.Double(ai_world_state.getMyGoal().getBottom().x+20 , ai_world_state.getMyGoal().getBottom().y);
+				point3= new Point2D.Double(ai_world_state.getMyGoal().getTop().x+20 , ai_world_state.getMyGoal().getTop().y);
+			} else {
+				point= new Point2D.Double(intercept.x -20, intercept.y);
+				point2= new Point2D.Double(ai_world_state.getMyGoal().getBottom().x-20 , ai_world_state.getMyGoal().getBottom().y);
+				point3= new Point2D.Double(ai_world_state.getMyGoal().getTop().x-20 , ai_world_state.getMyGoal().getTop().y);
+			}
+			double dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(point)).getLength();
+			double dist2 = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(ai_world_state.getMyGoal().getBottom())).getLength();
+			double dist3 = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(ai_world_state.getMyGoal().getTop())).getLength();
+		 if((intercept.y < ai_world_state.getMyGoal().getBottom().y+15)  && (intercept.y > ai_world_state.getMyGoal().getTop().y-15))	{
+		   if (dist > 5)
+				com = goTowardsPoint(new Vector2D(point), false, false);
+			slowDownSpeed(dist, 20, com, 0);
+
+			return com;
+		} else if(ai_world_state.getEnemyRobot().getAngle()<0 && ai_world_state.getEnemyRobot().getAngle()>-180) {
+			if (dist2 > 10)
+				com = goTowardsPoint(new Vector2D(point2), false, false);
+			    slowDownSpeed(dist2, 20, com, 0);
+			return com;
+			}
+
+		 else if(ai_world_state.getEnemyRobot().getAngle()>0 && ai_world_state.getEnemyRobot().getAngle()<180 ){
+			 if (dist3 > 10)
+					com = goTowardsPoint(new Vector2D(point3), false, false);
+				    slowDownSpeed(dist3, 20, com, 0);
+				return com;
+		 }
+		}
+
 		return null;
 	}
 
