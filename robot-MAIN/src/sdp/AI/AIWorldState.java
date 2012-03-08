@@ -14,7 +14,7 @@ import sdp.vision.processing.ImageProcessorConfig;
 
 public class AIWorldState extends WorldState {
 	
-	private static final long PREDICTION_TIME = 500; // in ms
+	private static final long PREDICTION_TIME = 1000; // in ms
 	private static final int PREDICTION_FPS = 20;
 
 	private boolean my_team_blue;
@@ -45,8 +45,8 @@ public class AIWorldState extends WorldState {
 	}
 
 	public void update(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
-
-		world_state = predict(world_state, PREDICTION_TIME, PREDICTION_FPS);
+		// To enable or disable the prediction uncomment/comment this line.
+		//world_state = predict(world_state, PREDICTION_TIME, PREDICTION_FPS);
 		
 		this.my_team_blue = my_team_blue;
 		this.my_goal_left = my_goal_left;
@@ -83,7 +83,7 @@ public class AIWorldState extends WorldState {
 		double sec = time_ms / 1000d;
 		double dt = sec / fps;
 		sim.setWorldState(input, dt, true);
-		return sim.simulateWs(time_ms, fps);
+		return Utilities.toCentimeters(sim.simulateWs(time_ms, fps));
 	}
 
 

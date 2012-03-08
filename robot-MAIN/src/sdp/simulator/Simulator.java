@@ -30,8 +30,6 @@ public class Simulator extends WorldStateProvider {
 	private final static double BALL_FRICTION_ACC = 25; // in cm/s/s
 	private final static double BALL_RADIUS = 4.27 / 2; // in cm
 
-	private WorldState state = null;
-
 	private final static double WALL_BOUNCINESS = 0.4; // 0 - inelastic, 1 -
 	// elastic
 	private final static double ROBOT_BOUNCINESS = 0.3; // 0 - 1
@@ -108,8 +106,8 @@ public class Simulator extends WorldStateProvider {
 						// call simulation giving time elapsed
 						if (!paused) {
 							double dt = delta_time / 1000d;
-							state = simulate(dt);
-							image(dt);
+							WorldState state = simulate(dt);
+							image(dt, state);
 							setChanged();
 							notifyObservers(state);
 						}
@@ -161,8 +159,7 @@ public class Simulator extends WorldStateProvider {
 			} catch (IOException e) {}
 		}
 		ball = new Vector2D(ws.getBallCoords());
-		ball_velocity = first_run ? Vector2D.ZERO() : Vector2D.subtract(new Vector2D(ws.getBallCoords()), new Vector2D(ws.getBallCoords()));
-		
+		ball_velocity = first_run ? Vector2D.ZERO() : Vector2D.subtract(new Vector2D(ws.getBallCoords()), new Vector2D(old_st.getBallCoords()));
 		old_st = ws;
 	}
 	
@@ -857,7 +854,7 @@ public class Simulator extends WorldStateProvider {
 
 	}
 	
-	private void image(double dt) {
+	private void image(double dt, WorldState state) {
 		if (im == null) {
 			im = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT
 			+ IMAGE_INFO_SEC_HEIGHT, BufferedImage.TYPE_INT_RGB);
