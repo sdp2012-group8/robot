@@ -27,7 +27,7 @@ public class Simulator extends WorldStateProvider {
 	private final static Vector2D PITCH_MIDDLE = new Vector2D(0.5,
 			WorldState.PITCH_HEIGHT_CM / (2 * WorldState.PITCH_WIDTH_CM));
 	private final static double BALL_MAX_SPEED = 350; // cm/s
-	private final static double BALL_FRICTION_ACC = 25; // in cm/s/s
+	private final static double BALL_FRICTION_ACC = 10; // in cm/s/s
 	private final static double BALL_RADIUS = 4.27 / 2; // in cm
 
 	private final static double WALL_BOUNCINESS = 0.4; // 0 - inelastic, 1 -
@@ -44,36 +44,36 @@ public class Simulator extends WorldStateProvider {
 			IMAGE_HEIGHT = (int) (IMAGE_WIDTH * WorldState.PITCH_HEIGHT_CM / WorldState.PITCH_WIDTH_CM),
 			IMAGE_INFO_SEC_HEIGHT = 100;
 
-	private static final int MAX_NUM_ROBOTS = 2;
+	private final static int MAX_NUM_ROBOTS = 2;
 
-	private static int SCORE_LEFT = 0, SCORE_RIGHT = 0;
+	private int SCORE_LEFT = 0, SCORE_RIGHT = 0;
 
-	private static boolean MOUSE_OVER_BALL = false;
-	private static int MOUSE_OVER_ROBOT = -1;
+	private boolean MOUSE_OVER_BALL = false;
+	private int MOUSE_OVER_ROBOT = -1;
 
 	// define robots
-	private static VBrick[] robot = new VBrick[MAX_NUM_ROBOTS]; // blue has id
+	private VBrick[] robot = new VBrick[MAX_NUM_ROBOTS]; // blue has id
 	// 0, yellow has
 	// id 1
-	private static Vector2D[] positions = new Vector2D[MAX_NUM_ROBOTS],
+	private Vector2D[] positions = new Vector2D[MAX_NUM_ROBOTS],
 			velocities = new Vector2D[MAX_NUM_ROBOTS];
-	private static double[] directions = new double[MAX_NUM_ROBOTS],
+	private double[] directions = new double[MAX_NUM_ROBOTS],
 			speeds = new double[MAX_NUM_ROBOTS],
 			turning_speeds = new double[MAX_NUM_ROBOTS];
-	private static boolean[] will_be_in_collision = new boolean[MAX_NUM_ROBOTS];
+	private boolean[] will_be_in_collision = new boolean[MAX_NUM_ROBOTS];
 
 	//boolean flag arrays for collisions
-	private static boolean[] collision_with_walls = new boolean[MAX_NUM_ROBOTS];
-	private static boolean[] collision_with_robot = new boolean[MAX_NUM_ROBOTS];
+	private boolean[] collision_with_walls = new boolean[MAX_NUM_ROBOTS];
+	private boolean[] collision_with_robot = new boolean[MAX_NUM_ROBOTS];
 
 	// for use for collision prediction
-	private static Vector2D[] future_positions = new Vector2D[MAX_NUM_ROBOTS],
+	private Vector2D[] future_positions = new Vector2D[MAX_NUM_ROBOTS],
 			future_velocities = new Vector2D[MAX_NUM_ROBOTS];
-	private static double[] future_directions = new double[MAX_NUM_ROBOTS],
+	private double[] future_directions = new double[MAX_NUM_ROBOTS],
 			future_speeds = new double[MAX_NUM_ROBOTS],
 			future_turning_speeds = new double[MAX_NUM_ROBOTS];
 	// define ball
-	private static Vector2D ball = Vector2D.multiply(
+	private Vector2D ball = Vector2D.multiply(
 			new Vector2D(PITCH_MIDDLE), WorldState.PITCH_WIDTH_CM),
 			ball_velocity = Vector2D.ZERO(),
 			// for use for collision prediction
