@@ -1,4 +1,4 @@
-package sdp.simulator;
+package sdp.gui;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -21,6 +21,8 @@ import sdp.common.Communicator.opcode;
 import sdp.common.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
+import sdp.simulator.Simulator;
+import sdp.simulator.VBrick;
 
 import javax.swing.JButton;
 import java.awt.event.ActionListener;

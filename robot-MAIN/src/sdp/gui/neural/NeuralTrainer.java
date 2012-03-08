@@ -1,4 +1,4 @@
-package sdp.simulator.neural;
+package sdp.gui.neural;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -11,7 +11,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
-import javax.rmi.CORBA.Util;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
@@ -27,6 +26,7 @@ import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.simulator.Simulator;
 import sdp.simulator.VBrick;
+import sdp.simulator.neural.NeuralNetworkTrainingGenerator;
 
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
@@ -43,7 +43,6 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
-import javax.swing.JEditorPane;
 
 public class NeuralTrainer {
 
