@@ -55,6 +55,11 @@ public class PositionErrorAccumulator {
 		}
 		
 		double error = 0.0;
+		if (validFlag < 0){
+			System.out.print(expectedPos);
+			System.out.print(actualPos);
+			System.out.printf("\n");
+		}
 		if (validFlag > 0) {
 			double xDiff = Math.abs(expectedPos.x - actualPos.x);
 			double yDiff = Math.abs(expectedPos.y - actualPos.y);
