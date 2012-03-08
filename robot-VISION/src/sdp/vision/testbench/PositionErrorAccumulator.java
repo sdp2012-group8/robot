@@ -47,14 +47,19 @@ public class PositionErrorAccumulator {
 	 */
 	public void addRecord(Point2D.Double expectedPos, Point2D.Double actualPos) {
 		int validFlag = 1;
-		if ((expectedPos.x < 0) && (expectedPos.y < 0)) {
+		if ((expectedPos.x < 0) || (expectedPos.y < 0)) {
 			validFlag *= -1;
 		}
-		if ((actualPos.x < 0) && (actualPos.y < 0)) {
+		if ((actualPos.x < 0) || (actualPos.y < 0)) {
 			validFlag *= -1;
 		}
 		
 		double error = 0.0;
+		if (validFlag < 0){
+			System.out.print(expectedPos);
+			System.out.print(actualPos);
+			System.out.printf("\n");
+		}
 		if (validFlag > 0) {
 			double xDiff = Math.abs(expectedPos.x - actualPos.x);
 			double yDiff = Math.abs(expectedPos.y - actualPos.y);
