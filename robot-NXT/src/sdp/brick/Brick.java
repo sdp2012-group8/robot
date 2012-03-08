@@ -8,13 +8,17 @@ import sdp.common.Communicator.sensorType;
 import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 
+import lejos.nxt.Battery;
+import lejos.nxt.ColorSensor;
 import lejos.nxt.LCD;
+import lejos.nxt.LightSensor;
 import lejos.nxt.Motor;
 import lejos.nxt.NXT;
 import lejos.nxt.SensorPort;
 import lejos.nxt.Sound;
 import lejos.nxt.TouchSensor;
 import lejos.nxt.UltrasonicSensor;
+import lejos.robotics.Color;
 
 /**
  * This is the program that should be uploaded to the NXT Brick.
@@ -30,74 +34,93 @@ public class Brick {
 	private static final int back_speed = -10; // cm per sec
 	private static final int angle_threshold = 5; // degrees per sec
 	private static final int turning_boost = 20; // degrees per sec
+	private static final long battery_timeout = 10000;
+	private static final long sens_check_interval = 100;
 	private static boolean is_on = true;
 
 	private static Communicator mComm;
-	private static UltrasonicSensor sens;
 	private static boolean collision = false;
 	private static boolean can_kick = false;
-
-	private static TouchSensor kickSensor;
 
 	/**
 	 * The entry point of the program
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// connect with PC and start receiving messages
-		sens = new UltrasonicSensor(SensorPort.S1);
-		sens.continuous();
-		kickSensor = new TouchSensor(SensorPort.S2);
+		// connect with PC and start receiving messages	
+		
 		new Thread() {
+			
+			private boolean left_old = false, right_old = false, dist_old = false;
+			private int battery = 0;
+			
 			public void run() {
+				UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
+				TouchSensor left = new TouchSensor(SensorPort.S3);
+				TouchSensor right = new TouchSensor(SensorPort.S4);
+				sens.continuous();
 				while (is_on) {
-					int dist = sens.getDistance();
-					collision = dist < coll_threshold;
-					//					try {
-					//						if ( collision && mComm != null){
-					//							try {
-					//								mComm.sendMessage(opcode.sensor, (byte) 0, (byte) dist);
-					//								Thread.sleep(10);
-					//							} catch (IOException e) {
-					//								e.printStackTrace();
-					//							}
-					//						}
-					//						Thread.sleep(100);
-					//					} catch (InterruptedException e) {
-					//						e.printStackTrace();
-					//					}
+					if (mComm != null) {
+						try {
+						int dist = sens.getDistance();
+						collision = dist < coll_threshold;
+						boolean left_pressed = left.isPressed(), right_pressed = right.isPressed();
+						if (collision != dist_old)
+							mComm.sendMessage(opcode.sensor_dist, (byte) (collision ? 1 : 0));
+						if (left_old != left_pressed)
+							mComm.sendMessage(opcode.sensor_left, (byte) (left_pressed ? 1 : 0));
+						if (right_old != right_pressed)
+							mComm.sendMessage(opcode.sensor_right, (byte) (right_pressed ? 1 : 0));
+						if (battery == 0)
+							mComm.sendMessage(opcode.battery, (byte) (Battery.getVoltage()*10));
+						left_old = left_pressed;
+						right_old = right_pressed;
+						dist_old = collision;
+						battery += sens_check_interval;
+						if (battery > battery_timeout)
+							battery = 0;
+						} catch (Exception e) {}
+					}
+					try {
+						Thread.sleep(sens_check_interval);
+					} catch (InterruptedException e) {}
 				}
 				sens.off();
 			};
 		}.start();
-		final Thread kicker_retractor = new Thread() {
+		new Thread() {
 			public void run() {
+				final TouchSensor kickSensor = new TouchSensor(SensorPort.S2);
 				while (is_on) {
 					boolean initial = kickSensor.isPressed();
 					if (!initial) {
+//						LCD.clear(0);
+//						LCD.drawString("RETR", 0, 0);
 						if (can_kick) {can_kick = false;}
 						Motor.B.setSpeed((int)(Motor.B.getMaxSpeed()/2));
 						Motor.B.setAcceleration(6000);
 						Motor.B.backward();
 						while (!kickSensor.isPressed()) {
 							try {
-								Thread.sleep(5);
+								sleep(5);
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
 						}
 						Motor.B.stop();
 					}
+					//Motor.B.setSpeed(0);
 					can_kick = true;
-
-
 					try {
-						Thread.sleep(100);						
-					} catch (InterruptedException e) {}
+						sleep(100);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+//					LCD.clear(0);
+//					LCD.drawString("OK KICK", 0, 0);
 				}
 			};
-		};
-		kicker_retractor.start();
+		}.start();
 		mComm = new BComm();
 		mComm.registerListener(new MessageListener() {
 
@@ -132,7 +155,6 @@ public class Brick {
 					try {
 						Thread.sleep(200);
 					} catch (Exception e) {}
-					sens.off();
 					NXT.shutDown();
 					break;
 
@@ -166,15 +188,15 @@ public class Brick {
 					Motor.A.forward();
 					Motor.C.forward();
 
-					while (true) { // if no other sensors interfere?
-						int dist = sens.getDistance();
-						LCD.clear(2);
-						LCD.clear(3);
-						LCD.drawString(String.valueOf(dist), 0, 2);
-						LCD.drawString(sens.getUnits(), 0, 3);
-						if (dist < 30)
-							break;
-					}
+//					while (true) { // if no other sensors interfere?
+//						int dist = sens.getDistance();
+//						LCD.clear(2);
+//						LCD.clear(3);
+//						LCD.drawString(String.valueOf(dist), 0, 2);
+//						LCD.drawString(sens.getUnits(), 0, 3);
+//						if (dist < 30)
+					//		break;
+//					}
 					Motor.A.setSpeed(0);
 					Motor.C.setSpeed(0);
 					Motor.C.stop();
@@ -208,8 +230,8 @@ public class Brick {
 						} else if (Math.abs(speed_c) > Motor.C.getMaxSpeed()){
 							corr = Math.abs(speed_c) - Motor.C.getMaxSpeed();
 						}
-						LCD.clear();
-						LCD.drawString("corr " + corr, 0, 0);
+//						LCD.clear();
+//						LCD.drawString("corr " + corr, 0, 0);
 						// change speed according to turning
 						Motor.A.setSpeed(Math.abs(speed_a)-corr);
 						Motor.C.setSpeed(Math.abs(speed_c)-corr);
@@ -220,7 +242,8 @@ public class Brick {
 							acceleration = args[2];
 							acc = (int) (acceleration/(0.017453292519943295*WHEELR));
 							turn_acceleration = acc*WHEELR/ROBOTR;
-						}
+						} else
+							acc = 1000;
 						if (old_a == 0 || old_a*speed_a < 0) {
 							Motor.A.setAcceleration(acc);
 							if (speed_a > 0)

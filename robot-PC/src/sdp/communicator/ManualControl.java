@@ -65,8 +65,8 @@ public class ManualControl {
 	private Timer btn_W_pressed = null, btn_A_pressed = null, btn_S_pressed = null, btn_D_pressed = null, btn_SPACE_pressed = null, btn_ENTER_pressed = null;
 
 	private int current_speed = 0, current_turn_speed = 0;
-	private static final int max_speed = 53;
-	private static final int turn_speed = 127;
+	private static final int max_speed = 53/3;
+	private static final int turn_speed = 127/3;
 	/**
 	 * Initialize the contents of the frame.
 	 */
@@ -442,14 +442,6 @@ public class ManualControl {
 				while (repeat) {
 					try {
 						mComm = new AIComm();
-						mComm.registerListener(new MessageListener() {
-
-							@Override
-							public void receiveMessage(opcode op, byte[] args, Communicator controler) {
-								System.out.println("New message "+op+" from BRICK");
-
-							}
-						});
 						repeat = false;
 					} catch (Exception e) {
 						System.out.println("Connection failed. Reattempting...");
