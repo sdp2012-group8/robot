@@ -108,7 +108,7 @@ public class UndistortionCalibrator {
 	private void findCoefficients(ArrayList<CvPoint2D32f> corners, CvSize imageSize,
 			int width, int length, CvMat intristic, CvMat distortion) {
 		if (corners.size() == 0) {
-			
+			LOGGER.warning("No chessboard corners have been found in the images.");
 		}
 		
 		int cornerCount = width * length;
