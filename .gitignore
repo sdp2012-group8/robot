@@ -1,6 +1,7 @@
 metrics.txt
 
 .metadata/*
+*.__afs*
 *.class
 *.fuse_hidden*
 *.log
