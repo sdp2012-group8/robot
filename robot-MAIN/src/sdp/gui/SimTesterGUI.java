@@ -364,10 +364,10 @@ public class SimTesterGUI {
 		
 
 		mAI = new AIMaster(mComm, mSim, AIMaster.AIMode.visual_servoing);
-		mAI.start(blue_selected, my_goal_left);
+		mAI.start(blue_selected, my_goal_left, false);
 		
 		opponentAI = new AIMaster(opponentComm, mSim, AIMaster.AIMode.visual_servoing);
-		opponentAI.start(!blue_selected, !my_goal_left);
+		opponentAI.start(!blue_selected, !my_goal_left, false);
 
 		
 		new Thread() {

@@ -83,9 +83,7 @@ public class AIComm implements sdp.common.Communicator {
         			try {
         				readNextMessage();
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						LOGGER.warning("Connection with device lost. Waiting 2 s and trying again...");
-						e.printStackTrace();
 						try {
 							sleep(2000);
 						} catch (InterruptedException e1) {	}

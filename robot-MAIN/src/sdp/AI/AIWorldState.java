@@ -37,16 +37,18 @@ public class AIWorldState extends WorldState {
 	
 	private Simulator sim;
 
-	public AIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
+	public AIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left, boolean do_prediction) {
 		super(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
-		sim = new Simulator(false);
+		if (do_prediction)
+			sim = new Simulator(false);
 
-		update(world_state, my_team_blue, my_goal_left);
+		update(world_state, my_team_blue, my_goal_left, do_prediction);
 	}
 
-	public void update(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
+	public void update(WorldState world_state, boolean my_team_blue, boolean my_goal_left, boolean do_prediction) {
 		// To enable or disable the prediction uncomment/comment this line.
-		//world_state = predict(world_state, PREDICTION_TIME, PREDICTION_FPS);
+		//if (do_prediction)
+		//	world_state = predict(world_state, PREDICTION_TIME, PREDICTION_FPS);
 		
 		this.my_team_blue = my_team_blue;
 		this.my_goal_left = my_goal_left;
@@ -80,8 +82,7 @@ public class AIWorldState extends WorldState {
 	}
 	
 	private WorldState predict(WorldState input, long time_ms, int fps) {
-		double sec = time_ms / 1000d;
-		double dt = sec / fps;
+		double dt = 1d / fps;
 		sim.setWorldState(input, dt, true);
 		return Utilities.toCentimeters(sim.simulateWs(time_ms, fps));
 	}

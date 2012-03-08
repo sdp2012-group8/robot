@@ -118,8 +118,7 @@ public class Simulator extends WorldStateProvider {
 						if (delta_time < ITERATION_TIME)
 							try {
 								Thread.sleep((long) ITERATION_TIME - delta_time);
-							} catch (Exception e) {
-							}
+							} catch (Exception e) {}
 						// recalculate delta
 						curr_time = System.currentTimeMillis();
 						delta_time = curr_time - old_time;
@@ -160,6 +159,7 @@ public class Simulator extends WorldStateProvider {
 		}
 		ball = new Vector2D(ws.getBallCoords());
 		ball_velocity = first_run ? Vector2D.ZERO() : Vector2D.subtract(new Vector2D(ws.getBallCoords()), new Vector2D(old_st.getBallCoords()));
+		//System.out.println("ball vel = "+ball_velocity.getLength());
 		old_st = ws;
 	}
 	
@@ -172,7 +172,7 @@ public class Simulator extends WorldStateProvider {
 	 */
 	public WorldState simulateWs(long time_ms, int fps) {
 		double sec = time_ms / 1000d;
-		double dt = sec / fps;
+		double dt = 1d / fps;
 		WorldState ws = null;
 		for (double t = 0; t <= sec; t+=dt) {
 			ws = simulate(dt);

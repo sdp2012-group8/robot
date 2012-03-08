@@ -430,7 +430,7 @@ public class NeuralTrainer {
 		}
 		trainer.registerAI(mAI);
 		
-		mAI.start(blue_selected, my_door_right);
+		mAI.start(blue_selected, my_door_right, false);
 		new Thread() {
 			public void run() {
 				while (true) {
