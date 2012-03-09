@@ -39,8 +39,7 @@ public class AIWorldState extends WorldState {
 
 	public AIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left, boolean do_prediction) {
 		super(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
-		if (do_prediction)
-			sim = new Simulator(false);
+		sim = new Simulator(false);
 
 		update(world_state, my_team_blue, my_goal_left, do_prediction);
 	}
