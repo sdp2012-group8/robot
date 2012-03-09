@@ -3,6 +3,7 @@ package sdp.AI;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
+import sdp.AI.AI.Command;
 import sdp.common.Goal;
 import sdp.common.Painter;
 import sdp.common.Robot;
@@ -14,7 +15,7 @@ import sdp.vision.processing.ImageProcessorConfig;
 
 public class AIWorldState extends WorldState {
 	
-	private static final long PREDICTION_TIME = 1000; // in ms
+	private static final long PREDICTION_TIME = 400; // in ms
 	private static final int PREDICTION_FPS = 20;
 
 	private boolean my_team_blue;
@@ -27,6 +28,8 @@ public class AIWorldState extends WorldState {
 	private Robot enemy_robot = null;
 	private double distance_to_ball;
 	private double distance_to_goal;
+	
+	private Command command;
 	
 	private boolean left_sensor = false, right_sensor = false, dist_sensor = false;
 
@@ -48,6 +51,9 @@ public class AIWorldState extends WorldState {
 		// To enable or disable the prediction uncomment/comment this line.
 		//if (do_prediction)
 		//	world_state = predict(world_state, PREDICTION_TIME, PREDICTION_FPS);
+		
+		// To enable or disable low pass, uncomment this line
+		//world_state = lowPass(this, world_state);
 		
 		this.my_team_blue = my_team_blue;
 		this.my_goal_left = my_goal_left;
@@ -82,7 +88,7 @@ public class AIWorldState extends WorldState {
 	
 	private WorldState predict(WorldState input, long time_ms, int fps) {
 		double dt = 1d / fps;
-		sim.setWorldState(input, dt, true);
+		sim.setWorldState(input, dt, true, command, my_team_blue);
 		return Utilities.toCentimeters(sim.simulateWs(time_ms, fps));
 	}
 
@@ -147,6 +153,81 @@ public class AIWorldState extends WorldState {
 		p.setOffsets(config.getFieldLowX(), config.getFieldLowY(), config.getFieldWidth(), config.getFieldHeight());
 		p.image(my_team_blue,my_goal_left);
 		p.dispose();
+	}
+	
+	////////////////////////////////////////////////////////
+	// low pass filtering
+	///////////////////////////////////////////////////////
+	
+	// this is the amount of filtering to be done
+	// higher values mean that the new data will "weigh more"
+	// so the more uncertainty in result, the smaller value you should use
+	// don't use values less then 1!
+	private int filteredPositionAmount = 6;
+	private int filteredAngleAmount = 2;
+	
+	/**
+	 * Low pass for angles
+	 * @param old_value
+	 * @param new_value
+	 * @return the filtered angle
+	 */
+	private double lowPass(double old_value, double new_value, boolean angle) {
+		if (Double.isNaN(new_value) || Double.isInfinite(new_value))
+			return old_value;
+		if (!angle)
+			return (old_value+new_value*filteredPositionAmount)/((double) (filteredPositionAmount+1));
+		else {
+			double new_ang = new_value*filteredAngleAmount;
+			return Utilities.normaliseAngle(old_value+filteredAngleAmount*(new_ang - old_value)/(filteredAngleAmount+1));
+		}
+	}
+	
+	/**
+	 * Low pass on position
+	 * @param old_value
+	 * @param new_value
+	 * @param amount
+	 * @return the filtered position
+	 */
+	private Point2D.Double lowPass(Point2D.Double old_value, Point2D.Double new_value) {
+		return new Point2D.Double (
+				lowPass(old_value.getX(), new_value.getX(), false),
+				lowPass(old_value.getY(), new_value.getY(), false));
+	}
+
+	/**
+	 * Low pass on a robot
+	 * @param old_value
+	 * @param new_value
+	 * @param amount
+	 * @return a new robot with low_pass
+	 */
+	private Robot lowPass(Robot old_value, Robot new_value) {
+		Robot a = new Robot(
+				lowPass(new_value.getCoords(), old_value.getCoords()),
+				lowPass(old_value.getAngle(), new_value.getAngle(), true));
+		a.setCoords(true);
+		return a;
+	}
+	
+	private WorldState lowPass(WorldState old_state, WorldState new_state) {
+		return new WorldState(checkBall(old_state.getBallCoords(), new_state.getBallCoords()),
+				lowPass(old_state.getBlueRobot(), new_state.getBlueRobot()),
+				lowPass(old_state.getYellowRobot(), new_state.getYellowRobot()),
+				new_state.getWorldImage());
+	}
+	
+	/**
+	 * Fix ball going offscreen
+	 * @param new_coords
+	 * @return
+	 */
+	private Point2D.Double checkBall(Point2D.Double new_coords, Point2D.Double old_coords) {
+		if (new_coords.getX() == -244d && new_coords.getY() == -244d)
+			return old_coords;
+		else
+			return new_coords;
 	}
 
 
@@ -215,5 +296,9 @@ public class AIWorldState extends WorldState {
 
 	public void setBattery(int battery) {
 		this.battery = battery;
+	}
+	
+	public void setCommand(Command com) {
+		command = com;
 	}
 }

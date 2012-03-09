@@ -1,15 +1,10 @@
 package sdp.AI;
 
-import java.awt.Canvas;
-import java.awt.Graphics2D;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
-import sdp.common.Tools;
 import sdp.common.Utilities;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
-import sdp.common.Robot;
 import sdp.common.WorldStateProvider;
 import sdp.vision.processing.ImageProcessorConfig;
 
@@ -33,13 +28,6 @@ public abstract class AIListener extends WorldStateProvider {
 	private boolean my_goal_left, my_team_blue, override_vision = false;
 	
 	private ImageProcessorConfig config;
-	
-	// this is the amount of filtering to be done
-	// higher values mean that the new data will "weigh more"
-	// so the more uncertainty in result, the smaller value you should use
-	// don't use values less then 1!
-	private int filteredPositionAmount = 6;
-	private int filteredAngleAmount = 2;
 
 	/**
 	 * Initialise the AI
@@ -83,10 +71,7 @@ public abstract class AIListener extends WorldStateProvider {
 						if (override_vision) {
 							ai_world_state.onDraw(im, config);
 						}
-						world_state = new WorldState(checkBall(state.getBallCoords(), world_state.getBallCoords()),
-								state.getBlueRobot(),//lowPass(world_state.getBlueRobot(), state.getBlueRobot()),
-								state.getYellowRobot(),//lowPass(world_state.getYellowRobot(), state.getYellowRobot()),
-								im);
+						world_state = state;
 					}
 					ai_world_state.update(world_state, my_team_blue, my_goal_left, do_prediction);
 					
@@ -115,68 +100,8 @@ public abstract class AIListener extends WorldStateProvider {
 			mVisionThread.interrupt();
 	}
 	
-	/**
-	 * Fix ball going offscreen
-	 * @param new_coords
-	 * @return
-	 */
-	private Point2D.Double checkBall(Point2D.Double new_coords, Point2D.Double old_coords) {
-		if (new_coords.getX() == -244d && new_coords.getY() == -244d)
-			return old_coords;
-		else
-			return new_coords;
-	}
 
-	/**
-	 * A simple low-pass filter
-	 * @param old_value
-	 * @param new_value
-	 * @param amount
-	 * @return a filtered value
-	 */
-	private double lowPass(double old_value, double new_value, int amount) {
-		if (Double.isNaN(new_value) || Double.isInfinite(new_value))
-			return old_value;
-		return (old_value+new_value*amount)/((double) (amount+1));
-	}
 
-	/**
-	 * Low pass for angles
-	 * @param old_value
-	 * @param new_value
-	 * @return the filtered angle
-	 */
-	private double lowPass(double old_value, double new_value) {
-		return lowPass(old_value, new_value, filteredAngleAmount);
-	}
-	
-	/**
-	 * Low pass on position
-	 * @param old_value
-	 * @param new_value
-	 * @param amount
-	 * @return the filtered position
-	 */
-	private Point2D.Double lowPass(Point2D.Double old_value, Point2D.Double new_value) {
-		return new Point2D.Double (
-				lowPass(old_value.getX(), new_value.getX(), filteredPositionAmount),
-				lowPass(old_value.getY(), new_value.getY(), filteredPositionAmount));
-	}
-
-	/**
-	 * Low pass on a robot
-	 * @param old_value
-	 * @param new_value
-	 * @param amount
-	 * @return a new robot with low_pass
-	 */
-	private Robot lowPass(Robot old_value, Robot new_value) {
-		Robot a = new Robot(
-				new_value.getCoords(),
-				lowPass(old_value.getAngle(), new_value.getAngle()));
-		a.setCoords(true);
-		return a;
-	}
 	
 	protected abstract void worldChanged();
 

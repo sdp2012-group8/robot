@@ -57,14 +57,14 @@ public class AIVisualServoing extends AI {
 
 			double dir_angle = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), target), -ai_world_state.getRobot().getAngle()));
 			if (Math.abs(dir_angle) > 20) {
-				slowDownSpeed(targ_dist, 20, comm, 0); // limits speed to 30
+				slowDownSpeed(targ_dist, 20, comm, 2); // limits speed to 30
 			}
 //			if (targ_dist < 20)
 //				comm.turning_speed = 0;
 		}
 		if (!chasing_target) {
 			Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
-//			double ball_dist = ai_world_state.getDistanceToBall();
+			double ball_dist = ai_world_state.getDistanceToBall();
 //			if (ball_dist > 20 && ball_dist < 50) {
 //				double dir = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(ball, target), -ai_world_state.getRobot().getAngle()));
 //				comm = new Command(Math.abs(dir) < 5 ? MAX_SPEED_CM_S : 0, dir*3, false);
@@ -368,7 +368,7 @@ public class AIVisualServoing extends AI {
 			return;
 		}
 		double rat = Math.abs(comm.turning_speed)/MAX_TURNING_SPEED;
-		comm.speed *= 1-Math.sqrt(rat);
+		comm.speed *= 1-rat;
 	}
 
 }

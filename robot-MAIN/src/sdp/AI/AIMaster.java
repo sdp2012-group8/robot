@@ -91,6 +91,8 @@ public class AIMaster extends AIListener {
 			if (command == null){
 				command = new Command(0, 0, false);
 			}
+			
+			ai_world_state.setCommand(command);
 
 			if (command.isDefaultAcc())
 				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed());
