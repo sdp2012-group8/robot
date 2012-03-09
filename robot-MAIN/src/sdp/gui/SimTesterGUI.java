@@ -363,10 +363,10 @@ public class SimTesterGUI {
 				yellow_placement == PLACEMENT_LEFT ? 0 : 180);
 		
 
-		mAI = new AIMaster(mComm, mSim, AIMaster.AIMode.visual_servoing);
+		mAI = new AIMaster(mComm, mSim, AIMaster.AIMode.VISUAL_SERVOING);
 		mAI.start(blue_selected, my_goal_left, false);
 		
-		opponentAI = new AIMaster(opponentComm, mSim, AIMaster.AIMode.visual_servoing);
+		opponentAI = new AIMaster(opponentComm, mSim, AIMaster.AIMode.VISUAL_SERVOING);
 		opponentAI.start(!blue_selected, !my_goal_left, false);
 
 		
@@ -395,7 +395,7 @@ public class SimTesterGUI {
 	 * @param pressed true if pressed, false if released
 	 */
 	private void keyAction(final int key_id, final boolean pressed) {
-		if (mAI.getState()!= mode.sit) mAI.setState(mode.sit);
+		if (mAI.getState()!= mode.SIT) mAI.setState(mode.SIT);
 		try {
 			switch (key_id) {
 			case KeyEvent.VK_UP:

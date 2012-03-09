@@ -89,7 +89,7 @@ public final class Robot {
 	 */
 	public final void setCoords(Point2D.Double coords, double angle, boolean cm) {
 		this.coords = coords;
-		this.angle = angle;
+		this.angle = Utilities.normaliseAngle(angle);
 		//System.out.println("Robot init angle: " + angle);
 		double length = cm ? LENGTH_CM : LENGTH;
 		double width = cm ? WIDTH_CM : WIDTH;

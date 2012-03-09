@@ -15,6 +15,7 @@ public class AIVisualServoing extends AI {
 	private final static int CORNER_COLL_THRESHOLD = 2;
 	private final static int NEAR_TARGET = 2;
 	private final static int POINT_ACCURACY = 5;
+	public static final int DIST_TO_BALL = 6;
 
 	private final static int MAX_TURN_ANG = 200;
 
@@ -28,6 +29,10 @@ public class AIVisualServoing extends AI {
 	protected Command chaseBall() throws IOException {
 		Command comm = null;
 		Vector2D target = null;
+		
+		if (ai_world_state.getDistanceToBall() < DIST_TO_BALL){
+			return gotBall();
+		}
 
 		try {
 			target = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, ai_world_state.getMyGoalLeft(), ai_world_state.getMyTeamBlue()));
@@ -103,14 +108,18 @@ public class AIVisualServoing extends AI {
 
 	@Override
 	protected Command gotBall() throws IOException {
-		System.out.println("GOT BALL");
+		//System.out.println("GOT BALL");
 		double angle = ai_world_state.getRobot().getAngle();
 		if (ai_world_state.getMyGoalLeft()) {
-			if (angle > 90 || angle < -90)
+			if (angle > 90 || angle < -90) {
+				//System.out.println("REVERSE angle = " + angle);
 				return new Command(-MAX_SPEED_CM_S, 0, false);
+			}
 		} else {
-			if (Math.abs(angle) <= 90)
+			if (Math.abs(angle) <= 90) {
+				//System.out.println("FORWARD");
 				return new Command(-MAX_SPEED_CM_S, 0, false);
+			}
 		}
 		chasing_target = true;
 		return new Command(MAX_SPEED_CM_S,0,true);
@@ -223,7 +232,7 @@ public class AIVisualServoing extends AI {
 
 	@Override
 	protected Command penaltiesAttack() throws IOException {
-		//TODO: Determine shoot path - Turn and shoot quickly.
+		Command command = new Command(0,0,false);
 
 //		Point2D.Double pointInGoal= 
 //			Utilities.intersection(ai_world_state.getRobot().getCoords(), 
