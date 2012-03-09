@@ -142,7 +142,7 @@ public class Brick {
 			/**
 			 * Add your movement logic inside this method
 			 */
-			@Override
+			
 			public void receiveMessage(opcode op, byte[] args, Communicator controller) {
 				final int def_vol = Sound.getVolume();
 				// to send messages back to PC, use mCont.sendMessage
