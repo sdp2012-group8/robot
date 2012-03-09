@@ -257,23 +257,23 @@ public class AIVisualServoing extends AI {
 			enemyRobot= ai_world_state.getEnemyRobot().getCoords();
 			//if enemy robot in the lower part of the goal then shoot in the upper part
 			if( enemyRobot.getY() < ai_world_state.getEnemyGoal().getCentre().y){
-				return new Command(0,0,false);
+				return new Command(0,0,true);
 				//mComm.sendMessage(opcode.operate,(byte) 0, (byte) 
-						//ai_world_state.getEnemyGoal().getTop().y);
+				//ai_world_state.getEnemyGoal().getTop().y);
 				// mComm.sendMessage(opcode.kick);
 				//if enemy robot in the upper part of the goal then shoot in the lower part
 			}else if( enemyRobot.getY() <ai_world_state.getEnemyGoal().getCentre().y){
-				return new Command(0,0,false);
+				return new Command(0,0,true);
 				//mComm.sendMessage(opcode.operate, (byte) 0, (byte)
 				//ai_world_state.getEnemyGoal().getBottom().y);
 				// mComm.sendMessage(opcode.kick);
 			}
 			//else just kick in upper part of the goal by ...this is the default
 			else{
-				return new Command(0,0,false);
+				return new Command(0,0,true);
 				//mComm.sendMessage(opcode.operate, (byte) 0, (byte) 
 				//ai_world_state.getEnemyGoal().getTop().y);
-				//         mComm.sendMessage(opcode.kick);
+				//mComm.sendMessage(opcode.kick);
 			}
 		}
 		return null;
