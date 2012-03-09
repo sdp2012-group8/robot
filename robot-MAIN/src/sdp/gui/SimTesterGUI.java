@@ -26,7 +26,7 @@ import javax.swing.JPanel;
 
 import sdp.AI.AI;
 import sdp.AI.AIMaster;
-import sdp.AI.AIMaster.AIType;
+import sdp.AI.AIMaster.AIMode;
 import sdp.AI.AIMaster.mode;
 import sdp.AI.AITest;
 import sdp.AI.AIVisualServoing;
@@ -54,8 +54,8 @@ public class SimTesterGUI {
 	private WorldState lastWS = null;
 	
 	private AIMaster mAI;
-	private AIType mMode;
-	private AIType opponentMode;
+	private AIMode mMode;
+	private AIMode opponentMode;
 	 //will be used for the opponent(yellow) robot
 	private AIMaster opponentAI;
 	
@@ -323,11 +323,11 @@ public class SimTesterGUI {
 		 */
 		comboBlueAIs = new JComboBox();
 		comboBlueAIs.setBounds(662, 259, 136, 27);
-		for (int i = 0; i < AIType.values().length; i++)
-			comboBlueAIs.addItem(AIType.values()[i]);
+		for (int i = 0; i < AIMode.values().length; i++)
+			comboBlueAIs.addItem(AIMode.values()[i]);
 		comboBlueAIs.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				mAI.setAIMode(checkTypeBlue());	
+				mAI.setAIMode(checkModesBlue());	
 			}
 		});
 		frmAlphaTeamSimulator.getContentPane().add(comboBlueAIs);
@@ -338,11 +338,11 @@ public class SimTesterGUI {
 		 */
 		comboYellowAIs = new JComboBox();
 		comboYellowAIs.setBounds(662, 360, 136, 27);
-		for (int i = 0; i < AIType.values().length; i++)
-			comboYellowAIs.addItem(AIType.values()[i]);
+		for (int i = 0; i < AIMode.values().length; i++)
+			comboYellowAIs.addItem(AIMode.values()[i]);
 		comboYellowAIs.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				opponentAI.setAIMode(checkTypeYellow());
+				opponentAI.setAIMode(checkModesYellow());
 			}
 		});
 		frmAlphaTeamSimulator.getContentPane().add(comboYellowAIs);
@@ -428,10 +428,10 @@ public class SimTesterGUI {
 				yellow_placement == PLACEMENT_LEFT ? 0 : 180);
 		
 
-		mAI = new AIMaster(mComm, mSim, checkTypeBlue());
+		mAI = new AIMaster(mComm, mSim, checkModesBlue());
 		mAI.start(blue_selected, my_goal_left, false);
 		
-		opponentAI = new AIMaster(opponentComm, mSim, checkTypeYellow());
+		opponentAI = new AIMaster(opponentComm, mSim, checkModesYellow());
 		opponentAI.start(!blue_selected, !my_goal_left, false);
 
 		
@@ -523,12 +523,12 @@ public class SimTesterGUI {
 		mSim.putBallAt(ballpos.getX(), ballpos.getY());
 	}
 	
-	private AIType checkTypeBlue(){	
-		return AIType.values()[comboBlueAIs.getSelectedIndex()];
+	private AIMode checkModesBlue(){	
+		return AIMode.values()[comboBlueAIs.getSelectedIndex()];
 	}
 	
-	private AIType checkTypeYellow(){	
-		return AIType.values()[comboYellowAIs.getSelectedIndex()];
+	private AIMode checkModesYellow(){	
+		return AIMode.values()[comboYellowAIs.getSelectedIndex()];
 	}
 }
 
