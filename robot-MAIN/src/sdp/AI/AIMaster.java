@@ -67,14 +67,7 @@ public class AIMaster extends AIListener {
 				}
 			});
 
-		switch(ai_mode) {
-		case VISUAL_SERVOING:
-			ai = new AIVisualServoing();
-			break;
-		case NEURAL_NETWORKS:
-			//ai = new AINeuralNetwork(comm, "data");
-			break;
-		}
+		setAIMode(ai_mode);
 	}
 
 	/**
@@ -135,16 +128,6 @@ public class AIMaster extends AIListener {
 	private void checkState() {
 		// Check the new world state and decide what state we should be in.
 
-		// Can now change between states more easily
-//		if (getState() == mode.chase_ball && ai_world_state.getDistanceToBall() > DIST_TO_BALL){
-//			setState(mode.chase_ball);
-//		} else if (getState() == mode.defend_penalties){
-//			setState(mode.defend_penalties);
-//		} else if(ai_world_state.getDistanceToBall() < DIST_TO_BALL){
-//			setState(mode.got_ball);
-//		} else if(getState()== mode.sit){
-//			setState(mode.sit);
-//		}
 		final boolean my_goal_left = ai_world_state.getMyGoalLeft();
 		final Point2D.Double ball = ai_world_state.getBallCoords();
 		
@@ -171,7 +154,22 @@ public class AIMaster extends AIListener {
 		state = new_state;
 		System.out.println("Changed State to - " + state);
 	}
-
+	
+	/**
+	 * Change the AI mode. Can be used in the simulator to test separate modes
+	 * @param new_ai
+	 */
+	public void setAIMode(AIMode new_ai_mode){
+		switch (new_ai_mode){
+			case visual_servoing:
+				ai = new AIVisualServoing();
+				break;
+			case neural_network: 
+				ai = new AITest();
+				break;
+		}
+	}
+	
 	/**
 	 * Gets AI mode
 	 * @return
