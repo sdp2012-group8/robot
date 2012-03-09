@@ -22,7 +22,7 @@ public class AIMaster extends AIListener {
 		chase_ball, got_ball, defend_goal, sit, defend_penalties, attack_penalties
 	}
 
-	public enum AIMode {
+	public enum AIType {
 		visual_servoing, neural_network
 	}
 
@@ -32,7 +32,7 @@ public class AIMaster extends AIListener {
 	private mode state = mode.sit;
 	private Communicator mComm;
 
-	public AIMaster(Communicator comm, WorldStateProvider obs, AIMode ai_mode) {
+	public AIMaster(Communicator comm, WorldStateProvider obs, AIType ai_mode) {
 		super(obs);
 		this.mComm = comm;
 			mComm.registerListener(new MessageListener() {
@@ -57,14 +57,7 @@ public class AIMaster extends AIListener {
 				}
 			});
 
-		switch(ai_mode) {
-		case visual_servoing:
-			ai = new AIVisualServoing();
-			break;
-		case neural_network:
-			//ai = new AINeuralNetwork(comm, "data");
-			break;
-		}
+		setAIMode(ai_mode);
 	}
 
 	/**
@@ -158,7 +151,22 @@ public class AIMaster extends AIListener {
 	public void setState(mode new_state) {
 		state = new_state;
 	}
-
+	
+	/**
+	 * Change the AI mode. Can be used in the simulator to test separate modes
+	 * @param new_ai
+	 */
+	public void setAIMode(AIType new_ai_mode){
+		switch (new_ai_mode){
+			case visual_servoing:
+				ai = new AIVisualServoing();
+				break;
+			case neural_network: 
+				ai = new AITest();
+				break;
+		}
+	}
+	
 	/**
 	 * Gets AI mode
 	 * @return
