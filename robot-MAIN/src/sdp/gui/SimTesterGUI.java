@@ -6,16 +6,30 @@ import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import sdp.AI.AI;
 import sdp.AI.AIMaster;
+import sdp.AI.AIMaster.AIMode;
 import sdp.AI.AIMaster.mode;
+import sdp.AI.AITest;
+import sdp.AI.AIVisualServoing;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.Vector2D;
@@ -23,18 +37,6 @@ import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.simulator.Simulator;
 import sdp.simulator.VBrick;
-
-import javax.swing.JButton;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import javax.swing.JComboBox;
-import javax.swing.DefaultComboBoxModel;
 
 /**
  * Manual simulator control and in the same time AI tester
@@ -52,6 +54,8 @@ public class SimTesterGUI {
 	private WorldState lastWS = null;
 	
 	private AIMaster mAI;
+	private AIMode mMode;
+	private AIMode opponentMode;
 	 //will be used for the opponent(yellow) robot
 	private AIMaster opponentAI;
 	
@@ -72,6 +76,9 @@ public class SimTesterGUI {
 	private final HashMap<Integer, Timer> key_pressed = new HashMap<Integer, Timer>();
 	
 	private Integer camera = null;
+	
+	public JComboBox comboBlueAIs;
+	public JComboBox comboYellowAIs;
 
 	/**
 	 * Launch the application.
@@ -207,21 +214,16 @@ public class SimTesterGUI {
 		btnConnect.setBounds(662, 10, 117, 25);
 		frmAlphaTeamSimulator.getContentPane().add(btnConnect);
 		
-		
-		final JComboBox comboYellowAI = new JComboBox();
-		comboYellowAI.setBounds(662, 379, 117, 24);
+		/**
+		 * Choose between the modes/states of the AIs for the enemy robot
+		 */
+		final JComboBox comboYellowModes = new JComboBox();
+		comboYellowModes.setBounds(662, 388, 136, 24);
 		for (int i = 0; i < mode.values().length; i++)
-			comboYellowAI.addItem(mode.values()[i]);
-		frmAlphaTeamSimulator.getContentPane().add(comboYellowAI);
+			comboYellowModes.addItem(mode.values()[i]);
+		frmAlphaTeamSimulator.getContentPane().add(comboYellowModes);
 		
-		JButton btnChangeYellowAI = new JButton("Change Yellow AI");
-		btnChangeYellowAI.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				opponentAI.setState(mode.values()[comboYellowAI.getSelectedIndex()]);
-			}
-		});
-		btnChangeYellowAI.setBounds(663, 412, 136, 25);
-		frmAlphaTeamSimulator.getContentPane().add(btnChangeYellowAI);
+		
 		
 		JButton btnResetField = new JButton("Reset field");
 		btnResetField.addActionListener(new ActionListener() {
@@ -229,7 +231,7 @@ public class SimTesterGUI {
 				resetField();
 			}
 		});
-		btnResetField.setBounds(662, 156, 117, 25);
+		btnResetField.setBounds(662, 120, 117, 25);
 		frmAlphaTeamSimulator.getContentPane().add(btnResetField);
 		
 		JButton btnResetBall = new JButton("Reset ball");
@@ -238,7 +240,7 @@ public class SimTesterGUI {
 				mSim.putBallAt();
 			}
 		});
-		btnResetBall.setBounds(662, 193, 117, 25);
+		btnResetBall.setBounds(662, 157, 117, 25);
 		frmAlphaTeamSimulator.getContentPane().add(btnResetBall);
 		
 		final JButton btnPause = new JButton("Pause");
@@ -253,7 +255,7 @@ public class SimTesterGUI {
 				}
 			}
 		});
-		btnPause.setBounds(662, 119, 117, 25);
+		btnPause.setBounds(662, 83, 117, 25);
 		frmAlphaTeamSimulator.getContentPane().add(btnPause);
 		
 		JButton btnRandomizeField = new JButton("Randomize");
@@ -262,7 +264,7 @@ public class SimTesterGUI {
 				RandomizeField();
 			}
 		});
-		btnRandomizeField.setBounds(662, 230, 117, 25);
+		btnRandomizeField.setBounds(662, 194, 117, 25);
 		frmAlphaTeamSimulator.getContentPane().add(btnRandomizeField);
 		
 		JButton btnCamera = new JButton("Camera");
@@ -276,23 +278,86 @@ public class SimTesterGUI {
 				mSim.centerViewAround(camera);
 			}
 		});
-		btnCamera.setBounds(662, 267, 117, 25);
+		btnCamera.setBounds(662, 231, 117, 25);
 		frmAlphaTeamSimulator.getContentPane().add(btnCamera);
 		
-		final JComboBox comboBlueAI = new JComboBox();
-		comboBlueAI.setBounds(662, 299, 117, 27);
+		/**
+		 * Choose between the modes/states of our robot
+		 */
+		final JComboBox comboBlueModes = new JComboBox();
+		comboBlueModes.setBounds(662, 288, 136, 27);
 		for (int i = 0; i < mode.values().length; i++)
-			comboBlueAI.addItem(mode.values()[i]);
-		frmAlphaTeamSimulator.getContentPane().add(comboBlueAI);
+			comboBlueModes.addItem(mode.values()[i]);
+		frmAlphaTeamSimulator.getContentPane().add(comboBlueModes);
 		
-		JButton btnChangeBlueAI = new JButton("Change Blue AI");
-		btnChangeBlueAI.setBounds(662, 338, 137, 29);
-		btnChangeBlueAI.addActionListener(new ActionListener() {
+		/**
+		 * Start the AI of our robot
+		 */
+		JButton btnStartBlueAI = new JButton("Start Blue AI");
+		btnStartBlueAI.setBounds(662, 319, 136, 29);
+		btnStartBlueAI.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				mAI.setState(mode.values()[comboBlueAI.getSelectedIndex()]);
+				mAI.setState(mode.values()[comboBlueModes.getSelectedIndex()]);
 			}
 		});
-		frmAlphaTeamSimulator.getContentPane().add(btnChangeBlueAI);
+		frmAlphaTeamSimulator.getContentPane().add(btnStartBlueAI);
+		
+		/**
+		 * Start both robots at the same time
+		 * The default mode is visual servoing, if you want to change that,
+		 * select the AI first, then press start 
+		 */
+		JButton btnStartBoth = new JButton("Start Game");
+		btnStartBoth.setBounds(533, 415, 117, 29);
+		btnStartBoth.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				mAI.setState(mode.values()[comboBlueModes.getSelectedIndex()]);
+				opponentAI.setState(mode.values()[comboYellowModes.getSelectedIndex()]);				
+			}
+		});
+		frmAlphaTeamSimulator.getContentPane().add(btnStartBoth);
+		
+		/**
+		 * Change the AI of our robot
+		 * Add another case statement if implementing a new AI
+		 */
+		comboBlueAIs = new JComboBox();
+		comboBlueAIs.setBounds(662, 259, 136, 27);
+		for (int i = 0; i < AIMode.values().length; i++)
+			comboBlueAIs.addItem(AIMode.values()[i]);
+		comboBlueAIs.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				mAI.setAIMode(checkModesBlue());	
+			}
+		});
+		frmAlphaTeamSimulator.getContentPane().add(comboBlueAIs);
+		
+		/**
+		 * Change the AI of the enemy robot
+		 * Add another case statement if implementing a new AI
+		 */
+		comboYellowAIs = new JComboBox();
+		comboYellowAIs.setBounds(662, 360, 136, 27);
+		for (int i = 0; i < AIMode.values().length; i++)
+			comboYellowAIs.addItem(AIMode.values()[i]);
+		comboYellowAIs.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				opponentAI.setAIMode(checkModesYellow());
+			}
+		});
+		frmAlphaTeamSimulator.getContentPane().add(comboYellowAIs);
+
+		/**
+		 * Start the AI  of the enemy robot
+		 */
+		JButton btnStartYellowAI = new JButton("Start Yellow AI");
+		btnStartYellowAI.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				opponentAI.setState(mode.values()[comboYellowModes.getSelectedIndex()]);
+			}
+		});
+		btnStartYellowAI.setBounds(662, 417, 136, 25);
+		frmAlphaTeamSimulator.getContentPane().add(btnStartYellowAI);
 		
 		// key listener
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
@@ -363,10 +428,10 @@ public class SimTesterGUI {
 				yellow_placement == PLACEMENT_LEFT ? 0 : 180);
 		
 
-		mAI = new AIMaster(mComm, mSim, AIMaster.AIMode.visual_servoing);
+		mAI = new AIMaster(mComm, mSim, checkModesBlue());
 		mAI.start(blue_selected, my_goal_left, false);
 		
-		opponentAI = new AIMaster(opponentComm, mSim, AIMaster.AIMode.visual_servoing);
+		opponentAI = new AIMaster(opponentComm, mSim, checkModesYellow());
 		opponentAI.start(!blue_selected, !my_goal_left, false);
 
 		
@@ -395,7 +460,7 @@ public class SimTesterGUI {
 	 * @param pressed true if pressed, false if released
 	 */
 	private void keyAction(final int key_id, final boolean pressed) {
-		if (mAI.getState()!= mode.sit) mAI.setState(mode.sit);
+		if (mAI.getState()!= mode.SIT) mAI.setState(mode.SIT);
 		try {
 			switch (key_id) {
 			case KeyEvent.VK_UP:
@@ -456,6 +521,14 @@ public class SimTesterGUI {
 		mSim.putAt(robot1.getX(), robot1.getY(), 0, 180-r.nextInt(360));
 		mSim.putAt(robot2.getX(), robot2.getY(), 1, 180-r.nextInt(360));
 		mSim.putBallAt(ballpos.getX(), ballpos.getY());
+	}
+	
+	private AIMode checkModesBlue(){	
+		return AIMode.values()[comboBlueAIs.getSelectedIndex()];
+	}
+	
+	private AIMode checkModesYellow(){	
+		return AIMode.values()[comboYellowAIs.getSelectedIndex()];
 	}
 }
 

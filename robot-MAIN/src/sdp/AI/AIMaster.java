@@ -1,5 +1,6 @@
 package sdp.AI;
 
+import java.awt.geom.Point2D;
 import java.io.IOException;
 
 //import sdp.AI.neural.AINeuralNetwork;
@@ -7,6 +8,7 @@ import sdp.AI.AI.Command;
 import sdp.common.Communicator;
 import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
+import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
 
 
@@ -18,18 +20,26 @@ import sdp.common.WorldStateProvider;
  */
 public class AIMaster extends AIListener {
 
+	// Eclipse shouted at me saying they shouldn't be lowercase.
+	/** The mode the AI is in.
+	 * This should be states common to all AI's.
+	 */
 	public enum mode {
-		chase_ball, got_ball, defend_goal, sit, defend_penalties, attack_penalties
+		PLAY, DEFEND_GOAL, SIT, DEFEND_PENALTIES, SHOOT_PENALTIES, MANUAL_CONTROL
 	}
 
+	/** The type of AI that is running */
 	public enum AIMode {
-		visual_servoing, neural_network
+		VISUAL_SERVOING, NEURAL_NETWORKS
 	}
+	
+	/** Distance from the goal when the AI changes from Penalty mode to play mode */
+	private final static int PENALTIES_THRESH = 30; 
 
-	public static final int DIST_TO_BALL = 6;
+	
 
 	private AI ai;
-	private mode state = mode.sit;
+	private mode state = mode.SIT;
 	private Communicator mComm;
 
 	public AIMaster(Communicator comm, WorldStateProvider obs, AIMode ai_mode) {
@@ -57,14 +67,7 @@ public class AIMaster extends AIListener {
 				}
 			});
 
-		switch(ai_mode) {
-		case visual_servoing:
-			ai = new AIVisualServoing();
-			break;
-		case neural_network:
-			//ai = new AINeuralNetwork(comm, "data");
-			break;
-		}
+		setAIMode(ai_mode);
 	}
 
 	/**
@@ -109,18 +112,15 @@ public class AIMaster extends AIListener {
 
 	private AI.Command getCommand() throws IOException {
 		switch (getState()) {
-		case chase_ball:
+		case PLAY:
 			return ai.chaseBall();
-		case got_ball:
-			//setState(mode.sit);
-			return ai.gotBall();
-		case sit:
+		case SIT:
 			return ai.sit();
-		case defend_penalties:
+		case DEFEND_PENALTIES:
 			return ai.penaltiesDefend();
-		case attack_penalties:
+		case SHOOT_PENALTIES:
 			return ai.penaltiesAttack();
-		case defend_goal:
+		case DEFEND_GOAL:
 			return ai.defendGoal();
 		default:
 			return null;
@@ -130,28 +130,23 @@ public class AIMaster extends AIListener {
 	private void checkState() {
 		// Check the new world state and decide what state we should be in.
 
-		// Can now change between states more easily
-//		if (getState() == mode.chase_ball && ai_world_state.getDistanceToBall() > DIST_TO_BALL){
-//			setState(mode.chase_ball);
-//		} else if (getState() == mode.defend_penalties){
-//			setState(mode.defend_penalties);
-//		} else if(ai_world_state.getDistanceToBall() < DIST_TO_BALL){
-//			setState(mode.got_ball);
-//		} else if(getState()== mode.sit){
-//			setState(mode.sit);
-//		}
-
-
-		if (state != mode.defend_goal) {
-			if (getState() != mode.sit) {
-				if (ai_world_state.getDistanceToBall() > DIST_TO_BALL) {
-					setState(mode.chase_ball);
-				} else {
-					setState(mode.got_ball);
-				}		
+		final boolean my_goal_left = ai_world_state.getMyGoalLeft();
+		final Point2D.Double ball = ai_world_state.getBallCoords();
+		
+		// DEFEND_PENALTIES -> PLAY
+		if (state == mode.DEFEND_PENALTIES) {
+			if (my_goal_left && ball.x < PENALTIES_THRESH ||
+					!my_goal_left && ball.x > WorldState.PITCH_WIDTH_CM - PENALTIES_THRESH) {
+				setState(mode.PLAY);
 			}
+		} else // SHOOT_PENALTIES -> PLAY
+			if (state == mode.SHOOT_PENALTIES) {
+				if (!my_goal_left && ball.x < PENALTIES_THRESH ||
+						my_goal_left && ball.x > WorldState.PITCH_WIDTH_CM - PENALTIES_THRESH) {
+					setState(mode.PLAY);
+				}
+		} 
 
-		}
 	}
 
 	/**
@@ -159,8 +154,24 @@ public class AIMaster extends AIListener {
 	 */
 	public void setState(mode new_state) {
 		state = new_state;
+		System.out.println("Changed State to - " + state);
 	}
-
+	
+	/**
+	 * Change the AI mode. Can be used in the simulator to test separate modes
+	 * @param new_ai
+	 */
+	public void setAIMode(AIMode new_ai_mode){
+		switch (new_ai_mode){
+			case VISUAL_SERVOING:
+				ai = new AIVisualServoing();
+				break;
+			case NEURAL_NETWORKS: 
+				ai = new AITest();
+				break;
+		}
+	}
+	
 	/**
 	 * Gets AI mode
 	 * @return
