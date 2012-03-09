@@ -35,7 +35,13 @@ public class AIVisualServoing extends AI {
 		}
 
 		try {
-			target = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, ai_world_state.getMyGoalLeft(), ai_world_state.getMyTeamBlue()));
+			// TODO: I have added the ability to change the distance of the point.
+			// However I couldn't find a good metric for what to do with it.
+			
+			//final double dir_to_ball = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(ai_world_state.getRobot().getCoords())), -ai_world_state.getRobot().getAngle()));
+			final double point_distance = 1.5*Robot.LENGTH_CM; // + 1*Robot.LENGTH_CM * (1 - (Math.abs(dir_to_ball)/180));
+			//System.out.println("Distance to Point: " + point_distance + " Dir: " + dir_to_ball);
+			target = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, ai_world_state.getMyGoalLeft(), ai_world_state.getMyTeamBlue(), point_distance));
 		} catch (NullPointerException e) {
 			// Robot can't see a goal
 			// TODO: decide on what to do when the robot can't see the goal.

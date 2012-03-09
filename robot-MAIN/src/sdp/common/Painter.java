@@ -7,6 +7,8 @@ import java.awt.RenderingHints;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
+import sdp.AI.AIWorldState;
+
 public class Painter {
 	
 	public int MOUSE_OVER_ROBOT = -1;
@@ -121,8 +123,14 @@ public class Painter {
 				Vector2D local_origin = new Vector2D(Robot.LENGTH_CM/2+2,0);
 				drawVector(Utilities.getGlobalVector(robot, local_origin),  Utilities.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0), true), true);
 				if ((my_team_blue && i == 0) || (!my_team_blue && i == 1)) {
-					Point2D.Double p_target = Utilities.getOptimalPointBehindBall(state_cm, my_goal_left, my_team_blue);
-
+					// TODO: Change this along with AIVisualServoing to show point
+					//final double dir_to_ball = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), new Vector2D(robot.getCoords())), -robot.getAngle()));
+					final double point_distance = 1.5*Robot.LENGTH_CM; // + 1*Robot.LENGTH_CM * (Math.abs(dir_to_ball)/180);
+					Vector2D p_target = null;
+					try {
+					 p_target = new Vector2D(Utilities.getOptimalPointBehindBall(state_cm, my_goal_left, my_team_blue, point_distance));
+					} catch (NullPointerException e) {}
+					
 					if (p_target != null) {
 
 

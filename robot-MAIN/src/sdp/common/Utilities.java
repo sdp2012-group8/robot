@@ -8,6 +8,8 @@ import java.awt.image.WritableRaster;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import sdp.AI.AIWorldState;
+
 
 /**
  * Contains various utility methods, which do not fit anywhere else.
@@ -313,10 +315,10 @@ public class Utilities {
 	 * @param point The target point on the goal the robot should be aligned to.
 	 * @return Point2D.Double behind the ball
 	 */
-	public static Point2D.Double getPointBehindBall(Point2D.Double point, Point2D.Double ball, boolean my_goal_left) {
+	public static Point2D.Double getPointBehindBall(Point2D.Double point, Point2D.Double ball, boolean my_goal_left, double point_offset) {
 
 		if (point.getY() == ball.getY()) {
-			return new Point2D.Double(my_goal_left ? ball.getX() - POINT_OFFSET : ball.getX() + POINT_OFFSET, ball.getY());
+			return new Point2D.Double(my_goal_left ? ball.getX() - point_offset : ball.getX() + point_offset, ball.getY());
 		} else {
 			/*double x, y, a, b;
 			a = point.getY() - ball.getY();
@@ -330,7 +332,7 @@ public class Utilities {
 				x = ball.getX() - (b*(y - ball.getY())/a);
 			}*/
 			
-			Point2D.Double p = Vector2D.change_length(Vector2D.subtract(new Vector2D(point),new Vector2D(ball)), -POINT_OFFSET);
+			Point2D.Double p = Vector2D.change_length(Vector2D.subtract(new Vector2D(point),new Vector2D(ball)), -point_offset);
 			p = new Point2D.Double(ball.x + p.x, ball.y + p.y);
 			//x = ball.getX() + (b*(y - ball.getY())/a);
 
@@ -370,6 +372,8 @@ public class Utilities {
 				toCentimeters(orig.getYellowRobot()),
 				orig.getWorldImage());
 	}
+	
+	
 
 
 	/**
@@ -378,7 +382,7 @@ public class Utilities {
 	 * @return The point closest to the robot that would allow it to shoot.
 	 * @throws NullPointerException Throws exception when the robot can't see a goal.
 	 */
-	public static Point2D.Double getOptimalPointBehindBall(WorldState ws, boolean my_goal_left, boolean my_team_blue) throws NullPointerException {
+	public static Point2D.Double getOptimalPointBehindBall(WorldState ws, boolean my_goal_left, boolean my_team_blue, double point_offset) throws NullPointerException {
 		Goal enemy_goal;
 		Robot robot, enemy_robot;
 
@@ -396,6 +400,7 @@ public class Utilities {
 			robot = (ws.getYellowRobot());
 			enemy_robot = (ws.getBlueRobot());
 		}
+		
 		ArrayList<Point2D.Double> goal_points = new ArrayList<Point2D.Double>();
 		Point2D.Double min_point = null;
 		double min_distance = WorldState.PITCH_WIDTH_CM*2;
@@ -439,7 +444,7 @@ public class Utilities {
 		itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
-			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(), my_goal_left);
+			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(),my_goal_left, point_offset);
 
 			//System.out.println(temp_point);
 			
@@ -510,7 +515,7 @@ public class Utilities {
 		itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
-			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(), my_goal_left);
+			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(), my_goal_left, POINT_OFFSET);
 
 			if (Utilities.isPointInField(temp_point)) { 
 				if (!isPointAroundRobot(temp_point, enemy_robot)) {
