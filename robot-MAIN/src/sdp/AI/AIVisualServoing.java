@@ -204,27 +204,30 @@ public class AIVisualServoing extends AI {
 		//
 		//
 
-//		Point2D.Double interceptBall= Utilities.intersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getRobot().getCoords(), ai_world_state.getRobot().getFrontCenter());
-//		System.out.println("InterceptDistance: " + interceptBall);
-//		System.out.println("Our robot's y: " + ai_world_state.getRobot().getCoords().y);
-//
-//		if (!interceptBall.equals(null)){
-//
-//			if((interceptBall.y < ai_world_state.getMyGoal().getBottom().y)  && (interceptBall.y > ai_world_state.getMyGoal().getTop().y)){
-//				if ((interceptBall.y > ai_world_state.getRobot().getCoords().y)  ){
-//					byte forward_speed = (byte) -20; //Utilities.normaliseToByte((15+(interceptDistance.getLength()/40)*25));
-//					mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
-//				} else if((interceptBall.y < ai_world_state.getRobot().getCoords().y)) {
-//					byte forward_speed = (byte) 20; //Utilities.normaliseToByte(-(15+(interceptDistance.getLength()/40)*25));
-//					mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
-//				}
-//			}
-//			else
-//			{
-//				mComm.sendMessage(opcode.operate, (byte) 0, (byte) 0);
-//			}
-//
-//		}
+		Point2D.Double interceptBall= Utilities.intersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getRobot().getCoords(), ai_world_state.getRobot().getFrontCenter());
+		System.out.println("InterceptDistance: " + interceptBall);
+		System.out.println("Our robot's y: " + ai_world_state.getRobot().getCoords().y);
+
+		if (!interceptBall.equals(null)){
+
+			if((interceptBall.y < ai_world_state.getMyGoal().getBottom().y)  && (interceptBall.y > ai_world_state.getMyGoal().getTop().y)){
+				if ((interceptBall.y > ai_world_state.getRobot().getCoords().y)  ){
+					byte forward_speed = (byte) -20; //Utilities.normaliseToByte((15+(interceptDistance.getLength()/40)*25));
+					return new Command(forward_speed, 0, false);
+					//mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
+				} else if((interceptBall.y < ai_world_state.getRobot().getCoords().y)) {
+					byte forward_speed = (byte) 20; //Utilities.normaliseToByte(-(15+(interceptDistance.getLength()/40)*25));
+					return new Command(forward_speed, 0, false);
+					//mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
+				}
+			}
+			else
+			{
+				return new Command( 0, 0, false);
+				//mComm.sendMessage(opcode.operate, (byte) 0, (byte) 0);
+			}
+
+		}
 		
 		return null;
 
@@ -234,41 +237,45 @@ public class AIVisualServoing extends AI {
 	protected Command penaltiesAttack() throws IOException {
 		Command command = new Command(0,0,false);
 
-//		Point2D.Double pointInGoal= 
-//			Utilities.intersection(ai_world_state.getRobot().getCoords(), 
-//					ai_world_state.getRobot().getFrontCenter(), ai_world_state.getEnemyGoal().getTop(), 
-//					ai_world_state.getEnemyGoal().getBottom());
-//		boolean clear_path = Utilities.isPathClear(pointInGoal, ai_world_state.getBallCoords(), 
-//				ai_world_state.getEnemyRobot());
-//		//        System.out.println(clear_path);
-//		if (clear_path){
-//			mComm.sendMessage(opcode.kick);
-//			System.out.println("kicking");
-//			//ai_world_state.setMode(mode.chase_ball);
-//
-//		}
-//
-//		Point2D enemyRobot;
-//		if(ai_world_state.isGoalVisible())        {
-//			enemyRobot= ai_world_state.getEnemyRobot().getCoords();
-//			//if enemy robot in the lower part of the goal then shoot in the upper part
-//			if( enemyRobot.getY() < ai_world_state.getEnemyGoal().getCentre().y){
-//				mComm.sendMessage(opcode.operate,(byte) 0, (byte) 
-//						ai_world_state.getEnemyGoal().getTop().y);
-//				///// mComm.sendMessage(opcode.kick);
-//				//if enemy robot in the upper part of the goal then shoot in the lower part
-//			}else if( enemyRobot.getY() <ai_world_state.getEnemyGoal().getCentre().y){
-//				mComm.sendMessage(opcode.operate, (byte) 0, (byte)
-//						ai_world_state.getEnemyGoal().getBottom().y);
-//				// mComm.sendMessage(opcode.kick);
-//			}
-//			//else just kick in upper part of the goal by ...this is the default
-//			else{
-//				mComm.sendMessage(opcode.operate, (byte) 0, (byte) 
-//						ai_world_state.getEnemyGoal().getTop().y);
-//				//         mComm.sendMessage(opcode.kick);
-//			}
-//		}
+		Point2D.Double pointInGoal= 
+			Utilities.intersection(ai_world_state.getRobot().getCoords(), 
+					ai_world_state.getRobot().getFrontCenter(), ai_world_state.getEnemyGoal().getTop(), 
+					ai_world_state.getEnemyGoal().getBottom());
+		boolean clear_path = Utilities.isPathClear(pointInGoal, ai_world_state.getBallCoords(), 
+				ai_world_state.getEnemyRobot());
+		//        System.out.println(clear_path);
+		if (clear_path){
+			return new Command(0,0,true);
+			//mComm.sendMessage(opcode.kick);
+			//System.out.println("kicking");
+			//ai_world_state.setMode(mode.chase_ball);
+
+		}
+
+		Point2D enemyRobot;
+		if(ai_world_state.isGoalVisible())        {
+			enemyRobot= ai_world_state.getEnemyRobot().getCoords();
+			//if enemy robot in the lower part of the goal then shoot in the upper part
+			if( enemyRobot.getY() < ai_world_state.getEnemyGoal().getCentre().y){
+				return new Command(0,0,false);
+				//mComm.sendMessage(opcode.operate,(byte) 0, (byte) 
+						//ai_world_state.getEnemyGoal().getTop().y);
+				// mComm.sendMessage(opcode.kick);
+				//if enemy robot in the upper part of the goal then shoot in the lower part
+			}else if( enemyRobot.getY() <ai_world_state.getEnemyGoal().getCentre().y){
+				return new Command(0,0,false);
+				//mComm.sendMessage(opcode.operate, (byte) 0, (byte)
+				//ai_world_state.getEnemyGoal().getBottom().y);
+				// mComm.sendMessage(opcode.kick);
+			}
+			//else just kick in upper part of the goal by ...this is the default
+			else{
+				return new Command(0,0,false);
+				//mComm.sendMessage(opcode.operate, (byte) 0, (byte) 
+				//ai_world_state.getEnemyGoal().getTop().y);
+				//         mComm.sendMessage(opcode.kick);
+			}
+		}
 		return null;
 	}
 

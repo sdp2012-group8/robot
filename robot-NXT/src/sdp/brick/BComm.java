@@ -57,7 +57,7 @@ public class BComm implements Communicator {
 	 * @param op the opcode
 	 * @param args the arguments
 	 */
-	@Override
+	
 	public void sendMessage(opcode op, byte... args) throws IOException {
 		os.write(op.ordinal()); // write opcode
 		os.write(args.length); // write number of args
@@ -68,7 +68,7 @@ public class BComm implements Communicator {
 	/**
 	 * Close the stream and connection gracefully
 	 */
-	@Override
+	
 	public void close() {
 		try {
 			running = false;
@@ -83,7 +83,7 @@ public class BComm implements Communicator {
 	/**
 	 * Only one listener could be registered on brick!
 	 */
-	@Override
+	
 	public void registerListener(final MessageListener listener) {
 		new Thread() {
 

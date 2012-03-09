@@ -161,10 +161,10 @@ public class AIMaster extends AIListener {
 	 */
 	public void setAIMode(AIMode new_ai_mode){
 		switch (new_ai_mode){
-			case visual_servoing:
+			case VISUAL_SERVOING:
 				ai = new AIVisualServoing();
 				break;
-			case neural_network: 
+			case NEURAL_NETWORKS: 
 				ai = new AITest();
 				break;
 		}
