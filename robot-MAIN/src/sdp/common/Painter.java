@@ -260,6 +260,8 @@ public class Painter {
 				(int) ((state_cm.getBallCoords().getY() - BALL_RADIUS) * width / WorldState.PITCH_WIDTH_CM),
 				(int) (2 * BALL_RADIUS * width / WorldState.PITCH_WIDTH_CM),
 				(int) (2 * BALL_RADIUS * width / WorldState.PITCH_WIDTH_CM), true);
+		drawLine((int)(state_cm.getBallCoords().getX()* width / WorldState.PITCH_WIDTH_CM), 0, (int) (state_cm.getBallCoords().getX()* width / WorldState.PITCH_WIDTH_CM), (int) (height/ratio));
+		drawLine(0, (int)(state_cm.getBallCoords().getY()* width / WorldState.PITCH_WIDTH_CM), width, (int)(state_cm.getBallCoords().getY()* width / WorldState.PITCH_WIDTH_CM));
 	}
 
 	// helpers

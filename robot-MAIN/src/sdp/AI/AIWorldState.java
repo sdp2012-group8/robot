@@ -17,7 +17,7 @@ import sdp.vision.processing.ImageProcessorConfig;
 
 public class AIWorldState extends WorldState {
 	
-	private static final long PREDICTION_TIME = 500; // in ms
+	private static final long PREDICTION_TIME = 400; // in ms
 	private static final long PREDICT_FRAME_SPAN = 3;
 	private Queue<WorldState> predict_queue = null;
 
@@ -195,7 +195,7 @@ public class AIWorldState extends WorldState {
 	// higher values mean that the new data will "weigh more"
 	// so the more uncertainty in result, the smaller value you should use
 	// don't use values less then 1!
-	private double filteredPositionAmount = 0.5;
+	private double filteredPositionAmount = 0.8;
 	private double filteredAngleAmount = 0.5;
 	
 	/**

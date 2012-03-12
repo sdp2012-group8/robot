@@ -27,8 +27,6 @@ public class MainImageProcessor extends BaseImageProcessor {
 	
 	/** The size of the direction cone angle. */
 	private static final int DIRECTION_CONE_ANGLE = 30;
-	/** Robot height normalisation constant. */
-	private static final double HEIGHT_NORM_VALUE = 40.0;
 	/** How many directions the outline distance calculations will use. */
 	private static final int OUTLINE_ANGLE_COUNT = 360;
 	
@@ -69,10 +67,21 @@ public class MainImageProcessor extends BaseImageProcessor {
 		cvSetImageROI(frame_ipl, getCurrentROI());
 
 		Point2D.Double ballPos = findBall(frame_ipl, ballThreshold);
-		Robot blueRobot = findRobot(frame_ipl, blueThreshold,
-				config.getBlueSizeMin(), config.getBlueSizeMax());
-		Robot yellowRobot = findRobot(frame_ipl, yellowThreshold,
-				config.getYellowSizeMin(), config.getYellowSizeMax());
+		
+		Robot blueRobot = new Robot(new Point2D.Double(-1.0, -1.0), -1.0);
+		if (config.isDetectBlue()) {
+			blueRobot = findRobot(frame_ipl, blueThreshold,
+					config.getBlueSizeMin(), config.getBlueSizeMax(),
+					config.isCorrectBlueHeight(), config.getBlueHeightFactor());
+		}
+		
+		Robot yellowRobot = new Robot(new Point2D.Double(-1.0, -1.0), -1.0);
+		if (config.isDetectYellow()) {
+			yellowRobot = findRobot(frame_ipl, yellowThreshold,
+					config.getYellowSizeMin(), config.getYellowSizeMax(),
+					config.isCorrectYellowHeight(), config.getYellowHeightFactor());
+		}
+		
 		BufferedImage worldImage = finaliseWorldImage(frame_ipl, ballPos, blueRobot, yellowRobot);
 		
 		return new WorldState(ballPos, blueRobot, yellowRobot, worldImage);
@@ -86,7 +95,9 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 */
 	private BufferedImage preprocessFrame(BufferedImage frame) {
 		IplImage frame_ipl = IplImage.createFrom(frame);
-		frame_ipl = ProcUtils.undistortImage(config, frame_ipl);
+		if (config.isUndistortFrame()) {
+			frame_ipl = ProcUtils.undistortImage(config, frame_ipl);
+		}
 		cvSetImageROI(frame_ipl, getCurrentROI());		
 		cvSmooth(frame_ipl, frame_ipl, CV_GAUSSIAN, 5);
 		return frame_ipl.getBufferedImage();
@@ -228,10 +239,12 @@ public class MainImageProcessor extends BaseImageProcessor {
 	 * @param frame_ipl The original frame.
 	 * @param robotThresh Thresholded image to search for the robot's T.
 	 * @param markerThresh Thresholded image to search for direction marker.
+	 * @param correctHeight Whether to correct robot height.
+	 * @param heightFactor Height correction factor.
 	 * @return The position of the ball.
 	 */
 	private Robot findRobot(IplImage frame_ipl, IplImage robotThresh,
-			int minSize, int maxSize) {
+			int minSize, int maxSize, boolean correctHeight, double heightFactor) {
 		CvSeq fullRobotContour = findAllContours(robotThresh);
 		ArrayList<CvSeq> robotShapes = sizeFilterContours(fullRobotContour, minSize, maxSize);
 		
@@ -288,8 +301,8 @@ public class MainImageProcessor extends BaseImageProcessor {
             }
             
             // Adjust mass center to account for robot's height.
-            if (config.isFixRobotHeight()) {
-	            double f = config.getFrameWidth() / HEIGHT_NORM_VALUE;
+            if (correctHeight && (heightFactor != 0.0)) {
+            	double f = config.getFrameWidth() / heightFactor;
 	            massCenterX -= (massCenterX - config.getFieldWidth() / 2) / f;
 	            massCenterY -= (massCenterY - config.getFieldHeight() / 2) / f;
             }
