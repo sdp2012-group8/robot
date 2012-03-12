@@ -46,19 +46,34 @@ public class ImageProcessorConfig {
 	/** Upper bound of ball contour size. */
 	private int ballSizeMax = 25;
 	
+	/** Whether to detect the blue robot. */
+	private boolean detectBlue = true;
 	/** Blue robot threshold bound container. */
 	private ThresholdBounds blueThresholds = new ThresholdBounds();
 	/** Lower bound of ball contour size. */
 	private int blueSizeMin = 10;
 	/** Upper bound of ball contour size. */
 	private int blueSizeMax = 60;
+	/** Whether to correct blue robot for height. */
+	private boolean correctBlueHeight = true;
+	/** Blue robot height correction height. */
+	private double blueHeightFactor = 40.0;
 	
+	/** Whether to detect the yellow robot. */
+	private boolean detectYellow = true;
 	/** Yellow robot threshold bound container. */
 	private ThresholdBounds yellowThresholds = new ThresholdBounds();
 	/** Lower bound of ball contour size. */
 	private int yellowSizeMin = 10;
 	/** Upper bound of ball contour size. */
 	private int yellowSizeMax = 60;
+	/** Whether to correct yellow robot for height. */
+	private boolean correctYellowHeight = true;
+	/** Yellow robot height correction height. */
+	private double yellowHeightFactor = 40.0;
+	
+	/** Whether to undistort the frame. */
+	private boolean undistortFrame = true;
 	
 	/** Image undistortion coefficient f_x. */
 	private double undistort_fx = 1.0;
@@ -77,9 +92,14 @@ public class ImageProcessorConfig {
 	private double undistort_p1 = 0.0;
 	/** Image undistortion coefficient p_2. */
 	private double undistort_p2 = 0.0;
-	
-	/** Whether to compensate for the robot height. */
-	private boolean fixRobotHeight = true;
+	/** Image undistortion coefficient k_3. */
+	private double undistort_k3 = 0.0;
+	/** Image undistortion coefficient k_4. */
+	private double undistort_k4 = 0.0;
+	/** Image undistortion coefficient k_5. */
+	private double undistort_k5 = 0.0;
+	/** Image undistortion coefficient k_6. */
+	private double undistort_k6 = 0.0;
 	
 	/** Whether to show the captured frame itself. */
 	private boolean showWorld = true;
@@ -358,6 +378,26 @@ public class ImageProcessorConfig {
 		return blueThresholds;
 	}
 	
+	
+	/**
+	 * Get whether blue robot detection is enabled.
+	 * 
+	 * @return Whether to detect blue robot.
+	 */
+	public boolean isDetectBlue() {
+		return detectBlue;
+	}
+
+	/**
+	 * Set whether to detect blue robot.
+	 * 
+	 * @param detectBlue Whether to detect blue robot.
+	 */
+	public void setDetectBlue(boolean detectBlue) {
+		this.detectBlue = detectBlue;
+	}
+
+
 	/**
 	 * Set the blue robot threshold bounds.
 	 * 
@@ -405,6 +445,63 @@ public class ImageProcessorConfig {
 		this.blueSizeMax = blueSizeMax;
 	}
 	
+
+	/**
+	 * Get whether blue robot height should be corrected.
+	 * 
+	 * @return Whether blue robot height should be corrected.
+	 */
+	public boolean isCorrectBlueHeight() {
+		return correctBlueHeight;
+	}
+
+	/**
+	 * Set whether blue robot height should be corrected.
+	 * 
+	 * @param correctBlueHeight Whether blue robot height should be corrected.
+	 */
+	public void setCorrectBlueHeight(boolean correctBlueHeight) {
+		this.correctBlueHeight = correctBlueHeight;
+	}
+
+
+	/**
+	 * Get the blue robot height correction factor.
+	 * 
+	 * @return The blue height factor.
+	 */
+	public double getBlueHeightFactor() {
+		return blueHeightFactor;
+	}
+
+	/**
+	 * Set the blue robot height correction factor.
+	 * 
+	 * @param blueHeightFactor The blue height factor.
+	 */
+	public void setBlueHeightFactor(double blueHeightFactor) {
+		this.blueHeightFactor = blueHeightFactor;
+	}
+
+
+	/**
+	 * Get whether yellow robot detection is enabled.
+	 * 
+	 * @return Whether yellow robot detection is enabled.
+	 */
+	public boolean isDetectYellow() {
+		return detectYellow;
+	}
+
+	/**
+	 * Set whether yellow robot detection is enabled.
+	 * 
+	 * @param detectYellow Whether yellow robot detection is enabled.
+	 */
+	public void setDetectYellow(boolean detectYellow) {
+		this.detectYellow = detectYellow;
+	}
+
 
 	/**
 	 * Get the yellow robot threshold bounds.
@@ -464,21 +561,40 @@ public class ImageProcessorConfig {
 
 
 	/**
-	 * Get whether robot height correction is being applied.
+	 * Get whether yellow robot height should be corrected.
 	 * 
-	 * @return Whether robot height correction is being applied.
+	 * @return Whether yellow robot height should be corrected.
 	 */
-	public boolean isFixRobotHeight() {
-		return fixRobotHeight;
+	public boolean isCorrectYellowHeight() {
+		return correctYellowHeight;
 	}
 
 	/**
-	 * Set whether robot height correction is being applied.
+	 * Set whether yellow robot height should be corrected.
 	 * 
-	 * @param fixRobotHeight Whether robot height correction should be applied.
+	 * @param correctYellowHeight Whether yellow robot height should be corrected.
 	 */
-	public void setFixRobotHeight(boolean fixRobotHeight) {
-		this.fixRobotHeight = fixRobotHeight;
+	public void setCorrectYellowHeight(boolean correctYellowHeight) {
+		this.correctYellowHeight = correctYellowHeight;
+	}
+
+
+	/**
+	 * Get the yellow robot height correction factor.
+	 * 
+	 * @return The yellow height factor.
+	 */
+	public double getYellowHeightFactor() {
+		return yellowHeightFactor;
+	}
+
+	/**
+	 * Set the yellow robot height correction factor.
+	 * 
+	 * @param yellowHeightFactor The yellow height factor.
+	 */
+	public void setYellowHeightFactor(double yellowHeightFactor) {
+		this.yellowHeightFactor = yellowHeightFactor;
 	}
 
 
@@ -501,6 +617,25 @@ public class ImageProcessorConfig {
 	}
 
 	
+	/**
+	 * Get whether to undistort the frame.
+	 * 
+	 * @return Whether to undistort the frame.
+	 */
+	public boolean isUndistortFrame() {
+		return undistortFrame;
+	}
+
+	/**
+	 * Set whether to undistort the frame.
+	 * 
+	 * @param undistortFrame Whether to undistort the frame.
+	 */
+	public void setUndistortFrame(boolean undistortFrame) {
+		this.undistortFrame = undistortFrame;
+	}
+
+
 	/**
 	 * Get the undistortion coefficient f_x.
 	 * 
@@ -654,6 +789,82 @@ public class ImageProcessorConfig {
 
 
 	/**
+	 * Get the undistortion coefficient k_3.
+	 * 
+	 * @return Coefficient k_3.
+	 */
+	public double getUndistort_k3() {
+		return undistort_k3;
+	}
+
+	/**
+	 * Set the undistortion coefficient k_3.
+	 * 
+	 * @param undistort_k3 New value of coefficient k_3.
+	 */
+	public void setUndistort_k3(double undistort_k3) {
+		this.undistort_k3 = undistort_k3;
+	}
+	
+	
+	/**
+	 * Get the undistortion coefficient k_4.
+	 * 
+	 * @return Coefficient k_4.
+	 */
+	public double getUndistort_k4() {
+		return undistort_k4;
+	}
+
+	/**
+	 * Set the undistortion coefficient k_4.
+	 * 
+	 * @param undistort_k4 New value of coefficient k_4.
+	 */
+	public void setUndistort_k4(double undistort_k4) {
+		this.undistort_k4 = undistort_k4;
+	}
+	
+	
+	/**
+	 * Get the undistortion coefficient k_5.
+	 * 
+	 * @return Coefficient k_5.
+	 */
+	public double getUndistort_k5() {
+		return undistort_k5;
+	}
+
+	/**
+	 * Set the undistortion coefficient k_5.
+	 * 
+	 * @param undistort_k5 New value of coefficient k_5.
+	 */
+	public void setUndistort_k5(double undistort_k5) {
+		this.undistort_k5 = undistort_k5;
+	}
+	
+	
+	/**
+	 * Get the undistortion coefficient k_6.
+	 * 
+	 * @return Coefficient k_6.
+	 */
+	public double getUndistort_k6() {
+		return undistort_k6;
+	}
+
+	/**
+	 * Set the undistortion coefficient k_6.
+	 * 
+	 * @param undistort_k6 New value of coefficient k_6.
+	 */
+	public void setUndistort_k6(double undistort_k6) {
+		this.undistort_k6 = undistort_k6;
+	}
+
+
+	/**
 	 * Get whether to show thresholded pixels.
 	 * 
 	 * @return Whether to show thresholded pixels.
@@ -749,6 +960,7 @@ public class ImageProcessorConfig {
 		Element rootElement = (Element)doc.getElementsByTagName("config").item(0);
 		
 		Element undistortElement = (Element)doc.getElementsByTagName("undistortion").item(0);
+		config.setUndistortFrame(XmlUtils.getChildBoolean(undistortElement, "enable"));
 		config.setUndistort_cx(XmlUtils.getChildDouble(undistortElement, "cx"));
 		config.setUndistort_cy(XmlUtils.getChildDouble(undistortElement, "cy"));
 		config.setUndistort_fx(XmlUtils.getChildDouble(undistortElement, "fx"));
@@ -757,6 +969,10 @@ public class ImageProcessorConfig {
 		config.setUndistort_k2(XmlUtils.getChildDouble(undistortElement, "k2"));
 		config.setUndistort_p1(XmlUtils.getChildDouble(undistortElement, "p1"));
 		config.setUndistort_p2(XmlUtils.getChildDouble(undistortElement, "p2"));
+		config.setUndistort_k3(XmlUtils.getChildDouble(undistortElement, "k3"));
+		config.setUndistort_k4(XmlUtils.getChildDouble(undistortElement, "k4"));
+		config.setUndistort_k5(XmlUtils.getChildDouble(undistortElement, "k5"));
+		config.setUndistort_k6(XmlUtils.getChildDouble(undistortElement, "k6"));
 		
 		Element fieldElement = (Element)rootElement.getElementsByTagName("field").item(0);
 		config.setRawFieldLowX(XmlUtils.getChildDouble(fieldElement, "lowX"));
@@ -775,6 +991,7 @@ public class ImageProcessorConfig {
 		config.setBallSizeMax(XmlUtils.getChildInt(ballElement, "sizeMax"));
 		
 		Element blueElement = (Element)rootElement.getElementsByTagName("blue").item(0);
+		config.setDetectBlue(XmlUtils.getChildBoolean(blueElement, "detect"));
 		config.getBlueThreshs().setHueMin(XmlUtils.getChildInt(blueElement, "hueMin"));
 		config.getBlueThreshs().setHueMax(XmlUtils.getChildInt(blueElement, "hueMax"));
 		config.getBlueThreshs().setSatMin(XmlUtils.getChildInt(blueElement, "satMin"));
@@ -783,8 +1000,11 @@ public class ImageProcessorConfig {
 		config.getBlueThreshs().setValMax(XmlUtils.getChildInt(blueElement, "valMax"));
 		config.setBlueSizeMin(XmlUtils.getChildInt(blueElement, "sizeMin"));
 		config.setBlueSizeMax(XmlUtils.getChildInt(blueElement, "sizeMax"));
+		config.setCorrectBlueHeight(XmlUtils.getChildBoolean(blueElement, "correctHeight"));
+		config.setBlueHeightFactor(XmlUtils.getChildDouble(blueElement, "heightFactor"));
 		
 		Element yellowElement = (Element)rootElement.getElementsByTagName("yellow").item(0);
+		config.setDetectYellow(XmlUtils.getChildBoolean(yellowElement, "detect"));
 		config.getYellowThreshs().setHueMin(XmlUtils.getChildInt(yellowElement, "hueMin"));
 		config.getYellowThreshs().setHueMax(XmlUtils.getChildInt(yellowElement, "hueMax"));
 		config.getYellowThreshs().setSatMin(XmlUtils.getChildInt(yellowElement, "satMin"));
@@ -793,6 +1013,8 @@ public class ImageProcessorConfig {
 		config.getYellowThreshs().setValMax(XmlUtils.getChildInt(yellowElement, "valMax"));
 		config.setYellowSizeMin(XmlUtils.getChildInt(yellowElement, "sizeMin"));
 		config.setYellowSizeMax(XmlUtils.getChildInt(yellowElement, "sizeMax"));
+		config.setCorrectYellowHeight(XmlUtils.getChildBoolean(yellowElement, "correctHeight"));
+		config.setYellowHeightFactor(XmlUtils.getChildDouble(yellowElement, "heightFactor"));
 		
 		return config;
 	}
@@ -811,6 +1033,7 @@ public class ImageProcessorConfig {
 		doc.appendChild(rootElement);
 		
 		Element undistortElement = doc.createElement("undistortion");
+		XmlUtils.addChildBoolean(doc, undistortElement, "enable", config.isUndistortFrame());
 		XmlUtils.addChildDouble(doc, undistortElement, "cx", config.getUndistort_cx());
 		XmlUtils.addChildDouble(doc, undistortElement, "cy", config.getUndistort_cy());
 		XmlUtils.addChildDouble(doc, undistortElement, "fx", config.getUndistort_fx());
@@ -819,6 +1042,10 @@ public class ImageProcessorConfig {
 		XmlUtils.addChildDouble(doc, undistortElement, "k2", config.getUndistort_k2());
 		XmlUtils.addChildDouble(doc, undistortElement, "p1", config.getUndistort_p1());
 		XmlUtils.addChildDouble(doc, undistortElement, "p2", config.getUndistort_p2());
+		XmlUtils.addChildDouble(doc, undistortElement, "k3", config.getUndistort_k3());
+		XmlUtils.addChildDouble(doc, undistortElement, "k4", config.getUndistort_k4());
+		XmlUtils.addChildDouble(doc, undistortElement, "k5", config.getUndistort_k5());
+		XmlUtils.addChildDouble(doc, undistortElement, "k6", config.getUndistort_k6());
 		rootElement.appendChild(undistortElement);
 		
 		Element fieldElement = doc.createElement("field");
@@ -840,6 +1067,7 @@ public class ImageProcessorConfig {
 		rootElement.appendChild(ballElement);
 		
 		Element blueElement = doc.createElement("blue");
+		XmlUtils.addChildBoolean(doc, blueElement, "detect", config.isDetectBlue());
 		XmlUtils.addChildInt(doc, blueElement, "hueMin", config.getBlueThreshs().getHueMin());
 		XmlUtils.addChildInt(doc, blueElement, "hueMax", config.getBlueThreshs().getHueMax());
 		XmlUtils.addChildInt(doc, blueElement, "satMin", config.getBlueThreshs().getSatMin());
@@ -848,9 +1076,12 @@ public class ImageProcessorConfig {
 		XmlUtils.addChildInt(doc, blueElement, "valMax", config.getBlueThreshs().getValMax());
 		XmlUtils.addChildInt(doc, blueElement, "sizeMin", config.getBlueSizeMin());
 		XmlUtils.addChildInt(doc, blueElement, "sizeMax", config.getBlueSizeMax());
+		XmlUtils.addChildBoolean(doc, blueElement, "correctHeight", config.isCorrectBlueHeight());
+		XmlUtils.addChildDouble(doc, blueElement, "heightFactor", config.getBlueHeightFactor());
 		rootElement.appendChild(blueElement);
 		
 		Element yellowElement = doc.createElement("yellow");
+		XmlUtils.addChildBoolean(doc, yellowElement, "detect", config.isDetectYellow());
 		XmlUtils.addChildInt(doc, yellowElement, "hueMin", config.getYellowThreshs().getHueMin());
 		XmlUtils.addChildInt(doc, yellowElement, "hueMax", config.getYellowThreshs().getHueMax());
 		XmlUtils.addChildInt(doc, yellowElement, "satMin", config.getYellowThreshs().getSatMin());
@@ -859,6 +1090,8 @@ public class ImageProcessorConfig {
 		XmlUtils.addChildInt(doc, yellowElement, "valMax", config.getYellowThreshs().getValMax());
 		XmlUtils.addChildInt(doc, yellowElement, "sizeMin", config.getYellowSizeMin());
 		XmlUtils.addChildInt(doc, yellowElement, "sizeMax", config.getYellowSizeMax());
+		XmlUtils.addChildBoolean(doc, yellowElement, "correctHeight", config.isCorrectYellowHeight());
+		XmlUtils.addChildDouble(doc, yellowElement, "heightFactor", config.getYellowHeightFactor());
 		rootElement.appendChild(yellowElement);
 		
 		XmlUtils.writeXmlDocument(doc, filename);

@@ -31,8 +31,8 @@ public class ProcUtils {
 	
 	/** Variable initialisation. */
 	static {
-		distortion = CvMat.create(1, 5);
-		distortion.put(0.0, 0.0, 0.0, 0.0, -1.684608201740239);	// TODO
+		distortion = CvMat.create(1, 8);
+		distortion.put(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 		
 		intristic = CvMat.create(3, 3);
 		intristic.put(1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0);
@@ -234,6 +234,10 @@ public class ProcUtils {
 		distortion.put(1, config.getUndistort_k2());
 		distortion.put(2, config.getUndistort_p1());
 		distortion.put(3, config.getUndistort_p2());
+		distortion.put(4, config.getUndistort_k3());
+		distortion.put(5, config.getUndistort_k4());
+		distortion.put(6, config.getUndistort_k5());
+		distortion.put(7, config.getUndistort_k6());
 	}
 	
 	/**

@@ -100,6 +100,17 @@ public class XmlUtils {
 	
 	
 	/**
+	 * Get the text contents of the specified child node as a boolean.
+	 * 
+	 * @param elem Current node.
+	 * @param childName Child node to get text out of.
+	 * @return Child's text contents as a boolean.
+	 */
+	public static boolean getChildBoolean(Element elem, String childName) {
+		return Boolean.valueOf(getChildText(elem, childName)).booleanValue();
+	}
+	
+	/**
 	 * Get the text contents of the specified child node as a double.
 	 * 
 	 * @param elem Current node.
@@ -151,12 +162,25 @@ public class XmlUtils {
 	
 	
 	/**
+	 * Add a child element, whose text contents are the given boolean value.
+	 * 
+	 * @param doc Document object, used to build new elements.
+	 * @param elem Element to append new child to.
+	 * @param childName Name of the new child element.
+	 * @param childValue Value of the new child element.
+	 */
+	public static void addChildBoolean(Document doc, Element elem, String childName,
+			boolean childValue) {
+		addChildText(doc, elem, childName, Boolean.toString(childValue));
+	}
+	
+	/**
 	 * Add a child element, whose text contents are the given double value.
 	 * 
 	 * @param doc Document object, used to build new elements.
 	 * @param elem Element to append new child to.
 	 * @param childName Name of the new child element.
-	 * @param childText Text contents of the new child element.
+	 * @param childValue Value of the new child element.
 	 */
 	public static void addChildDouble(Document doc, Element elem, String childName,
 			double childValue) {
