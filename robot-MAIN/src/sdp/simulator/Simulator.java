@@ -2,6 +2,7 @@ package sdp.simulator;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -170,12 +171,10 @@ public class Simulator extends WorldStateProvider {
 				will_be_in_collision[id] = false;
 				if (is_it_me) {
 					velocities[id] = first_run ? Vector2D.ZERO() :
-						Vector2D.multiply(
+						Vector2D.divide(
 								Vector2D.subtract(new Vector2D(rob.getCoords()), new Vector2D(old_rob.getCoords())),dt);
-					speeds[id] = velocities[id].getLength()*(
-							Utilities.normaliseAngle(Vector2D.getDirection(velocities[id])-directions[id])
-							< 0 ? -1d : 1d);
-
+					Vector2D proj = Vector2D.rotateVector(velocities[id], -rob.getAngle());
+					speeds[id] = proj.x;
 					turning_speeds[id] = first_run ? 0 : (rob.getAngle() - old_rob.getAngle())/dt;
 					try {
 						robot[id].sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed());
@@ -189,11 +188,12 @@ public class Simulator extends WorldStateProvider {
 		if (ws.getBallCoords().x != -1 && ws.getBallCoords().y != -1) {
 			ball = new Vector2D(ws.getBallCoords());
 			ball_velocity = first_run ? Vector2D.ZERO() : 
-				Vector2D.multiply(
+				Vector2D.divide(
 						Vector2D.subtract(new Vector2D(ws.getBallCoords()), new Vector2D(old_st.getBallCoords())), dt);
 		}
-		//System.out.println("ball vel = "+ball_velocity.getLength());
+		
 		old_st = ws;
+		im = ws.getWorldImage();
 	}
 
 	/**
@@ -210,20 +210,21 @@ public class Simulator extends WorldStateProvider {
 	public static WorldState simulateWs(long time_ms, int fps, WorldState[] states, boolean is_ws_in_cm, Command command, boolean am_i_blue) {
 		double sec = time_ms / 1000d;
 		double dt = 1d / fps;
+		double duration = dt*(states.length-1);
 		
 		Simulator sim = new Simulator(false);
-		for (int i = 0; i < states.length; i++)
-			sim.setWorldState(states[i], dt, is_ws_in_cm, command, am_i_blue);
+		
+		sim.setWorldState(states[0], 0, is_ws_in_cm, command, am_i_blue);
+		sim.setWorldState(states[states.length-1], duration, is_ws_in_cm, command, am_i_blue);
 		
 		// do simulation
 		WorldState ws = null;
-		for (double t = 0; t <= sec; t+=dt) {
+		
+		for (double t = 0; t <= sec; t+=dt)
 			ws = sim.simulate(dt);
-		}
 			
-		return ws;
-	}
-	
+		return Utilities.toCentimeters(ws);
+	}	
 
 
 	/**
