@@ -4,7 +4,6 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
 import sdp.AI.AIWorldState;
@@ -86,7 +85,7 @@ public class Painter {
 					(int)(robot.getBackRight().getY()*width),
 					(int)(robot.getBackLeft().getY()*width),
 					(int)(robot.getFrontLeft().getY()*width)
-			}, 5);
+			}, 5, true);
 
 			// draw direction pointer
 			double shift_x = 0.01 * Math.cos(robot.getAngle() * Math.PI / 180d);
@@ -127,7 +126,7 @@ public class Painter {
 					// TODO: Change this along with AIVisualServoing to show point
 					//final double dir_to_ball = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), new Vector2D(robot.getCoords())), -robot.getAngle()));
 					final double point_distance = 1.5*Robot.LENGTH_CM; // + 1*Robot.LENGTH_CM * (Math.abs(dir_to_ball)/180);
-					AIWorldState ai_world_state = Utilities.getAIWorldState(state_cm, my_goal_left, my_team_blue, false);
+					AIWorldState ai_world_state = Utilities.getAIWorldState(state_cm, my_goal_left, my_team_blue);
 					try {
 						// p_target = new Vector2D(Utilities.getOptimalPointBehindBall(Utilities.getAIWorldState(state_cm, my_goal_left, my_team_blue, false), point_distance));
 						if (p_target != null) {
@@ -159,9 +158,11 @@ public class Painter {
 					drawVector(Vector2D.add(startPt, left), Utilities.raytraceVector(state_cm, Vector2D.add(startPt, left), dir, am_i_blue, true), true);
 
 
+
 					g.setStroke(new BasicStroke(8.0f));
 					final int COLL_SECS_COUNT = 110;
 					final double SEC_ANGLE = 360d/COLL_SECS_COUNT;
+
 
 					final double[] sectors = Utilities.getSectors(state_cm, my_team_blue, 5, COLL_SECS_COUNT, false, true);
 
@@ -225,42 +226,40 @@ public class Painter {
 						id2 = temp3;
 					}
 
-
-					for (int ii = 0; ii < sectors.length; ii++) {
-						if (ii == id)
-							g.setColor(new Color(255, 0, 0, 200));
-						else if (ii == id2)
-							g.setColor(new Color(255, 255, 0, 200));
-						else
-							g.setColor(new Color(255, 255, 255, 10));
-						double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
-						double dista = sectors[ii];
-						Vector2D vec = Vector2D.multiply(Vector2D.rotateVector(new Vector2D(1, 0), ang), dista);
-						Vector2D coor = new Vector2D(robot.getCoords());
-						drawVector(coor, Vector2D.subtract(Utilities.getGlobalVector(robot, vec), coor), true);
-					}
-
-					g.setColor(new Color(255, 255, 255, 255));
-					fillOval((int)(target.x* width / WorldState.PITCH_WIDTH_CM-3), (int) (target.y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6);
-
-					g.setStroke(new BasicStroke(1.0f));
-					Vector2D dist = Utilities.raytraceVector(state_cm, target, Vector2D.change_length(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), target), 200), null, false);
-					drawVector(target, dist, false);
-					Vector2D global_dist = Vector2D.add(dist, target);
-					if (global_dist.getY() < 5) {
-						double a = Vector2D.getDirection(dist);
-						a += 180-2*(90-(180-a));
-						Vector2D dist2 = Vector2D.rotateVector(new Vector2D(200,0), a);
-						drawVector(global_dist, dist2, false);
-					} else if (global_dist.getY() > WorldState.PITCH_HEIGHT_CM-5) {
-						double a = Vector2D.getDirection(dist);
-						a -= 2*a-360;
-						Vector2D dist2 = Vector2D.rotateVector(new Vector2D(200,0), a);
-						drawVector(global_dist, dist2, false);
+						for (int ii = 0; ii < sectors.length; ii++) {
+							if (ii == id)
+								g.setColor(new Color(255, 0, 0, 200));
+							else if (ii == id2)
+								g.setColor(new Color(255, 255, 0, 200));
+							else
+								g.setColor(new Color(255, 255, 255, 10));
+							double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
+							double dista = sectors[ii];
+							Vector2D vec = Vector2D.multiply(Vector2D.rotateVector(new Vector2D(1, 0), ang), dista);
+							Vector2D coor = new Vector2D(robot.getCoords());
+							drawVector(coor, Vector2D.subtract(Utilities.getGlobalVector(robot, vec), coor), true);
+						}
+						
+						g.setColor(new Color(255, 255, 255, 255));
+						fillOval((int)(target.x* width / WorldState.PITCH_WIDTH_CM-3), (int) (target.y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6, true);
+						
+						g.setStroke(new BasicStroke(1.0f));
+						Vector2D dist = Utilities.raytraceVector(state_cm, target, Vector2D.change_length(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), target), 200), null, false);
+						drawVector(target, dist, false);
+						Vector2D global_dist = Vector2D.add(dist, target);
+						if (global_dist.getY() < 5) {
+							double a = Vector2D.getDirection(dist);
+							a += 180-2*(90-(180-a));
+							Vector2D dist2 = Vector2D.rotateVector(new Vector2D(200,0), a);
+							drawVector(global_dist, dist2, false);
+						} else if (global_dist.getY() > WorldState.PITCH_HEIGHT_CM-5) {
+							double a = Vector2D.getDirection(dist);
+							a -= 2*a-360;
+							Vector2D dist2 = Vector2D.rotateVector(new Vector2D(200,0), a);
+							drawVector(global_dist, dist2, false);
+						}
 					}
 				}
-
-			}
 		}
 		// draw ball
 		g.setColor(Color.red);
@@ -272,13 +271,15 @@ public class Painter {
 				(int) ((state_cm.getBallCoords().getX() - BALL_RADIUS) * width / WorldState.PITCH_WIDTH_CM),
 				(int) ((state_cm.getBallCoords().getY() - BALL_RADIUS) * width / WorldState.PITCH_WIDTH_CM),
 				(int) (2 * BALL_RADIUS * width / WorldState.PITCH_WIDTH_CM),
-				(int) (2 * BALL_RADIUS * width / WorldState.PITCH_WIDTH_CM));
+				(int) (2 * BALL_RADIUS * width / WorldState.PITCH_WIDTH_CM), true);
+		drawLine((int)(state_cm.getBallCoords().getX()* width / WorldState.PITCH_WIDTH_CM), 0, (int) (state_cm.getBallCoords().getX()* width / WorldState.PITCH_WIDTH_CM), (int) (height/ratio));
+		drawLine(0, (int)(state_cm.getBallCoords().getY()* width / WorldState.PITCH_WIDTH_CM), width, (int)(state_cm.getBallCoords().getY()* width / WorldState.PITCH_WIDTH_CM));
 	}
 
 	// helpers
 
 
-	public  void fillRect(int x, int y, int w, int h) {
+	public void fillRect(int x, int y, int w, int h) {
 		fillPolygon(new int[] {
 				x,
 				x+w,
@@ -291,7 +292,7 @@ public class Painter {
 				y+h,
 				y+h,
 				y
-		}, 5);
+		}, 5, true);
 	}
 
 	/**
@@ -301,11 +302,14 @@ public class Painter {
 	 * @param w
 	 * @param h
 	 */
-	private  void fillOval(int x, int y, int w, int h) {
+	public  void fillOval(int x, int y, int w, int h, boolean fill) {
 		Vector2D l_r = transformScreenVectorToLocalOne(x-w/2, y-h/2);
 		Vector2D t_r = transformScreenVectorToLocalOne(x+w/2, y+h/2);
 		Vector2D cent = Vector2D.divide(Vector2D.add(l_r, t_r), 2);
-		g.fillOval(off_x+(int) cent.getX(), off_y+(int) (cent.getY() * ratio), w, h);
+		if (fill)
+			g.fillOval(off_x+(int) cent.getX(), off_y+(int) (cent.getY() * ratio), w, h);
+		else
+			g.drawOval(off_x+(int) cent.getX(), off_y+(int) (cent.getY() * ratio), w, h);
 	}
 
 	/**
@@ -314,7 +318,7 @@ public class Painter {
 	 * @param ys
 	 * @param size number of points
 	 */
-	private  void fillPolygon(int[] xs, int[] ys, int size) {
+	public void fillPolygon(int[] xs, int[] ys, int size, boolean fill) {
 		Vector2D[] points = new Vector2D[size];
 		int[] newxs = new int[size], newys = new int[size];
 		for (int i = 0; i < size; i++) {
@@ -322,7 +326,10 @@ public class Painter {
 			newxs[i] = off_x+(int) points[i].getX();
 			newys[i] = off_y+(int) (points[i].getY()*ratio);
 		}
-		g.fillPolygon(newxs, newys, size);
+		if (fill)
+			g.fillPolygon(newxs, newys, size);
+		else
+			g.drawPolygon(newxs, newys, size);
 	}
 
 
@@ -334,7 +341,7 @@ public class Painter {
 	 * @param x2
 	 * @param y2
 	 */
-	private  void drawLine(int x1, int y1, int x2, int y2) {
+	public  void drawLine(int x1, int y1, int x2, int y2) {
 		if (reference_robot_id != null) {
 
 			Vector2D start = transformScreenVectorToLocalOne(x1, y1);
@@ -362,7 +369,7 @@ public class Painter {
 				(int)(ex),
 				(int)(ey));
 		if (draw_point_in_end) {
-			fillOval((int) ex-3, (int) ey-3, 6, 6);
+			fillOval((int) ex-3, (int) ey-3, 6, 6, true);
 		}
 
 	}

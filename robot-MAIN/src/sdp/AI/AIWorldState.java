@@ -2,6 +2,8 @@ package sdp.AI;
 
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import sdp.AI.AI.Command;
 import sdp.common.Goal;
@@ -16,7 +18,8 @@ import sdp.vision.processing.ImageProcessorConfig;
 public class AIWorldState extends WorldState {
 	
 	private static final long PREDICTION_TIME = 400; // in ms
-	private static final int PREDICTION_FPS = 20;
+	private static final long PREDICT_FRAME_SPAN = 3;
+	private Queue<WorldState> predict_queue = null;
 
 	private boolean my_team_blue;
 	private boolean my_goal_left;
@@ -28,6 +31,7 @@ public class AIWorldState extends WorldState {
 	private Robot enemy_robot = null;
 	private double distance_to_ball;
 	private double distance_to_goal;
+	private double point_offset;
 	
 	private Command command;
 	
@@ -37,23 +41,19 @@ public class AIWorldState extends WorldState {
 
 	//flags
 	boolean f_ball_on_field = false;
-	
-	private Simulator sim;
 
-	public AIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left, boolean do_prediction) {
+	public AIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
 		super(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
-		sim = new Simulator(false);
 
-		update(world_state, my_team_blue, my_goal_left, do_prediction);
+		update(world_state, my_team_blue, my_goal_left);
 	}
 
-	public void update(WorldState world_state, boolean my_team_blue, boolean my_goal_left, boolean do_prediction) {
+	public void update(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {		
 		// To enable or disable the prediction uncomment/comment this line.
-		//if (do_prediction)
-		//	world_state = predict(world_state, PREDICTION_TIME, PREDICTION_FPS);
+		world_state = predict(world_state, PREDICTION_TIME);
 		
 		// To enable or disable low pass, uncomment this line
-		//world_state = lowPass(this, world_state);
+		world_state = lowPass(this, world_state);
 		
 		this.my_team_blue = my_team_blue;
 		this.my_goal_left = my_goal_left;
@@ -86,10 +86,39 @@ public class AIWorldState extends WorldState {
 		}
 	}
 	
-	private WorldState predict(WorldState input, long time_ms, int fps) {
-		double dt = 1d / fps;
-		sim.setWorldState(input, dt, true, command, my_team_blue);
-		return Utilities.toCentimeters(sim.simulateWs(time_ms, fps));
+	private long fps = 25;
+	private long oldtime = -1;
+	
+	private WorldState predict(WorldState input, long time_ms) {
+		if (predict_queue == null) {
+			predict_queue = new LinkedList<WorldState>();
+			for (int i = 0; i < PREDICT_FRAME_SPAN; i++)
+				predict_queue.add(input);
+		}
+		
+		predict_queue.add(input);
+		predict_queue.poll();
+		
+		WorldState[] states = predict_queue.toArray(new WorldState[0]);
+		
+		if (oldtime != -1) {
+			long currtime = System.currentTimeMillis();
+			fps = (long) (1000d/(currtime - oldtime));
+		}
+		
+		if (fps > 25)
+			fps = 25;
+		if (fps < 5)
+			fps = 5;
+
+		
+		WorldState state = Simulator.simulateWs(time_ms, (int) fps,
+				states,
+				true, command, my_team_blue);
+		
+		oldtime = System.currentTimeMillis();
+		
+		return state;
 	}
 
 
@@ -150,7 +179,11 @@ public class AIWorldState extends WorldState {
 	
 	public void onDraw(BufferedImage im, ImageProcessorConfig config) {
 		Painter p = new Painter(im, this);
-		p.setOffsets(config.getFieldLowX(), config.getFieldLowY(), config.getFieldWidth(), config.getFieldHeight());
+		if (config != null) {
+			p.setOffsets(config.getFieldLowX(), config.getFieldLowY(), config.getFieldWidth(), config.getFieldHeight());
+		} else {
+			p.setOffsets(0, 0, Simulator.IMAGE_WIDTH, Simulator.IMAGE_HEIGHT);
+		}
 		p.image(my_team_blue,my_goal_left);
 		p.dispose();
 	}
@@ -163,8 +196,8 @@ public class AIWorldState extends WorldState {
 	// higher values mean that the new data will "weigh more"
 	// so the more uncertainty in result, the smaller value you should use
 	// don't use values less then 1!
-	private int filteredPositionAmount = 6;
-	private int filteredAngleAmount = 2;
+	private double filteredPositionAmount = 0.8;
+	private double filteredAngleAmount = 0.5;
 	
 	/**
 	 * Low pass for angles
@@ -178,8 +211,11 @@ public class AIWorldState extends WorldState {
 		if (!angle)
 			return (old_value+new_value*filteredPositionAmount)/((double) (filteredPositionAmount+1));
 		else {
-			double new_ang = new_value*filteredAngleAmount;
-			return Utilities.normaliseAngle(old_value+filteredAngleAmount*(new_ang - old_value)/(filteredAngleAmount+1));
+			Vector2D old_val = Vector2D.rotateVector(new Vector2D(1, 0), old_value);
+			Vector2D new_val = Vector2D.rotateVector(new Vector2D(1, 0), new_value);
+			Vector2D sum = Vector2D.add(old_val, Vector2D.multiply(new_val, filteredAngleAmount));
+			Vector2D ans = Vector2D.divide(sum, filteredAngleAmount+1);
+			return Vector2D.getDirection(ans);
 		}
 	}
 	
@@ -205,14 +241,14 @@ public class AIWorldState extends WorldState {
 	 */
 	private Robot lowPass(Robot old_value, Robot new_value) {
 		Robot a = new Robot(
-				lowPass(new_value.getCoords(), old_value.getCoords()),
+				lowPass(old_value.getCoords(), new_value.getCoords()),
 				lowPass(old_value.getAngle(), new_value.getAngle(), true));
 		a.setCoords(true);
 		return a;
 	}
 	
 	private WorldState lowPass(WorldState old_state, WorldState new_state) {
-		return new WorldState(checkBall(old_state.getBallCoords(), new_state.getBallCoords()),
+		return new WorldState(lowPass(old_state.getBallCoords(), new_state.getBallCoords()),//checkBall(old_state.getBallCoords(), new_state.getBallCoords()),
 				lowPass(old_state.getBlueRobot(), new_state.getBlueRobot()),
 				lowPass(old_state.getYellowRobot(), new_state.getYellowRobot()),
 				new_state.getWorldImage());

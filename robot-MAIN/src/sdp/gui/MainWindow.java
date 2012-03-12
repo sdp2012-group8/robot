@@ -44,6 +44,7 @@ import javax.swing.ButtonGroup;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -151,14 +152,19 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		
 		testBench = new TestBench();
 		
-		setSize(new Dimension(1050, 612));
+		setSize(new Dimension(1050, 710));
 		setTitle(WINDOW_TITLE);
 		initComponents();
 		
 		if (vision != null) {
-			ImageProcessorConfig defaultConfig = ImageProcessorConfig.loadConfiguration(DEFAULT_CONFIG_PATH);
-			setGUIConfiguration(defaultConfig);
-			setVisionConfiguration();
+			if (new File(DEFAULT_CONFIG_PATH).exists()) {
+				ImageProcessorConfig defaultConfig = ImageProcessorConfig.loadConfiguration(DEFAULT_CONFIG_PATH);
+				setGUIConfiguration(defaultConfig);
+				setVisionConfiguration();
+			} else {
+				LOGGER.warning("Could not find default vision configuration, using built-in defaults.");
+				getVisionConfiguration();
+			}
 		} else {
 			robotControlTabbedPanel.remove(visionSettingPanel);
 		}
@@ -204,7 +210,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		}
 		
 		aiInstance = new AIMaster(com, vision, AIMaster.AIMode.VISUAL_SERVOING);
-		aiInstance.start(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected(), true);
+		aiInstance.start(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected());
 		
 		WorldStateObserver aiObserver = new WorldStateObserver(aiInstance);
 		synchronized (worldStateObserver) {
@@ -316,6 +322,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		config.getBallThreshs().setValMax(((Integer)ballValMaxSpinner.getValue()).intValue());
 		config.setBallSizeMax(((Integer)ballSizeMaxSpinner.getValue()).intValue());
 		
+		config.setDetectBlue(enableBlueCheckbox.isSelected());
 		config.getBlueThreshs().setHueMin(((Integer)blueHueMinSpinner.getValue()).intValue());
 		config.getBlueThreshs().setSatMin(((Integer)blueSatMinSpinner.getValue()).intValue());
 		config.getBlueThreshs().setValMin(((Integer)blueValMinSpinner.getValue()).intValue());
@@ -324,7 +331,10 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		config.getBlueThreshs().setSatMax(((Integer)blueSatMaxSpinner.getValue()).intValue());
 		config.getBlueThreshs().setValMax(((Integer)blueValMaxSpinner.getValue()).intValue());
 		config.setBlueSizeMax(((Integer)blueSizeMaxSpinner.getValue()).intValue());
+		config.setCorrectBlueHeight(correctHeightBlueCheckbox.isSelected());
+		config.setBlueHeightFactor(((Integer)blueHeightFactorSpinner.getValue()).doubleValue());
 		
+		config.setDetectYellow(enableYellowCheckbox.isSelected());
 		config.getYellowThreshs().setHueMin(((Integer)yellowHueMinSpinner.getValue()).intValue());
 		config.getYellowThreshs().setSatMin(((Integer)yellowSatMinSpinner.getValue()).intValue());
 		config.getYellowThreshs().setValMin(((Integer)yellowValMinSpinner.getValue()).intValue());
@@ -333,7 +343,10 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		config.getYellowThreshs().setSatMax(((Integer)yellowSatMaxSpinner.getValue()).intValue());
 		config.getYellowThreshs().setValMax(((Integer)yellowValMaxSpinner.getValue()).intValue());
 		config.setYellowSizeMax(((Integer)yellowSizeMaxSpinner.getValue()).intValue());
+		config.setCorrectYellowHeight(correctHeightYellowCheckbox.isSelected());
+		config.setYellowHeightFactor(((Integer)yellowHeightFactorSpinner.getValue()).doubleValue());
 		
+		config.setUndistortFrame(enableUndistortionCheckbox.isSelected());
 		try {
 			config.setUndistort_cx(Double.valueOf(cxTextfield.getText()));
 		} catch (NumberFormatException e) {	}
@@ -358,8 +371,18 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		try {
 			config.setUndistort_p2(Double.valueOf(p2Textfield.getText()));
 		} catch (NumberFormatException e) { }
-		
-		config.setFixRobotHeight(correctHeightCheckbox.isSelected());
+		try {
+			config.setUndistort_k3(Double.valueOf(k3Textfield.getText()));
+		} catch (NumberFormatException e) { }
+		try {
+			config.setUndistort_k4(Double.valueOf(k4Textfield.getText()));
+		} catch (NumberFormatException e) { }
+		try {
+			config.setUndistort_k5(Double.valueOf(k5Textfield.getText()));
+		} catch (NumberFormatException e) { }
+		try {
+			config.setUndistort_k6(Double.valueOf(k6Textfield.getText()));
+		} catch (NumberFormatException e) { }
 		
 		config.setShowWorld(showWorldCheckbox.isSelected());
 		config.setShowThresholds(showThreshCheckbox.isSelected());
@@ -389,6 +412,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		ballValMaxSpinner.setValue(new Integer(config.getBallThreshs().getValMax()));
 		ballSizeMaxSpinner.setValue(new Integer(config.getBallSizeMax()));
 		
+		enableBlueCheckbox.setSelected(config.isDetectBlue());
 		blueHueMinSpinner.setValue(new Integer(config.getBlueThreshs().getHueMin()));
 		blueSatMinSpinner.setValue(new Integer(config.getBlueThreshs().getSatMin()));
 		blueValMinSpinner.setValue(new Integer(config.getBlueThreshs().getValMin()));
@@ -397,7 +421,10 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		blueSatMaxSpinner.setValue(new Integer(config.getBlueThreshs().getSatMax()));
 		blueValMaxSpinner.setValue(new Integer(config.getBlueThreshs().getValMax()));
 		blueSizeMaxSpinner.setValue(new Integer(config.getBlueSizeMax()));
+		correctHeightBlueCheckbox.setSelected(config.isCorrectBlueHeight());
+		blueHeightFactorSpinner.setValue(new Integer((int)config.getBlueHeightFactor()));
 		
+		enableYellowCheckbox.setSelected(config.isDetectYellow());
 		yellowHueMinSpinner.setValue(new Integer(config.getYellowThreshs().getHueMin()));
 		yellowSatMinSpinner.setValue(new Integer(config.getYellowThreshs().getSatMin()));
 		yellowValMinSpinner.setValue(new Integer(config.getYellowThreshs().getValMin()));
@@ -406,7 +433,10 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		yellowSatMaxSpinner.setValue(new Integer(config.getYellowThreshs().getSatMax()));
 		yellowValMaxSpinner.setValue(new Integer(config.getYellowThreshs().getValMax()));
 		yellowSizeMaxSpinner.setValue(new Integer(config.getYellowSizeMax()));
+		correctHeightYellowCheckbox.setSelected(config.isCorrectYellowHeight());
+		yellowHeightFactorSpinner.setValue(new Integer((int)config.getYellowHeightFactor()));
 		
+		enableUndistortionCheckbox.setSelected(config.isUndistortFrame());
 		cxTextfield.setText(Double.toString(config.getUndistort_cx()));
 		cyTextfield.setText(Double.toString(config.getUndistort_cy()));
 		fxTextfield.setText(Double.toString(config.getUndistort_fx()));
@@ -415,8 +445,10 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		k2Textfield.setText(Double.toString(config.getUndistort_k2()));
 		p1Textfield.setText(Double.toString(config.getUndistort_p1()));
 		p2Textfield.setText(Double.toString(config.getUndistort_p2()));
-		
-		correctHeightCheckbox.setSelected(config.isFixRobotHeight());
+		k3Textfield.setText(Double.toString(config.getUndistort_k3()));
+		k4Textfield.setText(Double.toString(config.getUndistort_k4()));
+		k5Textfield.setText(Double.toString(config.getUndistort_k5()));
+		k6Textfield.setText(Double.toString(config.getUndistort_k6()));
 		
 		showWorldCheckbox.setSelected(config.isShowWorld());
 		showThreshCheckbox.setSelected(config.isShowThresholds());
@@ -584,14 +616,14 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		getContentPane().add(robotControlTabbedPanel, gbc_robotControlTabbedPanel);
 		
 		visionSettingPanel = new JPanel();
-		robotControlTabbedPanel.addTab("Vision Calibration", null, visionSettingPanel, null);
+		robotControlTabbedPanel.addTab("Vision", null, visionSettingPanel, null);
 		robotControlTabbedPanel.setEnabledAt(0, true);
 		visionSettingPanel.setAlignmentY(Component.TOP_ALIGNMENT);
 		GridBagLayout gbl_visionSettingPanel = new GridBagLayout();
 		gbl_visionSettingPanel.columnWidths = new int[]{200, 200, 0, 0};
-		gbl_visionSettingPanel.rowHeights = new int[]{15, 0, 0, 0, 0, 0, 0};
+		gbl_visionSettingPanel.rowHeights = new int[]{15, 0, 0, 0, 0, 0};
 		gbl_visionSettingPanel.columnWeights = new double[]{1.0, 0.0, 1.0, Double.MIN_VALUE};
-		gbl_visionSettingPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_visionSettingPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		visionSettingPanel.setLayout(gbl_visionSettingPanel);
 		
 		generalSettingPanel = new JPanel();
@@ -800,7 +832,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		ballThreshPanel.add(ballSizeMaxSpinner, gbc_ballSizeMaxSpinner);
 		
 		undistortionPanel = new JPanel();
-		undistortionPanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Undistortion Coefficients", TitledBorder.CENTER, TitledBorder.TOP, null, null));
+		undistortionPanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Undistortion", TitledBorder.CENTER, TitledBorder.TOP, null, new Color(51, 51, 51)));
 		GridBagConstraints gbc_undistortionPanel = new GridBagConstraints();
 		gbc_undistortionPanel.gridheight = 2;
 		gbc_undistortionPanel.insets = new Insets(0, 0, 5, 5);
@@ -810,17 +842,26 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		visionSettingPanel.add(undistortionPanel, gbc_undistortionPanel);
 		GridBagLayout gbl_undistortionPanel = new GridBagLayout();
 		gbl_undistortionPanel.columnWidths = new int[]{0, 0, 100, 0, 0};
-		gbl_undistortionPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-		gbl_undistortionPanel.columnWeights = new double[]{1.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
-		gbl_undistortionPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_undistortionPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_undistortionPanel.columnWeights = new double[]{1.0, 0.0, 1.0, 1.0, Double.MIN_VALUE};
+		gbl_undistortionPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
 		undistortionPanel.setLayout(gbl_undistortionPanel);
 		
-		intristicLabel = new JLabel("Intristic");
+		enableUndistortionCheckbox = new JCheckBox("Enable undistortion");
+		GridBagConstraints gbc_enableUndistortionCheckbox = new GridBagConstraints();
+		gbc_enableUndistortionCheckbox.anchor = GridBagConstraints.WEST;
+		gbc_enableUndistortionCheckbox.gridwidth = 2;
+		gbc_enableUndistortionCheckbox.insets = new Insets(0, 0, 5, 5);
+		gbc_enableUndistortionCheckbox.gridx = 1;
+		gbc_enableUndistortionCheckbox.gridy = 0;
+		undistortionPanel.add(enableUndistortionCheckbox, gbc_enableUndistortionCheckbox);
+		
+		intristicLabel = new JLabel("Intristic Coefficients");
 		GridBagConstraints gbc_intristicLabel = new GridBagConstraints();
 		gbc_intristicLabel.gridwidth = 2;
 		gbc_intristicLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_intristicLabel.gridx = 1;
-		gbc_intristicLabel.gridy = 0;
+		gbc_intristicLabel.gridy = 1;
 		undistortionPanel.add(intristicLabel, gbc_intristicLabel);
 		
 		fxLabel = new JLabel("f_x");
@@ -829,7 +870,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_fxLabel.anchor = GridBagConstraints.EAST;
 		gbc_fxLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_fxLabel.gridx = 1;
-		gbc_fxLabel.gridy = 1;
+		gbc_fxLabel.gridy = 2;
 		undistortionPanel.add(fxLabel, gbc_fxLabel);
 		
 		fxTextfield = new JTextField();
@@ -837,7 +878,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_fxTextfield.insets = new Insets(0, 0, 5, 5);
 		gbc_fxTextfield.fill = GridBagConstraints.HORIZONTAL;
 		gbc_fxTextfield.gridx = 2;
-		gbc_fxTextfield.gridy = 1;
+		gbc_fxTextfield.gridy = 2;
 		undistortionPanel.add(fxTextfield, gbc_fxTextfield);
 		fxTextfield.setColumns(10);
 		
@@ -847,7 +888,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_fyLabel.anchor = GridBagConstraints.EAST;
 		gbc_fyLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_fyLabel.gridx = 1;
-		gbc_fyLabel.gridy = 2;
+		gbc_fyLabel.gridy = 3;
 		undistortionPanel.add(fyLabel, gbc_fyLabel);
 		
 		fyTextfield = new JTextField();
@@ -855,7 +896,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_fyTextfield.insets = new Insets(0, 0, 5, 5);
 		gbc_fyTextfield.fill = GridBagConstraints.HORIZONTAL;
 		gbc_fyTextfield.gridx = 2;
-		gbc_fyTextfield.gridy = 2;
+		gbc_fyTextfield.gridy = 3;
 		undistortionPanel.add(fyTextfield, gbc_fyTextfield);
 		fyTextfield.setColumns(10);
 		
@@ -865,7 +906,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_cxLabel.anchor = GridBagConstraints.EAST;
 		gbc_cxLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_cxLabel.gridx = 1;
-		gbc_cxLabel.gridy = 3;
+		gbc_cxLabel.gridy = 4;
 		undistortionPanel.add(cxLabel, gbc_cxLabel);
 		
 		cxTextfield = new JTextField();
@@ -873,7 +914,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_cxTextfield.insets = new Insets(0, 0, 5, 5);
 		gbc_cxTextfield.fill = GridBagConstraints.HORIZONTAL;
 		gbc_cxTextfield.gridx = 2;
-		gbc_cxTextfield.gridy = 3;
+		gbc_cxTextfield.gridy = 4;
 		undistortionPanel.add(cxTextfield, gbc_cxTextfield);
 		cxTextfield.setColumns(10);
 		
@@ -883,7 +924,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_cyLabel.anchor = GridBagConstraints.EAST;
 		gbc_cyLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_cyLabel.gridx = 1;
-		gbc_cyLabel.gridy = 4;
+		gbc_cyLabel.gridy = 5;
 		undistortionPanel.add(cyLabel, gbc_cyLabel);
 		
 		cyTextfield = new JTextField();
@@ -891,17 +932,17 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_cyTextfield.insets = new Insets(0, 0, 5, 5);
 		gbc_cyTextfield.fill = GridBagConstraints.HORIZONTAL;
 		gbc_cyTextfield.gridx = 2;
-		gbc_cyTextfield.gridy = 4;
+		gbc_cyTextfield.gridy = 5;
 		undistortionPanel.add(cyTextfield, gbc_cyTextfield);
 		cyTextfield.setColumns(10);
 		
-		distortionLabel = new JLabel("Distortion");
+		distortionLabel = new JLabel("Distortion Coefficients");
 		distortionLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		GridBagConstraints gbc_distortionLabel = new GridBagConstraints();
 		gbc_distortionLabel.gridwidth = 2;
 		gbc_distortionLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_distortionLabel.gridx = 1;
-		gbc_distortionLabel.gridy = 5;
+		gbc_distortionLabel.gridy = 6;
 		undistortionPanel.add(distortionLabel, gbc_distortionLabel);
 		
 		k1Label = new JLabel("k_1");
@@ -910,7 +951,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_k1Label.anchor = GridBagConstraints.EAST;
 		gbc_k1Label.insets = new Insets(0, 0, 5, 5);
 		gbc_k1Label.gridx = 1;
-		gbc_k1Label.gridy = 6;
+		gbc_k1Label.gridy = 7;
 		undistortionPanel.add(k1Label, gbc_k1Label);
 		
 		k1Textfield = new JTextField();
@@ -918,7 +959,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_k1Textfield.insets = new Insets(0, 0, 5, 5);
 		gbc_k1Textfield.fill = GridBagConstraints.HORIZONTAL;
 		gbc_k1Textfield.gridx = 2;
-		gbc_k1Textfield.gridy = 6;
+		gbc_k1Textfield.gridy = 7;
 		undistortionPanel.add(k1Textfield, gbc_k1Textfield);
 		k1Textfield.setColumns(10);
 		
@@ -928,7 +969,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_k2Label.anchor = GridBagConstraints.EAST;
 		gbc_k2Label.insets = new Insets(0, 0, 5, 5);
 		gbc_k2Label.gridx = 1;
-		gbc_k2Label.gridy = 7;
+		gbc_k2Label.gridy = 8;
 		undistortionPanel.add(k2Label, gbc_k2Label);
 		
 		k2Textfield = new JTextField();
@@ -936,7 +977,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_k2Textfield.insets = new Insets(0, 0, 5, 5);
 		gbc_k2Textfield.fill = GridBagConstraints.HORIZONTAL;
 		gbc_k2Textfield.gridx = 2;
-		gbc_k2Textfield.gridy = 7;
+		gbc_k2Textfield.gridy = 8;
 		undistortionPanel.add(k2Textfield, gbc_k2Textfield);
 		k2Textfield.setColumns(10);
 		
@@ -946,7 +987,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_p1Label.anchor = GridBagConstraints.EAST;
 		gbc_p1Label.insets = new Insets(0, 0, 5, 5);
 		gbc_p1Label.gridx = 1;
-		gbc_p1Label.gridy = 8;
+		gbc_p1Label.gridy = 9;
 		undistortionPanel.add(p1Label, gbc_p1Label);
 		
 		p1Textfield = new JTextField();
@@ -954,7 +995,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_p1Textfield.insets = new Insets(0, 0, 5, 5);
 		gbc_p1Textfield.fill = GridBagConstraints.HORIZONTAL;
 		gbc_p1Textfield.gridx = 2;
-		gbc_p1Textfield.gridy = 8;
+		gbc_p1Textfield.gridy = 9;
 		undistortionPanel.add(p1Textfield, gbc_p1Textfield);
 		p1Textfield.setColumns(10);
 		
@@ -962,19 +1003,87 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		p2Label.setHorizontalAlignment(SwingConstants.RIGHT);
 		GridBagConstraints gbc_p2Label = new GridBagConstraints();
 		gbc_p2Label.anchor = GridBagConstraints.EAST;
-		gbc_p2Label.insets = new Insets(0, 0, 0, 5);
+		gbc_p2Label.insets = new Insets(0, 0, 5, 5);
 		gbc_p2Label.gridx = 1;
-		gbc_p2Label.gridy = 9;
+		gbc_p2Label.gridy = 10;
 		undistortionPanel.add(p2Label, gbc_p2Label);
 		
 		p2Textfield = new JTextField();
 		GridBagConstraints gbc_p2Textfield = new GridBagConstraints();
-		gbc_p2Textfield.insets = new Insets(0, 0, 0, 5);
+		gbc_p2Textfield.insets = new Insets(0, 0, 5, 5);
 		gbc_p2Textfield.fill = GridBagConstraints.HORIZONTAL;
 		gbc_p2Textfield.gridx = 2;
-		gbc_p2Textfield.gridy = 9;
+		gbc_p2Textfield.gridy = 10;
 		undistortionPanel.add(p2Textfield, gbc_p2Textfield);
 		p2Textfield.setColumns(10);
+		
+		k3Label = new JLabel("k_3");
+		GridBagConstraints gbc_k3Label = new GridBagConstraints();
+		gbc_k3Label.insets = new Insets(0, 0, 5, 5);
+		gbc_k3Label.anchor = GridBagConstraints.EAST;
+		gbc_k3Label.gridx = 1;
+		gbc_k3Label.gridy = 11;
+		undistortionPanel.add(k3Label, gbc_k3Label);
+		
+		k3Textfield = new JTextField();
+		GridBagConstraints gbc_k3Textfield = new GridBagConstraints();
+		gbc_k3Textfield.insets = new Insets(0, 0, 5, 5);
+		gbc_k3Textfield.fill = GridBagConstraints.HORIZONTAL;
+		gbc_k3Textfield.gridx = 2;
+		gbc_k3Textfield.gridy = 11;
+		undistortionPanel.add(k3Textfield, gbc_k3Textfield);
+		k3Textfield.setColumns(10);
+		
+		k4Label = new JLabel("k_4");
+		GridBagConstraints gbc_k4Label = new GridBagConstraints();
+		gbc_k4Label.insets = new Insets(0, 0, 5, 5);
+		gbc_k4Label.anchor = GridBagConstraints.EAST;
+		gbc_k4Label.gridx = 1;
+		gbc_k4Label.gridy = 12;
+		undistortionPanel.add(k4Label, gbc_k4Label);
+		
+		k4Textfield = new JTextField();
+		GridBagConstraints gbc_k4Textfield = new GridBagConstraints();
+		gbc_k4Textfield.insets = new Insets(0, 0, 5, 5);
+		gbc_k4Textfield.fill = GridBagConstraints.HORIZONTAL;
+		gbc_k4Textfield.gridx = 2;
+		gbc_k4Textfield.gridy = 12;
+		undistortionPanel.add(k4Textfield, gbc_k4Textfield);
+		k4Textfield.setColumns(10);
+		
+		k5Label = new JLabel("k_5");
+		GridBagConstraints gbc_k5Label = new GridBagConstraints();
+		gbc_k5Label.insets = new Insets(0, 0, 5, 5);
+		gbc_k5Label.anchor = GridBagConstraints.EAST;
+		gbc_k5Label.gridx = 1;
+		gbc_k5Label.gridy = 13;
+		undistortionPanel.add(k5Label, gbc_k5Label);
+		
+		k5Textfield = new JTextField();
+		GridBagConstraints gbc_k5Textfield = new GridBagConstraints();
+		gbc_k5Textfield.insets = new Insets(0, 0, 5, 5);
+		gbc_k5Textfield.fill = GridBagConstraints.HORIZONTAL;
+		gbc_k5Textfield.gridx = 2;
+		gbc_k5Textfield.gridy = 13;
+		undistortionPanel.add(k5Textfield, gbc_k5Textfield);
+		k5Textfield.setColumns(10);
+		
+		k6Label = new JLabel("k_6");
+		GridBagConstraints gbc_k6Label = new GridBagConstraints();
+		gbc_k6Label.insets = new Insets(0, 0, 0, 5);
+		gbc_k6Label.anchor = GridBagConstraints.EAST;
+		gbc_k6Label.gridx = 1;
+		gbc_k6Label.gridy = 14;
+		undistortionPanel.add(k6Label, gbc_k6Label);
+		
+		k6Textfield = new JTextField();
+		GridBagConstraints gbc_k6Textfield = new GridBagConstraints();
+		gbc_k6Textfield.insets = new Insets(0, 0, 0, 5);
+		gbc_k6Textfield.fill = GridBagConstraints.HORIZONTAL;
+		gbc_k6Textfield.gridx = 2;
+		gbc_k6Textfield.gridy = 14;
+		undistortionPanel.add(k6Textfield, gbc_k6Textfield);
+		k6Textfield.setColumns(10);
 		
 		blueThreshPanel = new JPanel();
 		blueThreshPanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Blue T settings", TitledBorder.CENTER, TitledBorder.TOP, null, new Color(51, 51, 51)));
@@ -986,17 +1095,26 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		visionSettingPanel.add(blueThreshPanel, gbc_blueThreshPanel);
 		GridBagLayout gbl_blueThreshPanel = new GridBagLayout();
 		gbl_blueThreshPanel.columnWidths = new int[]{0, 0, 0, 0, 0, 0};
-		gbl_blueThreshPanel.rowHeights = new int[]{17, 20, 20, 0, 0};
+		gbl_blueThreshPanel.rowHeights = new int[]{0, 17, 20, 20, 0, 0, 0, 0};
 		gbl_blueThreshPanel.columnWeights = new double[]{1.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
-		gbl_blueThreshPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_blueThreshPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
 		blueThreshPanel.setLayout(gbl_blueThreshPanel);
+		
+		enableBlueCheckbox = new JCheckBox("Enable detection");
+		GridBagConstraints gbc_enableBlueCheckbox = new GridBagConstraints();
+		gbc_enableBlueCheckbox.anchor = GridBagConstraints.WEST;
+		gbc_enableBlueCheckbox.gridwidth = 3;
+		gbc_enableBlueCheckbox.insets = new Insets(0, 0, 5, 5);
+		gbc_enableBlueCheckbox.gridx = 1;
+		gbc_enableBlueCheckbox.gridy = 0;
+		blueThreshPanel.add(enableBlueCheckbox, gbc_enableBlueCheckbox);
 		
 		blueHueLabel = new JLabel("HUE");
 		GridBagConstraints gbc_blueHueLabel = new GridBagConstraints();
 		gbc_blueHueLabel.anchor = GridBagConstraints.EAST;
 		gbc_blueHueLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_blueHueLabel.gridx = 1;
-		gbc_blueHueLabel.gridy = 0;
+		gbc_blueHueLabel.gridy = 1;
 		blueThreshPanel.add(blueHueLabel, gbc_blueHueLabel);
 		
 		blueHueMinSpinner = new JSpinner();
@@ -1005,7 +1123,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_blueHueMinSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_blueHueMinSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_blueHueMinSpinner.gridx = 2;
-		gbc_blueHueMinSpinner.gridy = 0;
+		gbc_blueHueMinSpinner.gridy = 1;
 		blueThreshPanel.add(blueHueMinSpinner, gbc_blueHueMinSpinner);
 		
 		blueHueMaxSpinner = new JSpinner();
@@ -1014,7 +1132,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_blueHueMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_blueHueMaxSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_blueHueMaxSpinner.gridx = 3;
-		gbc_blueHueMaxSpinner.gridy = 0;
+		gbc_blueHueMaxSpinner.gridy = 1;
 		blueThreshPanel.add(blueHueMaxSpinner, gbc_blueHueMaxSpinner);
 		
 		blueSatLabel = new JLabel("SAT");
@@ -1022,7 +1140,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_blueSatLabel.anchor = GridBagConstraints.EAST;
 		gbc_blueSatLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_blueSatLabel.gridx = 1;
-		gbc_blueSatLabel.gridy = 1;
+		gbc_blueSatLabel.gridy = 2;
 		blueThreshPanel.add(blueSatLabel, gbc_blueSatLabel);
 		
 		blueSatMinSpinner = new JSpinner();
@@ -1031,7 +1149,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_blueSatMinSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_blueSatMinSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_blueSatMinSpinner.gridx = 2;
-		gbc_blueSatMinSpinner.gridy = 1;
+		gbc_blueSatMinSpinner.gridy = 2;
 		blueThreshPanel.add(blueSatMinSpinner, gbc_blueSatMinSpinner);
 		
 		blueSatMaxSpinner = new JSpinner();
@@ -1040,7 +1158,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_blueSatMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_blueSatMaxSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_blueSatMaxSpinner.gridx = 3;
-		gbc_blueSatMaxSpinner.gridy = 1;
+		gbc_blueSatMaxSpinner.gridy = 2;
 		blueThreshPanel.add(blueSatMaxSpinner, gbc_blueSatMaxSpinner);
 		
 		blueValLabel = new JLabel("VAL");
@@ -1048,7 +1166,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_blueValLabel.anchor = GridBagConstraints.EAST;
 		gbc_blueValLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_blueValLabel.gridx = 1;
-		gbc_blueValLabel.gridy = 2;
+		gbc_blueValLabel.gridy = 3;
 		blueThreshPanel.add(blueValLabel, gbc_blueValLabel);
 		
 		blueValMinSpinner = new JSpinner();
@@ -1057,7 +1175,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_blueValMinSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_blueValMinSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_blueValMinSpinner.gridx = 2;
-		gbc_blueValMinSpinner.gridy = 2;
+		gbc_blueValMinSpinner.gridy = 3;
 		blueThreshPanel.add(blueValMinSpinner, gbc_blueValMinSpinner);
 		
 		blueValMaxSpinner = new JSpinner();
@@ -1066,34 +1184,61 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_blueValMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_blueValMaxSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_blueValMaxSpinner.gridx = 3;
-		gbc_blueValMaxSpinner.gridy = 2;
+		gbc_blueValMaxSpinner.gridy = 3;
 		blueThreshPanel.add(blueValMaxSpinner, gbc_blueValMaxSpinner);
 		
 		blueSizeLabel = new JLabel("SIZE");
 		GridBagConstraints gbc_blueSizeLabel = new GridBagConstraints();
 		gbc_blueSizeLabel.anchor = GridBagConstraints.EAST;
-		gbc_blueSizeLabel.insets = new Insets(0, 0, 0, 5);
+		gbc_blueSizeLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_blueSizeLabel.gridx = 1;
-		gbc_blueSizeLabel.gridy = 3;
+		gbc_blueSizeLabel.gridy = 4;
 		blueThreshPanel.add(blueSizeLabel, gbc_blueSizeLabel);
 		
 		blueSizeMinSpinner = new JSpinner();
 		blueSizeMinSpinner.setModel(new SpinnerNumberModel(new Integer(0), new Integer(0), null, new Integer(1)));
 		GridBagConstraints gbc_blueSizeMinSpinner = new GridBagConstraints();
 		gbc_blueSizeMinSpinner.fill = GridBagConstraints.HORIZONTAL;
-		gbc_blueSizeMinSpinner.insets = new Insets(0, 0, 0, 5);
+		gbc_blueSizeMinSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_blueSizeMinSpinner.gridx = 2;
-		gbc_blueSizeMinSpinner.gridy = 3;
+		gbc_blueSizeMinSpinner.gridy = 4;
 		blueThreshPanel.add(blueSizeMinSpinner, gbc_blueSizeMinSpinner);
 		
 		blueSizeMaxSpinner = new JSpinner();
 		blueSizeMaxSpinner.setModel(new SpinnerNumberModel(new Integer(0), new Integer(0), null, new Integer(1)));
 		GridBagConstraints gbc_blueSizeMaxSpinner = new GridBagConstraints();
 		gbc_blueSizeMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
-		gbc_blueSizeMaxSpinner.insets = new Insets(0, 0, 0, 5);
+		gbc_blueSizeMaxSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_blueSizeMaxSpinner.gridx = 3;
-		gbc_blueSizeMaxSpinner.gridy = 3;
+		gbc_blueSizeMaxSpinner.gridy = 4;
 		blueThreshPanel.add(blueSizeMaxSpinner, gbc_blueSizeMaxSpinner);
+		
+		correctHeightBlueCheckbox = new JCheckBox("Correct height");
+		GridBagConstraints gbc_correctHeightBlueCheckbox = new GridBagConstraints();
+		gbc_correctHeightBlueCheckbox.anchor = GridBagConstraints.WEST;
+		gbc_correctHeightBlueCheckbox.gridwidth = 3;
+		gbc_correctHeightBlueCheckbox.insets = new Insets(0, 0, 5, 5);
+		gbc_correctHeightBlueCheckbox.gridx = 1;
+		gbc_correctHeightBlueCheckbox.gridy = 5;
+		blueThreshPanel.add(correctHeightBlueCheckbox, gbc_correctHeightBlueCheckbox);
+		
+		blueHeightFactorLabel = new JLabel("Height factor");
+		GridBagConstraints gbc_blueHeightFactorLabel = new GridBagConstraints();
+		gbc_blueHeightFactorLabel.anchor = GridBagConstraints.EAST;
+		gbc_blueHeightFactorLabel.gridwidth = 2;
+		gbc_blueHeightFactorLabel.insets = new Insets(0, 0, 0, 5);
+		gbc_blueHeightFactorLabel.gridx = 1;
+		gbc_blueHeightFactorLabel.gridy = 6;
+		blueThreshPanel.add(blueHeightFactorLabel, gbc_blueHeightFactorLabel);
+		
+		blueHeightFactorSpinner = new JSpinner();
+		blueHeightFactorSpinner.setModel(new SpinnerNumberModel(1, 1, 999, 1));
+		GridBagConstraints gbc_blueHeightFactorSpinner = new GridBagConstraints();
+		gbc_blueHeightFactorSpinner.fill = GridBagConstraints.HORIZONTAL;
+		gbc_blueHeightFactorSpinner.insets = new Insets(0, 0, 0, 5);
+		gbc_blueHeightFactorSpinner.gridx = 3;
+		gbc_blueHeightFactorSpinner.gridy = 6;
+		blueThreshPanel.add(blueHeightFactorSpinner, gbc_blueHeightFactorSpinner);
 		
 		JPanel fieldWallPanel = new JPanel();
 		fieldWallPanel.setBorder(new TitledBorder(null, "Field borders", TitledBorder.CENTER, TitledBorder.TOP, null, null));
@@ -1164,17 +1309,26 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		visionSettingPanel.add(yellowThreshPanel, gbc_yellowThreshPanel);
 		GridBagLayout gbl_yellowThreshPanel = new GridBagLayout();
 		gbl_yellowThreshPanel.columnWidths = new int[]{0, 28, 0, 28, 0, 0};
-		gbl_yellowThreshPanel.rowHeights = new int[]{17, 20, 20, 0, 0};
+		gbl_yellowThreshPanel.rowHeights = new int[]{0, 17, 20, 20, 0, 0, 0, 0};
 		gbl_yellowThreshPanel.columnWeights = new double[]{1.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
-		gbl_yellowThreshPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_yellowThreshPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
 		yellowThreshPanel.setLayout(gbl_yellowThreshPanel);
+		
+		enableYellowCheckbox = new JCheckBox("Enable detection");
+		GridBagConstraints gbc_enableYellowCheckbox = new GridBagConstraints();
+		gbc_enableYellowCheckbox.anchor = GridBagConstraints.WEST;
+		gbc_enableYellowCheckbox.gridwidth = 3;
+		gbc_enableYellowCheckbox.insets = new Insets(0, 0, 5, 5);
+		gbc_enableYellowCheckbox.gridx = 1;
+		gbc_enableYellowCheckbox.gridy = 0;
+		yellowThreshPanel.add(enableYellowCheckbox, gbc_enableYellowCheckbox);
 		
 		yellowHueLabel = new JLabel("HUE");
 		GridBagConstraints gbc_yellowHueLabel = new GridBagConstraints();
 		gbc_yellowHueLabel.anchor = GridBagConstraints.EAST;
 		gbc_yellowHueLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowHueLabel.gridx = 1;
-		gbc_yellowHueLabel.gridy = 0;
+		gbc_yellowHueLabel.gridy = 1;
 		yellowThreshPanel.add(yellowHueLabel, gbc_yellowHueLabel);
 		
 		yellowHueMinSpinner = new JSpinner();
@@ -1183,7 +1337,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_yellowHueMinSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_yellowHueMinSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowHueMinSpinner.gridx = 2;
-		gbc_yellowHueMinSpinner.gridy = 0;
+		gbc_yellowHueMinSpinner.gridy = 1;
 		yellowThreshPanel.add(yellowHueMinSpinner, gbc_yellowHueMinSpinner);
 		
 		yellowHueMaxSpinner = new JSpinner();
@@ -1192,7 +1346,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_yellowHueMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_yellowHueMaxSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowHueMaxSpinner.gridx = 3;
-		gbc_yellowHueMaxSpinner.gridy = 0;
+		gbc_yellowHueMaxSpinner.gridy = 1;
 		yellowThreshPanel.add(yellowHueMaxSpinner, gbc_yellowHueMaxSpinner);
 		
 		yellowSatLabel = new JLabel("SAT");
@@ -1200,7 +1354,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_yellowSatLabel.anchor = GridBagConstraints.EAST;
 		gbc_yellowSatLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowSatLabel.gridx = 1;
-		gbc_yellowSatLabel.gridy = 1;
+		gbc_yellowSatLabel.gridy = 2;
 		yellowThreshPanel.add(yellowSatLabel, gbc_yellowSatLabel);
 		
 		yellowSatMinSpinner = new JSpinner();
@@ -1209,7 +1363,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_yellowSatMinSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_yellowSatMinSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowSatMinSpinner.gridx = 2;
-		gbc_yellowSatMinSpinner.gridy = 1;
+		gbc_yellowSatMinSpinner.gridy = 2;
 		yellowThreshPanel.add(yellowSatMinSpinner, gbc_yellowSatMinSpinner);
 		
 		yellowSatMaxSpinner = new JSpinner();
@@ -1218,7 +1372,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_yellowSatMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_yellowSatMaxSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowSatMaxSpinner.gridx = 3;
-		gbc_yellowSatMaxSpinner.gridy = 1;
+		gbc_yellowSatMaxSpinner.gridy = 2;
 		yellowThreshPanel.add(yellowSatMaxSpinner, gbc_yellowSatMaxSpinner);
 		
 		yellowValLabel = new JLabel("VAL");
@@ -1226,7 +1380,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_yellowValLabel.anchor = GridBagConstraints.EAST;
 		gbc_yellowValLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowValLabel.gridx = 1;
-		gbc_yellowValLabel.gridy = 2;
+		gbc_yellowValLabel.gridy = 3;
 		yellowThreshPanel.add(yellowValLabel, gbc_yellowValLabel);
 		
 		yellowValMinSpinner = new JSpinner();
@@ -1235,7 +1389,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_yellowValMinSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_yellowValMinSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowValMinSpinner.gridx = 2;
-		gbc_yellowValMinSpinner.gridy = 2;
+		gbc_yellowValMinSpinner.gridy = 3;
 		yellowThreshPanel.add(yellowValMinSpinner, gbc_yellowValMinSpinner);
 		
 		yellowValMaxSpinner = new JSpinner();
@@ -1244,56 +1398,59 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_yellowValMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
 		gbc_yellowValMaxSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowValMaxSpinner.gridx = 3;
-		gbc_yellowValMaxSpinner.gridy = 2;
+		gbc_yellowValMaxSpinner.gridy = 3;
 		yellowThreshPanel.add(yellowValMaxSpinner, gbc_yellowValMaxSpinner);
 		
 		yellowSizeLabel = new JLabel("SIZE");
 		GridBagConstraints gbc_yellowSizeLabel = new GridBagConstraints();
 		gbc_yellowSizeLabel.anchor = GridBagConstraints.EAST;
-		gbc_yellowSizeLabel.insets = new Insets(0, 0, 0, 5);
+		gbc_yellowSizeLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowSizeLabel.gridx = 1;
-		gbc_yellowSizeLabel.gridy = 3;
+		gbc_yellowSizeLabel.gridy = 4;
 		yellowThreshPanel.add(yellowSizeLabel, gbc_yellowSizeLabel);
 		
 		yellowSizeMinSpinner = new JSpinner();
 		yellowSizeMinSpinner.setModel(new SpinnerNumberModel(new Integer(0), new Integer(0), null, new Integer(1)));
 		GridBagConstraints gbc_yellowSizeMinSpinner = new GridBagConstraints();
 		gbc_yellowSizeMinSpinner.fill = GridBagConstraints.HORIZONTAL;
-		gbc_yellowSizeMinSpinner.insets = new Insets(0, 0, 0, 5);
+		gbc_yellowSizeMinSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowSizeMinSpinner.gridx = 2;
-		gbc_yellowSizeMinSpinner.gridy = 3;
+		gbc_yellowSizeMinSpinner.gridy = 4;
 		yellowThreshPanel.add(yellowSizeMinSpinner, gbc_yellowSizeMinSpinner);
 		
 		yellowSizeMaxSpinner = new JSpinner();
 		yellowSizeMaxSpinner.setModel(new SpinnerNumberModel(new Integer(0), new Integer(0), null, new Integer(1)));
 		GridBagConstraints gbc_yellowSizeMaxSpinner = new GridBagConstraints();
 		gbc_yellowSizeMaxSpinner.fill = GridBagConstraints.HORIZONTAL;
-		gbc_yellowSizeMaxSpinner.insets = new Insets(0, 0, 0, 5);
+		gbc_yellowSizeMaxSpinner.insets = new Insets(0, 0, 5, 5);
 		gbc_yellowSizeMaxSpinner.gridx = 3;
-		gbc_yellowSizeMaxSpinner.gridy = 3;
+		gbc_yellowSizeMaxSpinner.gridy = 4;
 		yellowThreshPanel.add(yellowSizeMaxSpinner, gbc_yellowSizeMaxSpinner);
 		
-		otherVisionSettingPanel = new JPanel();
-		otherVisionSettingPanel.setBorder(new TitledBorder(null, "Other", TitledBorder.CENTER, TitledBorder.TOP, null, null));
-		GridBagConstraints gbc_otherVisionSettingPanel = new GridBagConstraints();
-		gbc_otherVisionSettingPanel.insets = new Insets(0, 0, 5, 5);
-		gbc_otherVisionSettingPanel.fill = GridBagConstraints.BOTH;
-		gbc_otherVisionSettingPanel.gridx = 0;
-		gbc_otherVisionSettingPanel.gridy = 4;
-		visionSettingPanel.add(otherVisionSettingPanel, gbc_otherVisionSettingPanel);
-		GridBagLayout gbl_otherVisionSettingPanel = new GridBagLayout();
-		gbl_otherVisionSettingPanel.columnWidths = new int[]{0, 0};
-		gbl_otherVisionSettingPanel.rowHeights = new int[]{0, 0};
-		gbl_otherVisionSettingPanel.columnWeights = new double[]{0.0, Double.MIN_VALUE};
-		gbl_otherVisionSettingPanel.rowWeights = new double[]{0.0, Double.MIN_VALUE};
-		otherVisionSettingPanel.setLayout(gbl_otherVisionSettingPanel);
+		correctHeightYellowCheckbox = new JCheckBox("Correct height");
+		GridBagConstraints gbc_correctHeightYellowCheckbox = new GridBagConstraints();
+		gbc_correctHeightYellowCheckbox.anchor = GridBagConstraints.WEST;
+		gbc_correctHeightYellowCheckbox.gridwidth = 3;
+		gbc_correctHeightYellowCheckbox.insets = new Insets(0, 0, 5, 5);
+		gbc_correctHeightYellowCheckbox.gridx = 1;
+		gbc_correctHeightYellowCheckbox.gridy = 5;
+		yellowThreshPanel.add(correctHeightYellowCheckbox, gbc_correctHeightYellowCheckbox);
 		
-		correctHeightCheckbox = new JCheckBox("Correct height");
-		correctHeightCheckbox.setSelected(false);
-		GridBagConstraints gbc_correctHeightCheckbox = new GridBagConstraints();
-		gbc_correctHeightCheckbox.gridx = 0;
-		gbc_correctHeightCheckbox.gridy = 0;
-		otherVisionSettingPanel.add(correctHeightCheckbox, gbc_correctHeightCheckbox);
+		yellowHeightFactorLabel = new JLabel("Height factor");
+		GridBagConstraints gbc_yellowHeightFactorLabel = new GridBagConstraints();
+		gbc_yellowHeightFactorLabel.gridwidth = 2;
+		gbc_yellowHeightFactorLabel.insets = new Insets(0, 0, 0, 5);
+		gbc_yellowHeightFactorLabel.gridx = 1;
+		gbc_yellowHeightFactorLabel.gridy = 6;
+		yellowThreshPanel.add(yellowHeightFactorLabel, gbc_yellowHeightFactorLabel);
+		
+		yellowHeightFactorSpinner = new JSpinner();
+		yellowHeightFactorSpinner.setModel(new SpinnerNumberModel(1, 1, 999, 1));
+		GridBagConstraints gbc_yellowHeightFactorSpinner = new GridBagConstraints();
+		gbc_yellowHeightFactorSpinner.insets = new Insets(0, 0, 0, 5);
+		gbc_yellowHeightFactorSpinner.gridx = 3;
+		gbc_yellowHeightFactorSpinner.gridy = 6;
+		yellowThreshPanel.add(yellowHeightFactorSpinner, gbc_yellowHeightFactorSpinner);
 		
 		robotSettingPanel = new JPanel();
 		robotControlTabbedPanel.addTab("Robot", null, robotSettingPanel, null);
@@ -1634,6 +1791,21 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JPanel testBenchOutputPanel;
 	private JLabel testCaseLabel;
 	private JPanel imageCanvasPanel;
-	private JPanel otherVisionSettingPanel;
-	private JCheckBox correctHeightCheckbox;
+	private JCheckBox enableBlueCheckbox;
+	private JCheckBox correctHeightBlueCheckbox;
+	private JLabel blueHeightFactorLabel;
+	private JSpinner blueHeightFactorSpinner;
+	private JCheckBox enableYellowCheckbox;
+	private JCheckBox correctHeightYellowCheckbox;
+	private JLabel yellowHeightFactorLabel;
+	private JSpinner yellowHeightFactorSpinner;
+	private JTextField k3Textfield;
+	private JTextField k4Textfield;
+	private JTextField k5Textfield;
+	private JTextField k6Textfield;
+	private JLabel k3Label;
+	private JLabel k4Label;
+	private JLabel k5Label;
+	private JLabel k6Label;
+	private JCheckBox enableUndistortionCheckbox;
 }

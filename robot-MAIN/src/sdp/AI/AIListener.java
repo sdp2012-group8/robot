@@ -54,7 +54,7 @@ public abstract class AIListener extends WorldStateProvider {
 	 * @param my_team_blue true if my team is blue, false if my team is yellow
 	 * @param my_goal_left true if my goal is on the left of camera, false otherwise
 	 */
-	public void start(final boolean is_my_team_blue, final boolean is_my_goal_left, final boolean do_prediction) {
+	public void start(final boolean is_my_team_blue, final boolean is_my_goal_left) {
 		this.my_team_blue = is_my_team_blue;
 		this.my_goal_left = is_my_goal_left;
 		mVisionThread = new Thread() {
@@ -65,7 +65,7 @@ public abstract class AIListener extends WorldStateProvider {
 					// do low pass filtering
 					if (world_state == null) {
 						world_state = state;
-						ai_world_state = new AIWorldState(world_state, my_team_blue, my_goal_left, do_prediction);
+						ai_world_state = new AIWorldState(world_state, my_team_blue, my_goal_left);
 					} else {
 						BufferedImage im = state.getWorldImage();
 						if (override_vision) {
@@ -73,7 +73,7 @@ public abstract class AIListener extends WorldStateProvider {
 						}
 						world_state = state;
 					}
-					ai_world_state.update(world_state, my_team_blue, my_goal_left, do_prediction);
+					ai_world_state.update(world_state, my_team_blue, my_goal_left);
 					
 					// pass coordinates to decision making logic
 					setChanged();

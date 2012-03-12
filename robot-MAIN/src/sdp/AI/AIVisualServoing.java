@@ -82,6 +82,7 @@ public class AIVisualServoing extends AI {
 
 		normalizeRatio(comm);
 
+
 		// debugging restrictions
 		//comm.turning_speed *= 10;
 		comm.speed *= SPEED_MULTIPLIER;
@@ -121,12 +122,12 @@ public class AIVisualServoing extends AI {
 			return chasingTarget(targ_dist);
 		}
 		
-
 		comm = goTowardsPoint(ball, false, true);
 		if (Math.abs(comm.getByteTurnSpeed()) > 3)
 			comm.speed = 0;
 		else
 			slowDownSpeed(ai_world_state.getDistanceToBall(), 10, comm, 2);
+
 
 		if (comm.getByteSpeed() == 0 && comm.getByteTurnSpeed() == 0)
 			comm = goTowardsPoint(ball, false, true);

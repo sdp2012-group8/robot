@@ -458,19 +458,22 @@ public class Utilities {
 	 * @return
 	 */
 	public static Vector2D getMovingPointBehindBall(AIWorldState ws, Vector2D last_point) {
-		final Robot robot = ws.getRobot();
-		//Vector2D point = new Vector2D(getOptimalPointBehindBall(ws, 1.5*Robot.LENGTH_CM));
+		return new Vector2D(getOptimalPointBehindBall(ws, POINT_OFFSET));
+//		final Robot robot = ws.getRobot();
+//		//Vector2D point = new Vector2D(getOptimalPointBehindBall(ws, 1.5*Robot.LENGTH_CM));
+//		
+//		Vector2D point_vector = Vector2D.subtract(last_point, new Vector2D(robot.getCoords()));
+//		//double angle = Math.abs(normaliseAngle(Vector2D.getAngle(point_vector) - robot.getAngle()));
+//		double dist = point_vector.getLength();
+//		System.out.println("last_point " + last_point);
+//		if (dist < AIVisualServoing.DIST_TO_BALL) {
+//			double old_dist = Vector2D.subtract(last_point, new Vector2D(ws.getBallCoords())).getLength();
+//			return new Vector2D(getOptimalPointBehindBall(ws, Math.abs(old_dist-AIVisualServoing.DIST_TO_BALL*1.1)));
+//		} else {
+//			return new Vector2D(getOptimalPointBehindBall(ws, POINT_OFFSET));
+//		}
+//		
 		
-		Vector2D point_vector = Vector2D.subtract(last_point, new Vector2D(robot.getCoords()));
-		//double angle = Math.abs(normaliseAngle(Vector2D.getAngle(point_vector) - robot.getAngle()));
-		double dist = point_vector.getLength();
-		System.out.println("last_point " + last_point);
-		if (dist < AIVisualServoing.DIST_TO_BALL) {
-			double old_dist = Vector2D.subtract(last_point, new Vector2D(ws.getBallCoords())).getLength();
-			return new Vector2D(getOptimalPointBehindBall(ws, Math.abs(old_dist-AIVisualServoing.DIST_TO_BALL*1.1)));
-		} else {
-			return last_point;
-		}
 	}
 
 
@@ -1065,8 +1068,8 @@ public class Utilities {
 	 * @param do_prediction
 	 * @return
 	 */
-	public static AIWorldState getAIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left, boolean do_prediction) {
-		return new AIWorldState(world_state, my_team_blue, my_goal_left, do_prediction);
+	public static AIWorldState getAIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
+		return new AIWorldState(world_state, my_team_blue, my_goal_left);
 	}
 
 
