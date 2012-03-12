@@ -4,7 +4,6 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -202,46 +201,26 @@ public class Simulator extends WorldStateProvider {
 	 * 
 	 * @param time_ms the time in future to simulate in milliseconds
 	 * @param fps expected emulated simulation frames per seconds
+	 * @param states last several states in hierarchical order
+	 * @param is_ws_in_cm is the world state in centimeters
+	 * @param command to be sent to the brick or null if not available
+	 * @param am_i_blue for use with a command. true if my robot blue, false otherwise.
 	 * @return what the world is expected to be after this amount of time
 	 */
-	public WorldState simulateWs(long time_ms, int fps) {
-		// backup current state
-		final Vector2D[] buff_vel = new Vector2D[velocities.length];
-		for (int i = 0; i < buff_vel.length; i++)
-			buff_vel[i] = new Vector2D(velocities[i]);
-		final Vector2D[] buff_pos = new Vector2D[positions.length];
-		for (int i = 0; i < buff_pos.length; i++)
-			buff_pos[i] = new Vector2D(positions[i]);
-		final Vector2D buff_ball = new Vector2D(ball),
-				buff_ball_vel = new Vector2D(ball_velocity);
-		final double[] buff_dir = new double[directions.length];
-		for (int i = 0; i < buff_dir.length; i++)
-			buff_dir[i] = directions[i];
-		final double[] buff_spd = new double[speeds.length];
-		for (int i = 0; i < buff_spd.length; i++)
-			buff_spd[i] = speeds[i];
-		final double[] buff_turn_spd = new double[turning_speeds.length];
-		for (int i = 0; i < buff_turn_spd.length; i++)
-			buff_turn_spd[i] = turning_speeds[i];
-		
-		// do simulation
+	public static WorldState simulateWs(long time_ms, int fps, WorldState[] states, boolean is_ws_in_cm, Command command, boolean am_i_blue) {
 		double sec = time_ms / 1000d;
 		double dt = 1d / fps;
+		
+		Simulator sim = new Simulator(false);
+		for (int i = 0; i < states.length; i++)
+			sim.setWorldState(states[i], dt, is_ws_in_cm, command, am_i_blue);
+		
+		// do simulation
 		WorldState ws = null;
 		for (double t = 0; t <= sec; t+=dt) {
-			ws = simulate(dt);
+			ws = sim.simulate(dt);
 		}
-		
-		// return state
-		velocities = buff_vel;
-		positions = buff_pos;
-		ball = buff_ball;
-		ball_velocity = buff_ball_vel;
-		directions = buff_dir;
-		speeds = buff_spd;
-		turning_speeds = buff_turn_spd;
-		
-		
+			
 		return ws;
 	}
 	
@@ -884,35 +863,10 @@ public class Simulator extends WorldStateProvider {
 
 		//p.image(true,true);
 		
-		// draw current frame
-		p.g.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
-				BasicStroke.JOIN_MITER, 10.0f, new float[] { 10.0f },
-				0.0f));
-		for (int i = 0; i < 2; i++) {
-			Robot robot = i == 0 ? real.getBlueRobot() : real.getYellowRobot();
-			p.g.setColor(i == 0 ? new Color(150, 150, 255, 200) : new Color(225, 225, 150, 200));
-			p.fillPolygon(new int[] {
-					(int)(robot.getFrontLeft().getX()*IMAGE_WIDTH),
-					(int)(robot.getFrontRight().getX()*IMAGE_WIDTH),
-					(int)(robot.getBackRight().getX()*IMAGE_WIDTH),
-					(int)(robot.getBackLeft().getX()*IMAGE_WIDTH),
-					(int)(robot.getFrontLeft().getX()*IMAGE_WIDTH)
-			}, new int[] {
-					(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH),
-					(int)(robot.getFrontRight().getY()*IMAGE_WIDTH),
-					(int)(robot.getBackRight().getY()*IMAGE_WIDTH),
-					(int)(robot.getBackLeft().getY()*IMAGE_WIDTH),
-					(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH)
-			}, 5, false);
-		}
-		// draw current ball
-		p.g.setStroke(new BasicStroke(1.0f));
-		p.g.setColor(new Color(255, 255, 255, 200));
-		p.fillOval(
-				(int) (real.getBallCoords().getX() * IMAGE_WIDTH - BALL_RADIUS * IMAGE_WIDTH / WorldState.PITCH_WIDTH_CM),
-				(int) (real.getBallCoords().getY() * IMAGE_WIDTH - BALL_RADIUS * IMAGE_WIDTH / WorldState.PITCH_WIDTH_CM),
-				(int) (2 * BALL_RADIUS * IMAGE_WIDTH / WorldState.PITCH_WIDTH_CM),
-				(int) (2 * BALL_RADIUS * IMAGE_WIDTH / WorldState.PITCH_WIDTH_CM), false);
+		sketchWs(p, state, true);
+		sketchWs(p, real, false);
+		
+		
 		// draw Strings
 		p.g.setColor(Color.BLACK);
 		p.g.fillRect(0, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_INFO_SEC_HEIGHT);
@@ -946,6 +900,49 @@ public class Simulator extends WorldStateProvider {
 						IMAGE_HEIGHT + 80);
 		p.g.drawString("ball : " + ball, IMAGE_WIDTH - 150, IMAGE_HEIGHT + 20);
 		p.dispose();
+	}
+	
+	private void sketchWs(Painter p, WorldState ws, boolean fill) {
+		// draw current frame
+				
+				for (int i = 0; i < 2; i++) {
+					Robot robot = i == 0 ? ws.getBlueRobot() : ws.getYellowRobot();
+					p.g.setColor(i == 0 ? new Color(150, 150, 255, 200) : new Color(225, 225, 150, 200));
+					p.g.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
+							BasicStroke.JOIN_MITER, 10.0f, new float[] { 10.0f },
+							0.0f));
+					p.fillPolygon(new int[] {
+							(int)(robot.getFrontLeft().getX()*IMAGE_WIDTH),
+							(int)(robot.getFrontRight().getX()*IMAGE_WIDTH),
+							(int)(robot.getBackRight().getX()*IMAGE_WIDTH),
+							(int)(robot.getBackLeft().getX()*IMAGE_WIDTH),
+							(int)(robot.getFrontLeft().getX()*IMAGE_WIDTH)
+					}, new int[] {
+							(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH),
+							(int)(robot.getFrontRight().getY()*IMAGE_WIDTH),
+							(int)(robot.getBackRight().getY()*IMAGE_WIDTH),
+							(int)(robot.getBackLeft().getY()*IMAGE_WIDTH),
+							(int)(robot.getFrontLeft().getY()*IMAGE_WIDTH)
+					}, 5, fill);
+					
+					p.g.setColor(new Color(255, 255, 255, 200));
+					p.g.setStroke(new BasicStroke(1.0f));
+					double dir_x = 0.04*Math.cos(robot.getAngle()*Math.PI/180d);
+					double dir_y = -0.04*Math.sin(robot.getAngle()*Math.PI/180d);
+					p.drawLine(
+							(int)((robot.getCoords().getX())*IMAGE_WIDTH),
+							(int)((robot.getCoords().getY())*IMAGE_WIDTH),
+							(int)((robot.getCoords().getX()+dir_x)*IMAGE_WIDTH),
+							(int)((robot.getCoords().getY()+dir_y)*IMAGE_WIDTH));
+				}
+				// draw current ball
+				p.g.setStroke(new BasicStroke(1.0f));
+				p.g.setColor(new Color(255, 255, 255, 200));
+				p.fillOval(
+						(int) (ws.getBallCoords().getX() * IMAGE_WIDTH - BALL_RADIUS * IMAGE_WIDTH / WorldState.PITCH_WIDTH_CM),
+						(int) (ws.getBallCoords().getY() * IMAGE_WIDTH - BALL_RADIUS * IMAGE_WIDTH / WorldState.PITCH_WIDTH_CM),
+						(int) (2 * BALL_RADIUS * IMAGE_WIDTH / WorldState.PITCH_WIDTH_CM),
+						(int) (2 * BALL_RADIUS * IMAGE_WIDTH / WorldState.PITCH_WIDTH_CM), fill);
 	}
 
 	/**

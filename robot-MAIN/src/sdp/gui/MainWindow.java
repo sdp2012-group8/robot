@@ -204,7 +204,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		}
 		
 		aiInstance = new AIMaster(com, vision, AIMaster.AIMode.VISUAL_SERVOING);
-		aiInstance.start(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected(), true);
+		aiInstance.start(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected());
 		
 		WorldStateObserver aiObserver = new WorldStateObserver(aiInstance);
 		synchronized (worldStateObserver) {

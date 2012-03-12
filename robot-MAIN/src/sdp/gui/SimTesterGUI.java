@@ -24,12 +24,9 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import sdp.AI.AI;
 import sdp.AI.AIMaster;
 import sdp.AI.AIMaster.AIMode;
 import sdp.AI.AIMaster.mode;
-import sdp.AI.AITest;
-import sdp.AI.AIVisualServoing;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.Vector2D;
@@ -54,8 +51,6 @@ public class SimTesterGUI {
 	private WorldState lastWS = null;
 	
 	private AIMaster mAI;
-	private AIMode mMode;
-	private AIMode opponentMode;
 	 //will be used for the opponent(yellow) robot
 	private AIMaster opponentAI;
 	
@@ -437,12 +432,12 @@ public class SimTesterGUI {
 		
 
 		mAI = new AIMaster(mComm, mSim, checkModesBlue());
-		mAI.start(blue_selected, my_goal_left, false);
+		mAI.start(blue_selected, my_goal_left);
 		
 		final WorldStateObserver obs = new WorldStateObserver(mAI);
 		
 		opponentAI = new AIMaster(opponentComm, mSim, checkModesYellow());
-		opponentAI.start(!blue_selected, !my_goal_left, false);
+		opponentAI.start(!blue_selected, !my_goal_left);
 
 		
 		new Thread() {

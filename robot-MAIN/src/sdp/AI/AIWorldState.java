@@ -15,8 +15,8 @@ import sdp.vision.processing.ImageProcessorConfig;
 
 public class AIWorldState extends WorldState {
 	
-	private static final long PREDICTION_TIME = 400; // in ms
-	private static final int PREDICTION_FPS = 20;
+	private static final long PREDICTION_TIME = 500; // in ms
+	private static final int PREDICTION_FPS = 25;
 
 	private boolean my_team_blue;
 	private boolean my_goal_left;
@@ -37,20 +37,16 @@ public class AIWorldState extends WorldState {
 
 	//flags
 	boolean f_ball_on_field = false;
-	
-	private Simulator sim;
 
-	public AIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left, boolean do_prediction) {
+	public AIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
 		super(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
-		sim = new Simulator(false);
 
-		update(world_state, my_team_blue, my_goal_left, do_prediction);
+		update(world_state, my_team_blue, my_goal_left);
 	}
 
-	public void update(WorldState world_state, boolean my_team_blue, boolean my_goal_left, boolean do_prediction) {
+	public void update(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
 		// To enable or disable the prediction uncomment/comment this line.
-		//if (do_prediction)
-		//	world_state = predict(world_state, PREDICTION_TIME, PREDICTION_FPS);
+		//world_state = predict(world_state, PREDICTION_TIME, PREDICTION_FPS);
 		
 		// To enable or disable low pass, uncomment this line
 		//world_state = lowPass(this, world_state);
@@ -86,10 +82,14 @@ public class AIWorldState extends WorldState {
 		}
 	}
 	
+	private WorldState old = null;
+	
 	private WorldState predict(WorldState input, long time_ms, int fps) {
-		double dt = 1d / fps;
-		sim.setWorldState(input, dt, true, command, my_team_blue);
-		return Utilities.toCentimeters(sim.simulateWs(time_ms, fps));
+		if (old == null)
+			old = input;
+		return Simulator.simulateWs(time_ms, fps,
+				new WorldState[]{old, input},
+				false, command, my_team_blue);
 	}
 
 

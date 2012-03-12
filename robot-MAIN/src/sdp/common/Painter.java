@@ -327,7 +327,7 @@ public class Painter {
 	 * @param x2
 	 * @param y2
 	 */
-	private  void drawLine(int x1, int y1, int x2, int y2) {
+	public  void drawLine(int x1, int y1, int x2, int y2) {
 		if (reference_robot_id != null) {
 
 			Vector2D start = transformScreenVectorToLocalOne(x1, y1);
