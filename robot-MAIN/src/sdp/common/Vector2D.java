@@ -222,6 +222,10 @@ public class Vector2D extends Point2D.Double {
 		return Math.atan2(-a.getY()+b.getY(), a.getX()-b.getX())*180/Math.PI;
 	}
 	
+	public static double getAngle(Vector2D a) {
+		return getAngle(new Vector2D(0,0), a);
+	}
+	
 	/**
 	 * Get direction of a vector
 	 * @param a
