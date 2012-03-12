@@ -4,10 +4,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-
-import sdp.AI.AIWorldState;
 
 public class Painter {
 	
@@ -85,7 +82,7 @@ public class Painter {
 					(int)(robot.getBackRight().getY()*width),
 					(int)(robot.getBackLeft().getY()*width),
 					(int)(robot.getFrontLeft().getY()*width)
-			}, 5);
+			}, 5, true);
 
 			// draw direction pointer
 			double shift_x = 0.01 * Math.cos(robot.getAngle() * Math.PI / 180d);
@@ -165,7 +162,7 @@ public class Painter {
 						// get direction and distance to point
 						final double point_dir = Vector2D.getDirection(point_rel);
 						final double point_dist = point_rel.getLength();
-						final double point_vis_dist = Utilities.visibility2(state_cm, target, my_team_blue, true);
+						//final double point_vis_dist = Utilities.visibility2(state_cm, target, my_team_blue, true);
 						double turn_ang = 999;
 						for (int ii = 0; ii < sectors.length; ii++) {
 
@@ -231,7 +228,7 @@ public class Painter {
 						}
 						
 						g.setColor(new Color(255, 255, 255, 255));
-						fillOval((int)(target.x* width / WorldState.PITCH_WIDTH_CM-3), (int) (target.y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6);
+						fillOval((int)(target.x* width / WorldState.PITCH_WIDTH_CM-3), (int) (target.y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6, true);
 						
 						g.setStroke(new BasicStroke(1.0f));
 						Vector2D dist = Utilities.raytraceVector(state_cm, target, Vector2D.change_length(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), target), 200), null, false);
@@ -262,13 +259,13 @@ public class Painter {
 				(int) ((state_cm.getBallCoords().getX() - BALL_RADIUS) * width / WorldState.PITCH_WIDTH_CM),
 				(int) ((state_cm.getBallCoords().getY() - BALL_RADIUS) * width / WorldState.PITCH_WIDTH_CM),
 				(int) (2 * BALL_RADIUS * width / WorldState.PITCH_WIDTH_CM),
-				(int) (2 * BALL_RADIUS * width / WorldState.PITCH_WIDTH_CM));
+				(int) (2 * BALL_RADIUS * width / WorldState.PITCH_WIDTH_CM), true);
 	}
 
 	// helpers
 
 
-	public  void fillRect(int x, int y, int w, int h) {
+	public void fillRect(int x, int y, int w, int h) {
 		fillPolygon(new int[] {
 				x,
 				x+w,
@@ -281,7 +278,7 @@ public class Painter {
 				y+h,
 				y+h,
 				y
-		}, 5);
+		}, 5, true);
 	}
 
 	/**
@@ -291,11 +288,14 @@ public class Painter {
 	 * @param w
 	 * @param h
 	 */
-	private  void fillOval(int x, int y, int w, int h) {
+	public  void fillOval(int x, int y, int w, int h, boolean fill) {
 		Vector2D l_r = transformScreenVectorToLocalOne(x-w/2, y-h/2);
 		Vector2D t_r = transformScreenVectorToLocalOne(x+w/2, y+h/2);
 		Vector2D cent = Vector2D.divide(Vector2D.add(l_r, t_r), 2);
-		g.fillOval(off_x+(int) cent.getX(), off_y+(int) (cent.getY() * ratio), w, h);
+		if (fill)
+			g.fillOval(off_x+(int) cent.getX(), off_y+(int) (cent.getY() * ratio), w, h);
+		else
+			g.drawOval(off_x+(int) cent.getX(), off_y+(int) (cent.getY() * ratio), w, h);
 	}
 
 	/**
@@ -304,7 +304,7 @@ public class Painter {
 	 * @param ys
 	 * @param size number of points
 	 */
-	private  void fillPolygon(int[] xs, int[] ys, int size) {
+	public void fillPolygon(int[] xs, int[] ys, int size, boolean fill) {
 		Vector2D[] points = new Vector2D[size];
 		int[] newxs = new int[size], newys = new int[size];
 		for (int i = 0; i < size; i++) {
@@ -312,7 +312,10 @@ public class Painter {
 			newxs[i] = off_x+(int) points[i].getX();
 			newys[i] = off_y+(int) (points[i].getY()*ratio);
 		}
-		g.fillPolygon(newxs, newys, size);
+		if (fill)
+			g.fillPolygon(newxs, newys, size);
+		else
+			g.drawPolygon(newxs, newys, size);
 	}
 
 
@@ -352,7 +355,7 @@ public class Painter {
 				(int)(ex),
 				(int)(ey));
 		if (draw_point_in_end) {
-			fillOval((int) ex-3, (int) ey-3, 6, 6);
+			fillOval((int) ex-3, (int) ey-3, 6, 6, true);
 		}
 
 	}
