@@ -45,9 +45,9 @@ public class Simulator extends WorldStateProvider {
 	private final static double KICKER_MIN_SPEED = 50; // cm/s
 
 
-	private final static int IMAGE_WIDTH = 640,
-			IMAGE_HEIGHT = (int) (IMAGE_WIDTH * WorldState.PITCH_HEIGHT_CM / WorldState.PITCH_WIDTH_CM),
-			IMAGE_INFO_SEC_HEIGHT = 100;
+	public final static int IMAGE_WIDTH = 640;
+	public static final int IMAGE_HEIGHT = (int) (IMAGE_WIDTH * WorldState.PITCH_HEIGHT_CM / WorldState.PITCH_WIDTH_CM);
+	private static final int IMAGE_INFO_SEC_HEIGHT = 100;
 
 	private final static int MAX_NUM_ROBOTS = 2;
 
@@ -882,7 +882,7 @@ public class Simulator extends WorldStateProvider {
 				(int) (IMAGE_WIDTH*2/WorldState.PITCH_WIDTH_CM),
 				(int) (IMAGE_WIDTH*GOAL_SIZE/WorldState.PITCH_WIDTH_CM));
 
-		p.image(true,true);
+		//p.image(true,true);
 		
 		// draw current frame
 		p.g.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT,

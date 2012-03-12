@@ -359,6 +359,16 @@ public class SimTesterGUI {
 		btnStartYellowAI.setBounds(662, 417, 136, 25);
 		frmAlphaTeamSimulator.getContentPane().add(btnStartYellowAI);
 		
+		JButton btnAiVisionOnoff = new JButton("AI vision on/off");
+		btnAiVisionOnoff.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (mAI != null)
+					mAI.switchOverrideVision();
+			}
+		});
+		btnAiVisionOnoff.setBounds(10, 415, 153, 25);
+		frmAlphaTeamSimulator.getContentPane().add(btnAiVisionOnoff);
+		
 		// key listener
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
 			
@@ -397,8 +407,6 @@ public class SimTesterGUI {
 		mComm = new VBrick();
 		opponentComm = new VBrick();
 		mSim = new Simulator(true);
-
-		final WorldStateObserver obs = new WorldStateObserver(mSim);
 		
 		if (blue_selected) {
 			if (my_goal_left) {
@@ -430,6 +438,8 @@ public class SimTesterGUI {
 
 		mAI = new AIMaster(mComm, mSim, checkModesBlue());
 		mAI.start(blue_selected, my_goal_left, false);
+		
+		final WorldStateObserver obs = new WorldStateObserver(mAI);
 		
 		opponentAI = new AIMaster(opponentComm, mSim, checkModesYellow());
 		opponentAI.start(!blue_selected, !my_goal_left, false);

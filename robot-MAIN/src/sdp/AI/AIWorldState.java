@@ -150,7 +150,11 @@ public class AIWorldState extends WorldState {
 	
 	public void onDraw(BufferedImage im, ImageProcessorConfig config) {
 		Painter p = new Painter(im, this);
-		p.setOffsets(config.getFieldLowX(), config.getFieldLowY(), config.getFieldWidth(), config.getFieldHeight());
+		if (config != null) {
+			p.setOffsets(config.getFieldLowX(), config.getFieldLowY(), config.getFieldWidth(), config.getFieldHeight());
+		} else {
+			p.setOffsets(0, 0, Simulator.IMAGE_WIDTH, Simulator.IMAGE_HEIGHT);
+		}
 		p.image(my_team_blue,my_goal_left);
 		p.dispose();
 	}
