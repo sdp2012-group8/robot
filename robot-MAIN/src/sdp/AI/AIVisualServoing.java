@@ -244,21 +244,39 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Command penaltiesAttack() throws IOException {
 		Command command = new Command(0,0,false);
-
+		Point2D.Double optimal = Utilities.getOptimalPointBehindBall(ai_world_state, ai_world_state.getMyGoalLeft(), ai_world_state.getMyTeamBlue(), 10);
+//		double turning_angle = Vector2D.getDirection(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()),new Vector2D(optimal)));
+		
+		if (optimal != null){
+			if (pointWithinRange(ai_world_state.getRobot().getCoords(), optimal)){
+				System.out.println("in range");
+				return goTowardsPoint(new Vector2D(40,40),false,false);
+			}
+			else
+				return new Command(0,0,true);
+		//	System.out.println(optimal);
+		//	return new Command(0,0,true);
+			}
+		else {
+			optimal = Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()),new Vector2D(-20,0));
+			return goTowardsPoint(new Vector2D(40,40),false,false);
+		//	return new Command(0,0,true);
+		}
+		//return new Command(0,0,false);
+		
+		//	return new Command(0,0,true);
+		/*
+		//the point where the ball would end up if we shoot
 		Point2D.Double pointInGoal= 
 			Utilities.intersection(ai_world_state.getRobot().getCoords(), 
 					ai_world_state.getRobot().getFrontCenter(), ai_world_state.getEnemyGoal().getTop(), 
 					ai_world_state.getEnemyGoal().getBottom());
 		boolean clear_path = Utilities.isPathClear(pointInGoal, ai_world_state.getBallCoords(), 
 				ai_world_state.getEnemyRobot());
-		//        System.out.println(clear_path);
-		if (clear_path){
+	
+		if (clear_path)
 			return new Command(0,0,true);
-			//mComm.sendMessage(opcode.kick);
-			//System.out.println("kicking");
-			//ai_world_state.setMode(mode.chase_ball);
 
-		}
 
 		Point2D enemyRobot;
 		if(ai_world_state.isGoalVisible())        {
@@ -283,8 +301,8 @@ public class AIVisualServoing extends AI {
 				//ai_world_state.getEnemyGoal().getTop().y);
 				//mComm.sendMessage(opcode.kick);
 			}
-		}
-		return null;
+		}  */
+	//	return null;
 	}
 
 	/**
@@ -292,6 +310,7 @@ public class AIVisualServoing extends AI {
 	 * @param point
 	 */
 	private Command goTowardsPoint(Vector2D point, boolean include_ball_as_obstacle, boolean need_to_face_point) {
+
 		Command command = new Command(0, 0, false);
 		// get relative ball coordinates
 		final Vector2D point_rel = Utilities.getLocalVector(ai_world_state.getRobot(), point);
@@ -536,4 +555,9 @@ public class AIVisualServoing extends AI {
 		comm.speed *= 1-rat;
 	}
 
+	public boolean pointWithinRange(Point2D a, Point2D b){
+		System.out.println("a = " + a + "  b = " + b);
+		return (((a.getX() < b.getX() - 5)) || (a.getX() < (b.getX() + 5))) && ((a.getY() < (b.getY() - 5)) || (a.getY() < (b.getY() + 5)));
+	}
+	
 }
