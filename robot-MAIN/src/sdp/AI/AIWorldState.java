@@ -31,6 +31,7 @@ public class AIWorldState extends WorldState {
 	private Robot enemy_robot = null;
 	private double distance_to_ball;
 	private double distance_to_goal;
+	private double point_offset;
 	
 	private Command command;
 	

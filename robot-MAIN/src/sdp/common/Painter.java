@@ -6,12 +6,14 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
+import sdp.AI.AIWorldState;
+
 public class Painter {
-	
+
 	public int MOUSE_OVER_ROBOT = -1;
 	public boolean MOUSE_OVER_BALL = false;
 	public Integer reference_robot_id = null;
-	
+
 	public  Graphics2D g;
 	private  int width, height;
 	private double ratio;
@@ -19,7 +21,8 @@ public class Painter {
 	private  WorldState state_cm;
 	private int off_x = 0, off_y = 0;
 	private  Robot[] robots;
-	
+	private static Vector2D p_target = null;
+
 	public Painter(BufferedImage im, WorldState ws) {
 		g = im.createGraphics();
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
@@ -30,7 +33,7 @@ public class Painter {
 		state_cm = ws;
 		robots = new Robot[]{state_cm.getBlueRobot(), state_cm.getYellowRobot()};
 	}
-	
+
 	public final  void dispose() {
 		g.dispose();
 	}
@@ -42,7 +45,7 @@ public class Painter {
 		height = h;
 		ratio = (WorldState.PITCH_WIDTH_CM/(double) WorldState.PITCH_HEIGHT_CM) * (height/(double) width);
 	}
-	
+
 	/**
 	 * Creates visualization
 	 * 
@@ -123,95 +126,105 @@ public class Painter {
 					// TODO: Change this along with AIVisualServoing to show point
 					//final double dir_to_ball = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), new Vector2D(robot.getCoords())), -robot.getAngle()));
 					final double point_distance = 1.5*Robot.LENGTH_CM; // + 1*Robot.LENGTH_CM * (Math.abs(dir_to_ball)/180);
-					Vector2D p_target = null;
+					AIWorldState ai_world_state = Utilities.getAIWorldState(state_cm, my_goal_left, my_team_blue);
 					try {
-					 p_target = new Vector2D(Utilities.getOptimalPointBehindBall(state_cm, my_goal_left, my_team_blue, point_distance));
-					} catch (NullPointerException e) {}
-					
-					if (p_target != null) {
+						// p_target = new Vector2D(Utilities.getOptimalPointBehindBall(Utilities.getAIWorldState(state_cm, my_goal_left, my_team_blue, false), point_distance));
+						if (p_target != null) {
+							p_target = Utilities.getMovingPointBehindBall(ai_world_state, p_target);
+						} else {
+							p_target = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, 2*Robot.LENGTH_CM));
+						}
+
+					} catch (NullPointerException e) {
+						System.out.println("Didn't Find Point");
+						p_target = new Vector2D(state_cm.getBallCoords());
+					}
 
 
-						Vector2D target = new Vector2D(p_target);
 
 
-						Vector2D startPt = new Vector2D(robot.getCoords());
-						Vector2D dir =  Vector2D.subtract(target, startPt);
-						double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
-						final double length = Robot.LENGTH_CM/2;
-						double cos = Math.cos(angle)*length;
-						double sin = Math.sin(angle)*length;
-						Vector2D right = new Vector2D(cos, sin);
-						Vector2D left = new Vector2D(-cos, -sin);
-						drawVector(Vector2D.add(startPt, right),  Utilities.raytraceVector(state_cm, Vector2D.add(startPt, right), dir, am_i_blue, true), true);
-						drawVector(Vector2D.add(startPt, left), Utilities.raytraceVector(state_cm, Vector2D.add(startPt, left), dir, am_i_blue, true), true);
+					Vector2D target = new Vector2D(p_target);
 
 
-						g.setStroke(new BasicStroke(8.0f));
-						final int COLL_SECS_COUNT = 110;
-						final double SEC_ANGLE = 360d/COLL_SECS_COUNT;
+					Vector2D startPt = new Vector2D(robot.getCoords());
+					Vector2D dir =  Vector2D.subtract(target, startPt);
+					double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
+					final double length = Robot.LENGTH_CM/2;
+					double cos = Math.cos(angle)*length;
+					double sin = Math.sin(angle)*length;
+					Vector2D right = new Vector2D(cos, sin);
+					Vector2D left = new Vector2D(-cos, -sin);
+					drawVector(Vector2D.add(startPt, right),  Utilities.raytraceVector(state_cm, Vector2D.add(startPt, right), dir, am_i_blue, true), true);
+					drawVector(Vector2D.add(startPt, left), Utilities.raytraceVector(state_cm, Vector2D.add(startPt, left), dir, am_i_blue, true), true);
 
-						final double[] sectors = Utilities.getSectors(state_cm, my_team_blue, 5, COLL_SECS_COUNT, false, true);
 
-						// find desired
-						double temp = 999;
-						int id = -1;
-						final Vector2D point_rel = Utilities.getLocalVector(robot, target);
 
-						
-						
-						// get direction and distance to point
-						final double point_dir = Vector2D.getDirection(point_rel);
-						final double point_dist = point_rel.getLength();
-						//final double point_vis_dist = Utilities.visibility2(state_cm, target, my_team_blue, true);
-						double turn_ang = 999;
+					g.setStroke(new BasicStroke(8.0f));
+					final int COLL_SECS_COUNT = 110;
+					final double SEC_ANGLE = 360d/COLL_SECS_COUNT;
+
+
+					final double[] sectors = Utilities.getSectors(state_cm, my_team_blue, 5, COLL_SECS_COUNT, false, true);
+
+					// find desired
+					double temp = 999;
+					int id = -1;
+					final Vector2D point_rel = Utilities.getLocalVector(robot, target);
+
+
+
+					// get direction and distance to point
+					final double point_dir = Vector2D.getDirection(point_rel);
+					final double point_dist = point_rel.getLength();
+					final double point_vis_dist = Utilities.visibility2(state_cm, target, my_team_blue, true);
+					double turn_ang = 999;
+					for (int ii = 0; ii < sectors.length; ii++) {
+
+						if (sectors[ii] >= point_dist) {	
+							double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
+							double diff = Utilities.normaliseAngle(ang-point_dir);
+							if (Math.abs(diff) < Math.abs(temp)) {
+								temp = diff;
+								id = ii;
+								turn_ang = ang;
+							}
+						}
+					}
+
+					// get second closest
+					double temp2 = 999;
+					int id2 = -1;
+					double turn_ang2 = 999;
+					for (int ii = 0; ii < sectors.length; ii++) {
+						if (sectors[ii] >= point_dist) {	
+							double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
+							double diff = Utilities.normaliseAngle(ang-point_dir);
+							if (Math.abs(diff) < Math.abs(temp2) && ii != id) {
+								temp2 = diff;
+								id2 = ii;
+								turn_ang2 = ang;
+							}
+						}
+					}
+
+					// if we have no way of reaching the point go into the most free direction
+					if (turn_ang == 999) {
+						temp = 0;
 						for (int ii = 0; ii < sectors.length; ii++) {
-
-							if (sectors[ii] >= point_dist) {	
+							if (sectors[ii] > temp) {
+								temp = sectors[ii];
 								double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
-								double diff = Utilities.normaliseAngle(ang-point_dir);
-								if (Math.abs(diff) < Math.abs(temp)) {
-									temp = diff;
-									id = ii;
-									turn_ang = ang;
-								}
+								turn_ang = ang;
+								id = ii;
 							}
 						}
+					} 
 
-						// get second closest
-						double temp2 = 999;
-						int id2 = -1;
-						double turn_ang2 = 999;
-						for (int ii = 0; ii < sectors.length; ii++) {
-							if (sectors[ii] >= point_dist) {	
-								double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
-								double diff = Utilities.normaliseAngle(ang-point_dir);
-								if (Math.abs(diff) < Math.abs(temp2) && ii != id) {
-									temp2 = diff;
-									id2 = ii;
-									turn_ang2 = ang;
-								}
-							}
-						}
-						
-						// if we have no way of reaching the point go into the most free direction
-						if (turn_ang == 999) {
-							temp = 0;
-							for (int ii = 0; ii < sectors.length; ii++) {
-								if (sectors[ii] > temp) {
-									temp = sectors[ii];
-									double ang = Utilities.normaliseAngle(((-90+ii*SEC_ANGLE)+(-90+(ii+1)*SEC_ANGLE))/2);
-									turn_ang = ang;
-									id = ii;
-								}
-							}
-						} 
-
-						if (Math.abs(Utilities.normaliseAngle(turn_ang2-turn_ang)) > SEC_ANGLE*2 && Math.abs(turn_ang2) < Math.abs(turn_ang)) {
-							int temp3 = id;
-							id = id2;
-							id2 = temp3;
-						}
-
+					if (Math.abs(Utilities.normaliseAngle(turn_ang2-turn_ang)) > SEC_ANGLE*2 && Math.abs(turn_ang2) < Math.abs(turn_ang)) {
+						int temp3 = id;
+						id = id2;
+						id2 = temp3;
+					}
 
 						for (int ii = 0; ii < sectors.length; ii++) {
 							if (ii == id)
@@ -247,7 +260,6 @@ public class Painter {
 						}
 					}
 				}
-			}
 		}
 		// draw ball
 		g.setColor(Color.red);

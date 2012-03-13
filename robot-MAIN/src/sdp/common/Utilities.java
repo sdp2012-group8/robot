@@ -8,6 +8,7 @@ import java.awt.image.WritableRaster;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import sdp.AI.AIVisualServoing;
 import sdp.AI.AIWorldState;
 
 
@@ -21,9 +22,8 @@ import sdp.AI.AIWorldState;
 public class Utilities {
 
 
-	private static final double POINT_OFFSET = 1.5*Robot.LENGTH_CM;
+	private static final double POINT_OFFSET = 2*Robot.LENGTH_CM;
 	public final static double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
-
 
 	/**
 	 * Return a deep copy of the given BufferedImage.
@@ -382,25 +382,11 @@ public class Utilities {
 	 * @return The point closest to the robot that would allow it to shoot.
 	 * @throws NullPointerException Throws exception when the robot can't see a goal.
 	 */
-	public static Point2D.Double getOptimalPointBehindBall(WorldState ws, boolean my_goal_left, boolean my_team_blue, double point_offset) throws NullPointerException {
-		Goal enemy_goal;
-		Robot robot, enemy_robot;
+	public static Point2D.Double getOptimalPointBehindBall(AIWorldState ws, double point_offset) throws NullPointerException {
+		Goal enemy_goal = ws.getEnemyGoal();
+		Robot robot = ws.getRobot();
+		Robot enemy_robot = ws.getEnemyRobot();
 
-		if (my_goal_left) {
-			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
-		} else {
-			enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
-		}
-
-		//update variables
-		if (my_team_blue) {
-			robot = ws.getBlueRobot();
-			enemy_robot = ws.getYellowRobot();
-		} else {
-			robot = (ws.getYellowRobot());
-			enemy_robot = (ws.getBlueRobot());
-		}
-		
 		ArrayList<Point2D.Double> goal_points = new ArrayList<Point2D.Double>();
 		Point2D.Double min_point = null;
 		double min_distance = WorldState.PITCH_WIDTH_CM*2;
@@ -444,7 +430,7 @@ public class Utilities {
 		itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
-			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(),my_goal_left, point_offset);
+			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(),ws.getMyGoalLeft(), point_offset);
 
 			//System.out.println(temp_point);
 			
@@ -462,6 +448,32 @@ public class Utilities {
 		} 
 		//System.out.println("min point "+min_point); //+ "enemy robot" + enemy_robot.getCoords() + "angle" + enemy_robot.getAngle() + "ball coords "+ws.getBallCoords());
 		return min_point;
+	}
+	
+	
+	/**
+	 * Finds a point behind the ball that will put the robot in a curved path
+	 * ending at the ball with shooting direction.
+	 * @param ws
+	 * @return
+	 */
+	public static Vector2D getMovingPointBehindBall(AIWorldState ws, Vector2D last_point) {
+		return new Vector2D(getOptimalPointBehindBall(ws, POINT_OFFSET));
+//		final Robot robot = ws.getRobot();
+//		//Vector2D point = new Vector2D(getOptimalPointBehindBall(ws, 1.5*Robot.LENGTH_CM));
+//		
+//		Vector2D point_vector = Vector2D.subtract(last_point, new Vector2D(robot.getCoords()));
+//		//double angle = Math.abs(normaliseAngle(Vector2D.getAngle(point_vector) - robot.getAngle()));
+//		double dist = point_vector.getLength();
+//		System.out.println("last_point " + last_point);
+//		if (dist < AIVisualServoing.DIST_TO_BALL) {
+//			double old_dist = Vector2D.subtract(last_point, new Vector2D(ws.getBallCoords())).getLength();
+//			return new Vector2D(getOptimalPointBehindBall(ws, Math.abs(old_dist-AIVisualServoing.DIST_TO_BALL*1.1)));
+//		} else {
+//			return new Vector2D(getOptimalPointBehindBall(ws, POINT_OFFSET));
+//		}
+//		
+		
 	}
 
 
@@ -1044,6 +1056,20 @@ public class Utilities {
 		for (int i = 0; i < sector_count; i++)
 			ans[i] = NNetTools.AI_normalizeDistanceTo1(NNetTools.targetInSector(relative, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle)), WorldState.PITCH_WIDTH_CM);
 		return ans;
+	}
+	
+	
+	
+	/**
+	 * Returns an AIWorldState given the current world state plus some booleans.
+	 * @param world_state
+	 * @param my_team_blue
+	 * @param my_goal_left
+	 * @param do_prediction
+	 * @return
+	 */
+	public static AIWorldState getAIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
+		return new AIWorldState(world_state, my_team_blue, my_goal_left);
 	}
 
 	/**
