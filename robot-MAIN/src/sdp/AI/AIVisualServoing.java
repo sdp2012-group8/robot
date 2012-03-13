@@ -28,7 +28,12 @@ public class AIVisualServoing extends AI {
 	private final static int POINT_ACCURACY = 5;
 	public static final int DIST_TO_BALL = 6;
 
-	private final static int MAX_TURN_ANG = 200;
+	private final static int MAX_TURN_ANG = 127;
+	public final static double DEFAULT_POINT_OFF = 2*Robot.LENGTH_CM;
+	private double point_off = DEFAULT_POINT_OFF;
+	public final static double TARG_THRESH = 40;
+	
+	
 
 	/**
 	 * True if the robot is chasing the target.
@@ -42,24 +47,14 @@ public class AIVisualServoing extends AI {
 	protected Command chaseBall() throws IOException {
 		Command comm = null;
 		
+		
 		if (ai_world_state.getDistanceToBall() < DIST_TO_BALL){
 			return gotBall();
 		}
 
 		try {
-			// TODO: I have added the ability to change the distance of the point.
-			// However I couldn't find a good metric for what to do with it.
 			
-			//final double dir_to_ball = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(ai_world_state.getRobot().getCoords())), -ai_world_state.getRobot().getAngle()));
-			//final double point_distance = 2*Robot.LENGTH_CM; // + 1*Robot.LENGTH_CM * (1 - (Math.abs(dir_to_ball)/180));
-			//System.out.println("Distance to Point: " + point_distance + " Dir: " + dir_to_ball);
-			//target = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, point_distance));
-			
-			if (target != null) {
-				target = Utilities.getMovingPointBehindBall(ai_world_state, target);
-			} else {
-				target = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, 2*Robot.LENGTH_CM));
-			}
+			target = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, point_off));
 		
 		} catch (NullPointerException e) {
 			// Robot can't see a goal
@@ -68,23 +63,33 @@ public class AIVisualServoing extends AI {
 			target = new Vector2D(ai_world_state.getBallCoords());
 		}
 
-		//		double dist = 2*Robot.LENGTH_CM;
-		//		Vector2D target = new Vector2D(ai_world_state.getBallCoords().getX() + (ai_world_state.getMyGoalLeft() ? - dist : dist), ai_world_state.getBallCoords().getY());
-
-		//		if (true) {
-		//			comm = goTowardsPoint(target, true, true);
-		//			comm.speed = 0;
-		//			return comm;
-		//		}
-
 
 		double targ_dist = distanceTo(target);
+		double direction = Utilities.getTurningAngle(ai_world_state.getRobot(), target);
 
-		if (chasing_target) {
-			comm = chasingTarget(targ_dist);
-		} else {
-			comm = chasingBall(targ_dist);
+		comm = goTowardsPoint(target, true, point_off != DEFAULT_POINT_OFF);
+		
+		comm.turning_speed *= 2;
+		
+		if (Math.abs(direction) < 45 && targ_dist < TARG_THRESH)
+			point_off *= 0.7;
+		if (point_off < DIST_TO_BALL)
+			point_off = DIST_TO_BALL;
+		
+		Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
+		if (ai_world_state.getMyGoalLeft()) {
+			if (ball.getX() < ai_world_state.getRobot().getCoords().getX())
+				point_off = DEFAULT_POINT_OFF;
+		}  else {
+			if (ball.getX() > ai_world_state.getRobot().getCoords().getX())
+				point_off = DEFAULT_POINT_OFF;
 		}
+		
+//		if (chasing_target) {
+//			comm = chasingTarget(targ_dist);
+//		} else {
+//			comm = chasingBall(targ_dist);
+//		}
 
 		normalizeRatio(comm);
 
@@ -150,6 +155,7 @@ public class AIVisualServoing extends AI {
 
 	@Override
 	protected Command gotBall() throws IOException {
+		point_off = DEFAULT_POINT_OFF;
 		//System.out.println("GOT BALL");
 		double angle = ai_world_state.getRobot().getAngle();
 		if (ai_world_state.getMyGoalLeft()) {
@@ -454,40 +460,6 @@ public class AIVisualServoing extends AI {
 		command.turning_speed = Utilities.normaliseAngle(command.turning_speed);
 	}
 
-	/**
-	 * Gives the ID of a given angle. Angle is wrt to (1, 0) local vector on robot (i.e. 0 is forward)
-	 * @param angle should not exceed
-	 * @return
-	 */
-	private int anid(double angle) {
-		int id =  (int) (COLL_SECS_COUNT*(angle+90)/360);
-		return id < 0 ? COLL_SECS_COUNT + id : (id >= COLL_SECS_COUNT ? id - COLL_SECS_COUNT : id);
-	}
-
-	/**
-	 * Find the smallest element in the array from start to end inclusive
-	 * 
-	 * @param array
-	 * @param start
-	 * @param end
-	 * @return
-	 */
-	private static final double getMin(double[] array, int start, int end) {
-		double min = 9999;
-		for (int i = start; i <= end; i++)
-			if (array[i] < min)
-				min = array[i];
-		return min;
-	}
-
-	/**
-	 * Distance from front of robot to a given point on table
-	 * @param global
-	 * @return
-	 */
-	private double frontDistanceTo(Vector2D global) {
-		return Utilities.getDistanceBetweenPoint(Utilities.getGlobalVector(ai_world_state.getRobot(), new Vector2D(Robot.LENGTH_CM/2, 0)), global);
-	}
 
 	/**
 	 * Distance from centre of robot to a given point on table
@@ -498,10 +470,6 @@ public class AIVisualServoing extends AI {
 		return Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), global).getLength();
 	}
 
-	private double directionTo(Vector2D global) {
-		final Vector2D point_rel = Utilities.getLocalVector(ai_world_state.getRobot(), global);
-		return Vector2D.getDirection(point_rel);
-	}
 
 	/**
 	 * Normalises speed to be within a upper and lower limit.
@@ -528,12 +496,18 @@ public class AIVisualServoing extends AI {
 	 * @param comm The command to be normalised.
 	 */
 	public void normalizeRatio(Command comm) {
-		if (Math.abs(comm.turning_speed) > MAX_TURNING_SPEED) {
+		if (Math.abs(comm.turning_speed) > MAX_TURN_ANG) {
 			comm.speed = 0;
 			return;
 		}
-		double rat = Math.abs(comm.turning_speed)/MAX_TURNING_SPEED;
+		double rat = Math.abs(comm.turning_speed)/MAX_TURN_ANG;
 		comm.speed *= 1-rat;
+	}
+	
+	@Override
+	public Command sit() throws IOException {
+		point_off = DEFAULT_POINT_OFF;
+		return super.sit();
 	}
 	
 

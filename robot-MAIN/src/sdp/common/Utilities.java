@@ -673,7 +673,8 @@ public class Utilities {
 	}
 
 	/**
-	 * Transforms a vector from table coordinates to robot coordinates
+	 * Transforms a vector from table coVector2D origin = getGlobalVector(robot, local_origin);
+		Vector2D direction = Vector2D.subtract(origin, getGlobalVector(robot, local_direction));ordinates to robot coordinates
 	 * @param me
 	 * @param vector
 	 * @return
@@ -746,6 +747,39 @@ public class Utilities {
 			if (temp != null && (near == null || temp.getLength() < near.getLength()))
 				near = temp;
 		}
+		if (near != null) 
+			return near;
+		return
+				Vector2D.change_length(direction, WorldState.PITCH_WIDTH_CM);
+	}
+	
+	/**
+	 * Does intersection with the wall in the direction specified from the current position of the robot.
+	 * @param robot
+	 * @param ang an angle local to the robot
+	 * @param wall_offset to shrink the walls with (not coefficient)
+	 * @return
+	 */
+	public static Vector2D internalWallIntersection(Robot robot, double ang, double wall_offset) {
+		final double ang_rad = ang*Math.PI/180;
+		final Vector2D local_direction = new Vector2D(-Math.cos(ang_rad), Math.sin(ang_rad));
+		final Vector2D origin = getGlobalVector(robot, Vector2D.ZERO());
+		final Vector2D direction = Vector2D.subtract(origin, getGlobalVector(robot, local_direction));
+		
+		if (origin.getX() <= 0 || origin.getY() <= 0 || origin.getX() >= WorldState.PITCH_WIDTH_CM || origin.getY() >= WorldState.PITCH_HEIGHT_CM)
+			return Vector2D.ZERO();
+		Vector2D near;
+		Vector2D temp = vectorLineIntersection(origin, direction, new Vector2D(wall_offset, wall_offset), new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, wall_offset));
+		near = temp;
+		temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, wall_offset), new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset));
+		if (temp != null && (near == null || temp.getLength() < near.getLength()))
+			near = temp;
+		temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset), new Vector2D(wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset));
+		if (temp != null && (near == null || temp.getLength() < near.getLength()))
+			near = temp;
+		temp = vectorLineIntersection(origin, direction, new Vector2D(wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset), new Vector2D(wall_offset, wall_offset));
+		if (temp != null && (near == null || temp.getLength() < near.getLength()))
+		
 		if (near != null) 
 			return near;
 		return
