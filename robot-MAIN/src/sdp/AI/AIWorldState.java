@@ -20,6 +20,8 @@ public class AIWorldState extends WorldState {
 	private static final long PREDICTION_TIME = 400; // in ms
 	private static final long PREDICT_FRAME_SPAN = 3;
 	private Queue<WorldState> predict_queue = null;
+	
+	private WorldState last_st = null;
 
 	private boolean my_team_blue;
 	private boolean my_goal_left;
@@ -54,6 +56,8 @@ public class AIWorldState extends WorldState {
 		
 		// To enable or disable low pass, uncomment this line
 		world_state = lowPass(this, world_state);
+		
+		last_st = world_state;
 		
 		this.my_team_blue = my_team_blue;
 		this.my_goal_left = my_goal_left;
@@ -90,6 +94,13 @@ public class AIWorldState extends WorldState {
 	private long oldtime = -1;
 	
 	private WorldState predict(WorldState input, long time_ms) {
+		
+		// handle ball going offscreen
+		if (last_st != null) {
+			if (input.getBallCoords().getX() == -244d || input.getBallCoords().getX() == -1d)
+				input = new WorldState(last_st.getBallCoords(), input.getBlueRobot(), input.getYellowRobot(), input.getWorldImage());
+		}
+		
 		if (predict_queue == null) {
 			predict_queue = new LinkedList<WorldState>();
 			for (int i = 0; i < PREDICT_FRAME_SPAN; i++)
@@ -248,22 +259,10 @@ public class AIWorldState extends WorldState {
 	}
 	
 	private WorldState lowPass(WorldState old_state, WorldState new_state) {
-		return new WorldState(lowPass(old_state.getBallCoords(), new_state.getBallCoords()),//checkBall(old_state.getBallCoords(), new_state.getBallCoords()),
+		return new WorldState(lowPass(old_state.getBallCoords(), new_state.getBallCoords()),
 				lowPass(old_state.getBlueRobot(), new_state.getBlueRobot()),
 				lowPass(old_state.getYellowRobot(), new_state.getYellowRobot()),
 				new_state.getWorldImage());
-	}
-	
-	/**
-	 * Fix ball going offscreen
-	 * @param new_coords
-	 * @return
-	 */
-	private Point2D.Double checkBall(Point2D.Double new_coords, Point2D.Double old_coords) {
-		if (new_coords.getX() == -244d && new_coords.getY() == -244d)
-			return old_coords;
-		else
-			return new_coords;
 	}
 
 

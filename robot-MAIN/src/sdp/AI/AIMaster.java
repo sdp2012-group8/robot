@@ -75,6 +75,7 @@ public class AIMaster extends AIListener {
 	 * The methods called are in all types of the AI.
 	 */
 	protected synchronized void worldChanged() {
+		
 		AI.Command command;
 
 		checkState();

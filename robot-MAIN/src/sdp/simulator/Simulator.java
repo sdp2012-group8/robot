@@ -37,7 +37,7 @@ public class Simulator extends WorldStateProvider {
 
 	private final static double WALL_BOUNCINESS = 0.4; // 0 - inelastic, 1 -
 	// elastic
-	private final static double ROBOT_BOUNCINESS = 0.3; // 0 - 1
+	private static double ROBOT_BOUNCINESS; // 0 - 1
 	private final static double GOAL_SIZE = 60; // cm
 
 	private final static double KICKER_RANGE = 10; // cm
@@ -96,11 +96,17 @@ public class Simulator extends WorldStateProvider {
 	private Queue<WorldState> delayQueue = new LinkedList<WorldState>();
 	private static final int DELAY_SIZE = (int) (DELAY_SIMULATION/ITERATION_TIME);
 
+	public Simulator(boolean realtime_simulation) {
+		this(realtime_simulation, 0.3);
+	}
+	
 	/**
 	 * Initializes a simulator
 	 * @param realtime_simulation true if you plan to use the simulator as a world state provider and simulate realtime. False otherwise.
 	 */
-	public Simulator(boolean realtime_simulation) {
+	public Simulator(boolean realtime_simulation, double robot_bounciness) {
+		ROBOT_BOUNCINESS = robot_bounciness;
+		
 		registerBlue(new VBrick(), 40, WorldState.PITCH_HEIGHT_CM / 2);
 		registerYellow(new VBrick(), WorldState.PITCH_WIDTH_CM - 40, WorldState.PITCH_HEIGHT_CM / 2);
 		ball =Vector2D.multiply(new Vector2D(PITCH_MIDDLE), WorldState.PITCH_WIDTH_CM);
@@ -212,7 +218,7 @@ public class Simulator extends WorldStateProvider {
 		double dt = 1d / fps;
 		double duration = dt*(states.length-1);
 		
-		Simulator sim = new Simulator(false);
+		Simulator sim = new Simulator(false, 0.001);
 		
 		sim.setWorldState(states[0], 0, is_ws_in_cm, command, am_i_blue);
 		sim.setWorldState(states[states.length-1], duration, is_ws_in_cm, command, am_i_blue);
