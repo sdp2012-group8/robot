@@ -30,7 +30,7 @@ public class NNetTools {
 		case 0:
 			Vector2D ball = new Vector2D(worldState.getBallCoords());
 			Vector2D ball_rel = Utilities.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
-			double reach = Utilities.reachability(worldState, ball, am_i_blue, false) ? 1 : -1;
+			double reach = Utilities.reachability(worldState, ball, am_i_blue, false, Robot.LENGTH_CM) ? 1 : -1;
 			return Utilities.concat(
 					Utilities.getSectors(worldState, am_i_blue, 5, 22, true, false),
 					Utilities.getTargetInSectors(ball_rel, 22),
