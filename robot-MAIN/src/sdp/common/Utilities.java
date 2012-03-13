@@ -840,18 +840,18 @@ public class Utilities {
 	 * @param endPt
 	 * @return
 	 */
-	public static double reachabilityRight2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
+	public static Vector2D reachabilityRight2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle, double wheel_dist) {
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
 		Vector2D startPt = new Vector2D(robot.getCoords());
 		Vector2D dir =  Vector2D.subtract(endPt, startPt);
 		double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
-		final double length = Robot.LENGTH_CM/2;
+		final double length = wheel_dist/2;
 		double cos = Math.cos(angle)*length;
 		double sin = Math.sin(angle)*length;
 		Vector2D left = new Vector2D(cos, sin);
 
 		Vector2D ray_right = raytraceVector(ws, Vector2D.add(startPt, left), dir, am_i_blue, include_ball_as_obstacle);
-		return ray_right.getLength();
+		return ray_right;
 	}
 
 	/**
@@ -862,18 +862,18 @@ public class Utilities {
 	 * @param endPt
 	 * @return
 	 */
-	public static double reachabilityLeft2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
+	public static Vector2D reachabilityLeft2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle, double wheel_dist) {
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
 		Vector2D startPt = new Vector2D(robot.getCoords());
 		Vector2D dir =  Vector2D.subtract(endPt, startPt);
 		double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
-		final double length = Robot.LENGTH_CM/2;
+		final double length = wheel_dist/2;
 		double cos = Math.cos(angle)*length;
 		double sin = Math.sin(angle)*length;
 		Vector2D right = new Vector2D(-cos, -sin);
 
 		Vector2D ray_left = raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue, include_ball_as_obstacle);
-		return ray_left.getLength();
+		return ray_left;
 	}
 
 
@@ -885,7 +885,7 @@ public class Utilities {
 	 * @param endPt
 	 * @return
 	 */
-	public static boolean reachability(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
+	public static boolean reachability(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle, double coeff) {
 		if (!visibility(ws, endPt, am_i_blue, include_ball_as_obstacle))
 			return false;
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
@@ -893,7 +893,7 @@ public class Utilities {
 		Vector2D dir =  Vector2D.subtract(endPt, startPt);
 		double dir_l = dir.getLength();
 		double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
-		final double length = Robot.LENGTH_CM/2;
+		final double length = Robot.LENGTH_CM/2-1;
 		double cos = Math.cos(angle)*length;
 		double sin = Math.sin(angle)*length;
 		Vector2D left = new Vector2D(cos, sin);
@@ -903,7 +903,21 @@ public class Utilities {
 		if (ray_left.getLength() < dir_l)
 			return false;
 		Vector2D ray_right = raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue, include_ball_as_obstacle);
-		return ray_right.getLength() >= dir_l;
+		if (ray_right.getLength() < dir_l)
+			return false;
+		
+		Vector2D left2 = new Vector2D(cos*coeff, sin*coeff);
+		Vector2D right2 = new Vector2D(-cos*coeff, -sin*coeff);
+		
+		Vector2D ray_left2 = raytraceVector(ws, Vector2D.add(startPt, left2), dir, am_i_blue, include_ball_as_obstacle);
+		if (ray_left2.getLength() < dir_l)
+			return false;
+		Vector2D ray_right2 = raytraceVector(ws, Vector2D.add(startPt, right2), dir, am_i_blue, include_ball_as_obstacle);
+		if (ray_right2.getLength() < dir_l)
+			return false;
+
+		
+		return true;
 	}
 
 	/**

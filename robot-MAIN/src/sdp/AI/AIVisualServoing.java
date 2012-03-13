@@ -13,11 +13,17 @@ public class AIVisualServoing extends AI {
 	/** The multiplier to the final speed to slow it down */
 	private final static double SPEED_MULTIPLIER = 0.7;
 
-	private final static int COLL_SECS_COUNT = 110;
+	private final static int COLL_SECS_COUNT = 222;
 	private final static double SEC_ANGLE = 360d/COLL_SECS_COUNT;
-	private final static int COLL_ANGLE = 25;
-	private final static int CORNER_COLL_THRESHOLD = 2;
-	private final static int NEAR_TARGET = 2;
+	
+	// corner thresholds
+	private final static int THRESH_CORN_HIGH = 5;
+	private final static int THRESH_CORN_LOW = 2;
+	
+	// back away threshold
+	private final static int THRESH_BACK_HIGH = 25;
+	private final static int THRESH_BACK_LOW = 2;
+	
 	/** Threshold for being at the target point */
 	private final static int POINT_ACCURACY = 5;
 	public static final int DIST_TO_BALL = 6;
@@ -364,128 +370,94 @@ public class AIVisualServoing extends AI {
 
 		// get direction and distance to point
 		final double point_dir = Vector2D.getDirection(point_rel);
-		final double point_dist = point_rel.getLength();
-
-		// if you go directly towards the point, at which closest point are we going to be in a collision
-		final double point_left_coll_dist = Utilities.reachabilityLeft2(ai_world_state, point, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle);
-		final double point_right_coll_dist = Utilities.reachabilityRight2(ai_world_state, point, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle);
-		final double point_coll_dist = Math.min(point_left_coll_dist, point_right_coll_dist);
-		final double point_vis_dist = Utilities.visibility2(ai_world_state, point, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle);
-
-		// the angle that we need to turn in order to avoid hitting our left or right corner at the obstacle
-		final double turn_ang_more = Math.toDegrees(Math.atan2(Robot.LENGTH_CM, point_coll_dist));
-
-		// get the sectors
-		final double[] sectors = Utilities.getSectors(ai_world_state, ai_world_state.getMyTeamBlue(), 5, COLL_SECS_COUNT, false, include_ball_as_obstacle);
-
-		// sectors[0] starts at -90
-		double temp = 999;
+		final double direct_dist = point_rel.getLength();
+		final double vis_dist = Utilities.visibility2(ai_world_state, point, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle) + Robot.LENGTH_CM;
+		final double other_rob_dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(ai_world_state.getEnemyRobot().getCoords())).getLength();
+		final boolean point_visible = vis_dist >= direct_dist;
+		
 		double turn_ang = 999;
-		int id = -1;
-		for (int i = 0; i < sectors.length; i++) {
-			if (sectors[i] >= point_dist) {	
+
+		double point_dist = point_visible ? direct_dist : other_rob_dist+Robot.LENGTH_CM/2;
+		double temp = 999;
+		int t = 0;
+		while (turn_ang == 999) {
+			for (int i = 0; i < COLL_SECS_COUNT; i++) {
 				double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
-				double diff = Utilities.normaliseAngle(ang-point_dir);
-				if (Math.abs(diff) < Math.abs(temp)) {
-					temp = diff;
-					turn_ang = ang;
-					id = i;
+				Vector2D vec = Vector2D.multiply(Vector2D.rotateVector(new Vector2D(1, 0), ang), point_dist);
+				if (Utilities.reachability(ai_world_state, Utilities.getGlobalVector(ai_world_state.getRobot(), vec), ai_world_state.getMyTeamBlue(), include_ball_as_obstacle, 1.5)) {	
+					double diff = Utilities.normaliseAngle(ang-point_dir);
+					if (Math.abs(diff) < Math.abs(temp)) {
+						temp = diff;
+						turn_ang = ang;
+					}
 				}
 			}
+			t++;
+			if (t == 5)
+				break;
+			point_dist -= Robot.LENGTH_CM;
 		}
 
-		double temp2 = 999;
-		double turn_ang2 = 999;
-		for (int i = 0; i < sectors.length; i++) {
-			if (sectors[i] >= point_dist) {	
-				double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
-				double diff = Utilities.normaliseAngle(ang-point_dir);
-				if (Math.abs(diff) < Math.abs(temp) && i != id) {
-					temp2 = diff;
-					turn_ang2 = ang;
-				}
+		if (turn_ang == 999)
+			turn_ang = point_dir;
+		
+		command.turning_speed = turn_ang;
+
+		if (need_to_face_point) { 
+			// set forward speed
+			if (command.turning_speed > 90 || command.turning_speed < -90){ 
+				// ball is behind
+				command.speed = -MAX_SPEED_CM_S;
+			} else { 
+				//ball is in front
+				command.speed = MAX_SPEED_CM_S;
 			}
-		}
+		} else {
+			// go fastest to a point regardless of direction
 
-		if (Math.abs(Utilities.normaliseAngle(turn_ang2-turn_ang)) > SEC_ANGLE*2 && Math.abs(turn_ang2) < Math.abs(turn_ang)) {
-			command.turning_speed = turn_ang2;
-		} else
-			command.turning_speed = turn_ang;
+			if (command.turning_speed > 90 || command.turning_speed < -90) {
+				// ball is behind
+				command.speed = -MAX_SPEED_CM_S;
 
-		//System.out.println(String.format("%.2f l="+point_left_coll_dist+" r="+point_right_coll_dist+" d="+point_dist,command.turning_speed));
-
-		// if we have no way of reaching the point go into the most free direction
-		if (command.turning_speed == 999) {
-			temp = 0;
-			for (int i = 0; i < sectors.length; i++) {
-				if (sectors[i] > temp) {
-					temp = sectors[i];
-					double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
-					command.turning_speed = ang;
-				}
-			}
-		} 
-
-		if (point_left_coll_dist < point_dist || point_right_coll_dist < point_dist)
-			command.turning_speed += point_left_coll_dist > point_right_coll_dist ? turn_ang_more : -turn_ang_more;
-
-
-			if (need_to_face_point) { 
-				// set forward speed
-				if (command.turning_speed > 90 || command.turning_speed < -90){ 
-					// ball is behind
-					command.speed = -MAX_SPEED_CM_S;
-				} else { 
-					//ball is in front
-					command.speed = MAX_SPEED_CM_S;
-				}
+				// go backwards to get to ball as soon as possible
+				command.turning_speed = Utilities.normaliseAngle(command.turning_speed-180);
 			} else {
-				// go fastest to a point regardless of direction
-
-				if (command.turning_speed > 90 || command.turning_speed < -90) {
-					// ball is behind
-					command.speed = -MAX_SPEED_CM_S;
-
-					// go backwards to get to ball as soon as possible
-					command.turning_speed = Utilities.normaliseAngle(command.turning_speed-180);
-				} else {
-					// ball is in front
-					command.speed = MAX_SPEED_CM_S;
-				}
+				// ball is in front
+				command.speed = MAX_SPEED_CM_S;
 			}
+		}
 
-			// if we get within too close (within coll_start) of an obstacle
-			backAwayIfTooClose(command, sectors);
+		// if we get within too close (within coll_start) of an obstacle
+		backAwayIfTooClose(command, include_ball_as_obstacle, point_visible ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
 
-			// check if either of the corners are in collision
-			nearCollisionCheck(command);
+		// check if either of the corners are in collision
+		nearCollisionCheck(command, point_visible ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
 
-			return command;
+		return command;
 	}
 
 	/**
 	 * If too close to an obstacle from sectors, back away
 	 * @param command
-	 * @param sectors
 	 */
-	private void backAwayIfTooClose(Command command, double[] sectors) {
-		double for_dist = getMin(sectors, anid(-10), anid(10)); // get collision distance at the front
-		double back_dist = getMin(sectors, anid(170), anid(190)); // get collision distance at the back
+	private void backAwayIfTooClose(Command command, boolean include_ball_as_obstacle, double threshold) {
+		double for_dist = Utilities.getSector(ai_world_state, ai_world_state.getMyTeamBlue(), -10, 10, 20, include_ball_as_obstacle).getLength(); // get collision distance at the front
+		double back_dist = Utilities.getSector(ai_world_state, ai_world_state.getMyTeamBlue(), 170, -170, 20, include_ball_as_obstacle).getLength(); // get collision distance at the back
 
 		if (ai_world_state.isDist_sensor()){
 			if (command.speed >= 0) {
 				// go backwards
-				double speed_coeff = -1+for_dist/COLL_ANGLE;
+				double speed_coeff = -1+for_dist/threshold;
 				if (speed_coeff > 0)
 					speed_coeff = 0;
 				if (speed_coeff < -1)
 					speed_coeff = -1;
 				command.speed *= speed_coeff;
 			}
-		} else if (back_dist < COLL_ANGLE) {
+		} else if (back_dist < threshold) {
 			if (command.speed <= 0) {
 				// same as above
-				double speed_coeff = -1+back_dist/COLL_ANGLE;
+				double speed_coeff = -1+back_dist/threshold;
 				if (speed_coeff > 0)
 					speed_coeff = 0;
 				if (speed_coeff < -1)
@@ -499,17 +471,17 @@ public class AIVisualServoing extends AI {
 	 * Checks whether there is a collision with either corner and tries to react to it
 	 * @param command
 	 */
-	private void nearCollisionCheck(Command command) {
+	private void nearCollisionCheck(Command command, double threshold) {
 		final Vector2D
 		front_left = Utilities.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getBackLeft()),Utilities.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
 		front_right = Utilities.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getBackRight()),Utilities.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
 		back_left = Utilities.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontLeft()),Utilities.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
 		back_right = Utilities.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontRight()),Utilities.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords())));
 		final boolean
-		front_left_coll = front_left.getLength() <= CORNER_COLL_THRESHOLD,
-		front_right_coll = front_right.getLength() <= CORNER_COLL_THRESHOLD,
-		back_left_coll = back_left.getLength() <= CORNER_COLL_THRESHOLD,
-		back_right_coll = back_right.getLength() <= CORNER_COLL_THRESHOLD,
+		front_left_coll = front_left.getLength() <= threshold,
+		front_right_coll = front_right.getLength() <= threshold,
+		back_left_coll = back_left.getLength() <= threshold,
+		back_right_coll = back_right.getLength() <= threshold,
 		any_collision = front_left_coll || front_right_coll || back_left_coll || back_right_coll;
 
 		if (any_collision) {
