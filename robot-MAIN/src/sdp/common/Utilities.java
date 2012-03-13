@@ -8,6 +8,7 @@ import java.awt.image.WritableRaster;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import sdp.AI.AIVisualServoing;
 import sdp.AI.AIWorldState;
 
 
@@ -21,9 +22,8 @@ import sdp.AI.AIWorldState;
 public class Utilities {
 
 
-	private static final double POINT_OFFSET = 1.5*Robot.LENGTH_CM;
+	private static final double POINT_OFFSET = 2*Robot.LENGTH_CM;
 	public final static double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
-
 
 	/**
 	 * Return a deep copy of the given BufferedImage.
@@ -382,25 +382,11 @@ public class Utilities {
 	 * @return The point closest to the robot that would allow it to shoot.
 	 * @throws NullPointerException Throws exception when the robot can't see a goal.
 	 */
-	public static Point2D.Double getOptimalPointBehindBall(WorldState ws, boolean my_goal_left, boolean my_team_blue, double point_offset) throws NullPointerException {
-		Goal enemy_goal;
-		Robot robot, enemy_robot;
+	public static Point2D.Double getOptimalPointBehindBall(AIWorldState ws, double point_offset) throws NullPointerException {
+		Goal enemy_goal = ws.getEnemyGoal();
+		Robot robot = ws.getRobot();
+		Robot enemy_robot = ws.getEnemyRobot();
 
-		if (my_goal_left) {
-			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
-		} else {
-			enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
-		}
-
-		//update variables
-		if (my_team_blue) {
-			robot = ws.getBlueRobot();
-			enemy_robot = ws.getYellowRobot();
-		} else {
-			robot = (ws.getYellowRobot());
-			enemy_robot = (ws.getBlueRobot());
-		}
-		
 		ArrayList<Point2D.Double> goal_points = new ArrayList<Point2D.Double>();
 		Point2D.Double min_point = null;
 		double min_distance = WorldState.PITCH_WIDTH_CM*2;
@@ -444,7 +430,7 @@ public class Utilities {
 		itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
-			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(),my_goal_left, point_offset);
+			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(),ws.getMyGoalLeft(), point_offset);
 
 			//System.out.println(temp_point);
 			
@@ -462,6 +448,32 @@ public class Utilities {
 		} 
 		//System.out.println("min point "+min_point); //+ "enemy robot" + enemy_robot.getCoords() + "angle" + enemy_robot.getAngle() + "ball coords "+ws.getBallCoords());
 		return min_point;
+	}
+	
+	
+	/**
+	 * Finds a point behind the ball that will put the robot in a curved path
+	 * ending at the ball with shooting direction.
+	 * @param ws
+	 * @return
+	 */
+	public static Vector2D getMovingPointBehindBall(AIWorldState ws, Vector2D last_point) {
+		return new Vector2D(getOptimalPointBehindBall(ws, POINT_OFFSET));
+//		final Robot robot = ws.getRobot();
+//		//Vector2D point = new Vector2D(getOptimalPointBehindBall(ws, 1.5*Robot.LENGTH_CM));
+//		
+//		Vector2D point_vector = Vector2D.subtract(last_point, new Vector2D(robot.getCoords()));
+//		//double angle = Math.abs(normaliseAngle(Vector2D.getAngle(point_vector) - robot.getAngle()));
+//		double dist = point_vector.getLength();
+//		System.out.println("last_point " + last_point);
+//		if (dist < AIVisualServoing.DIST_TO_BALL) {
+//			double old_dist = Vector2D.subtract(last_point, new Vector2D(ws.getBallCoords())).getLength();
+//			return new Vector2D(getOptimalPointBehindBall(ws, Math.abs(old_dist-AIVisualServoing.DIST_TO_BALL*1.1)));
+//		} else {
+//			return new Vector2D(getOptimalPointBehindBall(ws, POINT_OFFSET));
+//		}
+//		
+		
 	}
 
 
@@ -816,18 +828,18 @@ public class Utilities {
 	 * @param endPt
 	 * @return
 	 */
-	public static double reachabilityRight2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
+	public static Vector2D reachabilityRight2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle, double wheel_dist) {
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
 		Vector2D startPt = new Vector2D(robot.getCoords());
 		Vector2D dir =  Vector2D.subtract(endPt, startPt);
 		double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
-		final double length = Robot.LENGTH_CM/2;
+		final double length = wheel_dist/2;
 		double cos = Math.cos(angle)*length;
 		double sin = Math.sin(angle)*length;
 		Vector2D left = new Vector2D(cos, sin);
 
 		Vector2D ray_right = raytraceVector(ws, Vector2D.add(startPt, left), dir, am_i_blue, include_ball_as_obstacle);
-		return ray_right.getLength();
+		return ray_right;
 	}
 
 	/**
@@ -838,18 +850,18 @@ public class Utilities {
 	 * @param endPt
 	 * @return
 	 */
-	public static double reachabilityLeft2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
+	public static Vector2D reachabilityLeft2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle, double wheel_dist) {
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
 		Vector2D startPt = new Vector2D(robot.getCoords());
 		Vector2D dir =  Vector2D.subtract(endPt, startPt);
 		double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
-		final double length = Robot.LENGTH_CM/2;
+		final double length = wheel_dist/2;
 		double cos = Math.cos(angle)*length;
 		double sin = Math.sin(angle)*length;
 		Vector2D right = new Vector2D(-cos, -sin);
 
 		Vector2D ray_left = raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue, include_ball_as_obstacle);
-		return ray_left.getLength();
+		return ray_left;
 	}
 
 
@@ -861,7 +873,7 @@ public class Utilities {
 	 * @param endPt
 	 * @return
 	 */
-	public static boolean reachability(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
+	public static boolean reachability(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle, double coeff) {
 		if (!visibility(ws, endPt, am_i_blue, include_ball_as_obstacle))
 			return false;
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
@@ -869,7 +881,7 @@ public class Utilities {
 		Vector2D dir =  Vector2D.subtract(endPt, startPt);
 		double dir_l = dir.getLength();
 		double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
-		final double length = Robot.LENGTH_CM/2;
+		final double length = Robot.LENGTH_CM/2-1;
 		double cos = Math.cos(angle)*length;
 		double sin = Math.sin(angle)*length;
 		Vector2D left = new Vector2D(cos, sin);
@@ -879,7 +891,21 @@ public class Utilities {
 		if (ray_left.getLength() < dir_l)
 			return false;
 		Vector2D ray_right = raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue, include_ball_as_obstacle);
-		return ray_right.getLength() >= dir_l;
+		if (ray_right.getLength() < dir_l)
+			return false;
+		
+		Vector2D left2 = new Vector2D(cos*coeff, sin*coeff);
+		Vector2D right2 = new Vector2D(-cos*coeff, -sin*coeff);
+		
+		Vector2D ray_left2 = raytraceVector(ws, Vector2D.add(startPt, left2), dir, am_i_blue, include_ball_as_obstacle);
+		if (ray_left2.getLength() < dir_l)
+			return false;
+		Vector2D ray_right2 = raytraceVector(ws, Vector2D.add(startPt, right2), dir, am_i_blue, include_ball_as_obstacle);
+		if (ray_right2.getLength() < dir_l)
+			return false;
+
+		
+		return true;
 	}
 
 	/**
@@ -1044,6 +1070,20 @@ public class Utilities {
 		for (int i = 0; i < sector_count; i++)
 			ans[i] = NNetTools.AI_normalizeDistanceTo1(NNetTools.targetInSector(relative, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle)), WorldState.PITCH_WIDTH_CM);
 		return ans;
+	}
+	
+	
+	
+	/**
+	 * Returns an AIWorldState given the current world state plus some booleans.
+	 * @param world_state
+	 * @param my_team_blue
+	 * @param my_goal_left
+	 * @param do_prediction
+	 * @return
+	 */
+	public static AIWorldState getAIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
+		return new AIWorldState(world_state, my_team_blue, my_goal_left);
 	}
 
 
