@@ -8,7 +8,6 @@ import java.awt.image.WritableRaster;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import sdp.AI.AIVisualServoing;
 import sdp.AI.AIWorldState;
 
 
@@ -22,9 +21,15 @@ public class Utilities {
 
 	/** The distance from optimal point to the ball. */
 	private static final double POINT_OFFSET = 1.5 * Robot.LENGTH_CM;
-	
 	/** Size of the ball obstacle. */
 	public static final double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
+	
+	/** A flag that denotes that ball should be considered an obstacle. */
+	public static final int BALL_IS_OBSTACLE_FLAG = 0x1;
+	/** A flag that denotes that blue robot should be considered an obstacle. */
+	public static final int BLUE_IS_OBSTACLE_FLAG = 0x2;
+	/** A flag that denotes that yellow robot should be considered an obstacle. */
+	public static final int YELLOW_IS_OBSTACLE_FLAG = 0x4;
 
 	
 	/**
@@ -690,11 +695,15 @@ public class Utilities {
 
 	/**
 	 * Starting from origin in the given direction, find the first point of collision in the scene
+	 * 
+	 * TODO: Replace with getClosestCollisionVec.
+	 * 
 	 * @param origin the start of the vector
 	 * @param direction size doesn't matter, only the angle is relevant
 	 * @param ignore_blue true to ignore blue robot, false to ignore yellow, null to include both
 	 * @return a {@link Vector2D} in the same direction as direction but with greater length (distance from origin to the nearest collision point, raytraced along direction's direction)
 	 */
+	@Deprecated
 	public static Vector2D raytraceVector(WorldState ws, Vector2D origin, Vector2D direction, Boolean ignore_blue, boolean include_ball_as_obstacle) {
 		if (origin.getX() <= 0 || origin.getY() <= 0 || origin.getX() >= WorldState.PITCH_WIDTH_CM || origin.getY() >= WorldState.PITCH_HEIGHT_CM)
 			return Vector2D.ZERO();
@@ -742,20 +751,24 @@ public class Utilities {
 	}
 
 	/**
-	 * Raytrace vector with relation to a robot
+	 * TODO: Replace with getClosestCollisionVec.
+	 * 
 	 * @param ws
 	 * @param robot
 	 * @param local_origin In robot's coordinate system. Make sure it is outside robot to avoid false readings!
 	 * @param local_direction In robot's coordinate system
 	 * @return same output as {@link #raytraceVector(WorldState, Vector2D, Vector2D)} - in table coordinates
 	 */
+	@Deprecated
 	public static Vector2D raytraceVector(WorldState ws, Robot robot, Vector2D local_origin, Vector2D local_direction, boolean include_ball_as_obstacle) {
 		return raytraceVector(ws, robot, local_origin, local_direction, null, include_ball_as_obstacle);
 	}
 
-
 	/**
 	 * Raytrace vector with relation to a robot
+	 * 
+	 * TODO: Replace with getClosestCollisionVec or an overloaded function.
+	 * 
 	 * @param ws
 	 * @param robot
 	 * @param local_origin In robot's coordinate system. Make sure it is outside robot to avoid false readings!
@@ -763,11 +776,68 @@ public class Utilities {
 	 * @param am_i_blue if true, ignores blue if false ignores yellow. To include all robots, use {@link #raytraceVector(WorldState, Robot, Vector2D, Vector2D)}
 	 * @return same output as {@link #raytraceVector(WorldState, Vector2D, Vector2D)} - in table coordinates
 	 */
+	@Deprecated
 	public static Vector2D raytraceVector(WorldState ws, Robot robot, Vector2D local_origin, Vector2D local_direction,  Boolean am_i_blue, boolean include_ball_as_obstacle) {
 		Vector2D origin = getGlobalVector(robot, local_origin);
 		Vector2D direction = Vector2D.subtract(origin, getGlobalVector(robot, local_direction));
 		return raytraceVector(ws, origin, direction, am_i_blue, include_ball_as_obstacle);
 	}
+	
+	
+	/**
+	 * Find the closest collision from the given point in the specified
+	 * direction and return it as a vector. The vector's direction will match
+	 * the given parameter and its length will match the distance to the first
+	 * collision.
+	 * 
+	 * TODO: Move all raytracing functionality into this function.
+	 * 
+	 * @param state World state in which to perform the search.
+	 * @param origin The point from which to cast the ray.
+	 * @param direction Direction of the ray.
+	 * @param obstacles A bitfield that is expected to contain any combination
+	 * 		of flags BALL_IS_OBSTACLE_FLAG, BLUE_IS_OBSTACLE_FLAG and
+	 * 		YELLOW_IS_OBSTACLE_FLAG. It denotes which objects are considered
+	 * 		to be obstacles.
+	 * @return Collision vector, as described above.
+	 */
+	public static Vector2D getClosestCollisionVec(WorldState state, Vector2D origin,
+			Vector2D direction, int obstacles) {
+		boolean ballIsObstacle = ((obstacles & BALL_IS_OBSTACLE_FLAG) != 0);
+		
+		Boolean robotCollision;
+		if ((obstacles & BLUE_IS_OBSTACLE_FLAG) != 0) {
+			if ((obstacles & YELLOW_IS_OBSTACLE_FLAG) != 0) {
+				robotCollision = null;
+			} else {
+				robotCollision = true;
+			}
+		} else {
+			robotCollision = false;
+		}
+		
+		return raytraceVector(state, origin, direction, robotCollision, ballIsObstacle);
+	}
+	
+	/**
+	 * Find the closest collision from the given point in the specified
+	 * direction and return the distance to it.
+	 * 
+	 * @param state World state in which to perform the search.
+	 * @param origin The point from which to cast the ray.
+	 * @param direction Direction of the ray.
+	 * @param obstacles A bitfield that is expected to contain any combination
+	 * 		of flags BALL_IS_OBSTACLE_FLAG, BLUE_IS_OBSTACLE_FLAG and
+	 * 		YELLOW_IS_OBSTACLE_FLAG. It denotes which objects are considered
+	 * 		to be obstacles.
+	 * @return Distance to the closest collision, as described above.
+	 */
+	public static double getClosestCollisionDist(WorldState state, Vector2D origin,
+			Vector2D direction, int obstacles) {
+		Vector2D collVec = getClosestCollisionVec(state, origin, direction, obstacles);
+		return collVec.getLength();
+	}
+	
 
 	/**
 	 * Whether there is direct visibility from a point of the pitch to another one.
@@ -786,8 +856,8 @@ public class Utilities {
 	}
 
 	
+	@Deprecated
 	public static boolean visibility(WorldState ws, Vector2D startPoint, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
-		
 		Vector2D dir =  Vector2D.subtract(endPt, startPoint);
 		Vector2D ray = raytraceVector(ws, startPoint, dir, am_i_blue, include_ball_as_obstacle);
 		return ray.getLength() >= dir.getLength();
@@ -795,12 +865,16 @@ public class Utilities {
 	
 	/**
 	 * Returns the distance to the direct collision in a given direction.
+	 * 
+	 * TODO: Replace with getClosestCollisionDist.
+	 * 
 	 * @param ws
 	 * @param robot
 	 * @param startPt
 	 * @param endPt
 	 * @return
 	 */
+	@Deprecated
 	public static double visibility2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
 		Vector2D startPt = new Vector2D(robot.getCoords());
@@ -808,6 +882,9 @@ public class Utilities {
 		Vector2D ray = raytraceVector(ws, startPt, dir, am_i_blue, include_ball_as_obstacle);
 		return ray.getLength();
 	}
+	
+	
+	
 
 	/**
 	 * Returns the distance to the collision in a given direction
@@ -856,23 +933,33 @@ public class Utilities {
 	}
 	
 	
+	
 	/**
-	 * Get the closest collision distances from our robot into some direction.
-	 * Two values are reported: shortest collision of the left and the right
+	 * Get the closest collisions from our robot into some direction. Two
+	 * values are reported: shortest collision of the left and the right
 	 * sides of the robot.
 	 * 
+	 * Here is a helpful graphic:
+	 * 
+	 *  v- left side                                   XX <- obstacle         |
+	 * +----+--------------left collision vector----->XXXX                    |
+	 * |o |=| <- robot facing east                     XX       O <- target   |
+	 * +----+--------------right collision vector---------------------------->|
+	 *  ^- right side                                                 wall -> |
+	 * 
 	 * @param state Current world state.
-	 * @param endPt Point, in whose direction the check will be performed.
+	 * @param dirPt Point, in whose direction the check will be performed.
 	 * @param ballIsObstacle Whether the ball should be considered an obstacle.
 	 * @return Left and right collision distances, as described above.
 	 */
-	public static double[] getClosestCollDistances(AIWorldState state, Vector2D endPt, boolean ballIsObstacle) {
+	public static Vector2D[] getClosestCollisions(AIWorldState state, Vector2D dirPt, boolean ballIsObstacle) {
 		Vector2D startPt = new Vector2D(state.getRobot().getCoords());
-		Vector2D dir = Vector2D.subtract(endPt, startPt);
-		double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
-		final double length = Robot.LENGTH_CM/2;
-		double cos = Math.cos(angle)*length;
-		double sin = Math.sin(angle)*length;
+		Vector2D dir = Vector2D.subtract(dirPt, startPt);
+		double angle = (-Vector2D.getDirection(dir) + 90) * Math.PI / 180d;
+		
+		double length = Robot.LENGTH_CM / 2;
+		double cos = Math.cos(angle) * length;
+		double sin = Math.sin(angle) * length;
 		
 		Vector2D left = new Vector2D(cos, sin);
 		Vector2D leftRay = raytraceVector(state, Vector2D.add(startPt, left), dir, state.getMyTeamBlue(), ballIsObstacle);
@@ -880,7 +967,7 @@ public class Utilities {
 		Vector2D right = new Vector2D(-cos, -sin);
 		Vector2D rightRay = raytraceVector(state, Vector2D.add(startPt, right), dir, state.getMyTeamBlue(), ballIsObstacle);
 		
-		double retValue[] = { leftRay.getLength(), rightRay.getLength() };
+		Vector2D retValue[] = { leftRay, rightRay };
 		return retValue;
 	}
 

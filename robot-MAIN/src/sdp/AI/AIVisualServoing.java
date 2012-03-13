@@ -316,21 +316,33 @@ public class AIVisualServoing extends AI {
 	 * @return The next command to execute.
 	 */
 	private Command goTowardsPoint(Vector2D target, boolean ballIsObstacle, boolean need_to_face_point) {
-		Command command = new Command(0, 0, false);
+		Command comm = new Command(0, 0, false);
 
-		// get relative ball coordinates
-		final Vector2D point_rel = Utilities.getLocalVector(ai_world_state.getRobot(), target);
-
-		// get direction and distance to point
-		final double point_dir = Vector2D.getDirection(point_rel);
-		final double direct_dist = point_rel.getLength();
-		final double vis_dist = Utilities.visibility2(ai_world_state, target, ai_world_state.getMyTeamBlue(), ballIsObstacle) + Robot.LENGTH_CM;
-		final double other_rob_dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(ai_world_state.getEnemyRobot().getCoords())).getLength();
-		final boolean point_visible = vis_dist >= direct_dist;
+		// Target point data in local coordinates.
+		Vector2D targetLocal = Utilities.getLocalVector(ai_world_state.getRobot(), target);
+		double targetDirLocal = Vector2D.getDirection(targetLocal);
+		double targetDistLocal = targetLocal.getLength();
 		
+		// Set up the obstacle flag.
+		int obstacleFlag = 0;
+		obstacleFlag |= (ai_world_state.getMyTeamBlue()
+				? Utilities.YELLOW_IS_OBSTACLE_FLAG
+				: Utilities.BLUE_IS_OBSTACLE_FLAG);
+		if (ballIsObstacle) {
+			obstacleFlag |= Utilities.BALL_IS_OBSTACLE_FLAG;
+		}
+		
+		// Check if the target point is directly visible.
+		double targetCollDist = Utilities.getClosestCollisionDist(ai_world_state,
+				new Vector2D(ai_world_state.getRobot().getCoords()),
+				target, obstacleFlag) + Robot.LENGTH_CM;
+		boolean isTargetVisible = (targetCollDist >= targetDistLocal);
+		
+		double enemyRobotDist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(ai_world_state.getEnemyRobot().getCoords())).getLength();
+
 		double turn_ang = 999;
 
-		double point_dist = point_visible ? direct_dist : other_rob_dist+Robot.LENGTH_CM/2;
+		double point_dist = isTargetVisible ? targetDistLocal : enemyRobotDist+Robot.LENGTH_CM/2;
 		double temp = 999;
 		int t = 0;
 		while (turn_ang == 999) {
@@ -338,7 +350,7 @@ public class AIVisualServoing extends AI {
 				double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
 				Vector2D vec = Vector2D.multiply(Vector2D.rotateVector(new Vector2D(1, 0), ang), point_dist);
 				if (Utilities.reachability(ai_world_state, Utilities.getGlobalVector(ai_world_state.getRobot(), vec), ai_world_state.getMyTeamBlue(), ballIsObstacle, 1.5)) {	
-					double diff = Utilities.normaliseAngle(ang-point_dir);
+					double diff = Utilities.normaliseAngle(ang-targetDirLocal);
 					if (Math.abs(diff) < Math.abs(temp)) {
 						temp = diff;
 						turn_ang = ang;
@@ -352,41 +364,41 @@ public class AIVisualServoing extends AI {
 		}
 
 		if (turn_ang == 999)
-			turn_ang = point_dir;
+			turn_ang = targetDirLocal;
 		
-		command.turning_speed = turn_ang;
+		comm.turning_speed = turn_ang;
 
 		if (need_to_face_point) { 
 			// set forward speed
-			if (command.turning_speed > 90 || command.turning_speed < -90){ 
+			if (comm.turning_speed > 90 || comm.turning_speed < -90){ 
 				// ball is behind
-				command.speed = -MAX_SPEED_CM_S;
+				comm.speed = -MAX_SPEED_CM_S;
 			} else { 
 				//ball is in front
-				command.speed = MAX_SPEED_CM_S;
+				comm.speed = MAX_SPEED_CM_S;
 			}
 		} else {
 			// go fastest to a point regardless of direction
 
-			if (command.turning_speed > 90 || command.turning_speed < -90) {
+			if (comm.turning_speed > 90 || comm.turning_speed < -90) {
 				// ball is behind
-				command.speed = -MAX_SPEED_CM_S;
+				comm.speed = -MAX_SPEED_CM_S;
 
 				// go backwards to get to ball as soon as possible
-				command.turning_speed = Utilities.normaliseAngle(command.turning_speed-180);
+				comm.turning_speed = Utilities.normaliseAngle(comm.turning_speed-180);
 			} else {
 				// ball is in front
-				command.speed = MAX_SPEED_CM_S;
+				comm.speed = MAX_SPEED_CM_S;
 			}
 		}
 
 		// if we get within too close (within coll_start) of an obstacle
-		backAwayIfTooClose(command, ballIsObstacle, point_visible ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
+		backAwayIfTooClose(comm, ballIsObstacle, isTargetVisible ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
 
 		// check if either of the corners are in collision
-		nearCollisionCheck(command, point_visible ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
+		nearCollisionCheck(comm, isTargetVisible ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
 
-		return command;
+		return comm;
 	}
 
 	/**
