@@ -14,17 +14,19 @@ import sdp.AI.AIWorldState;
 
 /**
  * Contains various utility methods, which do not fit anywhere else.
- */
-/**
- * @author mihaela_laura_ionescu
- *
+ * 
+ * @author Gediminas Liktaras
+ * @author Mihaela Laura Ionescu
  */
 public class Utilities {
 
+	/** The distance from optimal point to the ball. */
+	private static final double POINT_OFFSET = 1.5 * Robot.LENGTH_CM;
+	
+	/** Size of the ball obstacle. */
+	public static final double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
 
-	private static final double POINT_OFFSET = 2*Robot.LENGTH_CM;
-	public final static double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
-
+	
 	/**
 	 * Return a deep copy of the given BufferedImage.
 	 * 
@@ -374,7 +376,9 @@ public class Utilities {
 	}
 	
 	
-
+	public static Point2D.Double getOptimalPointBehindBall(AIWorldState ws) {
+		return Utilities.getOptimalPointBehindBall(ws, POINT_OFFSET);
+	}
 
 	/**
 	 * Calculates all the points behind the ball that would align the robot to shoot and
@@ -382,7 +386,7 @@ public class Utilities {
 	 * @return The point closest to the robot that would allow it to shoot.
 	 * @throws NullPointerException Throws exception when the robot can't see a goal.
 	 */
-	public static Point2D.Double getOptimalPointBehindBall(AIWorldState ws, double point_offset) throws NullPointerException {
+	public static Point2D.Double getOptimalPointBehindBall(AIWorldState ws, double point_offset) {
 		Goal enemy_goal = ws.getEnemyGoal();
 		Robot robot = ws.getRobot();
 		Robot enemy_robot = ws.getEnemyRobot();
@@ -459,21 +463,6 @@ public class Utilities {
 	 */
 	public static Vector2D getMovingPointBehindBall(AIWorldState ws, Vector2D last_point) {
 		return new Vector2D(getOptimalPointBehindBall(ws, POINT_OFFSET));
-//		final Robot robot = ws.getRobot();
-//		//Vector2D point = new Vector2D(getOptimalPointBehindBall(ws, 1.5*Robot.LENGTH_CM));
-//		
-//		Vector2D point_vector = Vector2D.subtract(last_point, new Vector2D(robot.getCoords()));
-//		//double angle = Math.abs(normaliseAngle(Vector2D.getAngle(point_vector) - robot.getAngle()));
-//		double dist = point_vector.getLength();
-//		System.out.println("last_point " + last_point);
-//		if (dist < AIVisualServoing.DIST_TO_BALL) {
-//			double old_dist = Vector2D.subtract(last_point, new Vector2D(ws.getBallCoords())).getLength();
-//			return new Vector2D(getOptimalPointBehindBall(ws, Math.abs(old_dist-AIVisualServoing.DIST_TO_BALL*1.1)));
-//		} else {
-//			return new Vector2D(getOptimalPointBehindBall(ws, POINT_OFFSET));
-//		}
-//		
-		
 	}
 
 
@@ -828,6 +817,7 @@ public class Utilities {
 	 * @param endPt
 	 * @return
 	 */
+	@Deprecated
 	public static double reachabilityRight2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
 		Vector2D startPt = new Vector2D(robot.getCoords());
@@ -850,6 +840,7 @@ public class Utilities {
 	 * @param endPt
 	 * @return
 	 */
+	@Deprecated
 	public static double reachabilityLeft2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
 		Vector2D startPt = new Vector2D(robot.getCoords());
@@ -862,6 +853,35 @@ public class Utilities {
 
 		Vector2D ray_left = raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue, include_ball_as_obstacle);
 		return ray_left.getLength();
+	}
+	
+	
+	/**
+	 * Get the closest collision distances from our robot into some direction.
+	 * Two values are reported: shortest collision of the left and the right
+	 * sides of the robot.
+	 * 
+	 * @param state Current world state.
+	 * @param endPt Point, in whose direction the check will be performed.
+	 * @param ballIsObstacle Whether the ball should be considered an obstacle.
+	 * @return Left and right collision distances, as described above.
+	 */
+	public static double[] getClosestCollDistances(AIWorldState state, Vector2D endPt, boolean ballIsObstacle) {
+		Vector2D startPt = new Vector2D(state.getRobot().getCoords());
+		Vector2D dir = Vector2D.subtract(endPt, startPt);
+		double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
+		final double length = Robot.LENGTH_CM/2;
+		double cos = Math.cos(angle)*length;
+		double sin = Math.sin(angle)*length;
+		
+		Vector2D left = new Vector2D(cos, sin);
+		Vector2D leftRay = raytraceVector(state, Vector2D.add(startPt, left), dir, state.getMyTeamBlue(), ballIsObstacle);
+		
+		Vector2D right = new Vector2D(-cos, -sin);
+		Vector2D rightRay = raytraceVector(state, Vector2D.add(startPt, right), dir, state.getMyTeamBlue(), ballIsObstacle);
+		
+		double retValue[] = { leftRay.getLength(), rightRay.getLength() };
+		return retValue;
 	}
 
 

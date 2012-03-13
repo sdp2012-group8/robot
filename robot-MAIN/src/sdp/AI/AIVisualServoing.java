@@ -11,7 +11,7 @@ public class AIVisualServoing extends AI {
 	
 	
 	/** The multiplier to the final speed to slow it down */
-	private final static double SPEED_MULTIPLIER = 0.7;
+	private final static double SPEED_MULTIPLIER = 1.0;
 
 	private final static int COLL_SECS_COUNT = 110;
 	private final static double SEC_ANGLE = 360d/COLL_SECS_COUNT;
@@ -32,94 +32,76 @@ public class AIVisualServoing extends AI {
 	
 	private Vector2D target = null;
 
+	
+	/**
+	 * @see sdp.AI.AI#chaseBall()
+	 */
 	@Override
-	protected Command chaseBall() throws IOException {
-		Command comm = null;
-		
+	protected Command chaseBall() throws IOException {		
+		// Are we ready to score? TODO
 		if (ai_world_state.getDistanceToBall() < DIST_TO_BALL){
 			return gotBall();
 		}
-
-		try {
-			// TODO: I have added the ability to change the distance of the point.
-			// However I couldn't find a good metric for what to do with it.
-			
-			//final double dir_to_ball = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(ai_world_state.getRobot().getCoords())), -ai_world_state.getRobot().getAngle()));
-			//final double point_distance = 2*Robot.LENGTH_CM; // + 1*Robot.LENGTH_CM * (1 - (Math.abs(dir_to_ball)/180));
-			//System.out.println("Distance to Point: " + point_distance + " Dir: " + dir_to_ball);
-			//target = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, point_distance));
-			
-			if (target != null) {
-				target = Utilities.getMovingPointBehindBall(ai_world_state, target);
-			} else {
-				target = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, 2*Robot.LENGTH_CM));
-			}
 		
-		} catch (NullPointerException e) {
-			// Robot can't see a goal
-			// TODO: decide on what to do when the robot can't see the goal.
-			//System.out.println("Can't see a goal");
-			target = new Vector2D(ai_world_state.getBallCoords());
+		// Get the point to drive towards.
+		target = new Vector2D(ai_world_state.getBallCoords());
+		
+		Point2D.Double optimalPoint = Utilities.getOptimalPointBehindBall(ai_world_state);
+		if (optimalPoint != null) {
+			target = new Vector2D(optimalPoint);
 		}
 
-		//		double dist = 2*Robot.LENGTH_CM;
-		//		Vector2D target = new Vector2D(ai_world_state.getBallCoords().getX() + (ai_world_state.getMyGoalLeft() ? - dist : dist), ai_world_state.getBallCoords().getY());
-
-		//		if (true) {
-		//			comm = goTowardsPoint(target, true, true);
-		//			comm.speed = 0;
-		//			return comm;
-		//		}
-
-
-		double targ_dist = distanceTo(target);
-
+		// Generate command to drive towards the target point.
+		Command comm = null;
+		double targetDistance = distanceTo(target);
+		
 		if (chasing_target) {
-			comm = chasingTarget(targ_dist);
+			comm = chasingTarget(targetDistance);
 		} else {
-			comm = chasingBall(targ_dist);
+			comm = chasingBall(targetDistance);
 		}
 
-		normalizeRatio(comm);
-
-
-		// debugging restrictions
-		//comm.turning_speed *= 10;
 		comm.speed *= SPEED_MULTIPLIER;
 
 		return comm;
-
 	}
 	
-	private Command chasingTarget(double targ_dist) {
+	
+	/**
+	 * Generate a command to get closer to a target point.
+	 * 
+	 * @param targetDistance Distance to the target.
+	 * @return A command to execute next.
+	 */
+	private Command chasingTarget(double targetDistance) {
 		Command comm = goTowardsPoint(target, true, false);
-		// if oscillating near zero
-		if (targ_dist < POINT_ACCURACY)
+
+		if (targetDistance < POINT_ACCURACY)
 			chasing_target = false;
 
 		double dir_angle = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), target), -ai_world_state.getRobot().getAngle()));
-		if (Math.abs(dir_angle) > 20) {
-			slowDownSpeed(targ_dist, 20, comm, 2); // limits speed to 30
+		if (Math.abs(dir_angle) < 20) {
+			slowDownSpeed(targetDistance, 20, comm, 2);
 		}
+
 		normalizeRatio(comm);
 		return comm;
 	}
 	
-	private Command chasingBall(double targ_dist) {
+	/**
+	 * Generate a command to get closer to a target point, which happens to be
+	 * the ball.
+	 * 
+	 * @param targetDistance Distance to the target.
+	 * @return A command to execute next.
+	 */
+	private Command chasingBall(double targetDistance) {
 		Command comm = null;
 		Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
-
-		//			double ball_dist = ai_world_state.getDistanceToBall();
-		//			if (ball_dist > 20 && ball_dist < 50) {
-		//				double dir = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(ball, target), -ai_world_state.getRobot().getAngle()));
-		//				comm = new Command(Math.abs(dir) < 5 ? MAX_SPEED_CM_S : 0, dir*3, false);
-		//				comm.acceleration = 200;
-		//			} else
-		//				comm = goTowardsPoint(ball, false, true);
 		
 		if (ai_world_state.getDistanceToBall() > Robot.LENGTH_CM*2) {
 			chasing_target = true;
-			return chasingTarget(targ_dist);
+			return chasingTarget(targetDistance);
 		}
 		
 		comm = goTowardsPoint(ball, false, true);
@@ -139,9 +121,11 @@ public class AIVisualServoing extends AI {
 			if (ball.getX() > ai_world_state.getRobot().getCoords().getX())
 				chasing_target = true;
 		}
+		
 		return comm;
 	}
 
+	
 	@Override
 	protected Command gotBall() throws IOException {
 		//System.out.println("GOT BALL");
@@ -315,39 +299,45 @@ public class AIVisualServoing extends AI {
 		return null;
 	}
 
+
 	/**
-	 * Makes robot proceed towards a point avoiding obstacles on its way
-	 * @param point
+	 * Generate a command that will get the robot closer to the given point on
+	 * the field. The robot will attempt to avoid obstacles.
+	 * 
+	 * @param target Point to drive towards.
+	 * @param ballIsObstacle Whether the ball should be considered an obstacle.
+	 * @param need_to_face_point
+	 * @return The next command to execute.
 	 */
-	private Command goTowardsPoint(Vector2D point, boolean include_ball_as_obstacle, boolean need_to_face_point) {
+	private Command goTowardsPoint(Vector2D target, boolean ballIsObstacle, boolean need_to_face_point) {
 		Command command = new Command(0, 0, false);
-		// get relative ball coordinates
-		final Vector2D point_rel = Utilities.getLocalVector(ai_world_state.getRobot(), point);
-
-		// get direction and distance to point
-		final double point_dir = Vector2D.getDirection(point_rel);
-		final double point_dist = point_rel.getLength();
-
-		// if you go directly towards the point, at which closest point are we going to be in a collision
-		final double point_left_coll_dist = Utilities.reachabilityLeft2(ai_world_state, point, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle);
-		final double point_right_coll_dist = Utilities.reachabilityRight2(ai_world_state, point, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle);
-		final double point_coll_dist = Math.min(point_left_coll_dist, point_right_coll_dist);
-		final double point_vis_dist = Utilities.visibility2(ai_world_state, point, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle);
+		
+		// Target point data in local coordinates.
+		Vector2D targetLocal = Utilities.getLocalVector(ai_world_state.getRobot(), target);
+		double targetLocalDir = Vector2D.getDirection(targetLocal);
+		double targetLocalDist = targetLocal.getLength();
+		
+		// Find closest collision distance going from the current robot position
+		// to the target.
+		double[] collDistances = Utilities.getClosestCollDistances(ai_world_state, target, ballIsObstacle);
+		double leftCollDistance = collDistances[0];
+		double rightCollDistance = collDistances[1];
+		double minCollDistance = Math.min(leftCollDistance, rightCollDistance);
 
 		// the angle that we need to turn in order to avoid hitting our left or right corner at the obstacle
-		final double turn_ang_more = Math.toDegrees(Math.atan2(Robot.LENGTH_CM, point_coll_dist));
+		double turn_ang_more = Math.toDegrees(Math.atan2(Robot.LENGTH_CM, minCollDistance));
 
 		// get the sectors
-		final double[] sectors = Utilities.getSectors(ai_world_state, ai_world_state.getMyTeamBlue(), 5, COLL_SECS_COUNT, false, include_ball_as_obstacle);
+		double[] sectors = Utilities.getSectors(ai_world_state, ai_world_state.getMyTeamBlue(), 5, COLL_SECS_COUNT, false, ballIsObstacle);
 
 		// sectors[0] starts at -90
 		double temp = 999;
 		double turn_ang = 999;
 		int id = -1;
 		for (int i = 0; i < sectors.length; i++) {
-			if (sectors[i] >= point_dist) {	
+			if (sectors[i] >= targetLocalDist) {	
 				double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
-				double diff = Utilities.normaliseAngle(ang-point_dir);
+				double diff = Utilities.normaliseAngle(ang-targetLocalDir);
 				if (Math.abs(diff) < Math.abs(temp)) {
 					temp = diff;
 					turn_ang = ang;
@@ -359,9 +349,9 @@ public class AIVisualServoing extends AI {
 		double temp2 = 999;
 		double turn_ang2 = 999;
 		for (int i = 0; i < sectors.length; i++) {
-			if (sectors[i] >= point_dist) {	
+			if (sectors[i] >= targetLocalDist) {	
 				double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
-				double diff = Utilities.normaliseAngle(ang-point_dir);
+				double diff = Utilities.normaliseAngle(ang-targetLocalDir);
 				if (Math.abs(diff) < Math.abs(temp) && i != id) {
 					temp2 = diff;
 					turn_ang2 = ang;
@@ -373,8 +363,6 @@ public class AIVisualServoing extends AI {
 			command.turning_speed = turn_ang2;
 		} else
 			command.turning_speed = turn_ang;
-
-		//System.out.println(String.format("%.2f l="+point_left_coll_dist+" r="+point_right_coll_dist+" d="+point_dist,command.turning_speed));
 
 		// if we have no way of reaching the point go into the most free direction
 		if (command.turning_speed == 999) {
@@ -388,41 +376,40 @@ public class AIVisualServoing extends AI {
 			}
 		} 
 
-		if (point_left_coll_dist < point_dist || point_right_coll_dist < point_dist)
-			command.turning_speed += point_left_coll_dist > point_right_coll_dist ? turn_ang_more : -turn_ang_more;
+		if (leftCollDistance < targetLocalDist || rightCollDistance < targetLocalDist)
+			command.turning_speed += leftCollDistance > rightCollDistance ? turn_ang_more : -turn_ang_more;
 
-
-			if (need_to_face_point) { 
-				// set forward speed
-				if (command.turning_speed > 90 || command.turning_speed < -90){ 
-					// ball is behind
-					command.speed = -MAX_SPEED_CM_S;
-				} else { 
-					//ball is in front
-					command.speed = MAX_SPEED_CM_S;
-				}
-			} else {
-				// go fastest to a point regardless of direction
-
-				if (command.turning_speed > 90 || command.turning_speed < -90) {
-					// ball is behind
-					command.speed = -MAX_SPEED_CM_S;
-
-					// go backwards to get to ball as soon as possible
-					command.turning_speed = Utilities.normaliseAngle(command.turning_speed-180);
-				} else {
-					// ball is in front
-					command.speed = MAX_SPEED_CM_S;
-				}
+		if (need_to_face_point) { 
+			// set forward speed
+			if (command.turning_speed > 90 || command.turning_speed < -90){ 
+				// ball is behind
+				command.speed = -MAX_SPEED_CM_S;
+			} else { 
+				//ball is in front
+				command.speed = MAX_SPEED_CM_S;
 			}
-
-			// if we get within too close (within coll_start) of an obstacle
-			backAwayIfTooClose(command, sectors);
-
-			// check if either of the corners are in collision
-			nearCollisionCheck(command);
-
-			return command;
+		} else {
+			// go fastest to a point regardless of direction
+	
+			if (command.turning_speed > 90 || command.turning_speed < -90) {
+				// ball is behind
+				command.speed = -MAX_SPEED_CM_S;
+	
+				// go backwards to get to ball as soon as possible
+				command.turning_speed = Utilities.normaliseAngle(command.turning_speed-180);
+			} else {
+				// ball is in front
+				command.speed = MAX_SPEED_CM_S;
+			}
+		}
+	
+		// if we get within too close (within coll_start) of an obstacle
+		backAwayIfTooClose(command, sectors);
+	
+		// check if either of the corners are in collision
+		nearCollisionCheck(command);
+	
+		return command;
 	}
 
 	/**
