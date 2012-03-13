@@ -243,25 +243,34 @@ public class AIVisualServoing extends AI {
 
 	@Override
 	protected Command penaltiesAttack() throws IOException {
-		Command command = new Command(0,0,false);
-		Point2D.Double optimal = Utilities.getOptimalPointBehindBall(ai_world_state, ai_world_state.getMyGoalLeft(), ai_world_state.getMyTeamBlue(), 10);
-//		double turning_angle = Vector2D.getDirection(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()),new Vector2D(optimal)));
+
+		/*
+		 * Penalty mode 1, just do gotBall and it should work
+		 * */
+//		return gotBall();
 		
-		if (optimal != null){
-			if (pointWithinRange(ai_world_state.getRobot().getCoords(), optimal)){
-				System.out.println("in range");
-				return goTowardsPoint(new Vector2D(40,40),false,false);
-			}
-			else
+		/*
+		 * Penalty mode 2, go to optimal point and try to shoot
+		 * */
+		
+		Point2D.Double optimal = Utilities.getOptimalPointBehindBall(ai_world_state, ai_world_state.getMyGoalLeft(), ai_world_state.getMyTeamBlue(), 10);
+		try {
+			if (Utilities.pointInRange(ai_world_state.getRobot().getCoords(), ai_world_state.getBallCoords(), 5)){
+				System.out.println("kick");
 				return new Command(0,0,true);
-		//	System.out.println(optimal);
-		//	return new Command(0,0,true);
+			} else {
+				System.out.println("go to point");
+				return goTowardsPoint(new Vector2D(optimal),false,false);
 			}
-		else {
-			optimal = Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()),new Vector2D(-20,0));
-			return goTowardsPoint(new Vector2D(40,40),false,false);
-		//	return new Command(0,0,true);
 		}
+			catch (NullPointerException e){
+				System.out.println("go to point behind");
+			//	return goTowardsPoint(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(-15,0)),false,false);
+				return new Command(0,0,false);
+			}
+		
+	//	return goTowardsPoint(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(-40,0)),false,false);
+	//	return sit();
 		//return new Command(0,0,false);
 		
 		//	return new Command(0,0,true);
@@ -555,9 +564,4 @@ public class AIVisualServoing extends AI {
 		comm.speed *= 1-rat;
 	}
 
-	public boolean pointWithinRange(Point2D a, Point2D b){
-		System.out.println("a = " + a + "  b = " + b);
-		return (((a.getX() < b.getX() - 5)) || (a.getX() < (b.getX() + 5))) && ((a.getY() < (b.getY() - 5)) || (a.getY() < (b.getY() + 5)));
-	}
-	
 }

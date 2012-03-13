@@ -1046,5 +1046,15 @@ public class Utilities {
 		return ans;
 	}
 
-
+	/**
+	 * Checks if a point a is within a circle of radius 5 from a point b
+	 * by checking the Euclidian distance against the range
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static boolean pointInRange(Point2D a, Point2D b, double range){
+		return (((a.getX()-b.getX())*(a.getX()-b.getX()) + (a.getY()-b.getY())*(a.getY()-b.getY())) <= range*range);
+	}
+	
 }
