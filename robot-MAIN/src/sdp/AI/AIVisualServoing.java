@@ -315,7 +315,8 @@ public class AIVisualServoing extends AI {
 	 * @param need_to_face_point
 	 * @return The next command to execute.
 	 */
-	private Command goTowardsPoint(Vector2D target, boolean ballIsObstacle, boolean need_to_face_point) {
+	private Command goTowardsPoint(Vector2D target, boolean ballIsObstacle,
+			boolean need_to_face_point) {
 		Command comm = new Command(0, 0, false);
 
 		// Target point data in local coordinates.
@@ -323,50 +324,63 @@ public class AIVisualServoing extends AI {
 		double targetDirLocal = Vector2D.getDirection(targetLocal);
 		double targetDistLocal = targetLocal.getLength();
 		
-		// Set up the obstacle flag.
-		int obstacleFlag = 0;
-		obstacleFlag |= (ai_world_state.getMyTeamBlue()
+		// Which objects to consider as obstacles?
+		int obstacleFlags = 0;
+		obstacleFlags |= (ai_world_state.getMyTeamBlue()
 				? Utilities.YELLOW_IS_OBSTACLE_FLAG
 				: Utilities.BLUE_IS_OBSTACLE_FLAG);
 		if (ballIsObstacle) {
-			obstacleFlag |= Utilities.BALL_IS_OBSTACLE_FLAG;
+			obstacleFlags |= Utilities.BALL_IS_OBSTACLE_FLAG;
 		}
 		
 		// Check if the target point is directly visible.
 		double targetCollDist = Utilities.getClosestCollisionDist(ai_world_state,
 				new Vector2D(ai_world_state.getRobot().getCoords()),
-				target, obstacleFlag) + Robot.LENGTH_CM;
+				target, obstacleFlags) + Robot.LENGTH_CM;
 		boolean isTargetVisible = (targetCollDist >= targetDistLocal);
 		
-		double enemyRobotDist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(ai_world_state.getEnemyRobot().getCoords())).getLength();
+		// Compute distance to the destination point.
+		Vector2D ownCoords = new Vector2D(ai_world_state.getRobot().getCoords());
+		Vector2D enemyCoords = new Vector2D(ai_world_state.getEnemyRobot().getCoords());		
+		double enemyRobotDist = Vector2D.subtract(ownCoords, enemyCoords).getLength();
+		
+		double destPointDist = (isTargetVisible	? targetDistLocal
+				: (enemyRobotDist + Robot.LENGTH_CM / 2));
 
-		double turn_ang = 999;
-
-		double point_dist = isTargetVisible ? targetDistLocal : enemyRobotDist+Robot.LENGTH_CM/2;
-		double temp = 999;
-		int t = 0;
-		while (turn_ang == 999) {
+		// Compute angle to the destination point.
+		double destPointAngle = Double.NaN;
+		
+		double minAngle = Double.MAX_VALUE;
+		int iterations = 0;
+		
+		while (Double.isNaN(destPointAngle) && (iterations < 5)) {
 			for (int i = 0; i < COLL_SECS_COUNT; i++) {
-				double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
-				Vector2D vec = Vector2D.multiply(Vector2D.rotateVector(new Vector2D(1, 0), ang), point_dist);
-				if (Utilities.reachability(ai_world_state, Utilities.getGlobalVector(ai_world_state.getRobot(), vec), ai_world_state.getMyTeamBlue(), ballIsObstacle, 1.5)) {	
-					double diff = Utilities.normaliseAngle(ang-targetDirLocal);
-					if (Math.abs(diff) < Math.abs(temp)) {
-						temp = diff;
-						turn_ang = ang;
+				double curAngle = -90 + i * SEC_ANGLE + SEC_ANGLE / 2;
+				curAngle = Utilities.normaliseAngle(curAngle);
+				
+				Vector2D curDir = Vector2D.rotateVector(new Vector2D(1, 0), curAngle);
+				Vector2D rayEndLocal = Vector2D.multiply(curDir, destPointDist);
+				Vector2D rayEnd = Utilities.getGlobalVector(ai_world_state.getRobot(), rayEndLocal);
+				
+				if (Utilities.isDirectPathClear(ai_world_state, ownCoords, rayEnd, obstacleFlags)) {
+					double angleDiff = Utilities.normaliseAngle(curAngle - targetDirLocal);
+					if (Math.abs(angleDiff) < Math.abs(minAngle)) {
+						minAngle = angleDiff;
+						destPointAngle = curAngle;
 					}
 				}
 			}
-			t++;
-			if (t == 5)
-				break;
-			point_dist -= Robot.LENGTH_CM;
+			
+			++iterations;			
+			destPointDist -= Robot.LENGTH_CM; 	// TODO: What if this turns negative?
 		}
 
-		if (turn_ang == 999)
-			turn_ang = targetDirLocal;
+		if (Double.isNaN(destPointAngle)) {
+			destPointAngle = targetDirLocal;
+		}
 		
-		comm.turning_speed = turn_ang;
+		comm.turning_speed = destPointAngle;
+		System.out.println(destPointAngle + " " + minAngle);
 
 		if (need_to_face_point) { 
 			// set forward speed

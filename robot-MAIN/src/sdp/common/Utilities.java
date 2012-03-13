@@ -838,15 +838,86 @@ public class Utilities {
 		return collVec.getLength();
 	}
 	
+	
+	/**
+	 * Get the closest collision from a robot positioned in the starting
+	 * point, looking into the direction of the specified point. Two values
+	 * are reported: shortest collision of the left and the right sides of
+	 * the robot.
+	 * 
+	 * Here is a "helpful" graphic:
+	 * 
+	 *  v- left side                                   XX <- obstacle         |
+	 * +----+--------------left collision vector----->XXXX                    |
+	 * |o |=| <- robot facing east                     XX       O <- target   |
+	 * +----+--------------right collision vector---------------------------->|
+	 *  ^- right side                                                 wall -> |
+	 * 
+	 * @param state Current world state.
+	 * @param dirPt Point, in whose direction the check will be performed.
+	 * @param obstacles A bitfield that is expected to contain any combination
+	 * 		of flags BALL_IS_OBSTACLE_FLAG, BLUE_IS_OBSTACLE_FLAG and
+	 * 		YELLOW_IS_OBSTACLE_FLAG. It denotes which objects are considered
+	 * 		to be obstacles.
+	 * @return Left and right collision distances, as described above.
+	 */
+	public static Vector2D[] getClosestSideCollisions(WorldState state,
+			Vector2D startPt, Vector2D dirPt, int obstacles) {
+		Vector2D direction = Vector2D.subtract(dirPt, startPt);
+		double angle = (-Vector2D.getDirection(direction) + 90) * Math.PI / 180d;
+		
+		double cos = Math.cos(angle);
+		double sin = Math.sin(angle);
+		
+		Vector2D leftStartPt = Vector2D.add(startPt, new Vector2D(cos, sin));
+		Vector2D leftRay = getClosestCollisionVec(state, leftStartPt, direction,
+				obstacles);
+		
+		Vector2D rightStartPt = Vector2D.add(startPt, new Vector2D(-cos, -sin));
+		Vector2D rightRay = getClosestCollisionVec(state, rightStartPt, direction,
+				obstacles);
+		
+		Vector2D retValue[] = { leftRay, rightRay };
+		return retValue;
+	}
+	
+	
+	/**
+	 * Check whether a robot could drive between two points in a straight line
+	 * without colliding with anything. 
+	 * 
+	 * @param state Current world state.
+	 * @param point1 One of the path's endpoints.
+	 * @param point2 Another of the path's endpoints.
+	 * @param obstacles A bitfield that is expected to contain any combination
+	 * 		of flags BALL_IS_OBSTACLE_FLAG, BLUE_IS_OBSTACLE_FLAG and
+	 * 		YELLOW_IS_OBSTACLE_FLAG. It denotes which objects are considered
+	 * 		to be obstacles.
+	 * @return Whether the path between two points is clear.
+	 */
+	public static boolean isDirectPathClear(WorldState state, Vector2D point1,
+			Vector2D point2, int obstacles) {
+		double pathLength = Vector2D.subtract(point1, point2).getLength();		
+		Vector2D sideColls[] = Utilities.getClosestSideCollisions(state, point1,
+				point2, obstacles);
+
+		return ((sideColls[0].getLength() >= pathLength)
+				&& (sideColls[1].getLength() >= pathLength));
+	}
+	
 
 	/**
 	 * Whether there is direct visibility from a point of the pitch to another one.
+	 * 
+	 * TODO: Replace with getClosestCollisionDist or an overloaded function.
+	 * 
 	 * @param ws
 	 * @param robot
 	 * @param startPt
 	 * @param endPt
 	 * @return
 	 */
+	@Deprecated
 	public static boolean visibility(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
 		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
 		Vector2D startPt = new Vector2D(robot.getCoords());
@@ -888,6 +959,9 @@ public class Utilities {
 
 	/**
 	 * Returns the distance to the collision in a given direction
+	 * 
+	 * TODO: Replace with getClosestSideCollisions.
+	 * 
 	 * @param ws
 	 * @param robot
 	 * @param startPt
@@ -911,6 +985,9 @@ public class Utilities {
 
 	/**
 	 * Returns the distance to the collision in a given direction
+	 * 
+	 * TODO: Replace with getClosestSideCollisions.
+	 * 
 	 * @param ws
 	 * @param robot
 	 * @param startPt
@@ -931,55 +1008,20 @@ public class Utilities {
 		Vector2D ray_left = raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue, include_ball_as_obstacle);
 		return ray_left;
 	}
-	
-	
-	
-	/**
-	 * Get the closest collisions from our robot into some direction. Two
-	 * values are reported: shortest collision of the left and the right
-	 * sides of the robot.
-	 * 
-	 * Here is a helpful graphic:
-	 * 
-	 *  v- left side                                   XX <- obstacle         |
-	 * +----+--------------left collision vector----->XXXX                    |
-	 * |o |=| <- robot facing east                     XX       O <- target   |
-	 * +----+--------------right collision vector---------------------------->|
-	 *  ^- right side                                                 wall -> |
-	 * 
-	 * @param state Current world state.
-	 * @param dirPt Point, in whose direction the check will be performed.
-	 * @param ballIsObstacle Whether the ball should be considered an obstacle.
-	 * @return Left and right collision distances, as described above.
-	 */
-	public static Vector2D[] getClosestCollisions(AIWorldState state, Vector2D dirPt, boolean ballIsObstacle) {
-		Vector2D startPt = new Vector2D(state.getRobot().getCoords());
-		Vector2D dir = Vector2D.subtract(dirPt, startPt);
-		double angle = (-Vector2D.getDirection(dir) + 90) * Math.PI / 180d;
-		
-		double length = Robot.LENGTH_CM / 2;
-		double cos = Math.cos(angle) * length;
-		double sin = Math.sin(angle) * length;
-		
-		Vector2D left = new Vector2D(cos, sin);
-		Vector2D leftRay = raytraceVector(state, Vector2D.add(startPt, left), dir, state.getMyTeamBlue(), ballIsObstacle);
-		
-		Vector2D right = new Vector2D(-cos, -sin);
-		Vector2D rightRay = raytraceVector(state, Vector2D.add(startPt, right), dir, state.getMyTeamBlue(), ballIsObstacle);
-		
-		Vector2D retValue[] = { leftRay, rightRay };
-		return retValue;
-	}
 
 
 	/**
 	 * Whether you could reach this point if you turn into its direction and go into straight line.
+	 * 
+	 * TODO: Replace this function with isDirectPathClear.
+	 * 
 	 * @param ws
 	 * @param robot
 	 * @param startPt
 	 * @param endPt
 	 * @return
 	 */
+	@Deprecated
 	public static boolean reachability(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle, double coeff) {
 		if (!visibility(ws, endPt, am_i_blue, include_ball_as_obstacle))
 			return false;
