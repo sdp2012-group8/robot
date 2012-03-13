@@ -476,45 +476,56 @@ public class Utilities {
 		
 	}
 
-
 	/**
-	 * Calculates all the points behind the ball that would align the robot to shoot and
+	  * Calculates all the points behind the ball that would align the robot to shoot and
 	 * returns the point closest to the robot.
 	 * It does not take into account the image goals
-	 * @return The point closest to the robot that would allow it to shoot.
-	 * @throws NullPointerException Throws exception when the robot can't see a goal.
+	 * @param ws
+	 * @param my_goal_left
+	 * @param my_team_blue
+	 * @param priority - true is shoot only with walls, false is shoot only with main goal
+	 * @return the optimal point from which it can shoot
+	 * @throws NullPointerException
 	 */
-	public static Point2D.Double getOptimalPointBehindBallNoWalls(WorldState ws, boolean my_goal_left, boolean my_team_blue) throws NullPointerException {
-		Goal enemy_goal;
-		Robot robot, enemy_robot;
-
-		if (my_goal_left) {
-			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
-		} else {
-			enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
-		}
-
-		//update variables
-		if (my_team_blue) {
-			robot = ws.getBlueRobot();
-			enemy_robot = ws.getYellowRobot();
-		} else {
-			robot = (ws.getYellowRobot());
-			enemy_robot = (ws.getBlueRobot());
-		}
+	public static Point2D.Double getOptimalPointBehindBall(AIWorldState ws, double point_offset, boolean wall_priority) throws NullPointerException {
+		
+		Goal enemy_goal = ws.getEnemyGoal();
+		Robot robot = ws.getRobot();
+		Robot enemy_robot = ws.getEnemyRobot();
+		
 		ArrayList<Point2D.Double> goal_points = new ArrayList<Point2D.Double>();
 		Point2D.Double min_point = null;
 		double min_distance = WorldState.PITCH_WIDTH_CM*2;
-		double offset = enemy_goal.getBottom().y - enemy_goal.getTop().y; //offset>0
-		offset = offset/5;
+		
+		if (wall_priority){
+			//add only imaginary goals 
+			goal_points.add(new Point2D.Double(enemy_goal.getCentre().x, enemy_goal.getCentre().y - WorldState.PITCH_HEIGHT_CM));
+			goal_points.add(new Point2D.Double(enemy_goal.getCentre().x, enemy_goal.getCentre().y + WorldState.PITCH_HEIGHT_CM));
+		}
+		
+		else {
+		
+			//add only points in mail goal
+			if (ws.getMyGoalLeft()) {
+				enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
+			} else {
+				enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
+			}
+		
+			double offset = enemy_goal.getBottom().y - enemy_goal.getTop().y; //offset>0
+			offset = offset/5;
 
-		goal_points.add(enemy_goal.getCentre());
-		goal_points.add(enemy_goal.getTop());
-		goal_points.add(enemy_goal.getBottom());
+			goal_points.add(enemy_goal.getCentre());
+			goal_points.add(enemy_goal.getTop());
+			goal_points.add(enemy_goal.getBottom());
 
-		for (int i=0; i<4; i++)
-			goal_points.add(new Point2D.Double(enemy_goal.getTop().x, enemy_goal.getTop().y - (i+1)*offset));
+			for (int i=0; i<4; i++)
+				goal_points.add(new Point2D.Double(enemy_goal.getTop().x, enemy_goal.getTop().y - (i+1)*offset));
 
+		}
+		
+		/* start calculating the optimal point */
+		
 		Iterator<Point2D.Double> itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
@@ -527,7 +538,7 @@ public class Utilities {
 		itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
-			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(), my_goal_left, POINT_OFFSET);
+			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(), ws.getMyGoalLeft(), point_offset);
 
 			if (Utilities.isPointInField(temp_point)) { 
 				if (!isPointAroundRobot(temp_point, enemy_robot)) {
@@ -543,6 +554,7 @@ public class Utilities {
 
 
 		return min_point;
+		
 	}	
 
 	/**

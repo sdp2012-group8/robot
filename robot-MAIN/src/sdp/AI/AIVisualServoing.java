@@ -273,35 +273,45 @@ public class AIVisualServoing extends AI {
 	protected Command penaltiesAttack() throws IOException {
 
 		/*
-		 * Penalty mode 1, just do gotBall and it should work
+		 * Penalty mode 1, place the robot in front of the ball, do chaseBall and it should work
 		 * */
-//		return gotBall();
+//		return chaseBall();
 		
 		/*
 		 * Penalty mode 2, go to optimal point and try to shoot
+		 * you can choose which goals to prioritize
 		 * */
 		
-		Point2D.Double optimal = Utilities.getOptimalPointBehindBall(ai_world_state, ai_world_state.getMyGoalLeft(), ai_world_state.getMyTeamBlue(), 10);
+		Vector2D targetPoint = new Vector2D(ai_world_state.getBallCoords());
+		
 		try {
-			if (Utilities.pointInRange(ai_world_state.getRobot().getCoords(), ai_world_state.getBallCoords(), 5)){
-				System.out.println("kick");
-				return new Command(0,0,true);
-			} else {
-				System.out.println("go to point");
-				return goTowardsPoint(new Vector2D(optimal),false,false);
+			int priority = 1;
+		
+			switch (priority){
+				case 0: //shoot with both
+					targetPoint = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, 10));
+					break;
+				case 1: //shoot only with walls
+					targetPoint = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, 10, true));
+					break;
+				case 2: //shoot only with main goal
+					targetPoint = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, 10, false));
+					break;
 			}
+		} catch (NullPointerException e) {
+			System.out.println("can't find optimal point, i'm going to the ball");
 		}
-			catch (NullPointerException e){
-				System.out.println("go to point behind");
-			//	return goTowardsPoint(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(-15,0)),false,false);
-				return new Command(0,0,false);
-			}
 		
-	//	return goTowardsPoint(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(-40,0)),false,false);
-	//	return sit();
-		//return new Command(0,0,false);
+			
+		if ((distanceTo(targetPoint) < DIST_TO_BALL) && ai_world_state.isGoalVisible()){
+			System.out.println("I have the ball");
+			return chaseBall(); //new Command(0,0,true);
+		}
+		else {
+			System.out.println("I'm going to the optimal point");
+			return goTowardsPoint(targetPoint,true,true);
+		}
 		
-		//	return new Command(0,0,true);
 		/*
 		//the point where the ball would end up if we shoot
 		Point2D.Double pointInGoal= 
