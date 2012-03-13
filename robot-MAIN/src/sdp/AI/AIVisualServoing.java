@@ -9,6 +9,8 @@ import sdp.common.Vector2D;
 
 public class AIVisualServoing extends AI {
 	
+	/** Whether the robot is allowed to drive in reverse. */
+	private static final boolean REVERSE_DRIVING_ENABLED = true;
 	
 	/** The multiplier to the final speed to slow it down */
 	private final static double SPEED_MULTIPLIER = 1.0;
@@ -312,11 +314,11 @@ public class AIVisualServoing extends AI {
 	 * 
 	 * @param target Point to drive towards.
 	 * @param ballIsObstacle Whether the ball should be considered an obstacle.
-	 * @param need_to_face_point
+	 * @param mustFaceTarget Whether the robot should be facing the target point.
 	 * @return The next command to execute.
 	 */
 	private Command goTowardsPoint(Vector2D target, boolean ballIsObstacle,
-			boolean need_to_face_point) {
+			boolean mustFaceTarget) {
 		Command comm = new Command(0, 0, false);
 
 		// Target point data in local coordinates.
@@ -358,12 +360,13 @@ public class AIVisualServoing extends AI {
 				double curAngle = -90 + i * SEC_ANGLE + SEC_ANGLE / 2;
 				curAngle = Utilities.normaliseAngle(curAngle);
 				
-				Vector2D curDir = Vector2D.rotateVector(new Vector2D(1, 0), curAngle);
-				Vector2D rayEndLocal = Vector2D.multiply(curDir, destPointDist);
+				Vector2D rayDir = Vector2D.rotateVector(new Vector2D(1, 0), curAngle);
+				Vector2D rayEndLocal = Vector2D.multiply(rayDir, destPointDist);
 				Vector2D rayEnd = Utilities.getGlobalVector(ai_world_state.getRobot(), rayEndLocal);
 				
 				if (Utilities.isDirectPathClear(ai_world_state, ownCoords, rayEnd, obstacleFlags)) {
 					double angleDiff = Utilities.normaliseAngle(curAngle - targetDirLocal);
+					
 					if (Math.abs(angleDiff) < Math.abs(minAngle)) {
 						minAngle = angleDiff;
 						destPointAngle = curAngle;
@@ -379,31 +382,18 @@ public class AIVisualServoing extends AI {
 			destPointAngle = targetDirLocal;
 		}
 		
+		// Generate a command to get closer to the point.
 		comm.turning_speed = destPointAngle;
-		System.out.println(destPointAngle + " " + minAngle);
-
-		if (need_to_face_point) { 
-			// set forward speed
-			if (comm.turning_speed > 90 || comm.turning_speed < -90){ 
-				// ball is behind
-				comm.speed = -MAX_SPEED_CM_S;
-			} else { 
-				//ball is in front
-				comm.speed = MAX_SPEED_CM_S;
-			}
+		
+		// Ball is behind.
+		if (Math.abs(comm.turning_speed) > 90) {
+			comm.speed = -MAX_SPEED_CM_S;
+			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
+				comm.turning_speed = Utilities.normaliseAngle(comm.turning_speed - 180);
+			}		
+		// Ball is in front.
 		} else {
-			// go fastest to a point regardless of direction
-
-			if (comm.turning_speed > 90 || comm.turning_speed < -90) {
-				// ball is behind
-				comm.speed = -MAX_SPEED_CM_S;
-
-				// go backwards to get to ball as soon as possible
-				comm.turning_speed = Utilities.normaliseAngle(comm.turning_speed-180);
-			} else {
-				// ball is in front
-				comm.speed = MAX_SPEED_CM_S;
-			}
+			comm.speed = MAX_SPEED_CM_S;
 		}
 
 		// if we get within too close (within coll_start) of an obstacle

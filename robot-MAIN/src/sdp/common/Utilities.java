@@ -22,7 +22,7 @@ public class Utilities {
 	/** The distance from optimal point to the ball. */
 	private static final double POINT_OFFSET = 1.5 * Robot.LENGTH_CM;
 	/** Size of the ball obstacle. */
-	public static final double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
+	public static final double SIZE_OF_BALL_OBSTACLE = 2 * Robot.LENGTH_CM;
 	
 	/** A flag that denotes that ball should be considered an obstacle. */
 	public static final int BALL_IS_OBSTACLE_FLAG = 0x1;
@@ -847,9 +847,9 @@ public class Utilities {
 	 * 
 	 * Here is a "helpful" graphic:
 	 * 
-	 *  v- left side                                   XX <- obstacle         |
-	 * +----+--------------left collision vector----->XXXX                    |
-	 * |o |=| <- robot facing east                     XX       O <- target   |
+	 *  v- left side                                   /\ <- obstacle         |
+	 * +----+--------------left collision vector----->[||]                    |
+	 * |o |=| <- robot facing east                     \/       O <- target   |
 	 * +----+--------------right collision vector---------------------------->|
 	 *  ^- right side                                                 wall -> |
 	 * 
@@ -884,7 +884,10 @@ public class Utilities {
 	
 	/**
 	 * Check whether a robot could drive between two points in a straight line
-	 * without colliding with anything. 
+	 * without colliding with anything.
+	 * 
+	 * Note how this function assumes that no obstacle will be smaller than
+	 * robot's width.
 	 * 
 	 * @param state Current world state.
 	 * @param point1 One of the path's endpoints.
