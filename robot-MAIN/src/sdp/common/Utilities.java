@@ -913,14 +913,16 @@ public class Utilities {
 		Vector2D direction = Vector2D.subtract(dirPt, startPt);
 		double angle = (-Vector2D.getDirection(direction) + 90) * Math.PI / 180d;
 		
+		double halfWidth = Robot.WIDTH_CM / 2;
 		double cos = Math.cos(angle);
 		double sin = Math.sin(angle);
+		Vector2D sideOffset = new Vector2D(cos * halfWidth, sin * halfWidth);
 		
-		Vector2D leftStartPt = Vector2D.add(startPt, new Vector2D(cos, sin));
+		Vector2D leftStartPt = Vector2D.add(startPt, sideOffset);
 		Vector2D leftRay = getClosestCollisionVec(state, leftStartPt, direction,
 				obstacles);
 		
-		Vector2D rightStartPt = Vector2D.add(startPt, new Vector2D(-cos, -sin));
+		Vector2D rightStartPt = Vector2D.add(startPt, Vector2D.multiply(sideOffset, -1));
 		Vector2D rightRay = getClosestCollisionVec(state, rightStartPt, direction,
 				obstacles);
 		
