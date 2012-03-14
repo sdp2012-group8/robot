@@ -255,8 +255,8 @@ public class Utilities {
 	public static byte normaliseToByte(double angle){
 		if (angle > 127)
 			angle = 127;
-		if (angle < -128)
-			angle = -128;
+		if (angle < -127)
+			angle = -127;
 		return (byte)angle;
 	}
 
@@ -763,22 +763,35 @@ public class Utilities {
 	public static Vector2D internalWallIntersection(Robot robot, double ang, double wall_offset) {
 		final double ang_rad = ang*Math.PI/180;
 		final Vector2D local_direction = new Vector2D(-Math.cos(ang_rad), Math.sin(ang_rad));
-		final Vector2D origin = getGlobalVector(robot, Vector2D.ZERO());
+		final Vector2D origin = new Vector2D(robot.getCoords());
 		final Vector2D direction = Vector2D.subtract(origin, getGlobalVector(robot, local_direction));
 		
-		if (origin.getX() <= 0 || origin.getY() <= 0 || origin.getX() >= WorldState.PITCH_WIDTH_CM || origin.getY() >= WorldState.PITCH_HEIGHT_CM)
-			return Vector2D.ZERO();
-		Vector2D near;
-		Vector2D temp = vectorLineIntersection(origin, direction, new Vector2D(wall_offset, wall_offset), new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, wall_offset));
-		near = temp;
-		temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, wall_offset), new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset));
-		if (temp != null && (near == null || temp.getLength() < near.getLength()))
-			near = temp;
-		temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset), new Vector2D(wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset));
-		if (temp != null && (near == null || temp.getLength() < near.getLength()))
-			near = temp;
-		temp = vectorLineIntersection(origin, direction, new Vector2D(wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset), new Vector2D(wall_offset, wall_offset));
-		if (temp != null && (near == null || temp.getLength() < near.getLength()))
+		Vector2D near = null;
+		Vector2D temp = null;
+		
+		if (origin.getY() > wall_offset) {
+			temp = vectorLineIntersection(origin, direction, new Vector2D(wall_offset, wall_offset), new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, wall_offset));
+			if (temp != null && (near == null || temp.getLength() < near.getLength()))
+				near = temp;
+		}
+		
+		if (origin.getX() < WorldState.PITCH_WIDTH_CM - wall_offset) {
+			temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, wall_offset), new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset));
+			if (temp != null && (near == null || temp.getLength() < near.getLength()))
+				near = temp;
+		}
+		
+		if (origin.getY() < WorldState.PITCH_HEIGHT_CM - wall_offset) {
+			temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset), new Vector2D(wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset));
+			if (temp != null && (near == null || temp.getLength() < near.getLength()))
+				near = temp;
+		}
+		
+		if (origin.getX() > wall_offset) {
+			temp = vectorLineIntersection(origin, direction, new Vector2D(wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset), new Vector2D(wall_offset, wall_offset));
+			if (temp != null && (near == null || temp.getLength() < near.getLength()))
+				near = temp;
+		}
 		
 		if (near != null) 
 			return near;
@@ -929,13 +942,25 @@ public class Utilities {
 			return false;
 		
 		Vector2D left2 = new Vector2D(cos*coeff, sin*coeff);
+		Vector2D global_left2 = Vector2D.add(startPt, left2);
 		Vector2D right2 = new Vector2D(-cos*coeff, -sin*coeff);
+		Vector2D global_right2 = Vector2D.add(startPt, right2);
 		
-		Vector2D ray_left2 = raytraceVector(ws, Vector2D.add(startPt, left2), dir, am_i_blue, include_ball_as_obstacle);
+		Vector2D ray_left2 = raytraceVector(ws, global_left2, dir, am_i_blue, include_ball_as_obstacle);
 		if (ray_left2.getLength() < dir_l)
 			return false;
-		Vector2D ray_right2 = raytraceVector(ws, Vector2D.add(startPt, right2), dir, am_i_blue, include_ball_as_obstacle);
+		Vector2D ray_right2 = raytraceVector(ws, global_right2, dir, am_i_blue, include_ball_as_obstacle);
 		if (ray_right2.getLength() < dir_l)
+			return false;
+		
+		Vector2D dir_left = Vector2D.subtract(endPt, global_left2);
+		Vector2D ray_left3 = raytraceVector(ws, global_left2, dir_left, am_i_blue, include_ball_as_obstacle);
+		if (ray_left3.getLength() < dir_l)
+			return false;
+		
+		Vector2D dir_right = Vector2D.subtract(endPt, global_right2);
+		Vector2D ray_right3 = raytraceVector(ws, global_right2, dir_right, am_i_blue, include_ball_as_obstacle);
+		if (ray_right3.getLength() < dir_l)
 			return false;
 
 		

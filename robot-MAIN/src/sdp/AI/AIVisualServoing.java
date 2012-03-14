@@ -21,7 +21,7 @@ public class AIVisualServoing extends AI {
 	private final static int THRESH_CORN_LOW = 2;
 	
 	// back away threshold
-	private final static int THRESH_BACK_HIGH = 25;
+	private final static int THRESH_BACK_HIGH = 10;
 	private final static int THRESH_BACK_LOW = 2;
 	
 	/** Threshold for being at the target point */
@@ -67,7 +67,9 @@ public class AIVisualServoing extends AI {
 		double targ_dist = distanceTo(target);
 		double direction = Utilities.getTurningAngle(ai_world_state.getRobot(), target);
 
-		comm = goTowardsPoint(target, true, point_off != DEFAULT_POINT_OFF);
+		boolean face_target = point_off != TARG_THRESH;
+		
+		comm = goTowardsPoint(target, true, face_target);
 		
 		comm.turning_speed *= 2;
 		
@@ -412,7 +414,7 @@ public class AIVisualServoing extends AI {
 		double for_dist = Utilities.getSector(ai_world_state, ai_world_state.getMyTeamBlue(), -10, 10, 20, include_ball_as_obstacle).getLength(); // get collision distance at the front
 		double back_dist = Utilities.getSector(ai_world_state, ai_world_state.getMyTeamBlue(), 170, -170, 20, include_ball_as_obstacle).getLength(); // get collision distance at the back
 
-		if (ai_world_state.isDist_sensor()){
+		if (for_dist < threshold){
 			if (command.speed >= 0) {
 				// go backwards
 				double speed_coeff = -1+for_dist/threshold;
