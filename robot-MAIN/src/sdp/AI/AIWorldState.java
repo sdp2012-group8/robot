@@ -1,5 +1,7 @@
 package sdp.AI;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.LinkedList;
@@ -35,11 +37,20 @@ public class AIWorldState extends WorldState {
 	private double distance_to_goal;
 	private double point_offset;
 	
+	// battery indicator
+	private static final int BAT_TOP_OFF = 10;
+	private static final int BAT_RIGHT_OFF = 50;
+	private static final int BAT_WIDTH = 50;
+	private static final int BAT_HEIGHT = 20;
+	private static final int BAT_MIN_VOLT = 55;
+	private static final int BAT_MAX_VOLT = 79;
+	private static final int BAT_RED_BELOW_PER = 20;
+	
 	private Command command;
 	
 	private boolean left_sensor = false, right_sensor = false, dist_sensor = false;
 
-	private int battery;
+	private int battery = -1;
 
 	//flags
 	boolean f_ball_on_field = false;
@@ -196,6 +207,39 @@ public class AIWorldState extends WorldState {
 			p.setOffsets(0, 0, Simulator.IMAGE_WIDTH, Simulator.IMAGE_HEIGHT);
 		}
 		p.image(my_team_blue,my_goal_left);
+		
+		// battery status
+		
+		double batt_coeff = (battery-BAT_MIN_VOLT)/(double) (BAT_MAX_VOLT-BAT_MIN_VOLT);
+		if (batt_coeff < 0)
+			batt_coeff = 0;
+		if (batt_coeff > 1)
+			batt_coeff = 1;
+		if (battery == -1)
+			batt_coeff = 1;
+		
+		
+		if (batt_coeff*100 < BAT_RED_BELOW_PER)
+			p.g.setColor(new Color(255,150,150,220));
+		else
+			p.g.setColor(new Color(255,255,255,200));
+		p.g.setStroke(new BasicStroke(2.0f));
+		
+		p.g.drawRoundRect(Simulator.IMAGE_WIDTH-BAT_WIDTH-BAT_RIGHT_OFF,
+				BAT_TOP_OFF, BAT_WIDTH, BAT_HEIGHT, 5, 5);
+		p.g.fillRoundRect(Simulator.IMAGE_WIDTH-BAT_RIGHT_OFF,
+				BAT_TOP_OFF+BAT_HEIGHT/5, 4, BAT_HEIGHT-2*BAT_HEIGHT/5, 2, 2);
+		
+		if (batt_coeff*100 > 100-BAT_RED_BELOW_PER)
+			p.g.setColor(new Color(150,255,150,220));
+		
+		p.g.fillRect(Simulator.IMAGE_WIDTH-BAT_WIDTH-BAT_RIGHT_OFF+2,
+				BAT_TOP_OFF+2,
+				(int) (batt_coeff*(BAT_WIDTH-3)), 
+				BAT_HEIGHT-3);
+		
+	
+		
 		p.dispose();
 	}
 	
