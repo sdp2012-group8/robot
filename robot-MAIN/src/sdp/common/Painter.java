@@ -6,6 +6,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
+import sdp.AI.AIVisualServoing;
 import sdp.AI.AIWorldState;
 
 public class Painter {
@@ -21,7 +22,7 @@ public class Painter {
 	private  WorldState state_cm;
 	private int off_x = 0, off_y = 0;
 	private  Robot[] robots;
-	private static Vector2D p_target = null;
+	private static double point_off = AIVisualServoing.DEFAULT_POINT_OFF;
 
 	public Painter(BufferedImage im, WorldState ws) {
 		g = im.createGraphics();
@@ -126,24 +127,28 @@ public class Painter {
 					// TODO: Change this along with AIVisualServoing to show point
 					//final double dir_to_ball = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), new Vector2D(robot.getCoords())), -robot.getAngle()));
 					final double point_distance = 1.5*Robot.LENGTH_CM; // + 1*Robot.LENGTH_CM * (Math.abs(dir_to_ball)/180);
-					AIWorldState ai_world_state = Utilities.getAIWorldState(state_cm, my_goal_left, my_team_blue);
+					AIWorldState ai_world_state = Utilities.getAIWorldState(state_cm, my_team_blue, my_goal_left);
+					Vector2D target;
+					if (ai_world_state.getDistanceToBall() < AIVisualServoing.DIST_TO_BALL)
+						point_off = AIVisualServoing.DEFAULT_POINT_OFF;
+					
 					try {
 						// p_target = new Vector2D(Utilities.getOptimalPointBehindBall(Utilities.getAIWorldState(state_cm, my_goal_left, my_team_blue, false), point_distance));
-						if (p_target != null) {
-							p_target = Utilities.getMovingPointBehindBall(ai_world_state, p_target);
-						} else {
-							p_target = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, 2*Robot.LENGTH_CM));
-						}
+						target = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, point_off));
 
 					} catch (NullPointerException e) {
 						System.out.println("Didn't Find Point");
-						p_target = new Vector2D(state_cm.getBallCoords());
+						target = new Vector2D(state_cm.getBallCoords());
 					}
 
+					double targ_dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), target).getLength();
+					double direction = Utilities.getTurningAngle(ai_world_state.getRobot(), target);
+					
+					if (Math.abs(direction) < 45 && targ_dist < AIVisualServoing.TARG_THRESH)
+						point_off *= 0.7;
+					if (point_off < AIVisualServoing.DIST_TO_BALL)
+						point_off = AIVisualServoing.DIST_TO_BALL;
 
-
-
-					Vector2D target = new Vector2D(p_target);
 
 
 					Vector2D startPt = new Vector2D(robot.getCoords());
@@ -163,32 +168,31 @@ public class Painter {
 					final int COLL_SECS_COUNT = 222;
 					final double SEC_ANGLE = 360d/COLL_SECS_COUNT;
 
-					// find desired
-					double temp = 999;
-					int id = -1;
-					final Vector2D point_rel = Utilities.getLocalVector(robot, target);
-
-
-
-					// get direction and distance to point
+					g.setColor(new Color(255, 255, 255, 15));
+					final boolean include_ball_as_obstacle = true;
+					final Vector2D point_rel = Utilities.getLocalVector(ai_world_state.getRobot(), target);
 					final double point_dir = Vector2D.getDirection(point_rel);
 					final double direct_dist = point_rel.getLength();
-					final double vis_dist = Utilities.visibility2(ai_world_state, target, ai_world_state.getMyTeamBlue(), true) + Robot.LENGTH_CM;
+					final double vis_dist = Utilities.visibility2(ai_world_state, target, ai_world_state.getMyTeamBlue(), include_ball_as_obstacle) + Robot.LENGTH_CM;
 					final double other_rob_dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(ai_world_state.getEnemyRobot().getCoords())).getLength();
+					final boolean point_visible = vis_dist >= direct_dist;
 					
-					double point_dist = vis_dist >= direct_dist ? direct_dist : other_rob_dist+Robot.LENGTH_CM;
+					double turn_ang = 999;
+					int id = -1;
+
+					double point_dist = point_visible ? direct_dist : other_rob_dist+Robot.LENGTH_CM/2;
+					double temp = 999;
 					int t = 0;
-					g.setColor(new Color(255, 255, 255, 15));
-					while (id == -1) {
+					while (turn_ang == 999) {
 						for (int i = 0; i < COLL_SECS_COUNT; i++) {
 							double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
 							Vector2D vec = Vector2D.multiply(Vector2D.rotateVector(new Vector2D(1, 0), ang), point_dist);
-							Vector2D global = Utilities.getGlobalVector(ai_world_state.getRobot(), vec);
-							if (Utilities.reachability(ai_world_state, global, ai_world_state.getMyTeamBlue(), true, 1.5)) {	
-								drawVector(new Vector2D(robot.getCoords()), Vector2D.subtract(global, new Vector2D(robot.getCoords())), false);
+							if (Utilities.reachability(ai_world_state, Utilities.getGlobalVector(ai_world_state.getRobot(), vec), ai_world_state.getMyTeamBlue(), include_ball_as_obstacle, 1.5)) {	
 								double diff = Utilities.normaliseAngle(ang-point_dir);
+								drawVector(new Vector2D(robot.getCoords()), Vector2D.subtract(Utilities.getGlobalVector(ai_world_state.getRobot(), vec), new Vector2D(robot.getCoords())), false);
 								if (Math.abs(diff) < Math.abs(temp)) {
 									temp = diff;
+									turn_ang = ang;
 									id = i;
 								}
 							}
