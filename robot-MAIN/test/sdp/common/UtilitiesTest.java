@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import java.awt.geom.Point2D;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -67,17 +66,6 @@ public class UtilitiesTest {
 		assertTrue(Utilities.sameSide(robot.getFrontLeft(), robot.getBackRight(), new Point2D.Double(50.527974093792345, 93.47062110637931), new Point2D.Double(87.6875, 108.27499999999999)));
 
 		
-	}
-	
-	@Test
-	/**
-	 * Checks the pointInRange() method
-	 */
-	public void testPointInRange(){
-		assertTrue(Utilities.pointInRange(new Point2D.Double(10,10), new Point2D.Double(15,10),5));
-		assertTrue(Utilities.pointInRange(new Point2D.Double(10,10), new Point2D.Double(5,10),5));
-		assertFalse(Utilities.pointInRange(new Point2D.Double(10,10), new Point2D.Double(15,10),4.9));
-		assertFalse(Utilities.pointInRange(new Point2D.Double(10,10), new Point2D.Double(5,10),4.9));
 	}
 
 }

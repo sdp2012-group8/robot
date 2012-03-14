@@ -150,7 +150,7 @@ public class AIVisualServoing extends AI {
 
 	@Override
 	protected Command gotBall() throws IOException {
-		//System.out.println("GOT BALL");
+		System.out.println("GOT BALL");
 		double angle = ai_world_state.getRobot().getAngle();
 		if (ai_world_state.getMyGoalLeft()) {
 			if (angle > 90 || angle < -90) {
@@ -275,13 +275,16 @@ public class AIVisualServoing extends AI {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see sdp.AI.AI#penaltiesAttack()
+	 */
 	@Override
 	protected Command penaltiesAttack() throws IOException {
 
-		/*
-		 * Penalty mode 1, place the robot in front of the ball, do chaseBall and it should work
+		/**
+		 * Penalty mode 1, don't place the robot very close to the ball, do chaseBall and it should work
 		 * */
-//		return chaseBall();
+	//	return chaseBall();
 		
 		/*
 		 * Penalty mode 2, go to optimal point and try to shoot
@@ -289,9 +292,11 @@ public class AIVisualServoing extends AI {
 		 * */
 		
 		Vector2D targetPoint = new Vector2D(ai_world_state.getBallCoords());
+		targetPoint = Vector2D.add(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(-30,0));
+		
 		
 		try {
-			int priority = 1;
+			int priority = 0;
 		
 			switch (priority){
 				case 0: //shoot with both
@@ -307,15 +312,18 @@ public class AIVisualServoing extends AI {
 		} catch (NullPointerException e) {
 			System.out.println("can't find optimal point, i'm going to the ball");
 		}
-		
 			
-		if ((distanceTo(targetPoint) < DIST_TO_BALL) && ai_world_state.isGoalVisible()){
-			System.out.println("I have the ball");
-			return chaseBall(); //new Command(0,0,true);
-		}
-		else {
-			System.out.println("I'm going to the optimal point");
-			return goTowardsPoint(targetPoint,true,true);
+		targetPoint = Vector2D.add(new Vector2D(ai_world_state.getBallCoords()), new Vector2D(-30,-10));
+		target = targetPoint;
+	//	return chasingTarget(distanceTo(targetPoint));
+		
+		if (distanceTo(targetPoint) < 5){
+			System.out.println("chase ball");
+			return chaseBall();
+		} else {
+			System.out.println("go to point");
+			target = targetPoint;
+			return chasingTarget(distanceTo(targetPoint));
 		}
 		
 		/*
