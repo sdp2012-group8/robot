@@ -158,9 +158,9 @@ public class AIWorldState extends WorldState {
 
 		enemy_robot.setCoords(true); //need to convert robot coords to cm
 
-		if (Utilities.isPathClear(getBallCoords(), enemy_goal.getCentre(), enemy_robot)
-				|| Utilities.isPathClear(getBallCoords(), enemy_goal.getTop(), enemy_robot) 
-				|| Utilities.isPathClear(getBallCoords(), enemy_goal.getBottom(), enemy_robot)) {
+		if (Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getCentre(), enemy_robot)
+				|| Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getTop(), enemy_robot) 
+				|| Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getBottom(), enemy_robot)) {
 			return true;
 		}
 
@@ -179,9 +179,9 @@ public class AIWorldState extends WorldState {
 		double midmin = anglebetween(getRobot().getCoords(), enemy_goal.getCentre());
 		double botmin = anglebetween(getRobot().getCoords(), enemy_goal.getBottom());
 
-		if (Math.abs(topmin) < Math.abs(midmin) && Math.abs(topmin) < Math.abs(botmin) && Utilities.isPathClear(getBallCoords(), enemy_goal.getTop(), enemy_robot)) {
+		if (Math.abs(topmin) < Math.abs(midmin) && Math.abs(topmin) < Math.abs(botmin) && Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getTop(), enemy_robot)) {
 			return topmin;
-		} else if (Math.abs(midmin) < Math.abs(botmin) && Utilities.isPathClear(getBallCoords(), enemy_goal.getCentre(), enemy_robot)) {
+		} else if (Math.abs(midmin) < Math.abs(botmin) && Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getCentre(), enemy_robot)) {
 			return midmin;
 		} else {
 			return botmin;

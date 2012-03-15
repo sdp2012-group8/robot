@@ -129,7 +129,7 @@ public class Painter {
 					final double point_distance = 1.5*Robot.LENGTH_CM; // + 1*Robot.LENGTH_CM * (Math.abs(dir_to_ball)/180);
 					AIWorldState ai_world_state = Utilities.getAIWorldState(state_cm, my_team_blue, my_goal_left);
 					Vector2D target;
-					if (ai_world_state.getDistanceToBall() < AIVisualServoing.DIST_TO_BALL)
+					if (ai_world_state.getDistanceToBall() < AIVisualServoing.KICKABLE_BALL_DIST)
 						point_off = AIVisualServoing.DEFAULT_POINT_OFF;
 					
 					try {
@@ -146,8 +146,8 @@ public class Painter {
 					
 					if (Math.abs(direction) < 45 && targ_dist < AIVisualServoing.TARG_THRESH)
 						point_off *= 0.7;
-					if (point_off < AIVisualServoing.DIST_TO_BALL)
-						point_off = AIVisualServoing.DIST_TO_BALL;
+					if (point_off < AIVisualServoing.KICKABLE_BALL_DIST)
+						point_off = AIVisualServoing.KICKABLE_BALL_DIST;
 
 
 

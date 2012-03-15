@@ -51,8 +51,9 @@ public class Utilities {
 
 	/**
 	 * Convert java.awt.geom.Point2D to java.awt.Point.
-	 * @param pt
-	 * @return
+	 * 
+	 * @param pt Point2D to convert.
+	 * @return Corresponding Point.
 	 */
 	public static Point pointFromPoint2D(Point2D pt) {
 		return new Point((int)pt.getX(), (int)pt.getY());
@@ -145,36 +146,33 @@ public class Utilities {
 	
 
 	/**
-	 * Calculates if a point p is within the triangle abc
-	 * @param p Point in triangle
-	 * @param a
-	 * @param b
-	 * @param c
-	 * @return returns true if point is in triangle, false otherwise
+	 * Checks whether a point is contained within some triangle.
+	 * 
+	 * @param p A point of interest.
+	 * @param a First corner of a triangle.
+	 * @param b Second corner of a triangle.
+	 * @param c Third corner of a triangle.
+	 * @return Whether a point is within a triangle.
 	 */
-	public static boolean pointInTriangle(Point2D.Double p, Point2D.Double a, Point2D.Double b, Point2D.Double c) {
-		if (Utilities.sameSide(p,a, b,c) && Utilities.sameSide(p,b, a,c) && Utilities.sameSide(p,c, a,b)) {
-			return true;
-		} else {
-			return false;
-		}
-		
+	public static boolean pointInTriangle(Point2D.Double p, Point2D.Double a,
+			Point2D.Double b, Point2D.Double c) {
+		return (Utilities.sameSide(p, a, b, c) && Utilities.sameSide(p, b, a, c)
+				&& Utilities.sameSide(p, c, a, b));
 	}
 
 
 	/**
-	 * Determines if a robot is in the way of the path AB
-	 * @param A First point of line
-	 * @param B Second point of line
-	 * @param robot Robot to test against
-	 * @return returns true if the path is clear
+	 * Checks whether the given line intersects a robot.
+	 * 
+	 * @param point1 First point on the line.
+	 * @param point2 Second point on the line.
+	 * @param robot Robot in question.
+	 * @return Whether the line segment in question intersects the robot.
 	 */
-	public static boolean isPathClear(Point2D.Double A, Point2D.Double B, Robot robot) {
-		boolean diagonal1 = Utilities.sameSide(robot.getBackLeft(), robot.getFrontRight(), A, B);
-		boolean diagonal2 = Utilities.sameSide(robot.getFrontLeft(), robot.getBackRight(), A, B);
+	public static boolean lineIntersectsRobot(Point2D.Double point1, Point2D.Double point2, Robot robot) {
+		boolean diagonal1 = Utilities.sameSide(robot.getBackLeft(), robot.getFrontRight(), point1, point2);
+		boolean diagonal2 = Utilities.sameSide(robot.getFrontLeft(), robot.getBackRight(), point1, point2);
 		return (diagonal1 && diagonal2);
-		
-		
 	}
 
 
@@ -186,7 +184,7 @@ public class Utilities {
 	 * @param d
 	 * @return Returns the point of intersection or null if none exist
 	 */
-	public static Point2D.Double intersection(Point2D.Double a, Point2D.Double b, Point2D.Double c, Point2D.Double d) {
+	public static Point2D.Double getLineIntersection(Point2D.Double a, Point2D.Double b, Point2D.Double c, Point2D.Double d) {
 		double D = (a.x-b.x)*(c.y-d.y) - (a.y-b.y)*(c.x-d.x);
 		if (D == 0) return null;
 		double xi = ((c.x-d.x)*(a.x*b.y-a.y*b.x)-(a.x-b.x)*(c.x*d.y-c.y*d.x))/D;
@@ -206,33 +204,79 @@ public class Utilities {
 	 * @return
 	 */
 	public static boolean sameSide(Point2D.Double p1, Point2D.Double p2, Point2D.Double a, Point2D.Double b){
-		Point3D cp1 = Utilities.crossProduct(Utilities.pointSubtract(b,a), Utilities.pointSubtract(p1,a));
-		Point3D cp2 = Utilities.crossProduct(Utilities.pointSubtract(b,a), Utilities.pointSubtract(p2,a));
-		if (Utilities.dotProduct(cp1, cp2) >= 0) {
-			return true;
-		} else {
-			return false;
-		}
+		double cp1 = Utilities.crossProduct(Utilities.subtractPoints(b, a), Utilities.subtractPoints(p1, a));
+		double cp2 = Utilities.crossProduct(Utilities.subtractPoints(b, a), Utilities.subtractPoints(p2, a));
+		return ((cp1 * cp2) >= 0);
 	}
 
 
-	public static Point3D crossProduct(Point2D.Double a, Point2D.Double b) {
-		return Utilities.crossProduct(new Point3D(a.x,a.y,0), new Point3D(b.x,b.y,0));
+	/**
+	 * Get a cross product of two 2D vectors. The value returned is the cross
+	 * product's magnitude.
+	 * 
+	 * @param a First operand vector.
+	 * @param b Second operand vector.
+	 * @return Cross product of the two vectors.
+	 */
+	public static double crossProduct(Point2D.Double a, Point2D.Double b) {
+		return (a.x * b.y) - (a.y * b.x);
 	}
 
-
+	/**
+	 * Get a cross product of two 3D vectors.
+	 * 
+	 * @param a First operand vector.
+	 * @param b Second operand vector.
+	 * @return Cross product of the two vectors.
+	 */
 	public static Point3D crossProduct(Point3D a, Point3D b) {
-		return new Point3D(a.y*b.z - a.z*b.y, a.x*b.z - a.z*b.x, a.x*b.y - a.y*b.x);
+		return new Point3D((a.y * b.z) - (a.z * b.y), (a.x * b.z) - (a.z * b.x), (a.x * b.y) - (a.y * b.x));
 	}
 
+	
+	/**
+	 * Get the dot product of two 2D point.
+	 * 
+	 * @param a First operand.
+	 * @param b Second operand.
+	 * @return Dot product of the points.
+	 */
+	public static double dotProduct(Point2D.Double a, Point2D.Double b) {
+		return (a.x * b.x) + (a.y * b.y);
+	}
 
+	/**
+	 * Get the dot product of two 3D points.
+	 * 
+	 * @param a First operand.
+	 * @param b Second operand.
+	 * @return Dot product of the points.
+	 */
 	public static double dotProduct(Point3D a, Point3D b) {
-		return a.x*b.x + a.y*b.y + a.z*b.z;
+		return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
 	}
 
+	
+	/**
+	 * Add two points.
+	 * 
+	 * @param a First point to add.
+	 * @param b Second point to add.
+	 * @return Summand of the two points.
+	 */
+	public static Point2D.Double addPoints(Point2D.Double a, Point2D.Double b) {
+		return new Point2D.Double(a.x + b.x, a.y + b.y);
+	}
 
-	public static Point2D.Double pointSubtract(Point2D.Double a, Point2D.Double  b) {
-		return new Point2D.Double(a.x-b.x, a.y-b.y);
+	/**
+	 * Subtract one point from another one.
+	 * 
+	 * @param a Point to subtract from (minuend).
+	 * @param b Point to subtract (subtrahend).
+	 * @return Difference of the two points.
+	 */
+	public static Point2D.Double subtractPoints(Point2D.Double a, Point2D.Double b) {
+		return new Point2D.Double(a.x - b.x, a.y - b.y);
 	}
 
 
@@ -411,20 +455,20 @@ public class Utilities {
 			Point2D.Double point = itr.next();
 
 			if (point.y < 0) {
-				if (!Utilities.isPathClear(point, ws.getBallCoords(),
+				if (!Utilities.lineIntersectsRobot(point, ws.getBallCoords(),
 						enemy_robot.getTopImage())) {
 					itr.remove();
 
 				}
 			} else if (point.y > WorldState.PITCH_HEIGHT_CM) {
-				if (!Utilities.isPathClear(point, ws.getBallCoords(),
+				if (!Utilities.lineIntersectsRobot(point, ws.getBallCoords(),
 						enemy_robot.getBottomImage())) {
 					itr.remove();
 
 				}
 			} else {
 
-				if (!Utilities.isPathClear(point, ws.getBallCoords(),
+				if (!Utilities.lineIntersectsRobot(point, ws.getBallCoords(),
 						enemy_robot) || point.x > WorldState.PITCH_WIDTH_CM) {
 					itr.remove();
 
@@ -444,7 +488,7 @@ public class Utilities {
 			//System.out.println(temp_point);
 			
 			if (Utilities.isPointInField(temp_point)) { 
-				if (!isPointAroundRobot(temp_point, enemy_robot) && isPathClear(temp_point, ws.getBallCoords(),
+				if (!isPointAroundRobot(temp_point, enemy_robot) && lineIntersectsRobot(temp_point, ws.getBallCoords(),
 						enemy_robot)) {
 					//System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
 					//System.out.println("Min distance: "+min_distance);
@@ -513,7 +557,7 @@ public class Utilities {
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
 
-			if (!Utilities.isPathClear(point, ws.getBallCoords(), enemy_robot)) 
+			if (!Utilities.lineIntersectsRobot(point, ws.getBallCoords(), enemy_robot)) 
 				itr.remove();
 
 		}

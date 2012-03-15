@@ -8,10 +8,11 @@ import sdp.common.Utilities;
 import sdp.common.Vector2D;
 
 public class AIVisualServoing extends AI {
+	
 	/** Whether the robot is allowed to drive in reverse. */
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
 	
-	/** The multiplier to the final speed to slow it down */
+	/** The multiplier to the final speed. */
 	private final static double SPEED_MULTIPLIER = 0.8;
 
 	private final static int COLL_SECS_COUNT = 222;
@@ -27,7 +28,9 @@ public class AIVisualServoing extends AI {
 
 	/** Threshold for being at the target point */
 	private final static int POINT_ACCURACY = 5;
-	public static final int DIST_TO_BALL = 6;
+	
+	/** How close the robot should be to the ball before it attempts to kick it. */
+	public static final double KICKABLE_BALL_DIST = 6;
 
 	private final static int MAX_TURN_ANG = 127;
 	public final static double DEFAULT_POINT_OFF = 2*Robot.LENGTH_CM;
@@ -51,14 +54,14 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Command chaseBall() throws IOException {
 		// Are we ready to score?
-		if (ai_world_state.getDistanceToBall() < DIST_TO_BALL) {
-			Point2D.Double intersection = Utilities.intersection(ai_world_state.getRobot().getCoords(),
-					ai_world_state.getRobot().getFrontCenter(),
-					ai_world_state.getEnemyGoal().getTop(),
+		if (ai_world_state.getDistanceToBall() < KICKABLE_BALL_DIST) {
+			Point2D.Double intersection = Utilities.getLineIntersection(ai_world_state.getRobot().getCoords(),
+					ai_world_state.getRobot().getFrontCenter(), ai_world_state.getEnemyGoal().getTop(),
 					ai_world_state.getEnemyGoal().getBottom());
-			if (intersection != null && Utilities.isPathClear(ai_world_state.getRobot().getCoords(), intersection, ai_world_state.getEnemyRobot())){
+			if (intersection != null && Utilities.lineIntersectsRobot(ai_world_state.getRobot().getCoords(),
+					intersection, ai_world_state.getEnemyRobot())) {
 				return gotBall();
-			}	
+			}
 		}
 		
 		// Get the point to drive towards.
@@ -167,7 +170,7 @@ public class AIVisualServoing extends AI {
 		// TODO Auto-generated method stub
 
 
-		Point2D.Double intercept= Utilities.intersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getMyGoal().getTop(), ai_world_state.getMyGoal().getBottom());
+		Point2D.Double intercept= Utilities.getLineIntersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getMyGoal().getTop(), ai_world_state.getMyGoal().getBottom());
 
 
 		if (intercept != null){
@@ -241,7 +244,7 @@ public class AIVisualServoing extends AI {
 		//
 		//
 
-		Point2D.Double interceptBall= Utilities.intersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getRobot().getCoords(), ai_world_state.getRobot().getFrontCenter());
+		Point2D.Double interceptBall= Utilities.getLineIntersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getRobot().getCoords(), ai_world_state.getRobot().getFrontCenter());
 		System.out.println("InterceptDistance: " + interceptBall);
 		System.out.println("Our robot's y: " + ai_world_state.getRobot().getCoords().y);
 
@@ -275,10 +278,10 @@ public class AIVisualServoing extends AI {
 		Command command = new Command(0,0,false);
 
 		Point2D.Double pointInGoal= 
-				Utilities.intersection(ai_world_state.getRobot().getCoords(), 
+				Utilities.getLineIntersection(ai_world_state.getRobot().getCoords(), 
 						ai_world_state.getRobot().getFrontCenter(), ai_world_state.getEnemyGoal().getTop(), 
 						ai_world_state.getEnemyGoal().getBottom());
-		boolean clear_path = Utilities.isPathClear(pointInGoal, ai_world_state.getBallCoords(), 
+		boolean clear_path = Utilities.lineIntersectsRobot(pointInGoal, ai_world_state.getBallCoords(), 
 				ai_world_state.getEnemyRobot());
 		//        System.out.println(clear_path);
 		if (clear_path){
@@ -357,7 +360,8 @@ public class AIVisualServoing extends AI {
 			for (int i = 0; i < COLL_SECS_COUNT; i++) {
 				double curAngle = -90 + i * SEC_ANGLE + SEC_ANGLE / 2;
 				curAngle = Utilities.normaliseAngle(curAngle);
-				
+
+				// Pay attention!
 				Vector2D rayDir = Vector2D.rotateVector(new Vector2D(1, 0), curAngle);
 				Vector2D rayEndLocal = Vector2D.multiply(rayDir, destPointDist);
 				Vector2D rayEnd = Utilities.getGlobalVector(ai_world_state.getRobot(), rayEndLocal);
@@ -418,8 +422,8 @@ public class AIVisualServoing extends AI {
 				&& (waypoint.getDistance() < TARG_THRESH)) {
 			point_off *= 0.7;
 		}
-		if (point_off < DIST_TO_BALL) {
-			point_off = DIST_TO_BALL;
+		if (point_off < KICKABLE_BALL_DIST) {
+			point_off = KICKABLE_BALL_DIST;
 		}
 
 		Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
