@@ -360,7 +360,6 @@ public class AIVisualServoing extends AI {
 				double curAngle = -90 + i * SEC_ANGLE + SEC_ANGLE / 2;
 				curAngle = Utilities.normaliseAngle(curAngle);
 
-				// Pay attention!
 				Vector2D rayDir = Vector2D.rotateVector(new Vector2D(1, 0), curAngle);
 				Vector2D rayEndLocal = Vector2D.multiply(rayDir, destPointDist);
 				Vector2D rayEnd = Utilities.getGlobalVector(ai_world_state.getRobot(), rayEndLocal);

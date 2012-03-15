@@ -779,22 +779,21 @@ public class Utilities {
 	public static Vector2D[] getClosestSideCollisions(WorldState state,
 			Vector2D startPt, Vector2D dirPt, double widthFactor, int obstacles) {
 		Vector2D dir = Vector2D.subtract(dirPt, startPt);
-		double angle = (dir.getDirection() + 90) * Math.PI / 180d;
+		double angle = (-dir.getDirection() + 90) * Math.PI / 180d;
 		
-		double halfWidth = widthFactor * Robot.WIDTH_CM / 2;
+		double factor = widthFactor * Robot.WIDTH_CM / 2;
 		double cos = Math.cos(angle);
 		double sin = Math.sin(angle);
-		Vector2D sideOffset = new Vector2D(cos * halfWidth, sin * halfWidth);
 		
-		Vector2D leftStartPt = Vector2D.add(startPt, sideOffset);
-		Vector2D leftRay = getClosestCollisionVec(state, leftStartPt, dir,
-				obstacles);
+		Vector2D leftOffset = new Vector2D(cos * factor, sin * factor);
+		Vector2D leftStartPt = Vector2D.add(startPt, leftOffset);
+		Vector2D leftColl = getClosestCollisionVec(state, leftStartPt, dir, obstacles);
 		
-		Vector2D rightStartPt = Vector2D.add(startPt, Vector2D.multiply(sideOffset, -1));
-		Vector2D rightRay = getClosestCollisionVec(state, rightStartPt, dir,
-				obstacles);
+		Vector2D rightOffset = new Vector2D(-cos * factor, -sin * factor);
+		Vector2D rightStartPt = Vector2D.add(startPt, rightOffset);
+		Vector2D rightColl = getClosestCollisionVec(state, rightStartPt, dir, obstacles);
 		
-		Vector2D retValue[] = { leftRay, rightRay };
+		Vector2D retValue[] = { leftColl, rightColl };
 		return retValue;
 	}
 	
@@ -803,8 +802,8 @@ public class Utilities {
 	 * Check whether a robot could drive between two points in a straight line
 	 * without colliding with anything.
 	 * 
-	 * This function is a bit pessimistic, since it considers a tunnel that is
-	 * a bit wider than the robot.
+	 * This function is pessimistic, since it considers a tunnel that is a bit
+	 * wider than the robot.
 	 * 
 	 * @param state Current world state.
 	 * @param point1 One of the path's endpoints.
@@ -819,7 +818,7 @@ public class Utilities {
 	 */
 	public static boolean isDirectPathClear(WorldState state, Vector2D point1,
 			Vector2D point2, int obstacles) {
-		double pathLength = Vector2D.subtract(point1, point2).getLength();		
+		double pathLength = Vector2D.subtract(point2, point1).getLength();		
 		double widthFactors[] = { 0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5 };
 		
 		for (double factor : widthFactors) {
