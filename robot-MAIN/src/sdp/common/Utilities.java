@@ -349,9 +349,9 @@ public class Utilities {
 		Robot robot, enemy_robot;
 
 		if (my_goal_left) {
-			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
+			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_HEIGHT_CM ));
 		} else {
-			enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
+			enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_HEIGHT_CM ));
 		}
 
 		//update variables

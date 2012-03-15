@@ -10,14 +10,13 @@ import sdp.common.Communicator.opcode;
 
 
 /**
- * This class implements a message queue scheduler. It could send messages in a queue
- * with a given delay.
+ * This class implements a message queue scheduler. It could send messages in
+ * a queue with a given delay.
  * 
  * Ideally the AI should use this method to have its message queue built
  * before sending it via a Communicator.
  * 
  * @author Martin Marinov
- *
  */
 public class MessageQueue {
 	

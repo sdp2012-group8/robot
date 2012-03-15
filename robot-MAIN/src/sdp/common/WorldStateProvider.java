@@ -48,7 +48,7 @@ public abstract class WorldStateProvider extends Observable {
 	}
 	
 	
-	/* (non-Javadoc)
+	/**
 	 * @see java.util.Observable#addObserver(java.util.Observer)
 	 */
 	@Override

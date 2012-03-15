@@ -1,7 +1,5 @@
 package sdp.AI;
 
-import sdp.common.Robot;
-import sdp.common.Utilities;
 import sdp.common.geometry.Vector2D;
 
 
@@ -37,7 +35,7 @@ public final class Waypoint {
 		this.isEndpoint = isEndpoint;
 		
 		targetDist = targetPoint.getLength();
-		targetTurnAngle = Vector2D.getDirection(targetPoint);
+		targetTurnAngle = targetPoint.getDirection();
 	}
 	
 	

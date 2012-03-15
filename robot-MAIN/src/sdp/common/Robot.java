@@ -3,13 +3,10 @@ package sdp.common;
 import java.awt.geom.Point2D;
 
 import sdp.common.geometry.GeomUtils;
-import sdp.common.geometry.Vector2D;
 
 
 /**
  * This class represents a robot on the field.
- * 
- * @author Gediminas Liktaras
  */
 public final class Robot {
 	
@@ -22,12 +19,7 @@ public final class Robot {
 	public static final double WIDTH_CM = 18;	
 	/** Width of the robot's top plate in normalised coordinates. */
 	public static final double WIDTH = WIDTH_CM / 244d;
-	
-	public static final Vector2D local_front_left_CM = new Vector2D(LENGTH_CM / 2, WIDTH_CM / 2);
-	public static final Vector2D local_front_right_CM = new Vector2D(LENGTH_CM / 2, -WIDTH_CM / 2);
-	public static final Vector2D local_back_left_CM = new Vector2D(-LENGTH_CM / 2, WIDTH_CM / 2);
-	public static final Vector2D local_back_right_CM = new Vector2D(-LENGTH_CM / 2, -WIDTH_CM / 2);
-	
+
 
 	/** Coordinates of the robot's centre on the field. */
 	private Point2D.Double coords;
@@ -49,9 +41,9 @@ public final class Robot {
 
 	
 	/**
-	 * The main constructor.
+	 * Create a new robot.
 	 * 
-	 * @param coords The robot's coordinates. In 0..1, use {@link #setCoords(boolean)} for cm.
+	 * @param coords The robot's coordinates in normal coordinates.
 	 * @param angle The angle the robot is facing, in degrees.
 	 */
 	public Robot(Point2D.Double coords, double angle) {
@@ -59,14 +51,16 @@ public final class Robot {
 	}
 	
 	/**
-	 * Creates a new robot, with coordinates either in 0..1 or in cm
-	 * @param coords
-	 * @param angle
-	 * @param is_in_cm
+	 * Create a new robot.
+	 * 
+	 * @param coords The robot's coordinates, in normal coordinates or centimeters.
+	 * @param angle The angle the robot is facing, in degrees.
+	 * @param inCm Whether coords argument is in centimeters.
 	 */
-	public Robot(Point2D.Double coords, double angle, boolean is_in_cm) {
-		setCoords(coords, angle, is_in_cm);
+	public Robot(Point2D.Double coords, double angle, boolean inCm) {
+		setCoords(coords, angle, inCm);
 	}
+	
 	
 	/**
 	 * Set angle
@@ -93,9 +87,9 @@ public final class Robot {
 	public final void setCoords(Point2D.Double coords, double angle, boolean cm) {
 		this.coords = coords;
 		this.angle = Utilities.normaliseAngle(angle);
-		//System.out.println("Robot init angle: " + angle);
-		double length = cm ? LENGTH_CM : LENGTH;
-		double width = cm ? WIDTH_CM : WIDTH;
+		
+		double length = (cm ? LENGTH_CM : LENGTH);
+		double width = (cm ? WIDTH_CM : WIDTH);
 		
 		frontLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, width / 2), angle);
 		GeomUtils.translatePoint(frontLeftPoint, coords);
@@ -114,24 +108,8 @@ public final class Robot {
 		
 		backCenterPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, 0), angle);
 		GeomUtils.translatePoint(backCenterPoint, coords);
-		
 	}
-	
-	/**
-	 * Returns the top image of the enemy robot, coords in cm
-	 * @return
-	 */
-	public final Robot getTopImage(){
-		return new Robot(new Point2D.Double(coords.x, -coords.y),-angle,true);
-	}
-	
-	/**
-	 * Returns the bottom image of the enemy robot, coords in cm
-	 * @return
-	 */
-	public final Robot getBottomImage(){
-		return new Robot(new Point2D.Double(coords.x, 2*WorldState.PITCH_HEIGHT_CM-coords.y),-angle,true);
-	}
+
 	
 	/**
 	 * Converts coordinates that the robot was initialised with in cm or in 0..1
@@ -158,6 +136,27 @@ public final class Robot {
 	 */
 	public final double getAngle() {
 		return angle;
+	}
+	
+	
+	/**
+	 * Get the top image of the robot. Coordinates will be expressed in
+	 * centimetres.
+	 * 
+	 * @return The top image of the robot.
+	 */
+	public final Robot getTopImage(){
+		return new Robot(new Point2D.Double(coords.x, -coords.y), -angle, true);
+	}
+	
+	/**
+	 * Returns the bottom image of the robot. Coordinates will be expressed
+	 * in centimetres.
+	 * 
+	 * @return The bottom image of the robot.
+	 */
+	public final Robot getBottomImage(){
+		return new Robot(new Point2D.Double(coords.x, 2 * WorldState.PITCH_HEIGHT_CM - coords.y), -angle, true);
 	}
 
 	
@@ -202,7 +201,6 @@ public final class Robot {
 	 * 
 	 * @return Coordinates of the front center of robot.
 	 */
-	
 	public final Point2D.Double getFrontCenter(){	
 		return frontCenterPoint;
 	}
@@ -212,7 +210,6 @@ public final class Robot {
 	 * 
 	 * @return Coordinates of the back center of the robot.
 	 */
-	
 	public final Point2D.Double getBackCenter(){
 		return backCenterPoint;
 	}

@@ -36,7 +36,6 @@ public class AIWorldState extends WorldState {
 	private Robot enemy_robot = null;
 	private double distance_to_ball;
 	private double distance_to_goal;
-	private double point_offset;
 	
 	// battery indicator
 	private static final int BAT_TOP_OFF = 10;
@@ -75,11 +74,11 @@ public class AIWorldState extends WorldState {
 		this.my_goal_left = my_goal_left;
 
 		if (my_goal_left) {
-			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
-			my_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
+			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_HEIGHT_CM ));
+			my_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_HEIGHT_CM ));
 		} else {
-			enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
-			my_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
+			enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_HEIGHT_CM ));
+			my_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_HEIGHT_CM ));
 		}
 
 		super.update(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
@@ -271,7 +270,7 @@ public class AIWorldState extends WorldState {
 			Vector2D new_val = Vector2D.rotateVector(new Vector2D(1, 0), new_value);
 			Vector2D sum = Vector2D.add(old_val, Vector2D.multiply(new_val, filteredAngleAmount));
 			Vector2D ans = Vector2D.divide(sum, filteredAngleAmount+1);
-			return Vector2D.getDirection(ans);
+			return ans.getDirection();
 		}
 	}
 	
