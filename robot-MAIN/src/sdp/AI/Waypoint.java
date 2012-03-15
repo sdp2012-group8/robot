@@ -2,7 +2,7 @@ package sdp.AI;
 
 import sdp.common.Robot;
 import sdp.common.Utilities;
-import sdp.common.Vector2D;
+import sdp.common.geometry.Vector2D;
 
 
 /**

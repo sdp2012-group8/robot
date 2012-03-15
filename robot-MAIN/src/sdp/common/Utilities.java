@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import sdp.AI.AIWorldState;
+import sdp.common.geometry.Point3D;
+import sdp.common.geometry.Vector2D;
 
 
 /**
@@ -426,7 +428,7 @@ public class Utilities {
 				x = ball.getX() - (b*(y - ball.getY())/a);
 			}*/
 			
-			Point2D.Double p = Vector2D.change_length(Vector2D.subtract(new Vector2D(point),new Vector2D(ball)), -point_offset);
+			Point2D.Double p = Vector2D.changeLength(Vector2D.subtract(new Vector2D(point),new Vector2D(ball)), -point_offset);
 			p = new Point2D.Double(ball.x + p.x, ball.y + p.y);
 			//x = ball.getX() + (b*(y - ball.getY())/a);
 
@@ -824,7 +826,7 @@ public class Utilities {
 		if (near != null) 
 			return near;
 		return
-				Vector2D.change_length(direction, WorldState.PITCH_WIDTH_CM);
+				Vector2D.changeLength(direction, WorldState.PITCH_WIDTH_CM);
 	}
 	
 	/**
@@ -870,7 +872,7 @@ public class Utilities {
 		if (near != null) 
 			return near;
 		return
-				Vector2D.change_length(direction, WorldState.PITCH_WIDTH_CM);
+				Vector2D.changeLength(direction, WorldState.PITCH_WIDTH_CM);
 	}
 
 	/**
@@ -1226,7 +1228,7 @@ public class Utilities {
 			double length = loc_start.getX()-(loc_start.getY()*(loc_end.getX()-loc_start.getX())/(loc_end.getY()-loc_start.getY()));
 			if (length < 0)
 				return null;
-			return Vector2D.change_length(direction, length);
+			return Vector2D.changeLength(direction, length);
 		} else
 			return null;
 	}

@@ -1,5 +1,7 @@
 package sdp.common;
 
+import sdp.common.geometry.Vector2D;
+
 /**
  * Neural network shared tools
  * 

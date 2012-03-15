@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 
 import sdp.AI.AIVisualServoing;
 import sdp.AI.AIWorldState;
+import sdp.common.geometry.Vector2D;
 
 public class Painter {
 
@@ -214,7 +215,7 @@ public class Painter {
 						fillOval((int)(target.x* width / WorldState.PITCH_WIDTH_CM-3), (int) (target.y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6, true);
 						
 						g.setStroke(new BasicStroke(1.0f));
-						Vector2D dist = Utilities.raytraceVector(state_cm, target, Vector2D.change_length(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), target), 200), null, false);
+						Vector2D dist = Utilities.raytraceVector(state_cm, target, Vector2D.changeLength(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), target), 200), null, false);
 						drawVector(target, dist, false);
 						Vector2D global_dist = Vector2D.add(dist, target);
 						if (global_dist.getY() < 5) {

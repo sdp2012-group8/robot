@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import sdp.common.Communicator;
 import sdp.common.MessageListener;
 import sdp.common.Robot;
-import sdp.common.Vector2D;
 import sdp.common.WorldState;
+import sdp.common.geometry.Vector2D;
 
 /**
  * 

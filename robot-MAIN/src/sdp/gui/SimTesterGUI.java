@@ -29,7 +29,7 @@ import sdp.AI.AIMaster.AIMode;
 import sdp.AI.AIMaster.mode;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
-import sdp.common.Vector2D;
+import sdp.common.geometry.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.simulator.Simulator;

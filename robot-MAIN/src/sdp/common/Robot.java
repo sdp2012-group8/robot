@@ -2,6 +2,8 @@ package sdp.common;
 
 import java.awt.geom.Point2D;
 
+import sdp.common.geometry.Vector2D;
+
 
 /**
  * This class represents a robot on the field.

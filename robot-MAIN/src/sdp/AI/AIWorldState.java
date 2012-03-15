@@ -12,8 +12,8 @@ import sdp.common.Goal;
 import sdp.common.Painter;
 import sdp.common.Robot;
 import sdp.common.Utilities;
-import sdp.common.Vector2D;
 import sdp.common.WorldState;
+import sdp.common.geometry.Vector2D;
 import sdp.simulator.Simulator;
 import sdp.vision.processing.ImageProcessorConfig;
 

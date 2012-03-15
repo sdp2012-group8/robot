@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 
-import sdp.common.ImageFileFilter_IO;
+import sdp.common.filefilters.ImageFileFilter_IO;
 
 
 /**
