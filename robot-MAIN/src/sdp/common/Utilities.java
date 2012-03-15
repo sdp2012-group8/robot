@@ -857,10 +857,10 @@ public class Utilities {
 			if ((obstacles & YELLOW_IS_OBSTACLE_FLAG) != 0) {
 				robotCollision = null;
 			} else {
-				robotCollision = true;
+				robotCollision = false;
 			}
 		} else {
-			robotCollision = false;
+			robotCollision = true;
 		}
 		
 		return raytraceVector(state, origin, direction, robotCollision, ballIsObstacle);
@@ -902,6 +902,8 @@ public class Utilities {
 	 * 
 	 * @param state Current world state.
 	 * @param dirPt Point, in whose direction the check will be performed.
+	 * @param widthFactor Factor by which the robot width we consider is
+	 * 		modified.
 	 * @param obstacles A bitfield that is expected to contain any combination
 	 * 		of flags BALL_IS_OBSTACLE_FLAG, BLUE_IS_OBSTACLE_FLAG and
 	 * 		YELLOW_IS_OBSTACLE_FLAG. It denotes which objects are considered
@@ -909,11 +911,11 @@ public class Utilities {
 	 * @return Left and right collision distances, as described above.
 	 */
 	public static Vector2D[] getClosestSideCollisions(WorldState state,
-			Vector2D startPt, Vector2D dirPt, int obstacles) {
+			Vector2D startPt, Vector2D dirPt, double widthFactor, int obstacles) {
 		Vector2D direction = Vector2D.subtract(dirPt, startPt);
 		double angle = (-Vector2D.getDirection(direction) + 90) * Math.PI / 180d;
 		
-		double halfWidth = Robot.WIDTH_CM / 2;
+		double halfWidth = widthFactor * Robot.WIDTH_CM / 2;
 		double cos = Math.cos(angle);
 		double sin = Math.sin(angle);
 		Vector2D sideOffset = new Vector2D(cos * halfWidth, sin * halfWidth);
@@ -935,12 +937,14 @@ public class Utilities {
 	 * Check whether a robot could drive between two points in a straight line
 	 * without colliding with anything.
 	 * 
-	 * Note how this function assumes that no obstacle will be smaller than
-	 * robot's width.
+	 * This function is a bit pessimistic, since it considers a tunnel that is
+	 * a bit wider than the robot.
 	 * 
 	 * @param state Current world state.
 	 * @param point1 One of the path's endpoints.
 	 * @param point2 Another of the path's endpoints.
+	 * @param widthFactor Factor by which the robot width we consider is
+	 * 		modified.
 	 * @param obstacles A bitfield that is expected to contain any combination
 	 * 		of flags BALL_IS_OBSTACLE_FLAG, BLUE_IS_OBSTACLE_FLAG and
 	 * 		YELLOW_IS_OBSTACLE_FLAG. It denotes which objects are considered
@@ -950,11 +954,18 @@ public class Utilities {
 	public static boolean isDirectPathClear(WorldState state, Vector2D point1,
 			Vector2D point2, int obstacles) {
 		double pathLength = Vector2D.subtract(point1, point2).getLength();		
-		Vector2D sideColls[] = Utilities.getClosestSideCollisions(state, point1,
-				point2, obstacles);
-
-		return ((sideColls[0].getLength() >= pathLength)
-				&& (sideColls[1].getLength() >= pathLength));
+		double widthFactors[] = { 0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5 };
+		
+		for (double factor : widthFactors) {
+			Vector2D sideColls[] = Utilities.getClosestSideCollisions(state, point1,
+					point2, factor, obstacles);
+			if ((sideColls[0].getLength() < pathLength)
+					|| (sideColls[1].getLength() < pathLength)) {
+				return false;
+			}
+		}
+		
+		return true;
 	}
 	
 

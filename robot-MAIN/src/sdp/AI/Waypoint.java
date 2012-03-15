@@ -24,20 +24,20 @@ public final class Waypoint {
 	
 	
 	/**
-	 * Create a new waypoint for a robot.
+	 * Create a new waypoint.
 	 * 
-	 * @param robot Robot's current location.
-	 * @param target Target point.
+	 * This function assumes that the robot is placed at coordinates
+	 * (0, 0) and is facing direction of 0 degrees.
+	 * 
+	 * @param target Target point in robot-relative coordinates.
 	 * @param isEndpoint Whether the target is at the end of a path.
 	 */
-	public Waypoint(Robot robot, Vector2D target, boolean isEndpoint) {
-		Vector2D robotCoords = new Vector2D(robot.getCoords());
-		
-		this.targetPoint = Vector2D.subtract(target, robotCoords);
+	public Waypoint(Vector2D target, boolean isEndpoint) {
+		this.targetPoint = target;
 		this.isEndpoint = isEndpoint;
 		
 		targetDist = targetPoint.getLength();
-		targetTurnAngle = Utilities.getTurningAngle(robot, target);
+		targetTurnAngle = Vector2D.getDirection(targetPoint);
 	}
 	
 	

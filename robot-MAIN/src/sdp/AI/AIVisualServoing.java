@@ -341,24 +341,14 @@ public class AIVisualServoing extends AI {
 		}
 		
 		// Check if the target point is directly visible.
-		double targetCollDist = Utilities.getClosestCollisionDist(ai_world_state,
-				new Vector2D(ai_world_state.getRobot().getCoords()),
-				target, obstacleFlags) + Robot.LENGTH_CM;
-		boolean isTargetVisible = (targetCollDist >= targetDistLocal);
-		
-		if (isTargetVisible) {
-			return new Waypoint(ai_world_state.getRobot(), target, true);
+		Vector2D ownCoords = new Vector2D(ai_world_state.getRobot().getCoords());
+		if (Utilities.isDirectPathClear(ai_world_state, ownCoords, target, obstacleFlags)) {
+			return new Waypoint(targetLocal, true);
 		}
 		
-		// Compute distance to the destination point.
-		Vector2D ownCoords = new Vector2D(ai_world_state.getRobot().getCoords());
-		Vector2D enemyCoords = new Vector2D(ai_world_state.getEnemyRobot().getCoords());		
-		double enemyRobotDist = Vector2D.subtract(ownCoords, enemyCoords).getLength();
-		
-		double destPointDist = targetDistLocal;
-
 		// Compute the destination point.
 		Vector2D destPoint = null;
+		double destPointDist = targetDistLocal;
 		
 		double minAngle = Double.MAX_VALUE;
 		int iterations = 0;
@@ -374,23 +364,22 @@ public class AIVisualServoing extends AI {
 				
 				if (Utilities.isDirectPathClear(ai_world_state, ownCoords, rayEnd, obstacleFlags)) {
 					double angleDiff = Utilities.normaliseAngle(curAngle - targetDirLocal);
-					
 					if (Math.abs(angleDiff) < Math.abs(minAngle)) {
 						minAngle = angleDiff;
-						destPoint = rayEnd;
+						destPoint = rayEndLocal;
 					}
 				}
 			}
-			
-			++iterations;			
-			destPointDist -= Robot.LENGTH_CM; 	// TODO: What if this turns negative?
+
+			++iterations;
+			destPointDist -= Robot.LENGTH_CM;
 		}
 
 		if (destPoint == null) {
-			destPoint = target;
+			destPoint = targetLocal;
 		}
-		
-		return new Waypoint(ai_world_state.getRobot(), destPoint, false);
+				
+		return new Waypoint(destPoint, false);
 	}
 	
 	
@@ -410,15 +399,17 @@ public class AIVisualServoing extends AI {
 		comm.turning_speed = waypoint.getTurningAngle() * 2;
 
 		// Ball is behind.
-		if (Math.abs(comm.turning_speed) > 90) {
+		if (Math.abs(waypoint.getTurningAngle()) > 90) {
 			comm.speed = -MAX_SPEED_CM_S;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
-				comm.turning_speed = Utilities.normaliseAngle(comm.turning_speed - 180);
+				comm.turning_speed = Utilities.normaliseAngle(waypoint.getTurningAngle() - 180);
 			}		
 		// Ball is in front.
 		} else {
 			comm.speed = MAX_SPEED_CM_S;
 		}
+		
+		comm.turning_speed *= 2;
 		
 		backAwayIfTooClose(comm, true, waypoint.isEndpoint() ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
 		nearCollisionCheck(comm, waypoint.isEndpoint() ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
