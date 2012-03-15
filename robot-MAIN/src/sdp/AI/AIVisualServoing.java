@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import sdp.common.Robot;
 import sdp.common.Utilities;
+import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
 
 public class AIVisualServoing extends AI {
@@ -55,7 +56,7 @@ public class AIVisualServoing extends AI {
 	protected Command chaseBall() throws IOException {
 		// Are we ready to score?
 		if (ai_world_state.getDistanceToBall() < KICKABLE_BALL_DIST) {
-			Point2D.Double intersection = Utilities.getLineIntersection(ai_world_state.getRobot().getCoords(),
+			Point2D.Double intersection = GeomUtils.getLineIntersection(ai_world_state.getRobot().getCoords(),
 					ai_world_state.getRobot().getFrontCenter(), ai_world_state.getEnemyGoal().getTop(),
 					ai_world_state.getEnemyGoal().getBottom());
 			if (intersection != null && Utilities.lineIntersectsRobot(ai_world_state.getRobot().getCoords(),
@@ -170,7 +171,7 @@ public class AIVisualServoing extends AI {
 		// TODO Auto-generated method stub
 
 
-		Point2D.Double intercept= Utilities.getLineIntersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getMyGoal().getTop(), ai_world_state.getMyGoal().getBottom());
+		Point2D.Double intercept= GeomUtils.getLineIntersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getMyGoal().getTop(), ai_world_state.getMyGoal().getBottom());
 
 
 		if (intercept != null){
@@ -244,7 +245,7 @@ public class AIVisualServoing extends AI {
 		//
 		//
 
-		Point2D.Double interceptBall= Utilities.getLineIntersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getRobot().getCoords(), ai_world_state.getRobot().getFrontCenter());
+		Point2D.Double interceptBall= GeomUtils.getLineIntersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getRobot().getCoords(), ai_world_state.getRobot().getFrontCenter());
 		System.out.println("InterceptDistance: " + interceptBall);
 		System.out.println("Our robot's y: " + ai_world_state.getRobot().getCoords().y);
 
@@ -278,7 +279,7 @@ public class AIVisualServoing extends AI {
 		Command command = new Command(0,0,false);
 
 		Point2D.Double pointInGoal= 
-				Utilities.getLineIntersection(ai_world_state.getRobot().getCoords(), 
+				GeomUtils.getLineIntersection(ai_world_state.getRobot().getCoords(), 
 						ai_world_state.getRobot().getFrontCenter(), ai_world_state.getEnemyGoal().getTop(), 
 						ai_world_state.getEnemyGoal().getBottom());
 		boolean clear_path = Utilities.lineIntersectsRobot(pointInGoal, ai_world_state.getBallCoords(), 

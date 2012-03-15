@@ -13,6 +13,7 @@ import sdp.common.Painter;
 import sdp.common.Robot;
 import sdp.common.Utilities;
 import sdp.common.WorldState;
+import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
 import sdp.simulator.Simulator;
 import sdp.vision.processing.ImageProcessorConfig;
@@ -92,8 +93,8 @@ public class AIWorldState extends WorldState {
 		}
 
 
-		distance_to_ball = Utilities.pointDistance(Utilities.getGlobalVector(robot, new Vector2D(Robot.LENGTH_CM/2, 0)), getBallCoords());
-		distance_to_goal = Utilities.pointDistance(robot.getCoords(), enemy_goal.getCentre());
+		distance_to_ball = GeomUtils.pointDistance(Utilities.getGlobalVector(robot, new Vector2D(Robot.LENGTH_CM/2, 0)), getBallCoords());
+		distance_to_goal = GeomUtils.pointDistance(robot.getCoords(), enemy_goal.getCentre());
 
 		// check and set flags
 		if (getBallCoords() == new Point2D.Double(-1,-1)) {

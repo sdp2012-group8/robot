@@ -2,6 +2,7 @@ package sdp.common;
 
 import java.awt.geom.Point2D;
 
+import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
 
 
@@ -96,23 +97,23 @@ public final class Robot {
 		double length = cm ? LENGTH_CM : LENGTH;
 		double width = cm ? WIDTH_CM : WIDTH;
 		
-		frontLeftPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, width / 2), angle);
-		Utilities.translatePoint(frontLeftPoint, coords);
+		frontLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, width / 2), angle);
+		GeomUtils.translatePoint(frontLeftPoint, coords);
 		
-		frontRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, -width / 2), angle);
-		Utilities.translatePoint(frontRightPoint, coords);
+		frontRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, -width / 2), angle);
+		GeomUtils.translatePoint(frontRightPoint, coords);
 		
-		backLeftPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, width / 2), angle);
-		Utilities.translatePoint(backLeftPoint, coords);
+		backLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, width / 2), angle);
+		GeomUtils.translatePoint(backLeftPoint, coords);
 		
-		backRightPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, -width / 2), angle);
-		Utilities.translatePoint(backRightPoint, coords);
+		backRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, -width / 2), angle);
+		GeomUtils.translatePoint(backRightPoint, coords);
 		
-		frontCenterPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, 0), angle);
-		Utilities.translatePoint(frontCenterPoint, coords);
+		frontCenterPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, 0), angle);
+		GeomUtils.translatePoint(frontCenterPoint, coords);
 		
-		backCenterPoint = Utilities.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, 0), angle);
-		Utilities.translatePoint(backCenterPoint, coords);
+		backCenterPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, 0), angle);
+		GeomUtils.translatePoint(backCenterPoint, coords);
 		
 	}
 	

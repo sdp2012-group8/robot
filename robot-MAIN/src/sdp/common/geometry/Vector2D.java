@@ -200,7 +200,7 @@ public class Vector2D extends Point2D.Double {
      * @return Rotated point.
      */
     public static Vector2D rotateVector(final Vector2D vector, double angle) {
-    	return new Vector2D(Utilities.rotatePoint(new Point2D.Double(0.0, 0.0), vector, angle));
+    	return new Vector2D(GeomUtils.rotatePoint(new Point2D.Double(0.0, 0.0), vector, angle));
     }
     
     /**
@@ -236,7 +236,7 @@ public class Vector2D extends Point2D.Double {
 	 */
 	@Deprecated
 	public static double dot(Vector2D a, Vector2D b) {
-		return Utilities.dotProduct(a, b);
+		return GeomUtils.dotProduct(a, b);
 	}
 	
 	/**

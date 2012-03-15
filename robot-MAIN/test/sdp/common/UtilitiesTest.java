@@ -6,6 +6,8 @@ import java.awt.geom.Point2D;
 
 import org.junit.Test;
 
+import sdp.common.geometry.GeomUtils;
+
 public class UtilitiesTest {
 
 	Robot robot = new Robot(new Point2D.Double(0,0),0,true);
@@ -13,10 +15,10 @@ public class UtilitiesTest {
 	
 	@Test
 	public void testPointInTriangle() {
-		assertTrue(Utilities.isPointInTriangle(new Point2D.Double(1,2), new Point2D.Double(0,0), new Point2D.Double(4,0), new Point2D.Double(0,3)));
-		assertTrue(Utilities.isPointInTriangle(new Point2D.Double(0,0), new Point2D.Double(-3,-2), new Point2D.Double(4,0), new Point2D.Double(0,3)));
-		assertTrue(Utilities.isPointInTriangle(new Point2D.Double(41.12771286455945, 76.14973554308418), rb.getBackLeft(), rb.getFrontLeft(), rb.getFrontRight()));
-		assertFalse(Utilities.isPointInTriangle(new Point2D.Double(41.12771286455945, 76.14973554308418), rb.getBackRight(), rb.getBackLeft(), rb.getFrontRight()));
+		assertTrue(GeomUtils.isPointInTriangle(new Point2D.Double(1,2), new Point2D.Double(0,0), new Point2D.Double(4,0), new Point2D.Double(0,3)));
+		assertTrue(GeomUtils.isPointInTriangle(new Point2D.Double(0,0), new Point2D.Double(-3,-2), new Point2D.Double(4,0), new Point2D.Double(0,3)));
+		assertTrue(GeomUtils.isPointInTriangle(new Point2D.Double(41.12771286455945, 76.14973554308418), rb.getBackLeft(), rb.getFrontLeft(), rb.getFrontRight()));
+		assertFalse(GeomUtils.isPointInTriangle(new Point2D.Double(41.12771286455945, 76.14973554308418), rb.getBackRight(), rb.getBackLeft(), rb.getFrontRight()));
 	}
 
 	@Test
@@ -43,8 +45,8 @@ public class UtilitiesTest {
 	public void testIsPathClear(){
 		Robot robot = new Robot(new Point2D.Double(97.98125, 79.3),180.0, true);
 		assertFalse(Utilities.lineIntersectsRobot(new Point2D.Double(73.3741016438359, 75.00703978582817), new Point2D.Double(108.27499999999999, 94.55), robot));
-		assertTrue(Utilities.doesSegmentIntersectLine(robot.getBackLeft(), robot.getFrontRight(), new Point2D.Double(50.527974093792345, 93.47062110637931), new Point2D.Double(87.6875, 108.27499999999999)));
-		assertTrue(Utilities.doesSegmentIntersectLine(robot.getFrontLeft(), robot.getBackRight(), new Point2D.Double(50.527974093792345, 93.47062110637931), new Point2D.Double(87.6875, 108.27499999999999)));
+		assertTrue(GeomUtils.doesSegmentIntersectLine(robot.getBackLeft(), robot.getFrontRight(), new Point2D.Double(50.527974093792345, 93.47062110637931), new Point2D.Double(87.6875, 108.27499999999999)));
+		assertTrue(GeomUtils.doesSegmentIntersectLine(robot.getFrontLeft(), robot.getBackRight(), new Point2D.Double(50.527974093792345, 93.47062110637931), new Point2D.Double(87.6875, 108.27499999999999)));
 
 		
 	}

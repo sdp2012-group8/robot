@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import sdp.AI.AIWorldState;
-import sdp.common.geometry.Point3D;
+import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
 
 
@@ -75,57 +75,6 @@ public class Utilities {
 	}
 
 	/**
-	 * Rotate point p2 around point p1 by the given angle in degrees.
-	 * 
-	 * @param origin Rotation point.
-	 * @param point Point to rotate.
-	 * @param angle Angle of rotation in degrees.
-	 * @return Rotated point.
-	 */
-	public static Point2D.Double rotatePoint(Point2D.Double origin,
-			Point2D.Double point, double degrees)
-	{
-		double radAngle = Math.toRadians(degrees);
-
-		double xDiff = point.x - origin.x;
-		double yDiff = point.y - origin.y;
-
-		double rotX = (xDiff * Math.cos(radAngle)) - (yDiff * Math.sin(-radAngle)) + origin.x;
-		double rotY = (xDiff * Math.sin(-radAngle)) + (yDiff * Math.cos(radAngle)) + origin.y;
-
-		return new Point2D.Double(rotX, rotY);
-	}
-
-	/**
-	 * Rotate point p2 around point p1 by the given angle in degrees.
-	 * 
-	 * @param origin Rotation point.
-	 * @param point Point to rotate.
-	 * @param angle Angle of rotation in degrees.
-	 * @return Rotated point.
-	 */
-	public static Point rotatePoint(Point origin, Point point, double angle) {
-		Point2D.Double origin_f = new Point2D.Double(origin.x, origin.y);
-		Point2D.Double point_f = new Point2D.Double(point.x, point.y);
-		Point2D.Double retValue_f = rotatePoint(origin_f, point_f, angle);
-
-		return new Point((int)retValue_f.x, (int)retValue_f.y);
-	}
-
-
-	/**
-	 * Translate the given point by some offset.
-	 * 
-	 * @param point The point to translate.
-	 * @param offset Translate offset.
-	 */
-	public static void translatePoint(Point2D.Double point, Point2D.Double offset) {
-		point.x += offset.x;
-		point.y += offset.y;
-	}
-
-
-	/**
 	 * Check whether the given value is within specified bounds.
 	 * 
 	 * If lower > upper, the function checks if the given value is within the
@@ -163,185 +112,6 @@ public class Utilities {
 		return angle;
 	}
 	
-
-	/**
-	 * Checks whether a point is contained within some triangle.
-	 * 
-	 * @param p A point of interest.
-	 * @param a First corner of a triangle.
-	 * @param b Second corner of a triangle.
-	 * @param c Third corner of a triangle.
-	 * @return Whether a point is within a triangle.
-	 */
-	public static boolean isPointInTriangle(Point2D.Double p, Point2D.Double a,
-			Point2D.Double b, Point2D.Double c) {
-		return (Utilities.doesSegmentIntersectLine(p, a, b, c)
-				&& Utilities.doesSegmentIntersectLine(p, b, a, c)
-				&& Utilities.doesSegmentIntersectLine(p, c, a, b));
-	}
-
-
-	/**
-	 * Checks whether the given line intersects a robot.
-	 * 
-	 * @param point1 First point on the line.
-	 * @param point2 Second point on the line.
-	 * @param robot Robot in question.
-	 * @return Whether the line segment in question intersects the robot.
-	 */
-	public static boolean lineIntersectsRobot(Point2D.Double point1, Point2D.Double point2,
-			Robot robot) {
-		boolean diagonal1 = Utilities.doesSegmentIntersectLine(robot.getBackLeft(),
-				robot.getFrontRight(), point1, point2);
-		boolean diagonal2 = Utilities.doesSegmentIntersectLine(robot.getFrontLeft(),
-				robot.getBackRight(), point1, point2);
-		return (diagonal1 && diagonal2);
-	}
-
-
-	/**
-	 * Find the point where two lines intersect. If such point does not exist,
-	 * null is returned instead.
-	 * 
-	 * @param l1pt1 First point on the first line.
-	 * @param l1pt2 Second point on the first line.
-	 * @param l2pt1 First point on the second line.
-	 * @param l2pt2 Second point on the second line.
-	 * @return Point of intersection of the lines.
-	 */
-	public static Point2D.Double getLineIntersection(Point2D.Double l1pt1, Point2D.Double l1pt2,
-			Point2D.Double l2pt1, Point2D.Double l2pt2) {
-		Point2D.Double l1dir = Utilities.subtractPoints(l1pt1, l1pt2);
-		Point2D.Double l2dir = Utilities.subtractPoints(l2pt1, l2pt2);
-		double denom = Utilities.crossProduct(l1dir, l2dir);
-		
-		if (Utilities.areDoublesEqual(denom, 0.0)) {
-			return null;
-		} else {
-			double l1cp = Utilities.crossProduct(l1pt1, l1pt2);
-			double l2cp = Utilities.crossProduct(l2pt1, l2pt2);
-			
-			double xi = (l2dir.x * l1cp - l1dir.x * l2cp) / denom;
-			double yi = (l2dir.y * l1cp - l1dir.y * l2cp) / denom;
-			return new Point2D.Double(xi, yi);
-		}
-	}
-
-	/**
-	 * Check if a line segment intersects the given line.
-	 * 
-	 * @param segPt1 First endpoint of the line segment.
-	 * @param segPt2 Second endpoint of the line segment.
-	 * @param linePt1 First point on the line.
-	 * @param linePt2 Second point on the line.
-	 * @return Whether the line segment intersects the line.
-	 */
-	public static boolean doesSegmentIntersectLine(Point2D.Double segPt1, Point2D.Double segPt2,
-			Point2D.Double linePt1, Point2D.Double linePt2){
-		double cp1 = Utilities.crossProduct(Utilities.subtractPoints(linePt2, linePt1),
-				Utilities.subtractPoints(segPt1, linePt1));
-		double cp2 = Utilities.crossProduct(Utilities.subtractPoints(linePt2, linePt1),
-				Utilities.subtractPoints(segPt2, linePt1));
-		return ((cp1 * cp2) >= 0);
-	}
-
-
-	/**
-	 * Get a cross product of two 2D vectors. The value returned is the cross
-	 * product's magnitude.
-	 * 
-	 * @param a First operand vector.
-	 * @param b Second operand vector.
-	 * @return Cross product of the two vectors.
-	 */
-	public static double crossProduct(Point2D.Double a, Point2D.Double b) {
-		return (a.x * b.y) - (a.y * b.x);
-	}
-
-	/**
-	 * Get a cross product of two 3D vectors.
-	 * 
-	 * @param a First operand vector.
-	 * @param b Second operand vector.
-	 * @return Cross product of the two vectors.
-	 */
-	public static Point3D crossProduct(Point3D a, Point3D b) {
-		return new Point3D((a.y * b.z) - (a.z * b.y), (a.x * b.z) - (a.z * b.x), (a.x * b.y) - (a.y * b.x));
-	}
-
-	
-	/**
-	 * Get the dot product of two 2D point.
-	 * 
-	 * @param a First operand.
-	 * @param b Second operand.
-	 * @return Dot product of the points.
-	 */
-	public static double dotProduct(Point2D.Double a, Point2D.Double b) {
-		return (a.x * b.x) + (a.y * b.y);
-	}
-
-	/**
-	 * Get the dot product of two 3D points.
-	 * 
-	 * @param a First operand.
-	 * @param b Second operand.
-	 * @return Dot product of the points.
-	 */
-	public static double dotProduct(Point3D a, Point3D b) {
-		return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
-	}
-
-	
-	/**
-	 * Add two points.
-	 * 
-	 * @param a First point to add.
-	 * @param b Second point to add.
-	 * @return Summand of the two points.
-	 */
-	public static Point2D.Double addPoints(Point2D.Double a, Point2D.Double b) {
-		return new Point2D.Double(a.x + b.x, a.y + b.y);
-	}
-
-	/**
-	 * Subtract one point from another one.
-	 * 
-	 * @param a Point to subtract from (minuend).
-	 * @param b Point to subtract (subtrahend).
-	 * @return Difference of the two points.
-	 */
-	public static Point2D.Double subtractPoints(Point2D.Double a, Point2D.Double b) {
-		return new Point2D.Double(a.x - b.x, a.y - b.y);
-	}
-
-
-	/**
-	 * Takes points A, B and C and calculates the angle BAC.
-	 * 
-	 * @param a Point A.
-	 * @param b Point B.
-	 * @param c Point C.
-	 * @return Angle BAC.
-	 */
-	public static double getAngle(Point2D.Double a, Point2D.Double b, Point2D.Double c) {
-		double ab = pointDistance(a,b);
-		double ac = pointDistance(a,c);
-		double bc = pointDistance(b,c);
-
-		return Math.acos((ac * ac + ab * ab - bc * bc) / (2 * ac * ab));
-	}
-	
-	/**
-	 * Get Cartesian distance between two points.
-	 * 
-	 * @param a First point of interest.
-	 * @param b Second point of interest.
-	 * @return Distance between the points.
-	 */
-	public static double pointDistance(Point2D.Double a, Point2D.Double b) {
-		return Point2D.distance(a.x, a.y, b.x, b.y);
-	}
 
 	/**
 	 * converts to a byte
@@ -402,6 +172,24 @@ public class Utilities {
 			}
 		}
 		return false;
+	}
+	
+	
+	/**
+	 * Checks whether the given line intersects a robot.
+	 * 
+	 * @param point1 First point on the line.
+	 * @param point2 Second point on the line.
+	 * @param robot Robot in question.
+	 * @return Whether the line segment in question intersects the robot.
+	 */
+	public static boolean lineIntersectsRobot(Point2D.Double point1, Point2D.Double point2,
+			Robot robot) {
+		boolean diagonal1 = GeomUtils.doesSegmentIntersectLine(robot.getBackLeft(),
+				robot.getFrontRight(), point1, point2);
+		boolean diagonal2 = GeomUtils.doesSegmentIntersectLine(robot.getFrontLeft(),
+				robot.getBackRight(), point1, point2);
+		return (diagonal1 && diagonal2);
 	}
 
 
@@ -522,7 +310,7 @@ public class Utilities {
 			//System.out.println(temp_point);
 			
 			if (Utilities.isPointInField(temp_point)) { 
-				if (!isPointAroundRobot(temp_point, enemy_robot) && lineIntersectsRobot(temp_point, ws.getBallCoords(),
+				if (!isPointAroundRobot(temp_point, enemy_robot) && Utilities.lineIntersectsRobot(temp_point, ws.getBallCoords(),
 						enemy_robot)) {
 					//System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
 					//System.out.println("Min distance: "+min_distance);
@@ -623,8 +411,8 @@ public class Utilities {
 	 * @return Returns true if the point is within the enemy robot.
 	 */
 	public static boolean isPointInRobot(Point2D.Double point, Robot enemy_robot) {
-		if (Utilities.isPointInTriangle(point, enemy_robot.getFrontLeft(), enemy_robot.getFrontRight(), enemy_robot.getBackLeft()) || 
-				Utilities.isPointInTriangle(point, enemy_robot.getBackLeft(), enemy_robot.getBackRight(), enemy_robot.getFrontRight())){
+		if (GeomUtils.isPointInTriangle(point, enemy_robot.getFrontLeft(), enemy_robot.getFrontRight(), enemy_robot.getBackLeft()) || 
+				GeomUtils.isPointInTriangle(point, enemy_robot.getBackLeft(), enemy_robot.getBackRight(), enemy_robot.getFrontRight())){
 			return true;
 		}
 		return false;
@@ -642,20 +430,20 @@ public class Utilities {
 		double width = Robot.WIDTH_CM;
 		double angle = enemy_robot.getAngle();
 
-		Point2D.Double frontLeftPoint = rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2 + offset, width / 2 + offset), angle);
-		translatePoint(frontLeftPoint, enemy_robot.getCoords());
+		Point2D.Double frontLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2 + offset, width / 2 + offset), angle);
+		GeomUtils.translatePoint(frontLeftPoint, enemy_robot.getCoords());
 
-		Point2D.Double frontRightPoint = rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2 + offset, -width / 2 - offset), angle);
-		translatePoint(frontRightPoint, enemy_robot.getCoords());
+		Point2D.Double frontRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2 + offset, -width / 2 - offset), angle);
+		GeomUtils.translatePoint(frontRightPoint, enemy_robot.getCoords());
 
-		Point2D.Double backLeftPoint = rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2 - offset, width / 2 + offset), angle);
-		translatePoint(backLeftPoint, enemy_robot.getCoords());
+		Point2D.Double backLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2 - offset, width / 2 + offset), angle);
+		GeomUtils.translatePoint(backLeftPoint, enemy_robot.getCoords());
 
-		Point2D.Double backRightPoint = rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2 - offset, -width / 2 - offset), angle);
-		translatePoint(backRightPoint, enemy_robot.getCoords());
+		Point2D.Double backRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2 - offset, -width / 2 - offset), angle);
+		GeomUtils.translatePoint(backRightPoint, enemy_robot.getCoords());
 
-		if (isPointInTriangle(point, frontLeftPoint, frontRightPoint, backLeftPoint) || 
-				isPointInTriangle(point, backLeftPoint, backRightPoint, frontRightPoint)){
+		if (GeomUtils.isPointInTriangle(point, frontLeftPoint, frontRightPoint, backLeftPoint) || 
+				GeomUtils.isPointInTriangle(point, backLeftPoint, backRightPoint, frontRightPoint)){
 			return true;
 		}
 		return false;	
@@ -990,8 +778,8 @@ public class Utilities {
 	 */
 	public static Vector2D[] getClosestSideCollisions(WorldState state,
 			Vector2D startPt, Vector2D dirPt, double widthFactor, int obstacles) {
-		Vector2D direction = Vector2D.subtract(dirPt, startPt);
-		double angle = (-Vector2D.getDirection(direction) + 90) * Math.PI / 180d;
+		Vector2D dir = Vector2D.subtract(dirPt, startPt);
+		double angle = (dir.getDirection() + 90) * Math.PI / 180d;
 		
 		double halfWidth = widthFactor * Robot.WIDTH_CM / 2;
 		double cos = Math.cos(angle);
@@ -999,11 +787,11 @@ public class Utilities {
 		Vector2D sideOffset = new Vector2D(cos * halfWidth, sin * halfWidth);
 		
 		Vector2D leftStartPt = Vector2D.add(startPt, sideOffset);
-		Vector2D leftRay = getClosestCollisionVec(state, leftStartPt, direction,
+		Vector2D leftRay = getClosestCollisionVec(state, leftStartPt, dir,
 				obstacles);
 		
 		Vector2D rightStartPt = Vector2D.add(startPt, Vector2D.multiply(sideOffset, -1));
-		Vector2D rightRay = getClosestCollisionVec(state, rightStartPt, direction,
+		Vector2D rightRay = getClosestCollisionVec(state, rightStartPt, dir,
 				obstacles);
 		
 		Vector2D retValue[] = { leftRay, rightRay };
