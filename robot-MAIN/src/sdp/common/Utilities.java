@@ -13,14 +13,15 @@ import sdp.AI.AIWorldState;
 
 /**
  * Contains various utility methods, which do not fit anywhere else.
- * 
- * @author Gediminas Liktaras
- * @author Mihaela Laura Ionescu
  */
 public class Utilities {
+	
+	/** The double comparison accuracy that is required. */
+	private static final double EPSILON = 1e-8;
 
 	/** The distance from optimal point to the ball. */
 	private static final double POINT_OFFSET = 1.5 * Robot.LENGTH_CM;
+	
 	/** Size of the ball obstacle. */
 	public static final double SIZE_OF_BALL_OBSTACLE = 2 * Robot.LENGTH_CM;
 	
@@ -31,6 +32,18 @@ public class Utilities {
 	/** A flag that denotes that yellow robot should be considered an obstacle. */
 	public static final int YELLOW_IS_OBSTACLE_FLAG = 0x4;
 
+	
+	/**
+	 * Checks whether two doubles have close enough values.
+	 * 
+	 * @param a First double to check.
+	 * @param b Second double to check.
+	 * @return Whether the values are equal enough.
+	 */
+	public static boolean areDoublesEqual(double a, double b) {
+		return (Math.abs(a - b) < EPSILON);
+	}
+	
 	
 	/**
 	 * Return a deep copy of the given BufferedImage.
@@ -131,17 +144,21 @@ public class Utilities {
 
 
 	/**
-	 * Normalizes the given angle
-	 * @param initial given angle in degrees
-	 * @return normalized angle between -Pi and Pi
+	 * Normalise an angle to fit into interval [-180; 180).
+	 * 
+	 * @param angle Angle, in degrees.
+	 * @return Normalised angle, as described above.
 	 */
-	public static double normaliseAngle(double initial) {
-		initial = initial % 360;
-		if (initial > 180)
-			initial -= 360;
-		if (initial < -180)
-			initial += 360;
-		return initial;
+	public static double normaliseAngle(double angle) {
+		angle = angle % 360;
+		if (angle > 180) {
+			angle -= 360;
+		}
+		if (angle < -180) {
+			angle += 360;
+		}
+		
+		return angle;
 	}
 	
 
@@ -154,10 +171,11 @@ public class Utilities {
 	 * @param c Third corner of a triangle.
 	 * @return Whether a point is within a triangle.
 	 */
-	public static boolean pointInTriangle(Point2D.Double p, Point2D.Double a,
+	public static boolean isPointInTriangle(Point2D.Double p, Point2D.Double a,
 			Point2D.Double b, Point2D.Double c) {
-		return (Utilities.sameSide(p, a, b, c) && Utilities.sameSide(p, b, a, c)
-				&& Utilities.sameSide(p, c, a, b));
+		return (Utilities.doesSegmentIntersectLine(p, a, b, c)
+				&& Utilities.doesSegmentIntersectLine(p, b, a, c)
+				&& Utilities.doesSegmentIntersectLine(p, c, a, b));
 	}
 
 
@@ -169,43 +187,59 @@ public class Utilities {
 	 * @param robot Robot in question.
 	 * @return Whether the line segment in question intersects the robot.
 	 */
-	public static boolean lineIntersectsRobot(Point2D.Double point1, Point2D.Double point2, Robot robot) {
-		boolean diagonal1 = Utilities.sameSide(robot.getBackLeft(), robot.getFrontRight(), point1, point2);
-		boolean diagonal2 = Utilities.sameSide(robot.getFrontLeft(), robot.getBackRight(), point1, point2);
+	public static boolean lineIntersectsRobot(Point2D.Double point1, Point2D.Double point2,
+			Robot robot) {
+		boolean diagonal1 = Utilities.doesSegmentIntersectLine(robot.getBackLeft(),
+				robot.getFrontRight(), point1, point2);
+		boolean diagonal2 = Utilities.doesSegmentIntersectLine(robot.getFrontLeft(),
+				robot.getBackRight(), point1, point2);
 		return (diagonal1 && diagonal2);
 	}
 
 
 	/**
-	 * Calculates the point of intersection between two lines given 4 points
-	 * @param a
-	 * @param b
-	 * @param c
-	 * @param d
-	 * @return Returns the point of intersection or null if none exist
+	 * Find the point where two lines intersect. If such point does not exist,
+	 * null is returned instead.
+	 * 
+	 * @param l1pt1 First point on the first line.
+	 * @param l1pt2 Second point on the first line.
+	 * @param l2pt1 First point on the second line.
+	 * @param l2pt2 Second point on the second line.
+	 * @return Point of intersection of the lines.
 	 */
-	public static Point2D.Double getLineIntersection(Point2D.Double a, Point2D.Double b, Point2D.Double c, Point2D.Double d) {
-		double D = (a.x-b.x)*(c.y-d.y) - (a.y-b.y)*(c.x-d.x);
-		if (D == 0) return null;
-		double xi = ((c.x-d.x)*(a.x*b.y-a.y*b.x)-(a.x-b.x)*(c.x*d.y-c.y*d.x))/D;
-		double yi = ((c.y-d.y)*(a.x*b.y-a.y*b.x)-(a.y-b.y)*(c.x*d.y-c.y*d.x))/D;
-
-		return new Point2D.Double(xi,yi);
+	public static Point2D.Double getLineIntersection(Point2D.Double l1pt1, Point2D.Double l1pt2,
+			Point2D.Double l2pt1, Point2D.Double l2pt2) {
+		Point2D.Double l1dir = Utilities.subtractPoints(l1pt1, l1pt2);
+		Point2D.Double l2dir = Utilities.subtractPoints(l2pt1, l2pt2);
+		double denom = Utilities.crossProduct(l1dir, l2dir);
+		
+		if (Utilities.areDoublesEqual(denom, 0.0)) {
+			return null;
+		} else {
+			double l1cp = Utilities.crossProduct(l1pt1, l1pt2);
+			double l2cp = Utilities.crossProduct(l2pt1, l2pt2);
+			
+			double xi = (l2dir.x * l1cp - l1dir.x * l2cp) / denom;
+			double yi = (l2dir.y * l1cp - l1dir.y * l2cp) / denom;
+			return new Point2D.Double(xi, yi);
+		}
 	}
 
 	/**
-	 * This checks if 2 points are on the same side of a segment
-	 * Computes the cross product of P1A and AB and of P2A and AB
-	 * If the dot product of the resulting vectors us >=0, they have the same direction
-	 * @param p1
-	 * @param p2
-	 * @param a
-	 * @param b
-	 * @return
+	 * Check if a line segment intersects the given line.
+	 * 
+	 * @param segPt1 First endpoint of the line segment.
+	 * @param segPt2 Second endpoint of the line segment.
+	 * @param linePt1 First point on the line.
+	 * @param linePt2 Second point on the line.
+	 * @return Whether the line segment intersects the line.
 	 */
-	public static boolean sameSide(Point2D.Double p1, Point2D.Double p2, Point2D.Double a, Point2D.Double b){
-		double cp1 = Utilities.crossProduct(Utilities.subtractPoints(b, a), Utilities.subtractPoints(p1, a));
-		double cp2 = Utilities.crossProduct(Utilities.subtractPoints(b, a), Utilities.subtractPoints(p2, a));
+	public static boolean doesSegmentIntersectLine(Point2D.Double segPt1, Point2D.Double segPt2,
+			Point2D.Double linePt1, Point2D.Double linePt2){
+		double cp1 = Utilities.crossProduct(Utilities.subtractPoints(linePt2, linePt1),
+				Utilities.subtractPoints(segPt1, linePt1));
+		double cp2 = Utilities.crossProduct(Utilities.subtractPoints(linePt2, linePt1),
+				Utilities.subtractPoints(segPt2, linePt1));
 		return ((cp1 * cp2) >= 0);
 	}
 
@@ -281,21 +315,30 @@ public class Utilities {
 
 
 	/**
-	 * Calculates the angle BAC
-	 * @param A
-	 * @param B
-	 * @param C
-	 * @return angle BAC
+	 * Takes points A, B and C and calculates the angle BAC.
+	 * 
+	 * @param a Point A.
+	 * @param b Point B.
+	 * @param c Point C.
+	 * @return Angle BAC.
 	 */
-	public static double getAngle(Point2D.Double A, Point2D.Double B, Point2D.Double C) {
-		double angle = 0d;
-		double AB = getDistanceBetweenPoint(A,B);
-		double AC = getDistanceBetweenPoint(A,C);
-		double BC = getDistanceBetweenPoint(B,C);
+	public static double getAngle(Point2D.Double a, Point2D.Double b, Point2D.Double c) {
+		double ab = pointDistance(a,b);
+		double ac = pointDistance(a,c);
+		double bc = pointDistance(b,c);
 
-		angle = Math.acos((AC*AC + AB*AB - BC*BC)/(2*AC*AB));
-
-		return angle;
+		return Math.acos((ac * ac + ab * ab - bc * bc) / (2 * ac * ab));
+	}
+	
+	/**
+	 * Get Cartesian distance between two points.
+	 * 
+	 * @param a First point of interest.
+	 * @param b Second point of interest.
+	 * @return Distance between the points.
+	 */
+	public static double pointDistance(Point2D.Double a, Point2D.Double b) {
+		return Point2D.distance(a.x, a.y, b.x, b.y);
 	}
 
 	/**
@@ -393,17 +436,6 @@ public class Utilities {
 
 	public static boolean isLeft(Point2D.Double a, Point2D.Double b, Point2D.Double c){
 		return ((b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x)) > 0;
-	}
-
-	/**
-	 * Calculates distance between two points.
-	 * @param p1 start point
-	 * @param p2 end point
-	 * @return sqrt((x1-x2)^2+(y1-y2)^2)
-	 */
-	public static double getDistanceBetweenPoint(Point2D.Double p1, Point2D.Double p2)
-	{
-		return Math.sqrt((double)(Math.pow(p1.x-p2.x,2)+(Math.pow(p1.y-p2.y,2))));
 	}
 
 	private static Point2D.Double toCentimeters(Point2D.Double original) {
@@ -589,8 +621,8 @@ public class Utilities {
 	 * @return Returns true if the point is within the enemy robot.
 	 */
 	public static boolean isPointInRobot(Point2D.Double point, Robot enemy_robot) {
-		if (Utilities.pointInTriangle(point, enemy_robot.getFrontLeft(), enemy_robot.getFrontRight(), enemy_robot.getBackLeft()) || 
-				Utilities.pointInTriangle(point, enemy_robot.getBackLeft(), enemy_robot.getBackRight(), enemy_robot.getFrontRight())){
+		if (Utilities.isPointInTriangle(point, enemy_robot.getFrontLeft(), enemy_robot.getFrontRight(), enemy_robot.getBackLeft()) || 
+				Utilities.isPointInTriangle(point, enemy_robot.getBackLeft(), enemy_robot.getBackRight(), enemy_robot.getFrontRight())){
 			return true;
 		}
 		return false;
@@ -620,8 +652,8 @@ public class Utilities {
 		Point2D.Double backRightPoint = rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2 - offset, -width / 2 - offset), angle);
 		translatePoint(backRightPoint, enemy_robot.getCoords());
 
-		if (pointInTriangle(point, frontLeftPoint, frontRightPoint, backLeftPoint) || 
-				pointInTriangle(point, backLeftPoint, backRightPoint, frontRightPoint)){
+		if (isPointInTriangle(point, frontLeftPoint, frontRightPoint, backLeftPoint) || 
+				isPointInTriangle(point, backLeftPoint, backRightPoint, frontRightPoint)){
 			return true;
 		}
 		return false;	

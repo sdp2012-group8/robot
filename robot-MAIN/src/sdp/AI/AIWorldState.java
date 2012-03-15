@@ -92,8 +92,8 @@ public class AIWorldState extends WorldState {
 		}
 
 
-		distance_to_ball = Utilities.getDistanceBetweenPoint(Utilities.getGlobalVector(robot, new Vector2D(Robot.LENGTH_CM/2, 0)), getBallCoords());
-		distance_to_goal = Utilities.getDistanceBetweenPoint(robot.getCoords(), enemy_goal.getCentre());
+		distance_to_ball = Utilities.pointDistance(Utilities.getGlobalVector(robot, new Vector2D(Robot.LENGTH_CM/2, 0)), getBallCoords());
+		distance_to_goal = Utilities.pointDistance(robot.getCoords(), enemy_goal.getCentre());
 
 		// check and set flags
 		if (getBallCoords() == new Point2D.Double(-1,-1)) {
