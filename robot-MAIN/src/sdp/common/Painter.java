@@ -180,7 +180,7 @@ public class Painter {
 					double turn_ang = 999;
 					int id = -1;
 
-					double point_dist = point_visible ? direct_dist : other_rob_dist+Robot.LENGTH_CM/2;
+					double point_dist = direct_dist;//point_visible ? direct_dist : other_rob_dist+Robot.LENGTH_CM/2;
 					double temp = 999;
 					int t = 0;
 					while (turn_ang == 999) {

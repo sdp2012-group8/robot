@@ -111,7 +111,7 @@ public abstract class AI {
 		}
 		
 		public byte getByteTurnSpeed() {
-			return Utilities.normaliseToByte(Utilities.normaliseAngle(turning_speed));
+			return Utilities.normaliseToByte(turning_speed);
 		}
 		
 		public byte getByteAcc() {
