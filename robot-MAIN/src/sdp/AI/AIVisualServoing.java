@@ -95,12 +95,12 @@ public class AIVisualServoing extends AI {
 			chasing_target = false;
 		}
 
-		double dir_angle = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), target), -ai_world_state.getRobot().getAngle()));
+		double dir_angle = Vector2D.rotateVector(Vector2D.subtract(new Vector2D(ai_world_state.getBallCoords()), target), -ai_world_state.getRobot().getAngle()).getDirection();
 		if (Math.abs(dir_angle) < 20) {
-			slowDownSpeed(targetDistance, 20, comm, 2);
+			reduceSpeed(comm, targetDistance, 20, 2);
 		}
 
-		normalizeRatio(comm);
+		normalizeSpeed(comm);
 		return comm;
 	}
 	
@@ -125,7 +125,7 @@ public class AIVisualServoing extends AI {
 		if (Math.abs(comm.getByteTurnSpeed()) > 3) {
 			comm.speed = 0;
 		} else {
-			slowDownSpeed(ai_world_state.getDistanceToBall(), 10, comm, 2);
+			reduceSpeed(comm, ai_world_state.getDistanceToBall(), 10, 2);
 		}
 
 		if (comm.getByteSpeed() == 0 && comm.getByteTurnSpeed() == 0) {
@@ -194,20 +194,20 @@ public class AIVisualServoing extends AI {
 			if((intercept.y < ai_world_state.getMyGoal().getBottom().y+15)  && (intercept.y > ai_world_state.getMyGoal().getTop().y-15))	{
 				if (dist > 5)
 					com = getCommandOld(getNextWaypoint(new Vector2D(point), false), false);
-				slowDownSpeed(dist, 20, com, 0);
+				reduceSpeed(com, dist, 20, 0);
 
 				return com;
 			} else if(ai_world_state.getEnemyRobot().getAngle()<0 && ai_world_state.getEnemyRobot().getAngle()>-180) {
 				if (dist2 > 10)
 					com = getCommandOld(getNextWaypoint(new Vector2D(point2), false), false);
-				slowDownSpeed(dist2, 20, com, 0);
+				reduceSpeed(com, dist2, 20, 0);
 				return com;
 			}
 
 			else if(ai_world_state.getEnemyRobot().getAngle()>0 && ai_world_state.getEnemyRobot().getAngle()<180 ){
 				if (dist3 > 10)
 					com = getCommandOld(getNextWaypoint(new Vector2D(point3), false), false);
-				slowDownSpeed(dist3, 20, com, 0);
+				reduceSpeed(com, dist3, 20, 0);
 				return com;
 			}
 		}
@@ -332,8 +332,6 @@ public class AIVisualServoing extends AI {
 	private Waypoint getNextWaypoint(Vector2D target, boolean ballIsObstacle) {
 		// Target point data in local coordinates.
 		Vector2D targetLocal = Utilities.getLocalVector(ai_world_state.getRobot(), target);
-		double targetDirLocal = Vector2D.getDirection(targetLocal);
-		double targetDistLocal = targetLocal.getLength();
 		
 		// Which objects to consider as obstacles?
 		int obstacleFlags = 0;
@@ -352,7 +350,7 @@ public class AIVisualServoing extends AI {
 		
 		// Compute the destination point.
 		Vector2D destPoint = null;
-		double destPointDist = targetDistLocal;
+		double destPointDist = targetLocal.getLength();
 		
 		double minAngle = Double.MAX_VALUE;
 		int iterations = 0;
@@ -368,7 +366,7 @@ public class AIVisualServoing extends AI {
 				Vector2D rayEnd = Utilities.getGlobalVector(ai_world_state.getRobot(), rayEndLocal);
 				
 				if (Utilities.isDirectPathClear(ai_world_state, ownCoords, rayEnd, obstacleFlags)) {
-					double angleDiff = Utilities.normaliseAngle(curAngle - targetDirLocal);
+					double angleDiff = Utilities.normaliseAngle(curAngle - targetLocal.getDirection());
 					if (Math.abs(angleDiff) < Math.abs(minAngle)) {
 						minAngle = angleDiff;
 						destPoint = rayEndLocal;
@@ -377,7 +375,7 @@ public class AIVisualServoing extends AI {
 			}
 
 			++iterations;
-			destPointDist -= Robot.LENGTH_CM;
+			destPointDist -= Robot.LENGTH_CM;	// TODO: What if this gets negative?
 		}
 
 		if (destPoint == null) {
@@ -401,7 +399,7 @@ public class AIVisualServoing extends AI {
 	private Command getWaypointCommand(Waypoint waypoint, boolean mustFaceTarget) {
 		Command comm = new Command(0.0, 0.0, false);
 		
-		comm.turning_speed = waypoint.getTurningAngle() * 2;
+		comm.turning_speed = waypoint.getTurningAngle();
 
 		// Ball is behind.
 		if (Math.abs(waypoint.getTurningAngle()) > 90) {
@@ -416,11 +414,10 @@ public class AIVisualServoing extends AI {
 		
 		comm.turning_speed *= 2;
 		
-		backAwayIfTooClose(comm, true, waypoint.isEndpoint() ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
-		nearCollisionCheck(comm, waypoint.isEndpoint() ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
+		reactToFrontBackCollisions(comm, true, waypoint.isEndpoint() ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
+		reactToCornerCollisions(comm, waypoint.isEndpoint() ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
 
-		if ((Math.abs(waypoint.getTurningAngle()) < 45)
-				&& (waypoint.getDistance() < TARG_THRESH)) {
+		if ((Math.abs(waypoint.getTurningAngle()) < 45) && (waypoint.getDistance() < TARG_THRESH)) {
 			point_off *= 0.7;
 		}
 		if (point_off < KICKABLE_BALL_DIST) {
@@ -432,19 +429,154 @@ public class AIVisualServoing extends AI {
 			if (ball.getX() < ai_world_state.getRobot().getCoords().getX()) {
 				point_off = DEFAULT_POINT_OFF;
 			}
-		}  else {
+		} else {
 			if (ball.getX() > ai_world_state.getRobot().getCoords().getX()) {
 				point_off = DEFAULT_POINT_OFF;
 			}
 		}
 
-		normalizeRatio(comm);
-
+		normalizeSpeed(comm);
 		comm.speed *= SPEED_MULTIPLIER;
 		
 		return comm;
 	}
 
+
+	/**
+	 * Checks if our robot's front or back sides collide with anything and
+	 * reacts to the collision if they do.
+	 * 
+	 * @param command Command to modify in response to a collision.
+	 * @param ballIsObstacle Whether the ball should be considered an obstacle.
+	 * @param threshold Corner collision threshold. Higher values = lower
+	 * 		tolerance.
+	 */
+	private void reactToFrontBackCollisions(Command command, boolean ballIsObstacle, double threshold) {
+		double frontCollDist = Utilities.getSector(ai_world_state, ai_world_state.getMyTeamBlue(),
+				-10, 10, 20, ballIsObstacle).getLength();
+		double backCollDist = Utilities.getSector(ai_world_state, ai_world_state.getMyTeamBlue(),
+				170, -170, 20, ballIsObstacle).getLength();
+
+		// Collision in front.
+		if (frontCollDist < threshold) {
+			if (command.speed >= 0) {
+				double speed_coeff = (frontCollDist / threshold) - 1;
+				if (speed_coeff > 0) {
+					speed_coeff = 0;
+				}
+				if (speed_coeff < -1) {
+					speed_coeff = -1;
+				}
+				command.speed *= speed_coeff;
+			}
+		
+		// Collision in the back.
+		} else if (backCollDist < threshold) {
+			if (command.speed <= 0) {
+				double speed_coeff = (backCollDist / threshold) - 1;
+				if (speed_coeff > 0) {
+					speed_coeff = 0;
+				}
+				if (speed_coeff < -1) {
+					speed_coeff = -1;
+				}
+				command.speed *= speed_coeff;
+			}
+		}
+	}
+
+	/**
+	 * Checks if our robot's corners collide with anything and reacts to the
+	 * collision if they do.
+	 * 
+	 * @param command Command to modify in response to a collision.
+	 * @param threshold Corner collision threshold. Higher values = lower
+	 * 		tolerance.
+	 */
+	private void reactToCornerCollisions(Command command, double threshold) {
+		Vector2D nearestColl = Utilities.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords());
+		
+		Vector2D frontLeft = Utilities.getLocalVector(ai_world_state.getRobot(), Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontLeft()), nearestColl));
+		Vector2D frontRight = Utilities.getLocalVector(ai_world_state.getRobot(), Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontRight()), nearestColl));
+		Vector2D backLeft = Utilities.getLocalVector(ai_world_state.getRobot(), Vector2D.add(new Vector2D(ai_world_state.getRobot().getBackLeft()), nearestColl));
+		Vector2D backRight = Utilities.getLocalVector(ai_world_state.getRobot(), Vector2D.add(new Vector2D(ai_world_state.getRobot().getBackRight()), nearestColl));
+		
+		boolean haveFrontLeftColl = (frontLeft.getLength() <= threshold);
+		boolean haveFrontRightColl = (frontRight.getLength() <= threshold);
+		boolean haveBackLeftColl = (backLeft.getLength() <= threshold);
+		boolean haveBackRightColl = (backRight.getLength() <= threshold);
+		
+		boolean haveFrontColl = haveFrontLeftColl || haveFrontRightColl;
+		boolean haveAnyColl = haveFrontLeftColl || haveFrontRightColl || haveBackLeftColl || haveBackRightColl;
+
+		if (haveAnyColl) {
+			command.speed = (haveFrontColl ? -MAX_SPEED_CM_S : MAX_SPEED_CM_S);
+			command.turning_speed += (haveFrontColl ? -10 : 10);
+		}
+	}
+
+
+	/**
+	 * Get the distance from our robot to some point in the world.
+	 * 
+	 * @param point Point in global coordinates to find distance to.
+	 * @return Distance from our robot to the given point in the world.
+	 */
+	private double distanceTo(Vector2D point) {
+		return Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), point).getLength();
+	}
+
+
+	/**
+	 * Reduces the robot's speed depending on the distance to a particular
+	 * object.
+	 * 
+	 * @param command The command to be modified.
+	 * @param distance Current distance to the object.
+	 * @param threshold Distance threshold, after which speed is reduced.
+	 * @param baseSpeed Minimum speed the robot should slow to.
+	 */
+	private void reduceSpeed(Command command, double distance, double threshold, double baseSpeed) {
+		if (distance >= threshold) {
+			return;
+		}
+		
+		if (command.speed < 0) {
+			baseSpeed = -baseSpeed;
+		}
+		
+		if (Math.abs(command.speed) < Math.abs(baseSpeed)) {
+			command.speed = baseSpeed;
+		} else {
+			double coeff = distance / threshold;
+			command.speed = baseSpeed + coeff * (command.speed - baseSpeed);
+		}
+	}
+
+	/**
+	 * Reduce the forward speed based on the robot's turning speed.
+	 * 
+	 * @param comm The command to be modified.
+	 */
+	public void normalizeSpeed(Command comm) {
+		if (Math.abs(comm.turning_speed) > MAX_TURN_ANG) {
+			comm.speed = 0;
+		} else {		
+			double rat = Math.abs(comm.turning_speed) / MAX_TURN_ANG;
+			comm.speed *= 1 - rat;
+		}
+	}
+
+	
+	/**
+	 * @see sdp.AI.AI#sit()
+	 */
+	@Override
+	public Command sit() throws IOException {
+		point_off = DEFAULT_POINT_OFF;
+		return super.sit();
+	}
+	
 	
 	/**
 	 * A compatibility method to return a command from a waypoint using the
@@ -454,6 +586,7 @@ public class AIVisualServoing extends AI {
 	 * @param mustFaceTarget Require the robot to face the target point.
 	 * @return A command to get closer to the waypoint.
 	 */
+	@Deprecated
 	private Command getCommandOld(Waypoint waypoint, boolean mustFaceTarget) {
 		Command comm = new Command(0.0, 0.0, false);
 
@@ -471,119 +604,12 @@ public class AIVisualServoing extends AI {
 		}
 
 		// if we get within too close (within coll_start) of an obstacle
-		backAwayIfTooClose(comm, true, waypoint.isEndpoint() ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
+		reactToFrontBackCollisions(comm, true, waypoint.isEndpoint() ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
 
 		// check if either of the corners are in collision
-		nearCollisionCheck(comm, waypoint.isEndpoint() ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
+		reactToCornerCollisions(comm, waypoint.isEndpoint() ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
 		
 		return comm;
 	}
-
-	/**
-	 * If too close to an obstacle from sectors, back away
-	 * @param command
-	 */
-	private void backAwayIfTooClose(Command command, boolean include_ball_as_obstacle, double threshold) {
-		double for_dist = Utilities.getSector(ai_world_state, ai_world_state.getMyTeamBlue(), -10, 10, 20, include_ball_as_obstacle).getLength(); // get collision distance at the front
-		double back_dist = Utilities.getSector(ai_world_state, ai_world_state.getMyTeamBlue(), 170, -170, 20, include_ball_as_obstacle).getLength(); // get collision distance at the back
-
-		if (for_dist < threshold){
-			if (command.speed >= 0) {
-				// go backwards
-				double speed_coeff = -1+for_dist/threshold;
-				if (speed_coeff > 0)
-					speed_coeff = 0;
-				if (speed_coeff < -1)
-					speed_coeff = -1;
-				command.speed *= speed_coeff;
-			}
-		} else if (back_dist < threshold) {
-			if (command.speed <= 0) {
-				// same as above
-				double speed_coeff = -1+back_dist/threshold;
-				if (speed_coeff > 0)
-					speed_coeff = 0;
-				if (speed_coeff < -1)
-					speed_coeff = -1;
-				command.speed *= speed_coeff;
-			}
-		}
-	}
-
-	/**
-	 * Checks whether there is a collision with either corner and tries to react to it
-	 * @param command
-	 */
-	private void nearCollisionCheck(Command command, double threshold) {
-		final Vector2D
-		front_left = Utilities.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getBackLeft()),Utilities.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
-		front_right = Utilities.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getBackRight()),Utilities.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
-		back_left = Utilities.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontLeft()),Utilities.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords()))),
-		back_right = Utilities.getLocalVector(ai_world_state.getRobot(),Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontRight()),Utilities.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords())));
-		final boolean
-		front_left_coll = front_left.getLength() <= threshold,
-		front_right_coll = front_right.getLength() <= threshold,
-		back_left_coll = back_left.getLength() <= threshold,
-		back_right_coll = back_right.getLength() <= threshold,
-		any_collision = front_left_coll || front_right_coll || back_left_coll || back_right_coll;
-
-		if (any_collision) {
-			//System.out.println("Collision "+(front_left_coll || front_right_coll ? "FRONT" : "BACK")+" "+(front_left_coll || back_left_coll ? "LEFT" : "RIGHT"));
-			command.speed = front_left_coll || front_right_coll ? -MAX_SPEED_CM_S : MAX_SPEED_CM_S;
-			command.turning_speed += front_left_coll || back_left_coll ? -10 : 10;
-		}
-		command.turning_speed = command.turning_speed;
-	}
-
-
-	/**
-	 * Distance from centre of robot to a given point on table
-	 * @param global
-	 * @return
-	 */
-	private double distanceTo(Vector2D global) {
-		return Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), global).getLength();
-	}
-
-
-	/**
-	 * Normalises speed to be within a upper and lower limit.
-	 * @param distance Distance to the ball in which the speed is slowed down.
-	 * @param threshold 
-	 * @param current_speed The Command to be modified.
-	 * @param slow_speed Minimum speed the robot should slow to.
-	 */
-	private void slowDownSpeed(double distance, double threshold, Command current_speed, double slow_speed) {
-		if (distance >= threshold)
-			return;
-		if (current_speed.speed < 0)
-			slow_speed = -slow_speed;
-		if (Math.abs(current_speed.speed) < Math.abs(slow_speed)) {
-			current_speed.speed = slow_speed;
-			return;
-		}
-		double coeff = distance / threshold;
-		current_speed.speed = slow_speed+coeff*(current_speed.speed-slow_speed);
-	}
-
-	/**
-	 * Changes the speed to be a function of the turning speed.
-	 * @param comm The command to be normalised.
-	 */
-	public void normalizeRatio(Command comm) {
-		if (Math.abs(comm.turning_speed) > MAX_TURN_ANG) {
-			comm.speed = 0;
-			return;
-		}
-		double rat = Math.abs(comm.turning_speed)/MAX_TURN_ANG;
-		comm.speed *= 1-rat;
-	}
-
-	@Override
-	public Command sit() throws IOException {
-		point_off = DEFAULT_POINT_OFF;
-		return super.sit();
-	}
-
 
 }
