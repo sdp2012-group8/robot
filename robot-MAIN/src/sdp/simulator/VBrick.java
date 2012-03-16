@@ -41,14 +41,14 @@ public class VBrick implements Communicator {
 	
 	public boolean is_kicking = false;
 
-	protected byte desired_speed = 0,
+	protected short desired_speed = 0,
 			desired_turning_speed = 0;
 	
 	
 	private ArrayList<MessageListener> mListener = new ArrayList<MessageListener>();
 
 	@Override
-	public void sendMessage(opcode op, byte... args) throws IOException {
+	public void sendMessage(opcode op, short... args) throws IOException {
 		switch (op) {
 		case operate:
 			desired_speed = args[0];

@@ -106,7 +106,7 @@ public class AIWorldState extends WorldState {
 	
 	private WorldState predict(WorldState input, long time_ms) {
 		
-		// handle ball going offscreen
+		// handle ball going offscreen5
 		if (last_st != null) {
 			if (input.getBallCoords().getX() == -244d || input.getBallCoords().getX() == -1d)
 				input = new WorldState(last_st.getBallCoords(), input.getBlueRobot(), input.getYellowRobot(), input.getWorldImage());

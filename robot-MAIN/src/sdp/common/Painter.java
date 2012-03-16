@@ -23,7 +23,7 @@ public class Painter {
 	private  WorldState state_cm;
 	private int off_x = 0, off_y = 0;
 	private  Robot[] robots;
-	private static double point_off = AIVisualServoing.DEFAULT_POINT_OFF;
+	public static double point_off = AIVisualServoing.DEFAULT_POINT_OFF;
 
 	public Painter(BufferedImage im, WorldState ws) {
 		g = im.createGraphics();
@@ -130,8 +130,6 @@ public class Painter {
 					final double point_distance = 1.5*Robot.LENGTH_CM; // + 1*Robot.LENGTH_CM * (Math.abs(dir_to_ball)/180);
 					AIWorldState ai_world_state = Utilities.getAIWorldState(state_cm, my_team_blue, my_goal_left);
 					Vector2D target;
-					if (ai_world_state.getDistanceToBall() < AIVisualServoing.KICKABLE_BALL_DIST)
-						point_off = AIVisualServoing.DEFAULT_POINT_OFF;
 					
 					try {
 						// p_target = new Vector2D(Utilities.getOptimalPointBehindBall(Utilities.getAIWorldState(state_cm, my_goal_left, my_team_blue, false), point_distance));
@@ -144,11 +142,6 @@ public class Painter {
 
 					double targ_dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), target).getLength();
 					double direction = Utilities.getTurningAngle(ai_world_state.getRobot(), target);
-					
-					if (Math.abs(direction) < 45 && targ_dist < AIVisualServoing.TARG_THRESH)
-						point_off *= 0.7;
-					if (point_off < AIVisualServoing.KICKABLE_BALL_DIST)
-						point_off = AIVisualServoing.KICKABLE_BALL_DIST;
 
 
 

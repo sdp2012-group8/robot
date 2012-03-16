@@ -66,7 +66,7 @@ public class ManualControl {
 
 	private int current_speed = 0, current_turn_speed = 0;
 	private static final int max_speed = 53;
-	private static final int turn_speed = 127;
+	private static final int turn_speed = 627;
 	/**
 	 * Initialize the contents of the frame.
 	 */
@@ -153,7 +153,7 @@ public class ManualControl {
 						lblWAS.setText("W");
 						try {
 							current_speed = max_speed;
-							mComm.sendMessage(opcode.operate, (byte) current_speed, (byte) current_turn_speed);
+							mComm.sendMessage(opcode.operate, (short) current_speed, (short) current_turn_speed);
 							System.out.println("Sending W");
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -171,7 +171,7 @@ public class ManualControl {
 						lblWAS.setText("A");
 						try {
 							current_turn_speed = turn_speed;
-							mComm.sendMessage(opcode.operate, (byte) current_speed, (byte) current_turn_speed);
+							mComm.sendMessage(opcode.operate, (short) current_speed, (short) current_turn_speed);
 							System.out.println("Sending A");
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -189,7 +189,7 @@ public class ManualControl {
 						lblWAS.setText("S");
 						try {
 							current_speed = -max_speed;
-							mComm.sendMessage(opcode.operate, (byte) current_speed, (byte) current_turn_speed);
+							mComm.sendMessage(opcode.operate, (short) current_speed, (short) current_turn_speed);
 							System.out.println("Sending S");
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -208,7 +208,7 @@ public class ManualControl {
 						System.out.println("Sending D");
 						try {
 							current_turn_speed =  -turn_speed;
-							mComm.sendMessage(opcode.operate, (byte) current_speed, (byte)current_turn_speed);
+							mComm.sendMessage(opcode.operate, (short) current_speed, (short)current_turn_speed);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -268,7 +268,7 @@ public class ManualControl {
 							System.out.println("Stopping W");
 							try {
 								current_speed = 0;
-								mComm.sendMessage(opcode.operate, (byte) current_speed, (byte) current_turn_speed);
+								mComm.sendMessage(opcode.operate, (short) current_speed, (short) current_turn_speed);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -292,7 +292,7 @@ public class ManualControl {
 							btn_A_pressed = null;
 							try {
 								current_turn_speed = 0;
-								mComm.sendMessage(opcode.operate, (byte) current_speed, (byte) current_turn_speed);
+								mComm.sendMessage(opcode.operate, (short) current_speed, (short) current_turn_speed);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -312,7 +312,7 @@ public class ManualControl {
 							System.out.println("Stopping S");
 							try {
 								current_speed = 0;
-								mComm.sendMessage(opcode.operate, (byte) current_speed, (byte) current_turn_speed);
+								mComm.sendMessage(opcode.operate, (short) current_speed, (short) current_turn_speed);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -336,7 +336,7 @@ public class ManualControl {
 							btn_D_pressed = null;
 							try {
 								current_turn_speed = 0;
-								mComm.sendMessage(opcode.operate, (byte) current_speed, (byte) current_turn_speed);
+								mComm.sendMessage(opcode.operate, (short) current_speed, (short) current_turn_speed);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -410,10 +410,10 @@ public class ManualControl {
 					}
 				}
 				String[] sargs = textField.getText().split(",");
-				byte[] args = new byte[sargs.length];
+				short[] args = new short[sargs.length];
 				for (int i = 0; i < args.length; i++) {
 					try {
-						args[i] = (byte) (int) Integer.parseInt(sargs[i].trim());
+						args[i] = (short) (int) Integer.parseInt(sargs[i].trim());
 					} catch (Exception e) {
 						System.out.println("Error sending message. Cannot parse argument '"+sargs[i].trim()+"'");
 						return;

@@ -43,11 +43,11 @@ public class MessageQueueTest {
 		Random r = new Random();
 		final long[] delays = new long[TEST_SIZE];
 		final opcode[] opcodes = new opcode[TEST_SIZE];
-		final byte[] args = new byte[TEST_SIZE];
+		final short[] args = new short[TEST_SIZE];
 		final MessageQueue mq = new MessageQueue(new Communicator() {
 			
 			@Override
-			public void sendMessage(opcode op, byte... args) throws IOException {
+			public void sendMessage(opcode op, short... args) throws IOException {
 				long curr_delay = System.currentTimeMillis()-curr_time;
 				assertTrue("Opcodes not equal", op == opcodes[curr_message_id]);
 				assertTrue("Arguments not rqual", check_args(args));
@@ -100,10 +100,10 @@ public class MessageQueueTest {
 	 * @param number_of_args n
 	 * @return byte with size n, containing numbers 0..n-1
 	 */
-	private byte[] create_args(int number_of_args) {
-		byte[] ans = new byte[number_of_args];
+	private short[] create_args(int number_of_args) {
+		short[] ans = new short[number_of_args];
 		for (int i = 0; i < number_of_args; i++)
-			ans[i] = (byte) i;
+			ans[i] = (short) i;
 		return ans;
 	}
 	
@@ -113,10 +113,10 @@ public class MessageQueueTest {
 	 * @param args the arguments presumably created by the above method
 	 * @return true if they are, false otherwise
 	 */
-	private boolean check_args(byte[] args) {
+	private boolean check_args(short[] args) {
 		int number_of_args = args.length;
 		for (int i = 0; i < number_of_args; i++)
-			if (args[i] != (byte) i)
+			if (args[i] != (short) i)
 				return false;
 		return true;
 	}

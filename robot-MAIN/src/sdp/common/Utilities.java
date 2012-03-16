@@ -114,16 +114,16 @@ public class Utilities {
 	
 
 	/**
-	 * converts to a byte
+	 * converts to a short
 	 * @param angle
-	 * @return double between -128 and 127
+	 * @return short between Short.MAX_VALUE and Short.MIN_VALUE
 	 */
-	public static byte normaliseToByte(double angle){
-		if (angle > 127)
-			angle = 127;
-		if (angle < -127)
-			angle = -127;
-		return (byte)angle;
+	public static short normaliseToShort(double angle){
+		if (angle > Short.MAX_VALUE)
+			angle = Short.MAX_VALUE;
+		if (angle < Short.MIN_VALUE)
+			angle = Short.MIN_VALUE;
+		return (short) angle;
 	}
 
 

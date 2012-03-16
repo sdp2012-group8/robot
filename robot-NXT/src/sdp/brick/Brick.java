@@ -1,28 +1,22 @@
 package sdp.brick;
 
 import java.io.File;
-import java.io.IOException;
 
 import sdp.common.Communicator;
-import sdp.common.Communicator.sensorType;
 import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 
 import lejos.nxt.Battery;
-import lejos.nxt.ColorSensor;
-import lejos.nxt.LCD;
-import lejos.nxt.LightSensor;
 import lejos.nxt.Motor;
 import lejos.nxt.NXT;
 import lejos.nxt.SensorPort;
 import lejos.nxt.Sound;
 import lejos.nxt.TouchSensor;
 import lejos.nxt.UltrasonicSensor;
-import lejos.robotics.Color;
 
 /**
  * This is the program that should be uploaded to the NXT Brick.
- * It translates PC commands into movements. Modify {@link #receiveMessage(opcode, byte[], Communicator)}
+ * It translates PC commands into movements. Modify {@link #receiveMessage(opcode, short[], Communicator)}
  * method to add new abilities. To add new opcodes, modify {@link opcode}.
  * 
  * @author martinmarinov
@@ -31,9 +25,6 @@ import lejos.robotics.Color;
 public class Brick {
 
 	private static final int coll_threshold = 30; // cm
-	private static final int back_speed = -10; // cm per sec
-	private static final int angle_threshold = 5; // degrees per sec
-	private static final int turning_boost = 20; // degrees per sec
 	private static final long battery_timeout = 10000;
 	private static final long sens_check_interval = 100;
 	private static boolean is_on = true;
@@ -66,13 +57,13 @@ public class Brick {
 						collision = dist < coll_threshold;
 						boolean left_pressed = left.isPressed(), right_pressed = right.isPressed();
 						if (collision != dist_old)
-							mComm.sendMessage(opcode.sensor_dist, (byte) (collision ? 1 : 0));
+							mComm.sendMessage(opcode.sensor_dist, (short) (collision ? 1 : 0));
 						if (left_old != left_pressed)
-							mComm.sendMessage(opcode.sensor_left, (byte) (left_pressed ? 1 : 0));
+							mComm.sendMessage(opcode.sensor_left, (short) (left_pressed ? 1 : 0));
 						if (right_old != right_pressed)
-							mComm.sendMessage(opcode.sensor_right, (byte) (right_pressed ? 1 : 0));
+							mComm.sendMessage(opcode.sensor_right, (short) (right_pressed ? 1 : 0));
 						if (battery == 0)
-							mComm.sendMessage(opcode.battery, (byte) (Battery.getVoltage()*10));
+							mComm.sendMessage(opcode.battery, (short) (Battery.getVoltage()*10));
 						left_old = left_pressed;
 						right_old = right_pressed;
 						dist_old = collision;
@@ -94,10 +85,8 @@ public class Brick {
 				while (is_on) {
 					boolean initial = kickSensor.isPressed();
 					if (!initial) {
-//						LCD.clear(0);
-//						LCD.drawString("RETR", 0, 0);
 						if (can_kick) {can_kick = false;}
-						Motor.B.setSpeed((int)(Motor.B.getMaxSpeed()/2));
+						Motor.B.setSpeed((int)(0.7*Motor.B.getMaxSpeed()));
 						Motor.B.setAcceleration(6000);
 						Motor.B.backward();
 						while (!kickSensor.isPressed()) {
@@ -109,15 +98,12 @@ public class Brick {
 						}
 						Motor.B.stop();
 					}
-					//Motor.B.setSpeed(0);
 					can_kick = true;
 					try {
 						sleep(100);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-//					LCD.clear(0);
-//					LCD.drawString("OK KICK", 0, 0);
 				}
 			};
 		}.start();
@@ -131,7 +117,7 @@ public class Brick {
 			// for conversions
 			private int acc = 1000; // acc in degrees/s/s
 			private double acceleration = acc*0.017453292519943295*WHEELR;//69.8;
-			private double turn_acceleration = acc*WHEELR/ROBOTR;
+			//private double turn_acceleration = acc*WHEELR/ROBOTR;
 
 			// for tacho
 
@@ -143,7 +129,7 @@ public class Brick {
 			 * Add your movement logic inside this method
 			 */
 			
-			public void receiveMessage(opcode op, byte[] args, Communicator controller) {
+			public void receiveMessage(opcode op, short[] args, Communicator controller) {
 				final int def_vol = Sound.getVolume();
 				// to send messages back to PC, use mCont.sendMessage
 				switch (op) {
@@ -188,6 +174,9 @@ public class Brick {
 					Motor.A.forward();
 					Motor.C.forward();
 
+					// note to people from other years that want to use this code.
+					// uncomment it in order to make move_to_wall work
+					// and resolve the issues!
 //					while (true) { // if no other sensors interfere?
 //						int dist = sens.getDistance();
 //						LCD.clear(2);
@@ -209,11 +198,7 @@ public class Brick {
 					// args[1] - turning speed in degrees per second around centre of robot
 					// args[2] - acceleration in cm/s/s
 					if (args.length > 0) {
-						// collision detection
-						//						if (collision && Math.abs(args[1]) >= angle_threshold) {
-						//							args[0] = back_speed;
-						//							args[1] += args[1] > 0 ? turning_boost : -turning_boost;
-						//						}
+						
 						float old_a = speed_a;
 						float old_c = speed_c;
 						// convert the degrees per second around robot
@@ -230,18 +215,19 @@ public class Brick {
 						} else if (Math.abs(speed_c) > Motor.C.getMaxSpeed()){
 							corr = Math.abs(speed_c) - Motor.C.getMaxSpeed();
 						}
-//						LCD.clear();
-//						LCD.drawString("corr " + corr, 0, 0);
+						
 						// change speed according to turning
-						Motor.A.setSpeed(Math.abs(speed_a)-corr);
-						Motor.C.setSpeed(Math.abs(speed_c)-corr);
+						final float spd_a = Math.abs(speed_a)-corr;
+						Motor.A.setSpeed(spd_a < Motor.A.getMaxSpeed() ? spd_a : Motor.A.getMaxSpeed());
+						final float spd_c = Math.abs(speed_c)-corr;
+						Motor.C.setSpeed(spd_c < Motor.C.getMaxSpeed() ? spd_c : Motor.C.getMaxSpeed());
 
 						// check if we need to start motors or turn their direction
 						if (args.length > 2) {
 							//change acceleration
 							acceleration = args[2];
 							acc = (int) (acceleration/(0.017453292519943295*WHEELR));
-							turn_acceleration = acc*WHEELR/ROBOTR;
+							//turn_acceleration = acc*WHEELR/ROBOTR;
 						} else
 							acc = 1000;
 						if (old_a == 0 || old_a*speed_a < 0) {

@@ -43,7 +43,7 @@ public class MessageQueue {
 	 * @param op the opcode of the message
 	 * @param args the arguments of the message
 	 */
-	public void addMessageToQueue(double delay_s, final opcode op, final byte... args) {
+	public void addMessageToQueue(double delay_s, final opcode op, final short... args) {
 		final long delay = (long) (delay_s*1000);
 		if (mLastMsg == null)
 			mLastMsg = new Date(System.currentTimeMillis()+delay);
@@ -103,7 +103,7 @@ public class MessageQueue {
 		return tasks_pending;
 	}
 	
-	private String getHumanReadableArgs(byte[] args) {
+	private String getHumanReadableArgs(short[] args) {
 		if (args.length == 0)
 			return "[∅]";
 		else if (args.length == 1)

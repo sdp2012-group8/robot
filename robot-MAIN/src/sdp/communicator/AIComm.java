@@ -30,7 +30,7 @@ public class AIComm implements sdp.common.Communicator {
 	private static final String friendly_name = "Ball-E";
 	private static final String mac_of_brick = "00:16:53:0A:5C:22";
 	
-	private static byte[] old_operate = null;
+	private static short[] old_operate = null;
 	
 	private final static Logger LOGGER = Logger.getLogger(AIComm.class .getName());
 
@@ -104,10 +104,13 @@ public class AIComm implements sdp.common.Communicator {
 			throw new IOException("ERROR");
 		opcode op = opcode.values()[b];
 		int length = is.read();
-		byte[] args = new byte[length];
+		byte[] data = new byte[length];
 		for (int i = 0; i < length; i++) {
-			args[i] = (byte) is.read();
+			data[i] = (byte) is.read();
 		}
+		short[] args = new short[length/2];
+		for (int i = 0; i < args.length; i++)
+			args[i] = (short)((data[2*i] <<8) | (data[2*i+1] & 0xFF));
 		// notify all listeners
 		Iterator<MessageListener> ml = mListener.iterator();
 		while (ml.hasNext()) {
@@ -121,16 +124,21 @@ public class AIComm implements sdp.common.Communicator {
 	 * @param args the arguments
 	 */
 	//@Override
-	public void sendMessage(opcode op, byte... args) throws IOException {
+	public void sendMessage(opcode op, short... args) throws IOException {
 		if (op == opcode.operate)
 			if (old_operate != null && Arrays.equals(old_operate, args))
 				return;
 			else
 				old_operate = args;
 		// send a message to device
+		byte[] data = new byte[args.length*2];
+		for (int i = 0; i < args.length; i++) {
+			data[2*i] = (byte) (args[i] >> 8);
+			data[2*i+1] = (byte) (args[i]);
+		}
 		os.write(op.ordinal()); // write opcode
-		os.write(args.length); // write number of args
-		os.write(args); // write args
+		os.write(data.length); // write number of args
+		os.write(data); // write args
 		os.flush(); // send message
 	}
 

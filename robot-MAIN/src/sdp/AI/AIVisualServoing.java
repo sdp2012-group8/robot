@@ -3,6 +3,7 @@ package sdp.AI;
 import java.awt.geom.Point2D;
 import java.io.IOException;
 
+import sdp.common.Painter;
 import sdp.common.Robot;
 import sdp.common.Utilities;
 import sdp.common.geometry.GeomUtils;
@@ -14,7 +15,8 @@ public class AIVisualServoing extends AI {
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
 	
 	/** The multiplier to the final speed. */
-	private final static double SPEED_MULTIPLIER = 0.8;
+	private final static double SPEED_MULTIPLIER = 1;
+	private final static double TURN_SPD_MULTIPLIER = 1.8;
 
 	private final static int COLL_SECS_COUNT = 222;
 	private final static double SEC_ANGLE = 360d/COLL_SECS_COUNT;
@@ -24,8 +26,8 @@ public class AIVisualServoing extends AI {
 	private final static int THRESH_CORN_LOW = 2;
 
 	// back away threshold
-	private final static int THRESH_BACK_HIGH = 10;
-	private final static int THRESH_BACK_LOW = 2;
+	private final static int THRESH_BACK_HIGH = 25;
+	private final static int THRESH_BACK_LOW = 15;
 
 	/** Threshold for being at the target point */
 	private final static int POINT_ACCURACY = 5;
@@ -33,7 +35,7 @@ public class AIVisualServoing extends AI {
 	/** How close the robot should be to the ball before it attempts to kick it. */
 	public static final double KICKABLE_BALL_DIST = 6;
 
-	private final static int MAX_TURN_ANG = 127;
+	private final static int MAX_TURN_ANG = (int) (SPEED_MULTIPLIER*180-100);
 	public final static double DEFAULT_POINT_OFF = 2*Robot.LENGTH_CM;
 	private double point_off = DEFAULT_POINT_OFF;
 	public final static double TARG_THRESH = 40;
@@ -122,13 +124,13 @@ public class AIVisualServoing extends AI {
 		}
 
 		comm = getCommandOld(getNextWaypoint(ball, false), true);
-		if (Math.abs(comm.getByteTurnSpeed()) > 3) {
+		if (Math.abs(comm.getShortTurnSpeed()) > 3) {
 			comm.speed = 0;
 		} else {
 			reduceSpeed(comm, ai_world_state.getDistanceToBall(), 10, 2);
 		}
 
-		if (comm.getByteSpeed() == 0 && comm.getByteTurnSpeed() == 0) {
+		if (comm.getShortSpeed() == 0 && comm.getShortTurnSpeed() == 0) {
 			comm = getCommandOld(getNextWaypoint(ball, false), true);
 		}
 
@@ -149,6 +151,7 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Command gotBall() throws IOException {
 		point_off = DEFAULT_POINT_OFF;
+		Painter.point_off = point_off;
 		//System.out.println("GOT BALL");
 		double angle = ai_world_state.getRobot().getAngle();
 		if (ai_world_state.getMyGoalLeft()) {
@@ -253,19 +256,16 @@ public class AIVisualServoing extends AI {
 
 			if((interceptBall.y < ai_world_state.getMyGoal().getBottom().y)  && (interceptBall.y > ai_world_state.getMyGoal().getTop().y)){
 				if ((interceptBall.y > ai_world_state.getRobot().getCoords().y)  ){
-					byte forward_speed = (byte) -20; //Utilities.normaliseToByte((15+(interceptDistance.getLength()/40)*25));
+					short forward_speed = (short) -20;
 					return new Command(forward_speed, 0, false);
-					//mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
 				} else if((interceptBall.y < ai_world_state.getRobot().getCoords().y)) {
-					byte forward_speed = (byte) 20; //Utilities.normaliseToByte(-(15+(interceptDistance.getLength()/40)*25));
+					short forward_speed = (short) 20;
 					return new Command(forward_speed, 0, false);
-					//mComm.sendMessage(opcode.operate, forward_speed, (byte) 0);
 				}
 			}
 			else
 			{
 				return new Command( 0, 0, false);
-				//mComm.sendMessage(opcode.operate, (byte) 0, (byte) 0);
 			}
 
 		}
@@ -355,7 +355,7 @@ public class AIVisualServoing extends AI {
 		double minAngle = Double.MAX_VALUE;
 		int iterations = 0;
 		
-		while ((destPoint == null) && (iterations < 5)) {
+		while ((destPoint == null) && (iterations < 5) && (destPointDist > 0)) {
 			for (int i = 0; i < COLL_SECS_COUNT; i++) {
 				double curAngle = -90 + i * SEC_ANGLE + SEC_ANGLE / 2;
 				curAngle = Utilities.normaliseAngle(curAngle);
@@ -374,7 +374,7 @@ public class AIVisualServoing extends AI {
 			}
 
 			++iterations;
-			destPointDist -= Robot.LENGTH_CM;	// TODO: What if this gets negative?
+			destPointDist -= Robot.LENGTH_CM;
 		}
 
 		if (destPoint == null) {
@@ -411,8 +411,6 @@ public class AIVisualServoing extends AI {
 			comm.speed = MAX_SPEED_CM_S;
 		}
 		
-		comm.turning_speed *= 2;
-		
 		reactToFrontBackCollisions(comm, true, waypoint.isEndpoint() ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
 		reactToCornerCollisions(comm, waypoint.isEndpoint() ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
 
@@ -433,9 +431,16 @@ public class AIVisualServoing extends AI {
 				point_off = DEFAULT_POINT_OFF;
 			}
 		}
+		
+		reduceSpeed(comm, waypoint.getDistance(), 30, MAX_SPEED_CM_S/2);
+		
+		Painter.point_off = point_off;
 
-		normalizeSpeed(comm);
+		comm.turning_speed *= TURN_SPD_MULTIPLIER;
 		comm.speed *= SPEED_MULTIPLIER;
+		comm.acceleration = 100;
+		
+		normalizeSpeed(comm);
 		
 		return comm;
 	}
@@ -573,6 +578,7 @@ public class AIVisualServoing extends AI {
 	@Override
 	public Command sit() throws IOException {
 		point_off = DEFAULT_POINT_OFF;
+		Painter.point_off = point_off;
 		return super.sit();
 	}
 	
