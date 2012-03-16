@@ -87,7 +87,7 @@ public abstract class AI {
 		this.ai_world_state = ai_world_state;
 	}
 	
-	public static byte normaliseSpeed(byte speed) {
+	public static short normaliseSpeed(short speed) {
 		if (speed > MAX_SPEED_CM_S) speed = MAX_SPEED_CM_S;
 		if (speed < -MAX_SPEED_CM_S) speed = -MAX_SPEED_CM_S;
 		return speed;
@@ -106,16 +106,16 @@ public abstract class AI {
 			this.kick = kick;
 		}
 		
-		public byte getByteSpeed() {
-			return normaliseSpeed(Utilities.normaliseToByte(speed));
+		public short getShortSpeed() {
+			return normaliseSpeed(Utilities.normaliseToShort(speed));
 		}
 		
-		public byte getByteTurnSpeed() {
-			return Utilities.normaliseToByte(Utilities.normaliseAngle(turning_speed));
+		public short getShortTurnSpeed() {
+			return Utilities.normaliseToShort(turning_speed);
 		}
 		
-		public byte getByteAcc() {
-			return Utilities.normaliseToByte(acceleration);
+		public short getShortAcc() {
+			return Utilities.normaliseToShort(acceleration);
 		}
 		
 		public boolean isDefaultAcc() {
@@ -124,7 +124,7 @@ public abstract class AI {
 		
 		@Override
 		public String toString() {
-			return "spd: "+getByteSpeed()+", tspd: "+getByteTurnSpeed()+", kick "+kick+", acc: "+getByteAcc();
+			return "spd: "+getShortSpeed()+", tspd: "+getShortTurnSpeed()+", kick "+kick+", acc: "+getShortAcc();
 		}
 	}
 

@@ -10,14 +10,13 @@ import sdp.common.Communicator.opcode;
 
 
 /**
- * This class implements a message queue scheduler. It could send messages in a queue
- * with a given delay.
+ * This class implements a message queue scheduler. It could send messages in
+ * a queue with a given delay.
  * 
  * Ideally the AI should use this method to have its message queue built
  * before sending it via a Communicator.
  * 
  * @author Martin Marinov
- *
  */
 public class MessageQueue {
 	
@@ -44,7 +43,7 @@ public class MessageQueue {
 	 * @param op the opcode of the message
 	 * @param args the arguments of the message
 	 */
-	public void addMessageToQueue(double delay_s, final opcode op, final byte... args) {
+	public void addMessageToQueue(double delay_s, final opcode op, final short... args) {
 		final long delay = (long) (delay_s*1000);
 		if (mLastMsg == null)
 			mLastMsg = new Date(System.currentTimeMillis()+delay);
@@ -104,7 +103,7 @@ public class MessageQueue {
 		return tasks_pending;
 	}
 	
-	private String getHumanReadableArgs(byte[] args) {
+	private String getHumanReadableArgs(short[] args) {
 		if (args.length == 0)
 			return "[∅]";
 		else if (args.length == 1)

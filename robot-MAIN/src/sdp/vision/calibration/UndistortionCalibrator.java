@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 
-import sdp.common.ImageFileFilter_IO;
+import sdp.common.filefilters.ImageFileFilter_IO;
 
 
 /**
@@ -167,7 +167,7 @@ public class UndistortionCalibrator {
 		
 		UndistortionCalibrator calibrator = new UndistortionCalibrator();		
 		try {
-			calibrator.calibrate("data/images/checkers main", 9, 6,
+			calibrator.calibrate("data/images/checkers side", 9, 6,
 					intristic, distortion);
 		} catch (IOException e) {
 			System.err.println(e.getMessage());

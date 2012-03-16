@@ -24,15 +24,12 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import sdp.AI.AI;
 import sdp.AI.AIMaster;
 import sdp.AI.AIMaster.AIMode;
 import sdp.AI.AIMaster.mode;
-import sdp.AI.AITest;
-import sdp.AI.AIVisualServoing;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
-import sdp.common.Vector2D;
+import sdp.common.geometry.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.simulator.Simulator;
@@ -54,8 +51,6 @@ public class SimTesterGUI {
 	private WorldState lastWS = null;
 	
 	private AIMaster mAI;
-	private AIMode mMode;
-	private AIMode opponentMode;
 	 //will be used for the opponent(yellow) robot
 	private AIMaster opponentAI;
 	
@@ -359,6 +354,16 @@ public class SimTesterGUI {
 		btnStartYellowAI.setBounds(662, 417, 136, 25);
 		frmAlphaTeamSimulator.getContentPane().add(btnStartYellowAI);
 		
+		JButton btnAiVisionOnoff = new JButton("AI vision on/off");
+		btnAiVisionOnoff.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (mAI != null)
+					mAI.switchOverrideVision();
+			}
+		});
+		btnAiVisionOnoff.setBounds(10, 415, 153, 25);
+		frmAlphaTeamSimulator.getContentPane().add(btnAiVisionOnoff);
+		
 		// key listener
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
 			
@@ -397,8 +402,6 @@ public class SimTesterGUI {
 		mComm = new VBrick();
 		opponentComm = new VBrick();
 		mSim = new Simulator(true);
-
-		final WorldStateObserver obs = new WorldStateObserver(mSim);
 		
 		if (blue_selected) {
 			if (my_goal_left) {
@@ -429,10 +432,12 @@ public class SimTesterGUI {
 		
 
 		mAI = new AIMaster(mComm, mSim, checkModesBlue());
-		mAI.start(blue_selected, my_goal_left, false);
+		mAI.start(blue_selected, my_goal_left);
+		
+		final WorldStateObserver obs = new WorldStateObserver(mAI);
 		
 		opponentAI = new AIMaster(opponentComm, mSim, checkModesYellow());
-		opponentAI.start(!blue_selected, !my_goal_left, false);
+		opponentAI.start(!blue_selected, !my_goal_left);
 
 		
 		new Thread() {
@@ -491,7 +496,7 @@ public class SimTesterGUI {
 				System.out.println("ERROR: CURRENT SPEED OVERFLOW!!! = "+speed);
 			if (turn_speed > 127 || turn_speed < -128)
 				System.out.println("ERROR: TURN SPEED OVERFLOW!!! = "+turn_speed);
-			mComm.sendMessage(opcode.operate, (byte) speed, (byte) turn_speed);
+			mComm.sendMessage(opcode.operate, (short) speed, (short) turn_speed);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

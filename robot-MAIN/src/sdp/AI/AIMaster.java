@@ -47,7 +47,7 @@ public class AIMaster extends AIListener {
 		this.mComm = comm;
 			mComm.registerListener(new MessageListener() {
 				@Override
-				public void receiveMessage(opcode op, byte[] args, Communicator controler) {
+				public void receiveMessage(opcode op, short[] args, Communicator controler) {
 					System.out.println(op+" "+args[0]);
 					switch (op) {
 					case sensor_dist:
@@ -75,6 +75,7 @@ public class AIMaster extends AIListener {
 	 * The methods called are in all types of the AI.
 	 */
 	protected synchronized void worldChanged() {
+		
 		AI.Command command;
 
 		checkState();
@@ -94,13 +95,20 @@ public class AIMaster extends AIListener {
 			if (command == null){
 				command = new Command(0, 0, false);
 			}
+			
+			ai_world_state.setCommand(command);
 
 			if (command.isDefaultAcc())
-				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed());
+				mComm.sendMessage(opcode.operate, command.getShortSpeed(), command.getShortTurnSpeed());
 			else
-				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed(), command.getByteAcc());
+				mComm.sendMessage(opcode.operate, command.getShortSpeed(), command.getShortTurnSpeed(), command.getShortAcc());
 			
-			if (command.kick) mComm.sendMessage(opcode.kick);
+			if (command.kick) {
+				System.out.println("kicking");
+				mComm.sendMessage(opcode.kick);
+			}
+			
+			//System.out.println("ws: "+ai_world_state.getMyGoalLeft());
 			
 		} catch (IOException e) {
 			e.printStackTrace();
