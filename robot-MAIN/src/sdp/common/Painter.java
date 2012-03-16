@@ -23,6 +23,7 @@ public class Painter {
 	private  WorldState state_cm;
 	private int off_x = 0, off_y = 0;
 	private  Robot[] robots;
+	public static Vector2D[] debug;
 	public static double point_off = AIVisualServoing.DEFAULT_POINT_OFF;
 
 	public Painter(BufferedImage im, WorldState ws) {
@@ -222,6 +223,15 @@ public class Painter {
 							Vector2D dist2 = Vector2D.rotateVector(new Vector2D(200,0), a);
 							drawVector(global_dist, dist2, false);
 						}
+						
+						if (debug != null) {
+							g.setStroke(new BasicStroke(1.0f));
+							g.setColor(new Color(0, 255, 255));
+							for (int i = 0; i < debug.length; i++) {
+								fillOval((int)(debug[i].x* width / WorldState.PITCH_WIDTH_CM-3), (int) (debug[i].y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6, true);
+							}
+						}
+						
 					}
 				}
 		}

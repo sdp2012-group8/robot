@@ -258,7 +258,7 @@ public class Utilities {
 	 * @throws NullPointerException Throws exception when the robot can't see a goal.
 	 */
 	public static Point2D.Double getOptimalPointBehindBall(AIWorldState ws, double point_offset) {
-		Goal enemy_goal = ws.getEnemyGoal();
+		Goal enemy_goal = new Goal(ws.getEnemyGoal().getCentre(), true);
 		Robot robot = ws.getRobot();
 		Robot enemy_robot = ws.getEnemyRobot();
 

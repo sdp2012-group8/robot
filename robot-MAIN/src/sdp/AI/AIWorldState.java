@@ -42,7 +42,7 @@ public class AIWorldState extends WorldState {
 	private static final int BAT_RIGHT_OFF = 50;
 	private static final int BAT_WIDTH = 50;
 	private static final int BAT_HEIGHT = 20;
-	private static final int BAT_MIN_VOLT = 55;
+	private static final int BAT_MIN_VOLT = 70;
 	private static final int BAT_MAX_VOLT = 79;
 	private static final int BAT_RED_BELOW_PER = 20;
 	

@@ -171,50 +171,77 @@ public class AIVisualServoing extends AI {
 
 	@Override
 	protected Command defendGoal() throws IOException {
-		// TODO Auto-generated method stub
-
-
-		Point2D.Double intercept= GeomUtils.getLineIntersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getMyGoal().getTop(), ai_world_state.getMyGoal().getBottom());
-
-
-		if (intercept != null){
-			Point2D.Double point;
-			Point2D.Double point2 ;
-			Point2D.Double point3;
-			Command com = new Command(0, 0, false);
-			if (ai_world_state.getMyGoalLeft()){
-				point= new Point2D.Double(intercept.x+20 , intercept.y);
-				point2= new Point2D.Double(ai_world_state.getMyGoal().getBottom().x+20 , ai_world_state.getMyGoal().getBottom().y);
-				point3= new Point2D.Double(ai_world_state.getMyGoal().getTop().x+20 , ai_world_state.getMyGoal().getTop().y);
-			} else {
-				point= new Point2D.Double(intercept.x -20, intercept.y);
-				point2= new Point2D.Double(ai_world_state.getMyGoal().getBottom().x-20 , ai_world_state.getMyGoal().getBottom().y);
-				point3= new Point2D.Double(ai_world_state.getMyGoal().getTop().x-20 , ai_world_state.getMyGoal().getTop().y);
-			}
-			double dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(point)).getLength();
-			double dist2 = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(ai_world_state.getMyGoal().getBottom())).getLength();
-			double dist3 = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(ai_world_state.getMyGoal().getTop())).getLength();
-			if((intercept.y < ai_world_state.getMyGoal().getBottom().y+15)  && (intercept.y > ai_world_state.getMyGoal().getTop().y-15))	{
-				if (dist > 5)
-					com = getCommandOld(getNextWaypoint(new Vector2D(point), false), false);
-				reduceSpeed(com, dist, 20, 0);
-
-				return com;
-			} else if(ai_world_state.getEnemyRobot().getAngle()<0 && ai_world_state.getEnemyRobot().getAngle()>-180) {
-				if (dist2 > 10)
-					com = getCommandOld(getNextWaypoint(new Vector2D(point2), false), false);
-				reduceSpeed(com, dist2, 20, 0);
-				return com;
-			}
-
-			else if(ai_world_state.getEnemyRobot().getAngle()>0 && ai_world_state.getEnemyRobot().getAngle()<180 ){
-				if (dist3 > 10)
-					com = getCommandOld(getNextWaypoint(new Vector2D(point3), false), false);
-				reduceSpeed(com, dist3, 20, 0);
-				return com;
-			}
+		Point2D.Double int1;
+		Point2D.Double int2;
+		if (ai_world_state.getMyGoalLeft()){
+			int1 = new Point2D.Double(ai_world_state.getMyGoal().getTop().x + 30, ai_world_state.getMyGoal().getTop().y);
+			int2 = new Point2D.Double(ai_world_state.getMyGoal().getBottom().x + 30, ai_world_state.getMyGoal().getBottom().y);
+		} else {
+			int1 = new Point2D.Double(ai_world_state.getMyGoal().getTop().x - 30, ai_world_state.getMyGoal().getTop().y);
+			int2 = new Point2D.Double(ai_world_state.getMyGoal().getBottom().x - 30, ai_world_state.getMyGoal().getBottom().y);
 		}
 
+		Point2D.Double intercept= GeomUtils.getLineIntersection(ai_world_state.getBallCoords(), ai_world_state.getEnemyRobot().getCoords(), int1, int2);
+
+		boolean is_main_point = false;
+		Command com = new Command(0, 0, false);
+		double dist = 10000;
+
+		Point2D.Double point = new Point2D.Double(10000, 10000);
+		Point2D.Double point2 = new Point2D.Double(10000, 10000);
+		Point2D.Double point3 = new Point2D.Double(10000, 10000);
+
+		if (intercept != null){
+
+			if (ai_world_state.getMyGoalLeft()){
+				point= intercept;
+			} else {
+				point= intercept;
+			}
+
+			is_main_point = (intercept.y < ai_world_state.getMyGoal().getBottom().y)  && (intercept.y > ai_world_state.getMyGoal().getTop().y);
+			dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(point)).getLength();
+		}
+
+		if (ai_world_state.getMyGoalLeft()){
+			point2= new Point2D.Double(ai_world_state.getMyGoal().getBottom().x+30 , ai_world_state.getMyGoal().getBottom().y);
+			point3= new Point2D.Double(ai_world_state.getMyGoal().getTop().x+30 , ai_world_state.getMyGoal().getTop().y);
+		} else {
+			point2= new Point2D.Double(ai_world_state.getMyGoal().getBottom().x-30 , ai_world_state.getMyGoal().getBottom().y);
+			point3= new Point2D.Double(ai_world_state.getMyGoal().getTop().x-30 , ai_world_state.getMyGoal().getTop().y);
+		}
+
+		double dist2 = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(point2)).getLength();
+		double dist3 = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(point3)).getLength();
+
+		Painter.debug = new Vector2D[] {new Vector2D(point), new Vector2D(point2), new Vector2D(point3)};
+
+
+		
+		if(ai_world_state.getEnemyRobot().getAngle()>-90 && ai_world_state.getEnemyRobot().getAngle()<90)
+			return chaseBall();
+		
+		if(is_main_point)	{
+			if (dist > 5)
+				com = getWaypointCommand(getNextWaypoint(new Vector2D(point), true), false);
+			reduceSpeed(com, dist, 20, 0);
+			return com;
+		}
+				
+		if(ai_world_state.getEnemyRobot().getAngle()<-90 && ai_world_state.getEnemyRobot().getAngle()>-180) {
+			if (dist2 > 10)
+				com = getWaypointCommand(getNextWaypoint(new Vector2D(point2), true), false);
+			reduceSpeed(com, dist2, 20, 0);
+			return com;
+		}
+		
+		if(ai_world_state.getEnemyRobot().getAngle()>90 && ai_world_state.getEnemyRobot().getAngle()<180 ){
+			if (dist3 > 10)
+				com = getWaypointCommand(getNextWaypoint(new Vector2D(point3), true), false);
+			reduceSpeed(com, dist3, 20, 0);
+			return com;
+		}
+		
 		return null;
 	}
 
