@@ -108,6 +108,8 @@ public class AIMaster extends AIListener {
 				mComm.sendMessage(opcode.kick);
 			}
 			
+			//System.out.println("ws: "+ai_world_state.getMyGoalLeft());
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
