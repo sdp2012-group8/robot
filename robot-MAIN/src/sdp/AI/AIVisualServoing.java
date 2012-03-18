@@ -322,16 +322,21 @@ public class AIVisualServoing extends AI {
 		Point2D.Double interceptBall= GeomUtils.getLineIntersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getRobot().getCoords(), ai_world_state.getRobot().getFrontCenter());
 		System.out.println("InterceptDistance: " + interceptBall);
 		System.out.println("Our robot's y: " + ai_world_state.getRobot().getCoords().y);
-
+		double dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(interceptBall)).getLength();
+        Command com =new Command(0, 0, false);
 		if (!interceptBall.equals(null)){
 
 			if((interceptBall.y < ai_world_state.getMyGoal().getBottom().y)  && (interceptBall.y > ai_world_state.getMyGoal().getTop().y)){
 				if ((interceptBall.y > ai_world_state.getRobot().getCoords().y)  ){
 					short forward_speed = (short) -20;
-					return new Command(forward_speed, 0, false);
+					 com.speed=forward_speed;
+					reduceSpeed(com, dist, 20, 0);
+					return com;
 				} else if((interceptBall.y < ai_world_state.getRobot().getCoords().y)) {
 					short forward_speed = (short) 20;
-					return new Command(forward_speed, 0, false);
+					 com.speed=forward_speed;
+					 reduceSpeed(com, dist, 20, 0);
+					return  com;
 				}
 			}
 			else
