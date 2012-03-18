@@ -345,9 +345,17 @@ public class AIVisualServoing extends AI {
 
 	}
 
+	/**
+	 * Go into chaseBall(priority), which is chaseBall, but 
+	 * you can specify if you want to shoot only into the main goal, 
+	 * only into the image goals of in both
+	 */
 	@Override
 	protected Command penaltiesAttack() throws IOException {
 		
+		/**
+		 *  priority - 1 for shooting with main goal, 2 for shooting with walls only, 3 for shooting with both
+		 */
 		int priority = 2;
 		return chaseBall(priority);
 		
