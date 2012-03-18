@@ -83,6 +83,50 @@ public class AIVisualServoing extends AI {
 	}
 
 
+	
+	/**
+	 * Used for getting to the ball when shooting penalties
+	 * @param priority - 1 for shooting with main goal, 2 for shooting with walls only, 3 for shooting with both
+	 * @return
+	 * @throws IOException
+	 */
+	protected Command chaseBall(int priority) throws IOException {
+		// Are we ready to score?
+		if (ai_world_state.getDistanceToBall() < KICKABLE_BALL_DIST) {
+			Point2D.Double intersection = GeomUtils.getLineIntersection(ai_world_state.getRobot().getCoords(),
+					ai_world_state.getRobot().getFrontCenter(), ai_world_state.getEnemyGoal().getTop(),
+					ai_world_state.getEnemyGoal().getBottom());
+			if (intersection != null && Utilities.lineIntersectsRobot(ai_world_state.getRobot().getCoords(),
+					intersection, ai_world_state.getEnemyRobot())) {
+				return gotBall();
+			}
+		}
+
+		// Get the point to drive towards.
+		target = new Vector2D(ai_world_state.getBallCoords());
+		Point2D.Double optimalPoint = Utilities.getOptimalPointBehindBall(ai_world_state, point_off);
+		
+		switch (priority){
+		case 1:
+			optimalPoint = Utilities.getOptimalPointBehindBall(ai_world_state, point_off, false);
+		case 2:
+			optimalPoint = Utilities.getOptimalPointBehindBall(ai_world_state, point_off, true);
+		case 3:
+			optimalPoint = Utilities.getOptimalPointBehindBall(ai_world_state, point_off);	
+		}
+		
+		if (optimalPoint != null) {
+			target = new Vector2D(optimalPoint);
+		}
+
+		// Generate command to drive towards the target point.
+		boolean mustFaceTarget = (point_off != TARG_THRESH);
+
+		Waypoint waypoint = getNextWaypoint(target, true);
+		return getWaypointCommand(waypoint, mustFaceTarget);
+	}
+	
+	
 	/**
 	 * Generate a command to get closer to a target point.
 	 * 
@@ -303,6 +347,11 @@ public class AIVisualServoing extends AI {
 
 	@Override
 	protected Command penaltiesAttack() throws IOException {
+		
+		int priority = 2;
+		return chaseBall(priority);
+		
+		/*
 		Command command = new Command(0,0,false);
 
 		Point2D.Double pointInGoal= 
@@ -343,8 +392,7 @@ public class AIVisualServoing extends AI {
 				//ai_world_state.getEnemyGoal().getTop().y);
 				//mComm.sendMessage(opcode.kick);
 			}
-		}
-		return null;
+		}  */
 	}
 
 
