@@ -92,11 +92,11 @@ public class AIMaster extends AIListener {
 				command.turning_speed = -90;
 			}
 			
-			if (command == null){
-				command = new Command(0, 0, false);
-			}
+			if (command != null){
+				ai_world_state.setCommand(command);
 			
-			ai_world_state.setCommand(command);
+			
+	//		ai_world_state.setCommand(command);
 
 			if (command.isDefaultAcc())
 				mComm.sendMessage(opcode.operate, command.getShortSpeed(), command.getShortTurnSpeed());
@@ -107,7 +107,7 @@ public class AIMaster extends AIListener {
 				System.out.println("kicking");
 				mComm.sendMessage(opcode.kick);
 			}
-			
+			}
 			//System.out.println("ws: "+ai_world_state.getMyGoalLeft());
 			
 		} catch (IOException e) {

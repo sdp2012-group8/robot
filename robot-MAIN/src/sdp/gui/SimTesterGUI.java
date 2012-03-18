@@ -465,7 +465,8 @@ public class SimTesterGUI {
 	 * @param pressed true if pressed, false if released
 	 */
 	private void keyAction(final int key_id, final boolean pressed) {
-		if (mAI.getState()!= mode.SIT) mAI.setState(mode.SIT);
+		if (mAI.getState()!= mode.MANUAL_CONTROL)
+			mAI.setState(mode.MANUAL_CONTROL);
 		try {
 			switch (key_id) {
 			case KeyEvent.VK_UP:
