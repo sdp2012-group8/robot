@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 
 import sdp.AI.AIVisualServoing;
 import sdp.AI.AIWorldState;
+import sdp.common.geometry.Vector2D;
 
 public class Painter {
 
@@ -22,7 +23,8 @@ public class Painter {
 	private  WorldState state_cm;
 	private int off_x = 0, off_y = 0;
 	private  Robot[] robots;
-	private static double point_off = AIVisualServoing.DEFAULT_POINT_OFF;
+	public static Vector2D[] debug;
+	public static double point_off = AIVisualServoing.DEFAULT_POINT_OFF;
 
 	public Painter(BufferedImage im, WorldState ws) {
 		g = im.createGraphics();
@@ -129,8 +131,6 @@ public class Painter {
 					final double point_distance = 1.5*Robot.LENGTH_CM; // + 1*Robot.LENGTH_CM * (Math.abs(dir_to_ball)/180);
 					AIWorldState ai_world_state = Utilities.getAIWorldState(state_cm, my_team_blue, my_goal_left);
 					Vector2D target;
-					if (ai_world_state.getDistanceToBall() < AIVisualServoing.DIST_TO_BALL)
-						point_off = AIVisualServoing.DEFAULT_POINT_OFF;
 					
 					try {
 						// p_target = new Vector2D(Utilities.getOptimalPointBehindBall(Utilities.getAIWorldState(state_cm, my_goal_left, my_team_blue, false), point_distance));
@@ -143,11 +143,6 @@ public class Painter {
 
 					double targ_dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), target).getLength();
 					double direction = Utilities.getTurningAngle(ai_world_state.getRobot(), target);
-					
-					if (Math.abs(direction) < 45 && targ_dist < AIVisualServoing.TARG_THRESH)
-						point_off *= 0.7;
-					if (point_off < AIVisualServoing.DIST_TO_BALL)
-						point_off = AIVisualServoing.DIST_TO_BALL;
 
 
 
@@ -180,7 +175,7 @@ public class Painter {
 					double turn_ang = 999;
 					int id = -1;
 
-					double point_dist = point_visible ? direct_dist : other_rob_dist+Robot.LENGTH_CM/2;
+					double point_dist = direct_dist;//point_visible ? direct_dist : other_rob_dist+Robot.LENGTH_CM/2;
 					double temp = 999;
 					int t = 0;
 					while (turn_ang == 999) {
@@ -214,7 +209,7 @@ public class Painter {
 						fillOval((int)(target.x* width / WorldState.PITCH_WIDTH_CM-3), (int) (target.y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6, true);
 						
 						g.setStroke(new BasicStroke(1.0f));
-						Vector2D dist = Utilities.raytraceVector(state_cm, target, Vector2D.change_length(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), target), 200), null, false);
+						Vector2D dist = Utilities.raytraceVector(state_cm, target, Vector2D.changeLength(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), target), 200), null, false);
 						drawVector(target, dist, false);
 						Vector2D global_dist = Vector2D.add(dist, target);
 						if (global_dist.getY() < 5) {
@@ -228,6 +223,15 @@ public class Painter {
 							Vector2D dist2 = Vector2D.rotateVector(new Vector2D(200,0), a);
 							drawVector(global_dist, dist2, false);
 						}
+						
+						if (debug != null) {
+							g.setStroke(new BasicStroke(1.0f));
+							g.setColor(new Color(0, 255, 255));
+							for (int i = 0; i < debug.length; i++) {
+								fillOval((int)(debug[i].x* width / WorldState.PITCH_WIDTH_CM-3), (int) (debug[i].y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6, true);
+							}
+						}
+						
 					}
 				}
 		}

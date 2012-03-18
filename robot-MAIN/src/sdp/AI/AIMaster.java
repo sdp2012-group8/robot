@@ -47,7 +47,7 @@ public class AIMaster extends AIListener {
 		this.mComm = comm;
 			mComm.registerListener(new MessageListener() {
 				@Override
-				public void receiveMessage(opcode op, byte[] args, Communicator controler) {
+				public void receiveMessage(opcode op, short[] args, Communicator controler) {
 					System.out.println(op+" "+args[0]);
 					switch (op) {
 					case sensor_dist:
@@ -99,9 +99,9 @@ public class AIMaster extends AIListener {
 			ai_world_state.setCommand(command);
 
 			if (command.isDefaultAcc())
-				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed());
+				mComm.sendMessage(opcode.operate, command.getShortSpeed(), command.getShortTurnSpeed());
 			else
-				mComm.sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed(), command.getByteAcc());
+				mComm.sendMessage(opcode.operate, command.getShortSpeed(), command.getShortTurnSpeed(), command.getShortAcc());
 			
 			if (command.kick) {
 				System.out.println("kicking");

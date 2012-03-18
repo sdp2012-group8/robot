@@ -1,5 +1,7 @@
 package sdp.AI;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.LinkedList;
@@ -10,8 +12,9 @@ import sdp.common.Goal;
 import sdp.common.Painter;
 import sdp.common.Robot;
 import sdp.common.Utilities;
-import sdp.common.Vector2D;
 import sdp.common.WorldState;
+import sdp.common.geometry.GeomUtils;
+import sdp.common.geometry.Vector2D;
 import sdp.simulator.Simulator;
 import sdp.vision.processing.ImageProcessorConfig;
 
@@ -33,13 +36,21 @@ public class AIWorldState extends WorldState {
 	private Robot enemy_robot = null;
 	private double distance_to_ball;
 	private double distance_to_goal;
-	private double point_offset;
+	
+	// battery indicator
+	private static final int BAT_TOP_OFF = 10;
+	private static final int BAT_RIGHT_OFF = 50;
+	private static final int BAT_WIDTH = 50;
+	private static final int BAT_HEIGHT = 20;
+	private static final int BAT_MIN_VOLT = 70;
+	private static final int BAT_MAX_VOLT = 79;
+	private static final int BAT_RED_BELOW_PER = 20;
 	
 	private Command command;
 	
 	private boolean left_sensor = false, right_sensor = false, dist_sensor = false;
 
-	private int battery;
+	private int battery = -1;
 
 	//flags
 	boolean f_ball_on_field = false;
@@ -63,11 +74,11 @@ public class AIWorldState extends WorldState {
 		this.my_goal_left = my_goal_left;
 
 		if (my_goal_left) {
-			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
-			my_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
+			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_HEIGHT_CM ));
+			my_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_HEIGHT_CM ));
 		} else {
-			enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_Y_CM ));
-			my_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_Y_CM ));
+			enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_HEIGHT_CM ));
+			my_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_HEIGHT_CM ));
 		}
 
 		super.update(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
@@ -81,8 +92,8 @@ public class AIWorldState extends WorldState {
 		}
 
 
-		distance_to_ball = Utilities.getDistanceBetweenPoint(Utilities.getGlobalVector(robot, new Vector2D(Robot.LENGTH_CM/2, 0)), getBallCoords());
-		distance_to_goal = Utilities.getDistanceBetweenPoint(robot.getCoords(), enemy_goal.getCentre());
+		distance_to_ball = GeomUtils.pointDistance(Utilities.getGlobalVector(robot, new Vector2D(Robot.LENGTH_CM/2, 0)), getBallCoords());
+		distance_to_goal = GeomUtils.pointDistance(robot.getCoords(), enemy_goal.getCentre());
 
 		// check and set flags
 		if (getBallCoords() == new Point2D.Double(-1,-1)) {
@@ -95,7 +106,7 @@ public class AIWorldState extends WorldState {
 	
 	private WorldState predict(WorldState input, long time_ms) {
 		
-		// handle ball going offscreen
+		// handle ball going offscreen5
 		if (last_st != null) {
 			if (input.getBallCoords().getX() == -244d || input.getBallCoords().getX() == -1d)
 				input = new WorldState(last_st.getBallCoords(), input.getBlueRobot(), input.getYellowRobot(), input.getWorldImage());
@@ -147,9 +158,9 @@ public class AIWorldState extends WorldState {
 
 		enemy_robot.setCoords(true); //need to convert robot coords to cm
 
-		if (Utilities.isPathClear(getBallCoords(), enemy_goal.getCentre(), enemy_robot)
-				|| Utilities.isPathClear(getBallCoords(), enemy_goal.getTop(), enemy_robot) 
-				|| Utilities.isPathClear(getBallCoords(), enemy_goal.getBottom(), enemy_robot)) {
+		if (Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getCentre(), enemy_robot)
+				|| Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getTop(), enemy_robot) 
+				|| Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getBottom(), enemy_robot)) {
 			return true;
 		}
 
@@ -168,9 +179,9 @@ public class AIWorldState extends WorldState {
 		double midmin = anglebetween(getRobot().getCoords(), enemy_goal.getCentre());
 		double botmin = anglebetween(getRobot().getCoords(), enemy_goal.getBottom());
 
-		if (Math.abs(topmin) < Math.abs(midmin) && Math.abs(topmin) < Math.abs(botmin) && Utilities.isPathClear(getBallCoords(), enemy_goal.getTop(), enemy_robot)) {
+		if (Math.abs(topmin) < Math.abs(midmin) && Math.abs(topmin) < Math.abs(botmin) && Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getTop(), enemy_robot)) {
 			return topmin;
-		} else if (Math.abs(midmin) < Math.abs(botmin) && Utilities.isPathClear(getBallCoords(), enemy_goal.getCentre(), enemy_robot)) {
+		} else if (Math.abs(midmin) < Math.abs(botmin) && Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getCentre(), enemy_robot)) {
 			return midmin;
 		} else {
 			return botmin;
@@ -196,6 +207,39 @@ public class AIWorldState extends WorldState {
 			p.setOffsets(0, 0, Simulator.IMAGE_WIDTH, Simulator.IMAGE_HEIGHT);
 		}
 		p.image(my_team_blue,my_goal_left);
+		
+		// battery status
+		
+		double batt_coeff = (battery-BAT_MIN_VOLT)/(double) (BAT_MAX_VOLT-BAT_MIN_VOLT);
+		if (batt_coeff < 0)
+			batt_coeff = 0;
+		if (batt_coeff > 1)
+			batt_coeff = 1;
+		if (battery == -1)
+			batt_coeff = 1;
+		
+		
+		if (batt_coeff*100 < BAT_RED_BELOW_PER)
+			p.g.setColor(new Color(255,150,150,220));
+		else
+			p.g.setColor(new Color(255,255,255,200));
+		p.g.setStroke(new BasicStroke(2.0f));
+		
+		p.g.drawRoundRect(Simulator.IMAGE_WIDTH-BAT_WIDTH-BAT_RIGHT_OFF,
+				BAT_TOP_OFF, BAT_WIDTH, BAT_HEIGHT, 5, 5);
+		p.g.fillRoundRect(Simulator.IMAGE_WIDTH-BAT_RIGHT_OFF,
+				BAT_TOP_OFF+BAT_HEIGHT/5, 4, BAT_HEIGHT-2*BAT_HEIGHT/5, 2, 2);
+		
+		if (batt_coeff*100 > 100-BAT_RED_BELOW_PER)
+			p.g.setColor(new Color(150,255,150,220));
+		
+		p.g.fillRect(Simulator.IMAGE_WIDTH-BAT_WIDTH-BAT_RIGHT_OFF+2,
+				BAT_TOP_OFF+2,
+				(int) (batt_coeff*(BAT_WIDTH-3)), 
+				BAT_HEIGHT-3);
+		
+	
+		
 		p.dispose();
 	}
 	
@@ -226,7 +270,7 @@ public class AIWorldState extends WorldState {
 			Vector2D new_val = Vector2D.rotateVector(new Vector2D(1, 0), new_value);
 			Vector2D sum = Vector2D.add(old_val, Vector2D.multiply(new_val, filteredAngleAmount));
 			Vector2D ans = Vector2D.divide(sum, filteredAngleAmount+1);
-			return Vector2D.getDirection(ans);
+			return ans.getDirection();
 		}
 	}
 	

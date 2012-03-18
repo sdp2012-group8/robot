@@ -19,6 +19,7 @@ import javax.swing.JTabbedPane;
 
 import sdp.AI.AIMaster;
 import sdp.common.Communicator;
+import sdp.common.Communicator.opcode;
 import sdp.common.FPSCounter;
 import sdp.common.Utilities;
 import sdp.common.WorldState;
@@ -58,10 +59,11 @@ import javax.swing.JScrollPane;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 
 /**
- * The GUI class of the main window.
  */
 public class MainWindow extends javax.swing.JFrame implements Runnable {
 	
@@ -112,6 +114,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	/** Mouse pointer position on the canvas image. */
 	private Point imageMousePos = null;
 	
+	private Communicator com;
+	
 	
 	/**
 	 * Create the main GUI with the specified components.
@@ -123,6 +127,16 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 * 		let you adjust vision settings.
 	 */
 	public MainWindow(boolean testMode, WorldStateObserver worldStateObserver, Vision vision) {
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				try {
+					com.sendMessage(opcode.exit);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
 		if (worldStateObserver == null) {
 			throw new NullPointerException("Main window's state provider cannot be null.");
 		} else {
@@ -197,7 +211,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 * Connect to our robot.
 	 */
 	private void connectToRobot() {
-		Communicator com;
 		if (robotDebugModeCheckbox.isSelected()) {
 			com = null;
 		} else {

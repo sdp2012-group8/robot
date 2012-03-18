@@ -16,6 +16,6 @@ public interface MessageListener {
 	 * @param args the arguments of the message
 	 * @param controler which controller is returning the result
 	 */
-	public void receiveMessage(opcode op, byte[] args, Communicator controler);
+	public void receiveMessage(opcode op, short[] args, Communicator controler);
 
 }

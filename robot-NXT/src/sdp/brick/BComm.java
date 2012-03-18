@@ -58,10 +58,15 @@ public class BComm implements Communicator {
 	 * @param args the arguments
 	 */
 	
-	public void sendMessage(opcode op, byte... args) throws IOException {
+	public void sendMessage(opcode op, short... args) throws IOException {
 		os.write(op.ordinal()); // write opcode
-		os.write(args.length); // write number of args
-		os.write(args); // write args
+		byte[] data = new byte[args.length*2];
+		for (int i = 0; i < args.length; i++) {
+			data[2*i] = (byte) (args[i] >> 8);
+			data[2*i+1] = (byte) (args[i]);
+		}
+		os.write(data.length); // write number of args
+		os.write(data); // write args
 		os.flush(); // send message
 	}
 
@@ -93,10 +98,13 @@ public class BComm implements Communicator {
 							// wait for an instruction
 							opcode op = opcode.values()[is.read()];
 							int length = is.read();
-							byte[] args = new byte[length];
+							byte[] data = new byte[length];
 							for (int i = 0; i < length; i++) {
-								args[i] = (byte) is.read();
+								data[i] = (byte) is.read();
 							}
+							short[] args = new short[length/2];
+							for (int i = 0; i < args.length; i++)
+								args[i] = (short)((data[2*i] <<8) | (data[2*i+1] & 0xFF));
 							// print message on the LCD
 							messages_so_far++;
 							if (DEBUG) {
@@ -104,7 +112,7 @@ public class BComm implements Communicator {
 							LCD.clear(1);
 							LCD.clear(2);
 							LCD.drawString(messages_so_far+". messgs", 0, 0);
-							LCD.drawString(op+";"+length, 0, 1);
+							LCD.drawString(op+";"+length/2, 0, 1);
 							if (args.length > 1) {
 								String all = "["+args[0];
 								for (int i = 1; i < args.length; i++)

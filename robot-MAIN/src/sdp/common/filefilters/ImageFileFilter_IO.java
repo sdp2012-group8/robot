@@ -1,4 +1,4 @@
-package sdp.common;
+package sdp.common.filefilters;
 
 import java.io.File;
 

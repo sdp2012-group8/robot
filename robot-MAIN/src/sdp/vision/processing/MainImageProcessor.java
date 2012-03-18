@@ -15,6 +15,7 @@ import static com.googlecode.javacv.cpp.opencv_imgproc.*;
 import sdp.common.Robot;
 import sdp.common.Utilities;
 import sdp.common.WorldState;
+import sdp.common.geometry.GeomUtils;
 
 
 /**
@@ -338,14 +339,14 @@ public class MainImageProcessor extends BaseImageProcessor {
 			// Draw blue robot position and direction.
 			pt1 = ProcUtils.normalToFrameCoordinatesInt(config, blueRobot.getCoords().x,
 					blueRobot.getCoords().y, false);
-			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
+			pt2 = GeomUtils.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
 					blueRobot.getAngle());
 			drawPositionMarker(graphics, Color.blue, pt1, pt2);
 			
 			// Draw yellow robot position and direction.
 			pt1 = ProcUtils.normalToFrameCoordinatesInt(config, yellowRobot.getCoords().x,
 					yellowRobot.getCoords().y, false);
-			pt2 = Utilities.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
+			pt2 = GeomUtils.rotatePoint(pt1, new Point(pt1.x + DIR_LINE_LENGTH, pt1.y),
 					yellowRobot.getAngle());
 			drawPositionMarker(graphics, Color.orange, pt1, pt2);
 		}

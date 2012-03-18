@@ -12,10 +12,10 @@ import sdp.AI.AI.Command;
 import sdp.common.Painter;
 import sdp.common.Robot;
 import sdp.common.Utilities;
-import sdp.common.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
 import sdp.common.Communicator.opcode;
+import sdp.common.geometry.Vector2D;
 
 
 /**
@@ -183,11 +183,11 @@ public class Simulator extends WorldStateProvider {
 					speeds[id] = proj.x;
 					turning_speeds[id] = first_run ? 0 : (rob.getAngle() - old_rob.getAngle())/dt;
 					try {
-						robot[id].sendMessage(opcode.operate, command.getByteSpeed(), command.getByteTurnSpeed());
+						robot[id].sendMessage(opcode.operate, command.getShortSpeed(), command.getShortTurnSpeed());
 					} catch (IOException e) {}
 				} else {
 					try {
-						robot[id].sendMessage(opcode.operate, (byte) 0, (byte) 0);
+						robot[id].sendMessage(opcode.operate, (short) 0, (short) 0);
 					} catch (IOException e) {}
 				}
 		}
@@ -483,22 +483,22 @@ public class Simulator extends WorldStateProvider {
 						speeds[i] * Math.cos(directions[i] * Math.PI / 180),
 						speeds[i] * Math.sin(-directions[i] * Math.PI / 180));
 				future_positions[i] = new Vector2D(positions[i]);
-				future_positions[i].addmul_to(velocities[i], 2 * dt);
+				future_positions[i].addMul(velocities[i], 2 * dt);
 			}
 		// future ball friction
 		double ball_speed = ball_velocity.getLength();
 		if (ball_speed != 0) {
 			if (ball_speed >= BALL_FRICTION_ACC * 2 * dt) {
-				Vector2D friction = Vector2D.change_length(ball_velocity,
+				Vector2D friction = Vector2D.changeLength(ball_velocity,
 						-BALL_FRICTION_ACC);
 				future_ball_velocity = new Vector2D(ball_velocity);
-				future_ball_velocity.addmul_to(friction, 2 * dt);
+				future_ball_velocity.addMul(friction, 2 * dt);
 			} else
 				future_ball_velocity = Vector2D.ZERO();
 		}
 		// future calculate final ball position
 		future_ball = new Vector2D(ball);
-		future_ball.addmul_to(ball_velocity, 2 * dt);
+		future_ball.addMul(ball_velocity, 2 * dt);
 		// calculate final positions
 		for (int i = 0; i < robot.length; i++)
 			if (robot[i] != null) {
@@ -514,7 +514,7 @@ public class Simulator extends WorldStateProvider {
 						speeds[i] * Math.cos(directions[i] * Math.PI / 180),
 						speeds[i] * Math.sin(-directions[i] * Math.PI / 180));
 				if (!will_be_in_collision[i])
-					positions[i].addmul_to(velocities[i], dt);
+					positions[i].addMul(velocities[i], dt);
 				else
 					will_be_in_collision[i] = false;
 
@@ -523,9 +523,9 @@ public class Simulator extends WorldStateProvider {
 		ball_speed = ball_velocity.getLength();
 		if (ball_speed != 0) {
 			if (ball_speed >= BALL_FRICTION_ACC * dt) {
-				Vector2D friction = Vector2D.change_length(ball_velocity,
+				Vector2D friction = Vector2D.changeLength(ball_velocity,
 						-BALL_FRICTION_ACC);
-				ball_velocity.addmul_to(friction, dt);
+				ball_velocity.addMul(friction, dt);
 			} else
 				ball_velocity = Vector2D.ZERO();
 		}
@@ -533,7 +533,7 @@ public class Simulator extends WorldStateProvider {
 		if (ball_velocity.getLength() > BALL_MAX_SPEED)
 			ball_velocity = Vector2D.ZERO();// Vector2D.change_length(ball_velocity,
 		// ball_max_speed);
-		ball.addmul_to(ball_velocity, dt);
+		ball.addMul(ball_velocity, dt);
 
 		// ball collision with robots
 		for (int i = 0; i < robot.length; i++)
@@ -656,7 +656,7 @@ public class Simulator extends WorldStateProvider {
 							// and add it to ball's velocity
 							// this is the magic function that adds the ability that the
 							// ball is pushed around by the robot
-							curr_rel_spd.addmul_to(
+							curr_rel_spd.addMul(
 									getPointOfContactVel(curr_rel_ball,
 											future_rel_ball, turning_speeds[i], dt),
 											ROBOT_BOUNCINESS);
@@ -795,9 +795,9 @@ public class Simulator extends WorldStateProvider {
 									//compute relative velocity and scale the rebound velocities wrt to the relative one
 									Vector2D relative_velocity = Vector2D.add(velocities[i], velocities[j]);
 
-									backAwayDistance1.addmul_to(Vector2D.multiply(velocities[j],velocities[j].getLength()/relative_velocity.getLength()),
+									backAwayDistance1.addMul(Vector2D.multiply(velocities[j],velocities[j].getLength()/relative_velocity.getLength()),
 											dt);
-									backAwayDistance2.addmul_to(Vector2D.multiply(velocities[i],velocities[i].getLength()/relative_velocity.getLength()),
+									backAwayDistance2.addMul(Vector2D.multiply(velocities[i],velocities[i].getLength()/relative_velocity.getLength()),
 											dt);
 
 									Vector2D distance1 = Vector2D.add(
@@ -887,7 +887,7 @@ public class Simulator extends WorldStateProvider {
 								positions[0]).getLength()))
 								+ " cm; "
 								+ String.format("%.1f",
-										Vector2D.getAngle(ball, positions[0])) + "°",
+										Vector2D.getBetweenAngle(ball, positions[0])) + "°",
 										20, IMAGE_HEIGHT + 20);
 		p.g.drawString(
 				"blue : " + positions[0] + "; "
@@ -899,7 +899,7 @@ public class Simulator extends WorldStateProvider {
 								positions[1]).getLength()))
 								+ " cm; "
 								+ String.format("%.1f",
-										Vector2D.getAngle(ball, positions[1])) + "°",
+										Vector2D.getBetweenAngle(ball, positions[1])) + "°",
 										20, IMAGE_HEIGHT + 60);
 		p.g.drawString(
 				"yellow : " + positions[1] + "; "

@@ -62,7 +62,7 @@ public final class WorldStateObserver implements Observer {
 	}
 
 
-	/* (non-Javadoc)
+	/**
 	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
 	 */
 	@Override
