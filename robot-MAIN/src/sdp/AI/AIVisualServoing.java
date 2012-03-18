@@ -56,41 +56,17 @@ public class AIVisualServoing extends AI {
 	 */
 	@Override
 	protected Command chaseBall() throws IOException {
-		// Are we ready to score?
-		if (ai_world_state.getDistanceToBall() < KICKABLE_BALL_DIST) {
-			Point2D.Double intersection = GeomUtils.getLineIntersection(ai_world_state.getRobot().getCoords(),
-					ai_world_state.getRobot().getFrontCenter(), ai_world_state.getEnemyGoal().getTop(),
-					ai_world_state.getEnemyGoal().getBottom());
-			if (intersection != null && Utilities.lineIntersectsRobot(ai_world_state.getRobot().getCoords(),
-					intersection, ai_world_state.getEnemyRobot())) {
-				return gotBall();
-			}
-		}
-
-		// Get the point to drive towards.
-		target = new Vector2D(ai_world_state.getBallCoords());
-
-		Point2D.Double optimalPoint = Utilities.getOptimalPointBehindBall(ai_world_state, point_off);
-		if (optimalPoint != null) {
-			target = new Vector2D(optimalPoint);
-		}
-
-		// Generate command to drive towards the target point.
-		boolean mustFaceTarget = (point_off != TARG_THRESH);
-
-		Waypoint waypoint = getNextWaypoint(target, true);
-		return getWaypointCommand(waypoint, mustFaceTarget);
+		return attack(Utilities.AttackMode.Full);
 	}
-
-
 	
+
 	/**
-	 * Used for getting to the ball when shooting penalties
-	 * @param priority - 1 for shooting with main goal, 2 for shooting with walls only, 3 for shooting with both
-	 * @return
-	 * @throws IOException
+	 * Get a command to attack the opponents.
+	 * 
+	 * @param mode Robot's attack mode. See {@link Utilities.AttackMode}.
+	 * @return The next command the robot should execute.
 	 */
-	protected Command chaseBall(int priority) throws IOException {
+	protected Command attack(Utilities.AttackMode mode) {
 		// Are we ready to score?
 		if (ai_world_state.getDistanceToBall() < KICKABLE_BALL_DIST) {
 			Point2D.Double intersection = GeomUtils.getLineIntersection(ai_world_state.getRobot().getCoords(),
@@ -104,16 +80,7 @@ public class AIVisualServoing extends AI {
 
 		// Get the point to drive towards.
 		target = new Vector2D(ai_world_state.getBallCoords());
-		Point2D.Double optimalPoint = Utilities.getOptimalPointBehindBall(ai_world_state, point_off);
-		
-		switch (priority){
-		case 1:
-			optimalPoint = Utilities.getOptimalPointBehindBall(ai_world_state, point_off, false);
-		case 2:
-			optimalPoint = Utilities.getOptimalPointBehindBall(ai_world_state, point_off, true);
-		case 3:
-			optimalPoint = Utilities.getOptimalPointBehindBall(ai_world_state, point_off);	
-		}
+		Point2D.Double optimalPoint = Utilities.getOptimalPoint(ai_world_state, point_off, mode);
 		
 		if (optimalPoint != null) {
 			target = new Vector2D(optimalPoint);
@@ -193,7 +160,7 @@ public class AIVisualServoing extends AI {
 
 
 	@Override
-	protected Command gotBall() throws IOException {
+	protected Command gotBall() {
 		point_off = DEFAULT_POINT_OFF;
 		Painter.point_off = point_off;
 		//System.out.println("GOT BALL");
@@ -357,12 +324,7 @@ public class AIVisualServoing extends AI {
 	 */
 	@Override
 	protected Command penaltiesAttack() throws IOException {
-		
-		/**
-		 *  priority - 1 for shooting with main goal, 2 for shooting with walls only, 3 for shooting with both
-		 */
-		int priority = 2;
-		return chaseBall(priority);
+		return attack(Utilities.AttackMode.WallsOnly);
 		
 		/*
 		Command command = new Command(0,0,false);
@@ -446,14 +408,14 @@ public class AIVisualServoing extends AI {
 		while ((destPoint == null) && (iterations < 5) && (destPointDist > 0)) {
 			for (int i = 0; i < COLL_SECS_COUNT; i++) {
 				double curAngle = -90 + i * SEC_ANGLE + SEC_ANGLE / 2;
-				curAngle = Utilities.normaliseAngle(curAngle);
+				curAngle = Utilities.normaliseAngleToDegrees(curAngle);
 
 				Vector2D rayDir = Vector2D.rotateVector(new Vector2D(1, 0), curAngle);
 				Vector2D rayEndLocal = Vector2D.multiply(rayDir, destPointDist);
 				Vector2D rayEnd = Utilities.getGlobalVector(ai_world_state.getRobot(), rayEndLocal);
 
 				if (Utilities.isDirectPathClear(ai_world_state, ownCoords, rayEnd, obstacleFlags)) {
-					double angleDiff = Utilities.normaliseAngle(curAngle - targetLocal.getDirection());
+					double angleDiff = Utilities.normaliseAngleToDegrees(curAngle - targetLocal.getDirection());
 					if (Math.abs(angleDiff) < Math.abs(minAngle)) {
 						minAngle = angleDiff;
 						destPoint = rayEndLocal;
@@ -492,7 +454,7 @@ public class AIVisualServoing extends AI {
 		if (Math.abs(waypoint.getTurningAngle()) > 90) {
 			comm.speed = -MAX_SPEED_CM_S;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
-				comm.turning_speed = Utilities.normaliseAngle(waypoint.getTurningAngle() - 180);
+				comm.turning_speed = Utilities.normaliseAngleToDegrees(waypoint.getTurningAngle() - 180);
 			}		
 		// Ball is in front.
 		} else {
@@ -689,7 +651,7 @@ public class AIVisualServoing extends AI {
 		if (Math.abs(comm.turning_speed) > 90) {
 			comm.speed = -MAX_SPEED_CM_S;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
-				comm.turning_speed = Utilities.normaliseAngle(comm.turning_speed - 180);
+				comm.turning_speed = Utilities.normaliseAngleToDegrees(comm.turning_speed - 180);
 			}		
 		// Ball is in front.
 		} else {

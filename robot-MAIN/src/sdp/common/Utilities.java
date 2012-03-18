@@ -18,6 +18,9 @@ import sdp.common.geometry.Vector2D;
  */
 public class Utilities {
 	
+	/** Attack modes for optimal point calculations. */
+	public enum AttackMode { DirectOnly, WallsOnly, Full };
+	
 	/** The double comparison accuracy that is required. */
 	private static final double EPSILON = 1e-8;
 
@@ -100,7 +103,7 @@ public class Utilities {
 	 * @param angle Angle, in degrees.
 	 * @return Normalised angle, as described above.
 	 */
-	public static double normaliseAngle(double angle) {
+	public static double normaliseAngleToDegrees(double angle) {
 		angle = angle % 360;
 		if (angle > 180) {
 			angle -= 360;
@@ -114,15 +117,18 @@ public class Utilities {
 	
 
 	/**
-	 * converts to a short
-	 * @param angle
-	 * @return short between Short.MAX_VALUE and Short.MIN_VALUE
+	 * Normalise an angle to fit into interval [Short.MIN_VALUE; Short.MAX_VALUE).
+	 * 
+	 * @param angle Angle, in degrees.
+	 * @return Normalised angle, as described above.
 	 */
-	public static short normaliseToShort(double angle){
-		if (angle > Short.MAX_VALUE)
+	public static short normaliseAngleToShort(double angle){
+		if (angle > Short.MAX_VALUE) {
 			angle = Short.MAX_VALUE;
-		if (angle < Short.MIN_VALUE)
+		}
+		if (angle < Short.MIN_VALUE) {
 			angle = Short.MIN_VALUE;
+		}
 		return (short) angle;
 	}
 
@@ -246,17 +252,17 @@ public class Utilities {
 				orig.getWorldImage());
 	}
 	
-	
-	public static Point2D.Double getOptimalPointBehindBall(AIWorldState ws) {
-		return Utilities.getOptimalPointBehindBall(ws, POINT_OFFSET);
-	}
 
 	/**
 	 * Calculates all the points behind the ball that would align the robot to shoot and
 	 * returns the point closest to the robot.
+	 * 
+	 * TODO: Replace with getOptimalPoint.
+	 * 
 	 * @return The point closest to the robot that would allow it to shoot.
 	 * @throws NullPointerException Throws exception when the robot can't see a goal.
 	 */
+	@Deprecated
 	public static Point2D.Double getOptimalPointBehindBall(AIWorldState ws, double point_offset) {
 		Goal enemy_goal = new Goal(ws.getEnemyGoal().getCentre(), true);
 		Robot robot = ws.getRobot();
@@ -327,19 +333,12 @@ public class Utilities {
 	
 	
 	/**
-	 * Finds a point behind the ball that will put the robot in a curved path
-	 * ending at the ball with shooting direction.
-	 * @param ws
-	 * @return
-	 */
-	public static Vector2D getMovingPointBehindBall(AIWorldState ws, Vector2D last_point) {
-		return new Vector2D(getOptimalPointBehindBall(ws, POINT_OFFSET));
-	}
-
-	/**
-	  * Calculates all the points behind the ball that would align the robot to shoot and
+	 * Calculates all the points behind the ball that would align the robot to shoot and
 	 * returns the point closest to the robot.
 	 * It does not take into account the image goals
+	 * 
+	 * TODO: Replace with getOptimalPoint.
+	 * 
 	 * @param ws
 	 * @param my_goal_left
 	 * @param my_team_blue
@@ -347,6 +346,7 @@ public class Utilities {
 	 * @return the optimal point from which it can shoot
 	 * @throws NullPointerException
 	 */
+	@Deprecated
 	public static Point2D.Double getOptimalPointBehindBall(AIWorldState ws, double point_offset, boolean wall_priority) throws NullPointerException {
 		
 		Goal enemy_goal = ws.getEnemyGoal();
@@ -414,51 +414,77 @@ public class Utilities {
 
 
 		return min_point;
-		
-	}	
+	}
+	
+	
+	/**
+	 * Calculate the optimal point in the current world state. The optimal point
+	 * is a point that the robot should seek to go to next.
+	 * 
+	 * TODO: Move all logic out of deprecated functions here.
+	 * 
+	 * @param worldState Current world state.
+	 * @param distToBall Desired distance to the ball.
+	 * @param mode Robot's attack mode.
+	 * @return Optimal point on the field.
+	 */
+	public static Point2D.Double getOptimalPoint(AIWorldState worldState,
+			double distToBall, AttackMode mode) {
+		if (mode == AttackMode.DirectOnly) {
+			return getOptimalPointBehindBall(worldState, distToBall, false);
+		} else if (mode == AttackMode.WallsOnly) {
+			return getOptimalPointBehindBall(worldState, distToBall, true);
+		} else {	// mode == AttackMode.Full
+			return getOptimalPointBehindBall(worldState, distToBall);
+		}
+	}
+	
 
 	/**
-	 * Helper function to find if a specific point is within the enemy robot.
-	 * @param point The point to check.
-	 * @return Returns true if the point is within the enemy robot.
+	 * Check if the given point is inside the given robot.
+	 * 
+	 * @param point Point to check.
+	 * @param robot Robot to check.
+	 * @return If the point is inside the robot.
 	 */
-	public static boolean isPointInRobot(Point2D.Double point, Robot enemy_robot) {
-		if (GeomUtils.isPointInTriangle(point, enemy_robot.getFrontLeft(), enemy_robot.getFrontRight(), enemy_robot.getBackLeft()) || 
-				GeomUtils.isPointInTriangle(point, enemy_robot.getBackLeft(), enemy_robot.getBackRight(), enemy_robot.getFrontRight())){
-			return true;
-		}
-		return false;
+	public static boolean isPointInRobot(Point2D.Double point, Robot robot) {
+		return GeomUtils.isPointInQuadrilateral(point, robot.getFrontLeft(),
+				robot.getFrontRight(), robot.getBackRight(), robot.getBackLeft());
 	}
 
 
 	/**
-	 * Helper function to find if a specific point is around the enemy robot.
-	 * @param point The point to check.
-	 * @return Returns true if the point is within 1/3 of the length of the robot from the enemy robot.
+	 * Check whether the given point is inside or in the vicinity of the
+	 * given robot. Within vicinity means within half robot length to its side.
+	 * 
+	 * @param point Point of interest.
+	 * @param robot Robot in question.
+	 * @return Whether the point is around a robot.
 	 */
-	public static boolean isPointAroundRobot(Point2D.Double point, Robot enemy_robot){
+	public static boolean isPointAroundRobot(Point2D.Double point, Robot robot){
 		double offset = Robot.LENGTH_CM/2;
 		double length = Robot.LENGTH_CM;
 		double width = Robot.WIDTH_CM;
-		double angle = enemy_robot.getAngle();
+		double angle = robot.getAngle();
 
-		Point2D.Double frontLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2 + offset, width / 2 + offset), angle);
-		GeomUtils.translatePoint(frontLeftPoint, enemy_robot.getCoords());
+		Point2D.Double frontLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
+				new Point2D.Double(length / 2 + offset, width / 2 + offset), angle);
+		GeomUtils.translatePoint(frontLeftPoint, robot.getCoords());
 
-		Point2D.Double frontRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2 + offset, -width / 2 - offset), angle);
-		GeomUtils.translatePoint(frontRightPoint, enemy_robot.getCoords());
+		Point2D.Double frontRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
+				new Point2D.Double(length / 2 + offset, -width / 2 - offset), angle);
+		GeomUtils.translatePoint(frontRightPoint, robot.getCoords());
 
-		Point2D.Double backLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2 - offset, width / 2 + offset), angle);
-		GeomUtils.translatePoint(backLeftPoint, enemy_robot.getCoords());
+		Point2D.Double backLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
+				new Point2D.Double(-length / 2 - offset, width / 2 + offset), angle);
+		GeomUtils.translatePoint(backLeftPoint, robot.getCoords());
 
-		Point2D.Double backRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2 - offset, -width / 2 - offset), angle);
-		GeomUtils.translatePoint(backRightPoint, enemy_robot.getCoords());
-
-		if (GeomUtils.isPointInTriangle(point, frontLeftPoint, frontRightPoint, backLeftPoint) || 
-				GeomUtils.isPointInTriangle(point, backLeftPoint, backRightPoint, frontRightPoint)){
-			return true;
-		}
-		return false;	
+		Point2D.Double backRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
+				new Point2D.Double(-length / 2 - offset, -width / 2 - offset), angle);
+		GeomUtils.translatePoint(backRightPoint, robot.getCoords());
+		
+		return GeomUtils.isPointInQuadrilateral(point, frontLeftPoint, frontRightPoint,
+				backRightPoint, backLeftPoint);
 	}
 
 	/**
@@ -541,7 +567,7 @@ public class Utilities {
 	 * @return
 	 */
 	public static double getTurningAngle(Robot me, Vector2D point) {
-		return Utilities.normaliseAngle(-me.getAngle()+Vector2D.getDirection(new Vector2D(-me.getCoords().getX()+point.getX(), -me.getCoords().getY()+point.getY())));
+		return Utilities.normaliseAngleToDegrees(-me.getAngle()+Vector2D.getDirection(new Vector2D(-me.getCoords().getX()+point.getX(), -me.getCoords().getY()+point.getY())));
 	}
 
 	/**
@@ -1127,15 +1153,15 @@ public class Utilities {
 	 * @return the vector distance to the closest collision point a.k.a. the minimum distance determined by the scanning vector which swept the sector scan_count times.
 	 */
 	public static Vector2D getSector(WorldState ws, boolean am_i_blue, double start_angle, double end_angle, int scan_count, boolean include_ball_as_obstacle) {
-		start_angle = Utilities.normaliseAngle(start_angle);
-		end_angle = Utilities.normaliseAngle(end_angle);
+		start_angle = Utilities.normaliseAngleToDegrees(start_angle);
+		end_angle = Utilities.normaliseAngleToDegrees(end_angle);
 		final Robot me = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
 		final Vector2D zero = Vector2D.ZERO();
 		Double min_dist = null;
 		Vector2D min_vec = null;
-		final double sector_angle = Utilities.normaliseAngle(end_angle-start_angle);
+		final double sector_angle = Utilities.normaliseAngleToDegrees(end_angle-start_angle);
 		final double scan_angle = sector_angle/scan_count;
-		for (double angle = start_angle; Utilities.normaliseAngle(end_angle-angle) * sector_angle >= 0; angle+=scan_angle) {
+		for (double angle = start_angle; Utilities.normaliseAngleToDegrees(end_angle-angle) * sector_angle >= 0; angle+=scan_angle) {
 			final double ang_rad = angle*Math.PI/180d;
 			final Vector2D distV = raytraceVector(ws, me, zero, new Vector2D(-Math.cos(ang_rad), Math.sin(ang_rad)), am_i_blue, include_ball_as_obstacle);
 			final double dist = distV.getLength();
@@ -1156,8 +1182,8 @@ public class Utilities {
 		double sec_angle = 360d/sector_count;
 		for (int i = 0; i < sector_count; i++)
 			ans[i] = normalize_to_1 ?
-					NNetTools.AI_normalizeDistanceTo1(getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle), WorldState.PITCH_WIDTH_CM) :
-						getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle).getLength();
+					NNetTools.AI_normalizeDistanceTo1(getSector(ws, am_i_blue, Utilities.normaliseAngleToDegrees(-90+i*sec_angle), Utilities.normaliseAngleToDegrees(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle), WorldState.PITCH_WIDTH_CM) :
+						getSector(ws, am_i_blue, Utilities.normaliseAngleToDegrees(-90+i*sec_angle), Utilities.normaliseAngleToDegrees(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle).getLength();
 					return ans;
 	}
 
@@ -1169,7 +1195,7 @@ public class Utilities {
 		double[] ans = new double[sector_count];
 		double sec_angle = 360d/sector_count;
 		for (int i = 0; i < sector_count; i++)
-			ans[i] = NNetTools.AI_normalizeDistanceTo1(NNetTools.targetInSector(relative, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle)), WorldState.PITCH_WIDTH_CM);
+			ans[i] = NNetTools.AI_normalizeDistanceTo1(NNetTools.targetInSector(relative, Utilities.normaliseAngleToDegrees(-90+i*sec_angle), Utilities.normaliseAngleToDegrees(-90+(i+1)*sec_angle)), WorldState.PITCH_WIDTH_CM);
 		return ans;
 	}
 	

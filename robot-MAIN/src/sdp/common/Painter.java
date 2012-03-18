@@ -180,10 +180,10 @@ public class Painter {
 					int t = 0;
 					while (turn_ang == 999) {
 						for (int i = 0; i < COLL_SECS_COUNT; i++) {
-							double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
+							double ang = Utilities.normaliseAngleToDegrees(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
 							Vector2D vec = Vector2D.multiply(Vector2D.rotateVector(new Vector2D(1, 0), ang), point_dist);
 							if (Utilities.reachability(ai_world_state, Utilities.getGlobalVector(ai_world_state.getRobot(), vec), ai_world_state.getMyTeamBlue(), include_ball_as_obstacle, 1.5)) {	
-								double diff = Utilities.normaliseAngle(ang-point_dir);
+								double diff = Utilities.normaliseAngleToDegrees(ang-point_dir);
 								drawVector(new Vector2D(robot.getCoords()), Vector2D.subtract(Utilities.getGlobalVector(ai_world_state.getRobot(), vec), new Vector2D(robot.getCoords())), false);
 								if (Math.abs(diff) < Math.abs(temp)) {
 									temp = diff;
@@ -199,8 +199,8 @@ public class Painter {
 					}
 
 					g.setColor(new Color(255, 0, 0, 200));
-					double ang = Utilities.normaliseAngle(((-90+id*SEC_ANGLE)+(-90+(id+1)*SEC_ANGLE))/2);
-					double dista = Utilities.getSector(ai_world_state, ai_world_state.getMyTeamBlue(), Utilities.normaliseAngle(-90+id*SEC_ANGLE), Utilities.normaliseAngle(-90+(id+1)*SEC_ANGLE), 20, true).getLength();
+					double ang = Utilities.normaliseAngleToDegrees(((-90+id*SEC_ANGLE)+(-90+(id+1)*SEC_ANGLE))/2);
+					double dista = Utilities.getSector(ai_world_state, ai_world_state.getMyTeamBlue(), Utilities.normaliseAngleToDegrees(-90+id*SEC_ANGLE), Utilities.normaliseAngleToDegrees(-90+(id+1)*SEC_ANGLE), 20, true).getLength();
 					Vector2D vec = Vector2D.multiply(Vector2D.rotateVector(new Vector2D(1, 0), ang), dista);
 					Vector2D coor = new Vector2D(robot.getCoords());
 					drawVector(coor, Vector2D.subtract(Utilities.getGlobalVector(robot, vec), coor), true);

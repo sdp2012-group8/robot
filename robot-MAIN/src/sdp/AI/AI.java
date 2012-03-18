@@ -107,15 +107,15 @@ public abstract class AI {
 		}
 		
 		public short getShortSpeed() {
-			return normaliseSpeed(Utilities.normaliseToShort(speed));
+			return normaliseSpeed(Utilities.normaliseAngleToShort(speed));
 		}
 		
 		public short getShortTurnSpeed() {
-			return Utilities.normaliseToShort(turning_speed);
+			return Utilities.normaliseAngleToShort(turning_speed);
 		}
 		
 		public short getShortAcc() {
-			return Utilities.normaliseToShort(acceleration);
+			return Utilities.normaliseAngleToShort(acceleration);
 		}
 		
 		public boolean isDefaultAcc() {
