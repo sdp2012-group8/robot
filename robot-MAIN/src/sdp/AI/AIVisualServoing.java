@@ -10,10 +10,10 @@ import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
 
 public class AIVisualServoing extends AI {
-	
+
 	/** Whether the robot is allowed to drive in reverse. */
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
-	
+
 	/** The multiplier to the final speed. */
 	private final static double SPEED_MULTIPLIER = 1;
 	private final static double TURN_SPD_MULTIPLIER = 1.8;
@@ -31,9 +31,6 @@ public class AIVisualServoing extends AI {
 
 	/** Threshold for being at the target point */
 	private final static int POINT_ACCURACY = 5;
-	
-	/** How close the robot should be to the ball before it attempts to kick it. */
-	public static final double KICKABLE_BALL_DIST = 6;
 
 	private final static int MAX_TURN_ANG = (int) (SPEED_MULTIPLIER*180-100);
 	public final static double DEFAULT_POINT_OFF = 2*Robot.LENGTH_CM;
@@ -50,27 +47,38 @@ public class AIVisualServoing extends AI {
 
 	private Vector2D target = null;
 
-	
+
 	/**
 	 * @see sdp.AI.AI#chaseBall()
 	 */
 	@Override
 	protected Command chaseBall() throws IOException {
-		// Are we ready to score?
-		if (ai_world_state.getDistanceToBall() < KICKABLE_BALL_DIST) {
-			Point2D.Double intersection = GeomUtils.getLineIntersection(ai_world_state.getRobot().getCoords(),
-					ai_world_state.getRobot().getFrontCenter(), ai_world_state.getEnemyGoal().getTop(),
-					ai_world_state.getEnemyGoal().getBottom());
-			if (intersection != null && Utilities.lineIntersectsRobot(ai_world_state.getRobot().getCoords(),
-					intersection, ai_world_state.getEnemyRobot())) {
-				return gotBall();
-			}
+		if (Utilities.canRobotAttack(true, ai_world_state.getBallCoords(), ai_world_state.getEnemyRobot(),
+				ai_world_state.getRobot(), ai_world_state.getMyGoal())) {
+			return defendGoal();
+		} else {
+			return attack(Utilities.AttackMode.Full);
 		}
-		
+	}
+	
+
+	/**
+	 * Get a command to attack the opponents.
+	 * 
+	 * @param mode Robot's attack mode. See {@link Utilities.AttackMode}.
+	 * @return The next command the robot should execute.
+	 */
+	protected Command attack(Utilities.AttackMode mode) {
+		// Are we ready to score?
+		if (Utilities.canRobotAttack(false, ai_world_state.getBallCoords(), ai_world_state.getRobot(),
+				ai_world_state.getEnemyRobot(), ai_world_state.getEnemyGoal())) {
+			return gotBall();
+		}
+
 		// Get the point to drive towards.
 		target = new Vector2D(ai_world_state.getBallCoords());
+		Point2D.Double optimalPoint = Utilities.getOptimalPoint(ai_world_state, point_off, mode);
 		
-		Point2D.Double optimalPoint = Utilities.getOptimalPointBehindBall(ai_world_state, point_off);
 		if (optimalPoint != null) {
 			target = new Vector2D(optimalPoint);
 		}
@@ -105,7 +113,7 @@ public class AIVisualServoing extends AI {
 		normalizeSpeed(comm);
 		return comm;
 	}
-	
+
 	/**
 	 * Generate a command to get closer to a target point, which happens to be
 	 * the ball.
@@ -143,13 +151,13 @@ public class AIVisualServoing extends AI {
 				chasing_target = true;
 			}
 		}
-		
+
 		return comm;
 	}
 
-	
+
 	@Override
-	protected Command gotBall() throws IOException {
+	protected Command gotBall() {
 		point_off = DEFAULT_POINT_OFF;
 		Painter.point_off = point_off;
 		//System.out.println("GOT BALL");
@@ -217,31 +225,31 @@ public class AIVisualServoing extends AI {
 		Painter.debug = new Vector2D[] {new Vector2D(point), new Vector2D(point2), new Vector2D(point3)};
 
 
-		
+
 		if(ai_world_state.getEnemyRobot().getAngle()>-90 && ai_world_state.getEnemyRobot().getAngle()<90)
 			return chaseBall();
-		
+
 		if(is_main_point)	{
 			if (dist > 5)
 				com = getWaypointCommand(getNextWaypoint(new Vector2D(point), true), false);
 			reduceSpeed(com, dist, 20, 0);
 			return com;
 		}
-				
+
 		if(ai_world_state.getEnemyRobot().getAngle()<-90 && ai_world_state.getEnemyRobot().getAngle()>-180) {
 			if (dist2 > 10)
 				com = getWaypointCommand(getNextWaypoint(new Vector2D(point2), true), false);
 			reduceSpeed(com, dist2, 20, 0);
 			return com;
 		}
-		
+
 		if(ai_world_state.getEnemyRobot().getAngle()>90 && ai_world_state.getEnemyRobot().getAngle()<180 ){
 			if (dist3 > 10)
 				com = getWaypointCommand(getNextWaypoint(new Vector2D(point3), true), false);
 			reduceSpeed(com, dist3, 20, 0);
 			return com;
 		}
-		
+
 		return null;
 	}
 
@@ -278,16 +286,21 @@ public class AIVisualServoing extends AI {
 		Point2D.Double interceptBall= GeomUtils.getLineIntersection(ai_world_state.getEnemyRobot().getFrontCenter(), ai_world_state.getEnemyRobot().getCoords(), ai_world_state.getRobot().getCoords(), ai_world_state.getRobot().getFrontCenter());
 		System.out.println("InterceptDistance: " + interceptBall);
 		System.out.println("Our robot's y: " + ai_world_state.getRobot().getCoords().y);
-
+		double dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(interceptBall)).getLength();
+        Command com =new Command(0, 0, false);
 		if (!interceptBall.equals(null)){
 
 			if((interceptBall.y < ai_world_state.getMyGoal().getBottom().y)  && (interceptBall.y > ai_world_state.getMyGoal().getTop().y)){
 				if ((interceptBall.y > ai_world_state.getRobot().getCoords().y)  ){
 					short forward_speed = (short) -20;
-					return new Command(forward_speed, 0, false);
+					 com.speed=forward_speed;
+					reduceSpeed(com, dist, 20, 0);
+					return com;
 				} else if((interceptBall.y < ai_world_state.getRobot().getCoords().y)) {
 					short forward_speed = (short) 20;
-					return new Command(forward_speed, 0, false);
+					 com.speed=forward_speed;
+					 reduceSpeed(com, dist, 20, 0);
+					return  com;
 				}
 			}
 			else
@@ -301,8 +314,16 @@ public class AIVisualServoing extends AI {
 
 	}
 
+	/**
+	 * Go into chaseBall(priority), which is chaseBall, but 
+	 * you can specify if you want to shoot only into the main goal, 
+	 * only into the image goals of in both
+	 */
 	@Override
 	protected Command penaltiesAttack() throws IOException {
+		return attack(Utilities.AttackMode.WallsOnly);
+		
+		/*
 		Command command = new Command(0,0,false);
 
 		Point2D.Double pointInGoal= 
@@ -343,8 +364,7 @@ public class AIVisualServoing extends AI {
 				//ai_world_state.getEnemyGoal().getTop().y);
 				//mComm.sendMessage(opcode.kick);
 			}
-		}
-		return null;
+		}  */
 	}
 
 
@@ -359,7 +379,7 @@ public class AIVisualServoing extends AI {
 	private Waypoint getNextWaypoint(Vector2D target, boolean ballIsObstacle) {
 		// Target point data in local coordinates.
 		Vector2D targetLocal = Utilities.getLocalVector(ai_world_state.getRobot(), target);
-		
+
 		// Which objects to consider as obstacles?
 		int obstacleFlags = 0;
 		obstacleFlags |= (ai_world_state.getMyTeamBlue()
@@ -368,31 +388,31 @@ public class AIVisualServoing extends AI {
 		if (ballIsObstacle) {
 			obstacleFlags |= Utilities.BALL_IS_OBSTACLE_FLAG;
 		}
-		
+
 		// Check if the target point is directly visible.
 		Vector2D ownCoords = new Vector2D(ai_world_state.getRobot().getCoords());
 		if (Utilities.isDirectPathClear(ai_world_state, ownCoords, target, obstacleFlags)) {
 			return new Waypoint(targetLocal, true);
 		}
-		
+
 		// Compute the destination point.
 		Vector2D destPoint = null;
 		double destPointDist = targetLocal.getLength();
-		
+
 		double minAngle = Double.MAX_VALUE;
 		int iterations = 0;
-		
+
 		while ((destPoint == null) && (iterations < 5) && (destPointDist > 0)) {
 			for (int i = 0; i < COLL_SECS_COUNT; i++) {
 				double curAngle = -90 + i * SEC_ANGLE + SEC_ANGLE / 2;
-				curAngle = Utilities.normaliseAngle(curAngle);
+				curAngle = Utilities.normaliseAngleToDegrees(curAngle);
 
 				Vector2D rayDir = Vector2D.rotateVector(new Vector2D(1, 0), curAngle);
 				Vector2D rayEndLocal = Vector2D.multiply(rayDir, destPointDist);
 				Vector2D rayEnd = Utilities.getGlobalVector(ai_world_state.getRobot(), rayEndLocal);
-				
+
 				if (Utilities.isDirectPathClear(ai_world_state, ownCoords, rayEnd, obstacleFlags)) {
-					double angleDiff = Utilities.normaliseAngle(curAngle - targetLocal.getDirection());
+					double angleDiff = Utilities.normaliseAngleToDegrees(curAngle - targetLocal.getDirection());
 					if (Math.abs(angleDiff) < Math.abs(minAngle)) {
 						minAngle = angleDiff;
 						destPoint = rayEndLocal;
@@ -407,11 +427,11 @@ public class AIVisualServoing extends AI {
 		if (destPoint == null) {
 			destPoint = targetLocal;
 		}
-				
+
 		return new Waypoint(destPoint, false);
 	}
-	
-	
+
+
 	/**
 	 * Generate a command that will get the robot closer to the specified
 	 * waypoint.
@@ -424,28 +444,28 @@ public class AIVisualServoing extends AI {
 	 */
 	private Command getWaypointCommand(Waypoint waypoint, boolean mustFaceTarget) {
 		Command comm = new Command(0.0, 0.0, false);
-		
+
 		comm.turning_speed = waypoint.getTurningAngle();
 
 		// Ball is behind.
 		if (Math.abs(waypoint.getTurningAngle()) > 90) {
 			comm.speed = -MAX_SPEED_CM_S;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
-				comm.turning_speed = Utilities.normaliseAngle(waypoint.getTurningAngle() - 180);
+				comm.turning_speed = Utilities.normaliseAngleToDegrees(waypoint.getTurningAngle() - 180);
 			}		
 		// Ball is in front.
 		} else {
 			comm.speed = MAX_SPEED_CM_S;
 		}
-		
+
 		reactToFrontBackCollisions(comm, true, waypoint.isEndpoint() ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
 		reactToCornerCollisions(comm, waypoint.isEndpoint() ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
 
 		if ((Math.abs(waypoint.getTurningAngle()) < 45) && (waypoint.getDistance() < TARG_THRESH)) {
 			point_off *= 0.7;
 		}
-		if (point_off < KICKABLE_BALL_DIST) {
-			point_off = KICKABLE_BALL_DIST;
+		if (point_off < Utilities.KICKABLE_BALL_DIST) {
+			point_off = Utilities.KICKABLE_BALL_DIST;
 		}
 
 		Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
@@ -458,17 +478,17 @@ public class AIVisualServoing extends AI {
 				point_off = DEFAULT_POINT_OFF;
 			}
 		}
-		
+
 		reduceSpeed(comm, waypoint.getDistance(), 30, MAX_SPEED_CM_S/2);
-		
+
 		Painter.point_off = point_off;
 
 		comm.turning_speed *= TURN_SPD_MULTIPLIER;
 		comm.speed *= SPEED_MULTIPLIER;
 		comm.acceleration = 100;
-		
+
 		normalizeSpeed(comm);
-		
+
 		return comm;
 	}
 
@@ -500,7 +520,7 @@ public class AIVisualServoing extends AI {
 				}
 				command.speed *= speed_coeff;
 			}
-		
+
 		// Collision in the back.
 		} else if (backCollDist < threshold) {
 			if (command.speed <= 0) {
@@ -526,17 +546,17 @@ public class AIVisualServoing extends AI {
 	 */
 	private void reactToCornerCollisions(Command command, double threshold) {
 		Vector2D nearestColl = Utilities.getNearestCollisionPoint(ai_world_state, ai_world_state.getMyTeamBlue(), ai_world_state.getRobot().getCoords());
-		
+
 		Vector2D frontLeft = Utilities.getLocalVector(ai_world_state.getRobot(), Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontLeft()), nearestColl));
 		Vector2D frontRight = Utilities.getLocalVector(ai_world_state.getRobot(), Vector2D.add(new Vector2D(ai_world_state.getRobot().getFrontRight()), nearestColl));
 		Vector2D backLeft = Utilities.getLocalVector(ai_world_state.getRobot(), Vector2D.add(new Vector2D(ai_world_state.getRobot().getBackLeft()), nearestColl));
 		Vector2D backRight = Utilities.getLocalVector(ai_world_state.getRobot(), Vector2D.add(new Vector2D(ai_world_state.getRobot().getBackRight()), nearestColl));
-		
+
 		boolean haveFrontLeftColl = (frontLeft.getLength() <= threshold);
 		boolean haveFrontRightColl = (frontRight.getLength() <= threshold);
 		boolean haveBackLeftColl = (backLeft.getLength() <= threshold);
 		boolean haveBackRightColl = (backRight.getLength() <= threshold);
-		
+
 		boolean haveFrontColl = haveFrontLeftColl || haveFrontRightColl;
 		boolean haveAnyColl = haveFrontLeftColl || haveFrontRightColl || haveBackLeftColl || haveBackRightColl;
 
@@ -571,11 +591,11 @@ public class AIVisualServoing extends AI {
 		if (distance >= threshold) {
 			return;
 		}
-		
+
 		if (command.speed < 0) {
 			baseSpeed = -baseSpeed;
 		}
-		
+
 		if (Math.abs(command.speed) < Math.abs(baseSpeed)) {
 			command.speed = baseSpeed;
 		} else {
@@ -598,7 +618,7 @@ public class AIVisualServoing extends AI {
 		}
 	}
 
-	
+
 	/**
 	 * @see sdp.AI.AI#sit()
 	 */
@@ -608,8 +628,8 @@ public class AIVisualServoing extends AI {
 		Painter.point_off = point_off;
 		return super.sit();
 	}
-	
-	
+
+
 	/**
 	 * A compatibility method to return a command from a waypoint using the
 	 * old method.
@@ -623,12 +643,12 @@ public class AIVisualServoing extends AI {
 		Command comm = new Command(0.0, 0.0, false);
 
 		comm.turning_speed = waypoint.getTurningAngle();
-		
+
 		// Ball is behind.
 		if (Math.abs(comm.turning_speed) > 90) {
 			comm.speed = -MAX_SPEED_CM_S;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
-				comm.turning_speed = Utilities.normaliseAngle(comm.turning_speed - 180);
+				comm.turning_speed = Utilities.normaliseAngleToDegrees(comm.turning_speed - 180);
 			}		
 		// Ball is in front.
 		} else {
@@ -640,8 +660,9 @@ public class AIVisualServoing extends AI {
 
 		// check if either of the corners are in collision
 		reactToCornerCollisions(comm, waypoint.isEndpoint() ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
-		
+
 		return comm;
 	}
 
 }
+

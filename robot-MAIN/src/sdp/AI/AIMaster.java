@@ -10,6 +10,7 @@ import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
+import sdp.common.geometry.Vector2D;
 
 
 /**
@@ -36,7 +37,8 @@ public class AIMaster extends AIListener {
 	/** Distance from the goal when the AI changes from Penalty mode to play mode */
 	private final static int PENALTIES_THRESH = 30; 
 
-	
+	/** The threshold distance for defend goal */
+	private final static double DEFEND_THRESH = WorldState.PITCH_WIDTH_CM / 2 - 20;
 
 	private AI ai;
 	private mode state = mode.SIT;
@@ -92,11 +94,11 @@ public class AIMaster extends AIListener {
 				command.turning_speed = -90;
 			}
 			
-			if (command == null){
-				command = new Command(0, 0, false);
-			}
+			if (command != null){
+				ai_world_state.setCommand(command);
 			
-			ai_world_state.setCommand(command);
+			
+	//		ai_world_state.setCommand(command);
 
 			if (command.isDefaultAcc())
 				mComm.sendMessage(opcode.operate, command.getShortSpeed(), command.getShortTurnSpeed());
@@ -107,7 +109,7 @@ public class AIMaster extends AIListener {
 				System.out.println("kicking");
 				mComm.sendMessage(opcode.kick);
 			}
-			
+			}
 			//System.out.println("ws: "+ai_world_state.getMyGoalLeft());
 			
 		} catch (IOException e) {
@@ -151,7 +153,27 @@ public class AIMaster extends AIListener {
 						my_goal_left && ball.x > WorldState.PITCH_WIDTH_CM - PENALTIES_THRESH) {
 					setState(mode.PLAY);
 				}
-		} 
+		} else  //PLAY->DEFEND_GOAL
+			if (state == mode.PLAY) {
+				//if the enemy robot has the ball and it is close to our goal, go to defend
+				Vector2D enemyDistance = Vector2D.subtract(new Vector2D(ai_world_state.getEnemyRobot().getCoords()), new Vector2D(ball));
+				
+				if ((((my_goal_left && ball.x < DEFEND_THRESH)  || 
+						(!my_goal_left && ball.x < WorldState.PITCH_WIDTH_CM - DEFEND_THRESH))
+						&& enemyDistance.getLength() < 30)){
+					setState(mode.DEFEND_GOAL);
+				}
+						
+			}
+			else  //DEFEND_GOAL -> PLAY 
+				if (state == mode.DEFEND_GOAL) {
+					//if the enemy robot is at a greater distance from the ball, go into play mode
+					Vector2D enemyDistance = Vector2D.subtract(new Vector2D(ai_world_state.getEnemyRobot().getCoords()), new Vector2D(ball));
+					
+					if (enemyDistance.getLength() > 30){
+						setState(mode.PLAY);
+					}
+				}
 
 	}
 

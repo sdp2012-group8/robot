@@ -57,13 +57,13 @@ public class NNetTools {
 	
 	public static Vector2D targetInSector(Vector2D relative, double start_angle, double end_angle) {
 		double ang = Vector2D.getDirection(relative);
-		if (Utilities.normaliseAngle(end_angle - start_angle) < 0) {
+		if (Utilities.normaliseAngleToDegrees(end_angle - start_angle) < 0) {
 			double temp = start_angle;
 			start_angle = end_angle;
 			end_angle = temp;
 		}
 
-		return Utilities.normaliseAngle(ang - start_angle) >= 0 && Utilities.normaliseAngle(ang - end_angle) < 0 ? relative : new Vector2D(5*WorldState.PITCH_WIDTH_CM, 0);
+		return Utilities.normaliseAngleToDegrees(ang - start_angle) >= 0 && Utilities.normaliseAngleToDegrees(ang - end_angle) < 0 ? relative : new Vector2D(5*WorldState.PITCH_WIDTH_CM, 0);
 	}
 	
 

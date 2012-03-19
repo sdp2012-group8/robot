@@ -112,6 +112,26 @@ public class GeomUtils {
 				&& GeomUtils.doesSegmentIntersectLine(p, b, a, c)
 				&& GeomUtils.doesSegmentIntersectLine(p, c, a, b));
 	}
+	
+	/**
+	 * Checks whether a point is contained within some quadrilateral.
+	 * 
+	 * This function assumes that the quadrilateral in question is convex and
+	 * that the vertices are passed in clockwise order.
+	 * 
+	 * @param p A point of interest.
+	 * @param q1 First vertex of the quadrilateral.
+	 * @param q2 Second vertex of the quadrilateral.
+	 * @param q3 Third vertex of the quadrilateral.
+	 * @param q4 Fourth vertex of the quadrilateral.
+	 * @return Whether the point is inside the quadrilateral.
+	 */
+	public static boolean isPointInQuadrilateral(Point2D.Double p, Point2D.Double q1,
+			Point2D.Double q2, Point2D.Double q3, Point2D.Double q4) {
+		return (GeomUtils.isPointInTriangle(p, q1, q2, q3)
+				|| GeomUtils.isPointInTriangle(p, q3, q4, q1));
+	}
+	
 
 	/**
 	 * Find the point where two lines intersect. If such point does not exist,
