@@ -35,8 +35,8 @@ public class AIVisualServoing extends AI {
 	private final static int MAX_TURN_ANG = (int) (SPEED_MULTIPLIER*180-100);
 	public final static double DEFAULT_POINT_OFF = 2*Robot.LENGTH_CM;
 	private double point_off = DEFAULT_POINT_OFF;
-	public final static double TARG_THRESH = 40;
-
+	public final static double DEFAULT_TARG_THRESH = 30;
+	private double targ_thresh = DEFAULT_TARG_THRESH;
 
 
 	/**
@@ -84,7 +84,7 @@ public class AIVisualServoing extends AI {
 		}
 
 		// Generate command to drive towards the target point.
-		boolean mustFaceTarget = (point_off != TARG_THRESH);
+		boolean mustFaceTarget = (point_off != DEFAULT_TARG_THRESH);
 
 		Waypoint waypoint = getNextWaypoint(target, true);
 		return getWaypointCommand(waypoint, mustFaceTarget);
@@ -159,6 +159,7 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Command gotBall() {
 		point_off = DEFAULT_POINT_OFF;
+		targ_thresh = DEFAULT_TARG_THRESH;
 		Painter.point_off = point_off;
 		//System.out.println("GOT BALL");
 		double angle = ai_world_state.getRobot().getAngle();
@@ -201,6 +202,8 @@ public class AIVisualServoing extends AI {
 
 		if (intercept != null){
 
+			//TODO: Re-check this
+			/* What is this doing? */
 			if (ai_world_state.getMyGoalLeft()){
 				point= intercept;
 			} else {
@@ -251,6 +254,15 @@ public class AIVisualServoing extends AI {
 		}
 
 		return null;
+	}
+	
+	/**
+	 * This is called by the AIMaster every time the state is changed
+	 */
+	protected void changedState() {
+		point_off = DEFAULT_POINT_OFF;
+		targ_thresh = DEFAULT_TARG_THRESH;
+		Painter.point_off = point_off;
 	}
 
 	@Override
@@ -461,8 +473,9 @@ public class AIVisualServoing extends AI {
 		reactToFrontBackCollisions(comm, true, waypoint.isEndpoint() ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
 		reactToCornerCollisions(comm, waypoint.isEndpoint() ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
 
-		if ((Math.abs(waypoint.getTurningAngle()) < 45) && (waypoint.getDistance() < TARG_THRESH)) {
+		if ((Math.abs(waypoint.getTurningAngle()) < 45) && (waypoint.getDistance() < targ_thresh)) {
 			point_off *= 0.7;
+			targ_thresh *= 0.4;
 		}
 		if (point_off < Utilities.KICKABLE_BALL_DIST) {
 			point_off = Utilities.KICKABLE_BALL_DIST;

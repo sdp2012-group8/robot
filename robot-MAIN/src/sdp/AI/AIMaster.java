@@ -183,6 +183,7 @@ public class AIMaster extends AIListener {
 	public void setState(mode new_state) {
 		state = new_state;
 		System.out.println("Changed State to - " + state);
+		ai.changedState();
 	}
 	
 	/**

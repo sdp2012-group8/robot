@@ -41,4 +41,10 @@ public class AITest extends AI{
 		return null;
 	}
 
+	@Override
+	protected void changedState() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
