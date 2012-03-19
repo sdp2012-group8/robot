@@ -32,6 +32,11 @@ public class Utilities {
 	
 	/** How close the robot should be to the ball before it attempts to kick it. */
 	public static final double KICKABLE_BALL_DIST = 6;
+	/** How close the robot should be to the ball before it attempts to kick it. */
+	public static final double ENEMY_KICKABLE_BALL_DIST = 20;
+	
+	/** The maximum attack angle for an attacking robot. */
+	public static final double KICKABLE_ATTACK_ANGLE = 40.0;
 	
 	/** A flag that denotes that ball should be considered an obstacle. */
 	public static final int BALL_IS_OBSTACLE_FLAG = 0x1;
@@ -257,20 +262,14 @@ public class Utilities {
 	
 	
 	/**
-	 * Checks whether a robot can directly attack the given goal.
+	 * Checks whether our robot can directly attack the enemy goal.
 	 * 
-	 * @param checkDirect Check whether a robot can shoot directly into the
-	 * 		goal. Set to false if testing for indirect shots.
-	 * @param ball Coordinates of the ball.
-	 * @param robot Robot in question.
-	 * @param enemy Enemy robot. Leave null to skip this check.
-	 * @param goal Goal in question.
+	 * @param worldState Current world state.
 	 * @return Whether the gates can be attacked.
 	 */
-	public static boolean canRobotAttack(boolean checkDirect, Point2D.Double ball,
-			Robot robot, Robot enemy, Goal goal) {
-		Vector2D robotToBallVec = Vector2D.subtract(new Vector2D(ball), new Vector2D(robot.getCoords()));
-		Vector2D ballToGoalVec = Vector2D.subtract(new Vector2D(goal.getCentre()), new Vector2D(ball));
+	public static boolean canWeAttack(AIWorldState worldState) {
+		Vector2D robotToBallVec = Vector2D.subtract(new Vector2D(worldState.getBallCoords()), new Vector2D(worldState.getRobot().getCoords()));
+		Vector2D ballToGoalVec = Vector2D.subtract(new Vector2D(worldState.getEnemyGoal().getCentre()), new Vector2D(worldState.getBallCoords()));
 		
 		double attackAngle = robotToBallVec.getDirection() - ballToGoalVec.getDirection();
 		attackAngle = normaliseAngleToDegrees(attackAngle);
@@ -278,18 +277,37 @@ public class Utilities {
 		if (robotToBallVec.getLength() > (KICKABLE_BALL_DIST + Robot.LENGTH_CM / 2)) {
 			return false;
 		}
-		if (checkDirect) {
-			if (Math.abs(attackAngle) > 40.0) {
-				return false;
-			}
-			if (!Utilities.lineIntersectsRobot(goal.getCentre(), ball, robot)) {
-				return false;
-			}
+		if (!Utilities.lineIntersectsRobot(worldState.getRobot().getCoords(), worldState.getRobot().getFrontCenter(), worldState.getEnemyRobot())) {
+			return false;
 		}
-		if (enemy != null) {
-			if (!Utilities.lineIntersectsRobot(robot.getCoords(), robot.getFrontCenter(), enemy)) {
-				return false;
-			}
+		
+		return true;
+	}
+	
+	/**
+	 * Checks whether enemy robot can directly attack our goal.
+	 * 
+	 * @param worldState Current world state.
+	 * @return Whether the gates can be attacked.
+	 */
+	public static boolean canEnemyAttack(AIWorldState worldState) {
+		Vector2D robotToBallVec = Vector2D.subtract(new Vector2D(worldState.getBallCoords()), new Vector2D(worldState.getEnemyRobot().getCoords()));
+		Vector2D ballToGoalVec = Vector2D.subtract(new Vector2D(worldState.getMyGoal().getCentre()), new Vector2D(worldState.getBallCoords()));
+		
+		double attackAngle = robotToBallVec.getDirection() - ballToGoalVec.getDirection();
+		attackAngle = normaliseAngleToDegrees(attackAngle);
+		
+		if (robotToBallVec.getLength() > (ENEMY_KICKABLE_BALL_DIST + Robot.LENGTH_CM / 2)) {
+			return false;
+		}
+		if (Math.abs(attackAngle) > KICKABLE_ATTACK_ANGLE) {
+			return false;
+		}
+		if (!Utilities.lineIntersectsRobot(worldState.getMyGoal().getCentre(), worldState.getBallCoords(), worldState.getRobot())) {
+			return false;
+		}
+		if (!Utilities.lineIntersectsRobot(worldState.getEnemyRobot().getCoords(), worldState.getEnemyRobot().getFrontCenter(), worldState.getRobot())) {
+			return false;
 		}
 		
 		return true;
