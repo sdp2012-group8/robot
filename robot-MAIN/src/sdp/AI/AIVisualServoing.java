@@ -32,9 +32,6 @@ public class AIVisualServoing extends AI {
 	/** Threshold for being at the target point */
 	private final static int POINT_ACCURACY = 5;
 
-	/** How close the robot should be to the ball before it attempts to kick it. */
-	public static final double KICKABLE_BALL_DIST = 6;
-
 	private final static int MAX_TURN_ANG = (int) (SPEED_MULTIPLIER*180-100);
 	public final static double DEFAULT_POINT_OFF = 2*Robot.LENGTH_CM;
 	private double point_off = DEFAULT_POINT_OFF;
@@ -56,7 +53,12 @@ public class AIVisualServoing extends AI {
 	 */
 	@Override
 	protected Command chaseBall() throws IOException {
-		return attack(Utilities.AttackMode.Full);
+		if (Utilities.canRobotAttack(true, ai_world_state.getBallCoords(), ai_world_state.getEnemyRobot(),
+				ai_world_state.getRobot(), ai_world_state.getMyGoal())) {
+			return defendGoal();
+		} else {
+			return attack(Utilities.AttackMode.Full);
+		}
 	}
 	
 
@@ -68,14 +70,9 @@ public class AIVisualServoing extends AI {
 	 */
 	protected Command attack(Utilities.AttackMode mode) {
 		// Are we ready to score?
-		if (ai_world_state.getDistanceToBall() < KICKABLE_BALL_DIST) {
-			Point2D.Double intersection = GeomUtils.getLineIntersection(ai_world_state.getRobot().getCoords(),
-					ai_world_state.getRobot().getFrontCenter(), ai_world_state.getEnemyGoal().getTop(),
-					ai_world_state.getEnemyGoal().getBottom());
-			if (intersection != null && Utilities.lineIntersectsRobot(ai_world_state.getRobot().getCoords(),
-					intersection, ai_world_state.getEnemyRobot())) {
-				return gotBall();
-			}
+		if (Utilities.canRobotAttack(false, ai_world_state.getBallCoords(), ai_world_state.getRobot(),
+				ai_world_state.getEnemyRobot(), ai_world_state.getEnemyGoal())) {
+			return gotBall();
 		}
 
 		// Get the point to drive towards.
@@ -467,8 +464,8 @@ public class AIVisualServoing extends AI {
 		if ((Math.abs(waypoint.getTurningAngle()) < 45) && (waypoint.getDistance() < TARG_THRESH)) {
 			point_off *= 0.7;
 		}
-		if (point_off < KICKABLE_BALL_DIST) {
-			point_off = KICKABLE_BALL_DIST;
+		if (point_off < Utilities.KICKABLE_BALL_DIST) {
+			point_off = Utilities.KICKABLE_BALL_DIST;
 		}
 
 		Vector2D ball = new Vector2D(ai_world_state.getBallCoords());
