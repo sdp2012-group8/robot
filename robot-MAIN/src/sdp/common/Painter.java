@@ -137,7 +137,6 @@ public class Painter {
 						target = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, point_off));
 
 					} catch (NullPointerException e) {
-						System.out.println("Didn't Find Point");
 						target = new Vector2D(state_cm.getBallCoords());
 					}
 

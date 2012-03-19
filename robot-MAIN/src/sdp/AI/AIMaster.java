@@ -2,6 +2,8 @@ package sdp.AI;
 
 import java.awt.geom.Point2D;
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 //import sdp.AI.neural.AINeuralNetwork;
 import sdp.AI.AI.Command;
@@ -156,23 +158,28 @@ public class AIMaster extends AIListener {
 		} else  //PLAY->DEFEND_GOAL
 			if (state == mode.PLAY) {
 				//if the enemy robot has the ball and it is close to our goal, go to defend
-				Vector2D enemyDistance = Vector2D.subtract(new Vector2D(ai_world_state.getEnemyRobot().getCoords()), new Vector2D(ball));
-				
-				if ((((my_goal_left && ball.x < DEFEND_THRESH)  || 
-						(!my_goal_left && ball.x < WorldState.PITCH_WIDTH_CM - DEFEND_THRESH))
-						&& enemyDistance.getLength() < 30)){
-					setState(mode.DEFEND_GOAL);
-				}
+//				Vector2D enemyDistance = Vector2D.subtract(new Vector2D(ai_world_state.getEnemyRobot().getCoords()), new Vector2D(ball));
+//				
+//				if ((((my_goal_left && ball.x < DEFEND_THRESH)  || 
+//						(!my_goal_left && ball.x < WorldState.PITCH_WIDTH_CM - DEFEND_THRESH))
+//						&& enemyDistance.getLength() < 30)){
+//					setState(mode.DEFEND_GOAL);
+//				}
 						
 			}
 			else  //DEFEND_GOAL -> PLAY 
 				if (state == mode.DEFEND_GOAL) {
 					//if the enemy robot is at a greater distance from the ball, go into play mode
-					Vector2D enemyDistance = Vector2D.subtract(new Vector2D(ai_world_state.getEnemyRobot().getCoords()), new Vector2D(ball));
+//					Vector2D enemyDistance = Vector2D.subtract(new Vector2D(ai_world_state.getEnemyRobot().getCoords()), new Vector2D(ball));
+//					
+//					if (enemyDistance.getLength() > 30){
+//						setState(mode.PLAY);
+//					}
 					
-					if (enemyDistance.getLength() > 30){
+					Vector2D myDistance = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(ball));
+					
+					if (myDistance.getLength() < 20)
 						setState(mode.PLAY);
-					}
 				}
 
 	}
@@ -183,6 +190,16 @@ public class AIMaster extends AIListener {
 	public void setState(mode new_state) {
 		state = new_state;
 		System.out.println("Changed State to - " + state);
+		
+//		if (state == mode.DEFEND_GOAL) {
+//			Timer t = new Timer();
+//			t.schedule(new TimerTask() {
+//				@Override
+//				public void run() {
+//					setState(AIMaster.mode.PLAY);
+//				}
+//			}, 6000);
+//		}
 	}
 	
 	/**

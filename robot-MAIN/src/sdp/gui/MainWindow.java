@@ -131,7 +131,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				try {
-					com.sendMessage(opcode.exit);
+					if (com != null)
+						com.sendMessage(opcode.exit);
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}

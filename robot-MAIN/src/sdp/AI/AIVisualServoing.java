@@ -232,21 +232,23 @@ public class AIVisualServoing extends AI {
 		if(is_main_point)	{
 			if (dist > 5)
 				com = getWaypointCommand(getNextWaypoint(new Vector2D(point), true), false);
-			reduceSpeed(com, dist, 20, 0);
+			com.acceleration = 150;
 			return com;
 		}
 
 		if(ai_world_state.getEnemyRobot().getAngle()<-90 && ai_world_state.getEnemyRobot().getAngle()>-180) {
 			if (dist2 > 10)
 				com = getWaypointCommand(getNextWaypoint(new Vector2D(point2), true), false);
-			reduceSpeed(com, dist2, 20, 0);
+			//reduceSpeed(com, dist2, 20, 0);
+			com.acceleration = 150;
 			return com;
 		}
 
 		if(ai_world_state.getEnemyRobot().getAngle()>90 && ai_world_state.getEnemyRobot().getAngle()<180 ){
 			if (dist3 > 10)
 				com = getWaypointCommand(getNextWaypoint(new Vector2D(point3), true), false);
-			reduceSpeed(com, dist3, 20, 0);
+			//reduceSpeed(com, dist3, 20, 0);
+			com.acceleration = 150;
 			return com;
 		}
 
@@ -458,8 +460,8 @@ public class AIVisualServoing extends AI {
 			comm.speed = MAX_SPEED_CM_S;
 		}
 
-		reactToFrontBackCollisions(comm, true, waypoint.isEndpoint() ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
-		reactToCornerCollisions(comm, waypoint.isEndpoint() ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
+		//reactToFrontBackCollisions(comm, true, waypoint.isEndpoint() ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
+		//reactToCornerCollisions(comm, waypoint.isEndpoint() ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
 
 		if ((Math.abs(waypoint.getTurningAngle()) < 45) && (waypoint.getDistance() < TARG_THRESH)) {
 			point_off *= 0.7;

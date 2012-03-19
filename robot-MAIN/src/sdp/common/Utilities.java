@@ -270,13 +270,21 @@ public class Utilities {
 	public static boolean canWeAttack(AIWorldState worldState) {
 		Vector2D robotToBallVec = Vector2D.subtract(new Vector2D(worldState.getBallCoords()), new Vector2D(worldState.getRobot().getCoords()));
 		Vector2D ballToGoalVec = Vector2D.subtract(new Vector2D(worldState.getEnemyGoal().getCentre()), new Vector2D(worldState.getBallCoords()));
+		Vector2D localBall = Utilities.getLocalVector(worldState.getRobot(), new Vector2D(worldState.getBallCoords()));
+		
 		
 		double attackAngle = robotToBallVec.getDirection() - ballToGoalVec.getDirection();
 		attackAngle = normaliseAngleToDegrees(attackAngle);
 		
-		if (robotToBallVec.getLength() > (KICKABLE_BALL_DIST + Robot.LENGTH_CM / 2)) {
+		if (!(localBall.x < Robot.LENGTH_CM / 2 + KICKABLE_BALL_DIST && localBall.x > 0 && localBall.y < Robot.WIDTH_CM/2 && localBall.y > -Robot.WIDTH_CM/2)) {
 			return false;
+		} else {
+			System.out.println("I can kick da ball!!!!");
 		}
+		
+//		if (robotToBallVec.getLength() > (KICKABLE_BALL_DIST + Robot.LENGTH_CM / 2)) {
+//			
+//		}
 		if (!Utilities.lineIntersectsRobot(worldState.getRobot().getCoords(), worldState.getRobot().getFrontCenter(), worldState.getEnemyRobot())) {
 			return false;
 		}

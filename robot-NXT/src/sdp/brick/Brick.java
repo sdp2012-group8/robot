@@ -7,6 +7,7 @@ import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
 
 import lejos.nxt.Battery;
+import lejos.nxt.LCD;
 import lejos.nxt.Motor;
 import lejos.nxt.NXT;
 import lejos.nxt.SensorPort;
@@ -46,16 +47,18 @@ public class Brick {
 			private int battery = 0;
 			
 			public void run() {
-				UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
 				TouchSensor left = new TouchSensor(SensorPort.S3);
 				TouchSensor right = new TouchSensor(SensorPort.S4);
+				UltrasonicSensor sens = new UltrasonicSensor(SensorPort.S1);
 				sens.continuous();
 				while (is_on) {
 					if (mComm != null) {
 						try {
-						int dist = sens.getDistance();
+							LCD.clear(0);					
+						int dist = sens.getDistance();	
 						collision = dist < coll_threshold;
 						boolean left_pressed = left.isPressed(), right_pressed = right.isPressed();
+						LCD.drawString(dist+"cm", 0, 0);
 						if (collision != dist_old)
 							mComm.sendMessage(opcode.sensor_dist, (short) (collision ? 1 : 0));
 						if (left_old != left_pressed)
@@ -76,7 +79,7 @@ public class Brick {
 						Thread.sleep(sens_check_interval);
 					} catch (InterruptedException e) {}
 				}
-				sens.off();
+				
 			};
 		}.start();
 		new Thread() {
