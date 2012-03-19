@@ -53,12 +53,7 @@ public class AIVisualServoing extends AI {
 	 */
 	@Override
 	protected Command chaseBall() throws IOException {
-		if (Utilities.canRobotAttack(true, ai_world_state.getBallCoords(), ai_world_state.getEnemyRobot(),
-				ai_world_state.getRobot(), ai_world_state.getMyGoal())) {
-			return defendGoal();
-		} else {
-			return attack(Utilities.AttackMode.Full);
-		}
+		return attack(Utilities.AttackMode.Full, true);
 	}
 	
 
@@ -66,12 +61,17 @@ public class AIVisualServoing extends AI {
 	 * Get a command to attack the opponents.
 	 * 
 	 * @param mode Robot's attack mode. See {@link Utilities.AttackMode}.
+	 * @param defend Whether to consider defending the gate.
 	 * @return The next command the robot should execute.
+	 * @throws IOException 
 	 */
-	protected Command attack(Utilities.AttackMode mode) {
+	protected Command attack(Utilities.AttackMode mode, boolean defend) throws IOException {
+		if (defend && Utilities.canEnemyAttack(ai_world_state)) {
+			return defendGoal();
+		}
+		
 		// Are we ready to score?
-		if (Utilities.canRobotAttack(false, ai_world_state.getBallCoords(), ai_world_state.getRobot(),
-				ai_world_state.getEnemyRobot(), ai_world_state.getEnemyGoal())) {
+		if (Utilities.canWeAttack(ai_world_state)) {
 			return gotBall();
 		}
 
@@ -230,7 +230,7 @@ public class AIVisualServoing extends AI {
 
 
 		if(ai_world_state.getEnemyRobot().getAngle()>-90 && ai_world_state.getEnemyRobot().getAngle()<90)
-			return chaseBall();
+			return attack(Utilities.AttackMode.Full, false);
 
 		if(is_main_point)	{
 			if (dist > 5)
@@ -333,7 +333,7 @@ public class AIVisualServoing extends AI {
 	 */
 	@Override
 	protected Command penaltiesAttack() throws IOException {
-		return attack(Utilities.AttackMode.WallsOnly);
+		return attack(Utilities.AttackMode.WallsOnly, false);
 		
 		/*
 		Command command = new Command(0,0,false);
