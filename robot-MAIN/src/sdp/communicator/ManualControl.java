@@ -235,6 +235,7 @@ public class ManualControl {
 
 					break;
 				case KeyEvent.VK_ENTER:
+				case KeyEvent.VK_E:
 					if (btn_ENTER_pressed == null) {
 						// if pressing button for first time
 						lblWAS.setText("ENTER");
@@ -360,6 +361,7 @@ public class ManualControl {
 					}, 60);
 					break;
 				case KeyEvent.VK_ENTER:
+				case KeyEvent.VK_E:
 					btn_ENTER_pressed = new Timer();
 					btn_ENTER_pressed.schedule(new TimerTask() {
 

@@ -23,7 +23,7 @@ public interface Communicator {
 				 // turning speed of robot in degrees per second
 		play_sound // no arguments
 		, rotate_kicker_stop,float_kicker,
-		sensor_left, sensor_right, battery, sensor_dist
+		SENSOR_LEFT, SENSOR_RIGHT, BATTERY, SENSOR_KICKER
 	}
 	
 	public enum sensorType {

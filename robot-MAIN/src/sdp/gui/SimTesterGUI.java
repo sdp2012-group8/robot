@@ -24,6 +24,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import sdp.AI.AI;
 import sdp.AI.AIMaster;
 import sdp.AI.AIMaster.AIMode;
 import sdp.AI.AIMaster.mode;
@@ -60,9 +61,6 @@ public class SimTesterGUI {
 	private boolean drag_ball = false;
 	private int drag_robot = -1;
 	private JPanel panel;
-
-	private static final int max_speed = 35;
-	private static final int max_turn_speed = 90;
 	private int speed = 0;
 	private static int turn_speed = 0;
 	
@@ -454,6 +452,8 @@ public class SimTesterGUI {
 	 * Reset field
 	 */
 	private void resetField() {
+		mAI.setState(AIMaster.mode.SIT);
+		opponentAI.setState(AIMaster.mode.SIT);
 		mSim.putBallAt();
 		mSim.putAt(blue_placement/WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM), 0, blue_placement == PLACEMENT_LEFT ?  0 : 180);
 		mSim.putAt(yellow_placement/WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM), 1, yellow_placement == PLACEMENT_LEFT ?  0 : 180);
@@ -471,21 +471,21 @@ public class SimTesterGUI {
 			switch (key_id) {
 			case KeyEvent.VK_UP:
 			case KeyEvent.VK_W:
-				speed = pressed ? max_speed : 0;
+				speed = pressed ? AI.MAX_SPEED_CM_S : 0;
 				//turn_speed = 0;
 				break;
 			case KeyEvent.VK_DOWN:
 			case KeyEvent.VK_S:
-				speed = pressed ? -max_speed : 0;
+				speed = pressed ? -AI.MAX_SPEED_CM_S : 0;
 				//turn_speed = 0;
 				break;
 			case KeyEvent.VK_LEFT:
 			case KeyEvent.VK_A:
-				turn_speed = pressed ? max_turn_speed : 0;
+				turn_speed = pressed ? AI.MAX_TURNING_SPEED : 0;
 				break;
 			case KeyEvent.VK_RIGHT:
 			case KeyEvent.VK_D:
-				turn_speed = pressed ? -max_turn_speed : 0;
+				turn_speed = pressed ? -AI.MAX_TURNING_SPEED : 0;
 				break;
 			case KeyEvent.VK_ENTER:
 			case KeyEvent.VK_E:

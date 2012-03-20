@@ -28,7 +28,7 @@ public class BComm implements Communicator {
 	private static int messages_so_far = 0;
 	private static NXTConnection connection;
 	
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	
 	/**
 	 * Initialises the controller with a listener

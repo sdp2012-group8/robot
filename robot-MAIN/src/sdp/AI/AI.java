@@ -19,8 +19,8 @@ public abstract class AI {
 	protected final static double KICKING_ACCURACY = 10;
 
 	protected final static double ROBOT_ACC_CM_S_S = 69.8; // 1000 degrees/s/s
-	protected final static int MAX_SPEED_CM_S = 53; // 50 cm per second
-	protected final static int MAX_TURNING_SPEED = 127;
+	public final static int MAX_SPEED_CM_S = 53; // 50 cm per second
+	public final static int MAX_TURNING_SPEED = 127;
 
 	protected AIWorldState ai_world_state= null;
 	protected AIWorldState old_ai_world_state = null;

@@ -25,9 +25,9 @@ import lejos.nxt.UltrasonicSensor;
  */
 public class Brick {
 
-	private static final int coll_threshold = 30; // cm
-	private static final long battery_timeout = 10000;
-	private static final long sens_check_interval = 100;
+	private static final int COLL_THRESHOLD = 10; // cm
+	private static final long BATTERY_TIMEOUT = 10000;
+	private static final long SENS_CHECK_INTERVAL = 100;
 	private static boolean is_on = true;
 
 	private static Communicator mComm;
@@ -54,29 +54,30 @@ public class Brick {
 				while (is_on) {
 					if (mComm != null) {
 						try {
-							LCD.clear(0);					
+						;					
 						int dist = sens.getDistance();	
-						collision = dist < coll_threshold;
+						collision = dist < COLL_THRESHOLD && can_kick;
 						boolean left_pressed = left.isPressed(), right_pressed = right.isPressed();
-						LCD.drawString(dist+"cm", 0, 0);
+						//LCD.clear(0)
+						//LCD.drawString(dist+"cm", 0, 0);
 						if (collision != dist_old)
-							mComm.sendMessage(opcode.sensor_dist, (short) (collision ? 1 : 0));
+							mComm.sendMessage(opcode.SENSOR_KICKER, (short) (collision ? 1 : 0));
 						if (left_old != left_pressed)
-							mComm.sendMessage(opcode.sensor_left, (short) (left_pressed ? 1 : 0));
+							mComm.sendMessage(opcode.SENSOR_LEFT, (short) (left_pressed ? 1 : 0));
 						if (right_old != right_pressed)
-							mComm.sendMessage(opcode.sensor_right, (short) (right_pressed ? 1 : 0));
+							mComm.sendMessage(opcode.SENSOR_RIGHT, (short) (right_pressed ? 1 : 0));
 						if (battery == 0)
-							mComm.sendMessage(opcode.battery, (short) (Battery.getVoltage()*10));
+							mComm.sendMessage(opcode.BATTERY, (short) (Battery.getVoltage()*10));
 						left_old = left_pressed;
 						right_old = right_pressed;
 						dist_old = collision;
-						battery += sens_check_interval;
-						if (battery > battery_timeout)
+						battery += SENS_CHECK_INTERVAL;
+						if (battery > BATTERY_TIMEOUT)
 							battery = 0;
 						} catch (Exception e) {}
 					}
 					try {
-						Thread.sleep(sens_check_interval);
+						Thread.sleep(SENS_CHECK_INTERVAL);
 					} catch (InterruptedException e) {}
 				}
 				

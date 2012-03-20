@@ -15,7 +15,7 @@ public class AIVisualServoing extends AI {
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
 
 	/** The multiplier to the final speed. */
-	private final static double SPEED_MULTIPLIER = 1;
+	private final static double SPEED_MULTIPLIER = 0.7;
 	private final static double TURN_SPD_MULTIPLIER = 1.8;
 
 	private final static int COLL_SECS_COUNT = 222;
@@ -55,7 +55,7 @@ public class AIVisualServoing extends AI {
 	protected Command chaseBall() throws IOException {
 		return attack(Utilities.AttackMode.Full, true);
 	}
-	
+
 
 	/**
 	 * Get a command to attack the opponents.
@@ -69,7 +69,7 @@ public class AIVisualServoing extends AI {
 		if (defend && Utilities.canEnemyAttack(ai_world_state)) {
 			return defendGoal();
 		}
-		
+
 		// Are we ready to score?
 		if (Utilities.canWeAttack(ai_world_state)) {
 			return gotBall();
@@ -77,8 +77,17 @@ public class AIVisualServoing extends AI {
 
 		// Get the point to drive towards.
 		target = new Vector2D(ai_world_state.getBallCoords());
-		Point2D.Double optimalPoint = Utilities.getOptimalPoint(ai_world_state, point_off, mode);
 		
+		Point2D.Double optimalPoint = null;
+		for (int t = 0; t < 20; t++) {
+			optimalPoint = Utilities.getOptimalPoint(ai_world_state, point_off, mode);
+			
+			if (optimalPoint == null)
+				point_off *= 0.8;
+			else
+				break;
+		}
+
 		if (optimalPoint != null) {
 			target = new Vector2D(optimalPoint);
 		}
@@ -87,10 +96,10 @@ public class AIVisualServoing extends AI {
 		boolean mustFaceTarget = (point_off != DEFAULT_TARG_THRESH);
 
 		Waypoint waypoint = getNextWaypoint(target, true);
-		return getWaypointCommand(waypoint, mustFaceTarget);
+		return getWaypointCommand(waypoint, mustFaceTarget, SPEED_MULTIPLIER);
 	}
-	
-	
+
+
 	/**
 	 * Generate a command to get closer to a target point.
 	 * 
@@ -157,25 +166,29 @@ public class AIVisualServoing extends AI {
 
 
 	@Override
-	protected Command gotBall() {
-		point_off = DEFAULT_POINT_OFF;
-		targ_thresh = DEFAULT_TARG_THRESH;
-		Painter.point_off = point_off;
-		//System.out.println("GOT BALL");
-		double angle = ai_world_state.getRobot().getAngle();
-		if (ai_world_state.getMyGoalLeft()) {
-			if (angle > 90 || angle < -90) {
-				//System.out.println("REVERSE angle = " + angle);
-				return new Command(-MAX_SPEED_CM_S, 0, false);
+	protected Command gotBall() throws IOException {
+		if (Utilities.canWeAttack(ai_world_state)) {
+			point_off = DEFAULT_POINT_OFF;
+			targ_thresh = DEFAULT_TARG_THRESH;
+			Painter.point_off = point_off;
+			//System.out.println("GOT BALL");
+			double angle = ai_world_state.getRobot().getAngle();
+			if (ai_world_state.getMyGoalLeft()) {
+				if (angle > 90 || angle < -90) {
+					//System.out.println("REVERSE angle = " + angle);
+					return new Command(-MAX_SPEED_CM_S, 0, false);
+				}
+			} else {
+				if (Math.abs(angle) <= 90) {
+					//System.out.println("FORWARD");
+					return new Command(-MAX_SPEED_CM_S, 0, false);
+				}
 			}
+			chasing_target = true;
+			return new Command(MAX_SPEED_CM_S,0,true);
 		} else {
-			if (Math.abs(angle) <= 90) {
-				//System.out.println("FORWARD");
-				return new Command(-MAX_SPEED_CM_S, 0, false);
-			}
+			return chaseBall();
 		}
-		chasing_target = true;
-		return new Command(MAX_SPEED_CM_S,0,true);
 	}
 
 	@Override
@@ -234,14 +247,14 @@ public class AIVisualServoing extends AI {
 
 		if(is_main_point)	{
 			if (dist > 5)
-				com = getWaypointCommand(getNextWaypoint(new Vector2D(point), true), false);
+				com = getWaypointCommand(getNextWaypoint(new Vector2D(point), true), false, 1);
 			com.acceleration = 150;
 			return com;
 		}
 
 		if(ai_world_state.getEnemyRobot().getAngle()<-90 && ai_world_state.getEnemyRobot().getAngle()>-180) {
 			if (dist2 > 10)
-				com = getWaypointCommand(getNextWaypoint(new Vector2D(point2), true), false);
+				com = getWaypointCommand(getNextWaypoint(new Vector2D(point2), true), false, 1);
 			//reduceSpeed(com, dist2, 20, 0);
 			com.acceleration = 150;
 			return com;
@@ -249,7 +262,7 @@ public class AIVisualServoing extends AI {
 
 		if(ai_world_state.getEnemyRobot().getAngle()>90 && ai_world_state.getEnemyRobot().getAngle()<180 ){
 			if (dist3 > 10)
-				com = getWaypointCommand(getNextWaypoint(new Vector2D(point3), true), false);
+				com = getWaypointCommand(getNextWaypoint(new Vector2D(point3), true), false, 1);
 			//reduceSpeed(com, dist3, 20, 0);
 			com.acceleration = 150;
 			return com;
@@ -257,7 +270,7 @@ public class AIVisualServoing extends AI {
 
 		return null;
 	}
-	
+
 	/**
 	 * This is called by the AIMaster every time the state is changed
 	 */
@@ -301,19 +314,19 @@ public class AIVisualServoing extends AI {
 		System.out.println("InterceptDistance: " + interceptBall);
 		System.out.println("Our robot's y: " + ai_world_state.getRobot().getCoords().y);
 		double dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(interceptBall)).getLength();
-        Command com =new Command(0, 0, false);
+		Command com =new Command(0, 0, false);
 		if (!interceptBall.equals(null)){
 
 			if((interceptBall.y < ai_world_state.getMyGoal().getBottom().y)  && (interceptBall.y > ai_world_state.getMyGoal().getTop().y)){
 				if ((interceptBall.y > ai_world_state.getRobot().getCoords().y)  ){
 					short forward_speed = (short) -20;
-					 com.speed=forward_speed;
+					com.speed=forward_speed;
 					reduceSpeed(com, dist, 20, 0);
 					return com;
 				} else if((interceptBall.y < ai_world_state.getRobot().getCoords().y)) {
 					short forward_speed = (short) 20;
-					 com.speed=forward_speed;
-					 reduceSpeed(com, dist, 20, 0);
+					com.speed=forward_speed;
+					reduceSpeed(com, dist, 20, 0);
 					return  com;
 				}
 			}
@@ -336,7 +349,7 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Command penaltiesAttack() throws IOException {
 		return attack(Utilities.AttackMode.WallsOnly, false);
-		
+
 		/*
 		Command command = new Command(0,0,false);
 
@@ -398,7 +411,7 @@ public class AIVisualServoing extends AI {
 		int obstacleFlags = 0;
 		obstacleFlags |= (ai_world_state.getMyTeamBlue()
 				? Utilities.YELLOW_IS_OBSTACLE_FLAG
-				: Utilities.BLUE_IS_OBSTACLE_FLAG);
+						: Utilities.BLUE_IS_OBSTACLE_FLAG);
 		if (ballIsObstacle) {
 			obstacleFlags |= Utilities.BALL_IS_OBSTACLE_FLAG;
 		}
@@ -456,7 +469,7 @@ public class AIVisualServoing extends AI {
 	 * @return A command that will get the robot closer towards the given
 	 * 		waypoint.
 	 */
-	private Command getWaypointCommand(Waypoint waypoint, boolean mustFaceTarget) {
+	private Command getWaypointCommand(Waypoint waypoint, boolean mustFaceTarget, double speed_multiplier) {
 		Command comm = new Command(0.0, 0.0, false);
 
 		comm.turning_speed = waypoint.getTurningAngle();
@@ -467,7 +480,7 @@ public class AIVisualServoing extends AI {
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
 				comm.turning_speed = Utilities.normaliseAngleToDegrees(waypoint.getTurningAngle() - 180);
 			}		
-		// Ball is in front.
+			// Ball is in front.
 		} else {
 			comm.speed = MAX_SPEED_CM_S;
 		}
@@ -477,7 +490,7 @@ public class AIVisualServoing extends AI {
 
 		if ((Math.abs(waypoint.getTurningAngle()) < 45) && (waypoint.getDistance() < targ_thresh)) {
 			point_off *= 0.7;
-			targ_thresh *= 0.4;
+			targ_thresh = point_off*0.5;
 		}
 		if (point_off < Utilities.KICKABLE_BALL_DIST) {
 			point_off = Utilities.KICKABLE_BALL_DIST;
@@ -498,7 +511,7 @@ public class AIVisualServoing extends AI {
 
 		Painter.point_off = point_off;
 
-		comm.turning_speed *= TURN_SPD_MULTIPLIER;
+		comm.turning_speed *= speed_multiplier;
 		comm.speed *= SPEED_MULTIPLIER;
 		comm.acceleration = 100;
 
@@ -536,7 +549,7 @@ public class AIVisualServoing extends AI {
 				command.speed *= speed_coeff;
 			}
 
-		// Collision in the back.
+			// Collision in the back.
 		} else if (backCollDist < threshold) {
 			if (command.speed <= 0) {
 				double speed_coeff = (backCollDist / threshold) - 1;
@@ -633,18 +646,6 @@ public class AIVisualServoing extends AI {
 		}
 	}
 
-
-	/**
-	 * @see sdp.AI.AI#sit()
-	 */
-	@Override
-	public Command sit() throws IOException {
-		point_off = DEFAULT_POINT_OFF;
-		Painter.point_off = point_off;
-		return super.sit();
-	}
-
-
 	/**
 	 * A compatibility method to return a command from a waypoint using the
 	 * old method.
@@ -665,7 +666,7 @@ public class AIVisualServoing extends AI {
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
 				comm.turning_speed = Utilities.normaliseAngleToDegrees(comm.turning_speed - 180);
 			}		
-		// Ball is in front.
+			// Ball is in front.
 		} else {
 			comm.speed = MAX_SPEED_CM_S;
 		}

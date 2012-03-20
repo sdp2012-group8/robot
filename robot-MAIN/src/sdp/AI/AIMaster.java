@@ -52,18 +52,29 @@ public class AIMaster extends AIListener {
 			mComm.registerListener(new MessageListener() {
 				@Override
 				public void receiveMessage(opcode op, short[] args, Communicator controler) {
-					System.out.println(op+" "+args[0]);
+					//System.out.println(op+" "+args[0]);
 					switch (op) {
-					case sensor_dist:
+					case SENSOR_KICKER:
+//						try {
+//							mComm.sendMessage(opcode.kick);
+//						} catch (IOException e) {
+//							e.printStackTrace();
+//						}
 						ai_world_state.setDist_sensor(args[0] == 1);
+						try {
+							execCommand(ai.gotBall());
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						
 						break;
-					case sensor_left:
+					case SENSOR_LEFT:
 						ai_world_state.setLeft_sensor(args[0] == 1);
 						break;
-					case sensor_right:
+					case SENSOR_RIGHT:
 						ai_world_state.setRight_sensor(args[0] == 1);
 						break;
-					case battery:
+					case BATTERY:
 						ai_world_state.setBattery(args[0]);
 						break;
 					}
@@ -84,8 +95,15 @@ public class AIMaster extends AIListener {
 
 		checkState();
 		ai.update(ai_world_state);
+		
 		try {
-			command = getCommand();
+			execCommand(getCommand());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void execCommand(Command command) throws IOException {
 			final boolean dist_sens = ai_world_state.isDist_sensor(),
 					left_sens = ai_world_state.isLeft_sensor(),
 					right_sens = ai_world_state.isRight_sensor();
@@ -113,11 +131,6 @@ public class AIMaster extends AIListener {
 			}
 			}
 			//System.out.println("ws: "+ai_world_state.getMyGoalLeft());
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
 	}
 
 	private AI.Command getCommand() throws IOException {
@@ -190,7 +203,7 @@ public class AIMaster extends AIListener {
 	public void setState(mode new_state) {
 		state = new_state;
 		System.out.println("Changed State to - " + state);
-<<<<<<< HEAD
+
 		
 //		if (state == mode.DEFEND_GOAL) {
 //			Timer t = new Timer();
@@ -201,9 +214,9 @@ public class AIMaster extends AIListener {
 //				}
 //			}, 6000);
 //		}
-=======
+
 		ai.changedState();
->>>>>>> ae31ce107e5dbd218920befa12f377c3e4279801
+
 	}
 	
 	/**
