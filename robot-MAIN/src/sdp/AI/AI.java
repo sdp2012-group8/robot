@@ -62,6 +62,12 @@ public abstract class AI {
 	protected abstract Command penaltiesAttack() throws IOException;
 	
 	/**
+	 * Called by the AIMaster every time the state changes.
+	 * This can be used to reset variables to default settings.
+	 */
+	protected abstract void changedState();
+	
+	/**
 	 * Initialise the AI
 	 * 
 	 * @param Comm a communicator for making connection with real robot/simulated one

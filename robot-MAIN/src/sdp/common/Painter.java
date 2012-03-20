@@ -126,9 +126,6 @@ public class Painter {
 				Vector2D local_origin = new Vector2D(Robot.LENGTH_CM/2+2,0);
 				drawVector(Utilities.getGlobalVector(robot, local_origin),  Utilities.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0), true), true);
 				if ((my_team_blue && j == 0) || (!my_team_blue && j == 1)) {
-					// TODO: Change this along with AIVisualServoing to show point
-					//final double dir_to_ball = Vector2D.getDirection(Vector2D.rotateVector(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), new Vector2D(robot.getCoords())), -robot.getAngle()));
-					final double point_distance = 1.5*Robot.LENGTH_CM; // + 1*Robot.LENGTH_CM * (Math.abs(dir_to_ball)/180);
 					AIWorldState ai_world_state = Utilities.getAIWorldState(state_cm, my_team_blue, my_goal_left);
 					Vector2D target;
 					
@@ -139,11 +136,6 @@ public class Painter {
 					} catch (NullPointerException e) {
 						target = new Vector2D(state_cm.getBallCoords());
 					}
-
-					double targ_dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), target).getLength();
-					double direction = Utilities.getTurningAngle(ai_world_state.getRobot(), target);
-
-
 
 					Vector2D startPt = new Vector2D(robot.getCoords());
 					Vector2D dir =  Vector2D.subtract(target, startPt);

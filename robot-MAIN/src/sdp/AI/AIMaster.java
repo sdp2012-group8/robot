@@ -190,6 +190,7 @@ public class AIMaster extends AIListener {
 	public void setState(mode new_state) {
 		state = new_state;
 		System.out.println("Changed State to - " + state);
+<<<<<<< HEAD
 		
 //		if (state == mode.DEFEND_GOAL) {
 //			Timer t = new Timer();
@@ -200,6 +201,9 @@ public class AIMaster extends AIListener {
 //				}
 //			}, 6000);
 //		}
+=======
+		ai.changedState();
+>>>>>>> ae31ce107e5dbd218920befa12f377c3e4279801
 	}
 	
 	/**
