@@ -135,12 +135,12 @@ public class AIVisualServoing extends AI {
 		Point2D.Double int1;
 		Point2D.Double int2;
 		if (ai_world_state.getMyGoalLeft()){
-			int1 = new Point2D.Double(ai_world_state.getRobot().getCoords().x, Robot.LENGTH_CM);
-			int2 = new Point2D.Double(ai_world_state.getRobot().getCoords().x, WorldState.PITCH_HEIGHT_CM - Robot.LENGTH_CM);
+			int1 = new Point2D.Double(Math.max(ai_world_state.getRobot().getCoords().x, Robot.LENGTH_CM), Robot.LENGTH_CM);
+			int2 = new Point2D.Double(Math.max(ai_world_state.getRobot().getCoords().x, Robot.LENGTH_CM), WorldState.PITCH_HEIGHT_CM - Robot.LENGTH_CM);
 		} else {
 			double goalX = ai_world_state.getMyGoal().getCentre().getX();
-			int1 = new Point2D.Double(WorldState.PITCH_WIDTH_CM - ai_world_state.getRobot().getCoords().x, Robot.LENGTH_CM);
-			int2 = new Point2D.Double(WorldState.PITCH_WIDTH_CM - ai_world_state.getRobot().getCoords().x, WorldState.PITCH_HEIGHT_CM - Robot.LENGTH_CM);
+			int1 = new Point2D.Double(WorldState.PITCH_WIDTH_CM - Math.min(ai_world_state.getRobot().getCoords().x, Robot.LENGTH_CM), Robot.LENGTH_CM);
+			int2 = new Point2D.Double(WorldState.PITCH_WIDTH_CM - Math.min(ai_world_state.getRobot().getCoords().x, Robot.LENGTH_CM), WorldState.PITCH_HEIGHT_CM - Robot.LENGTH_CM);
 		}
 
 		Point2D.Double intercept= GeomUtils.getLineIntersection(ai_world_state.getBallCoords(), ai_world_state.getEnemyRobot().getCoords(), int1, int2);

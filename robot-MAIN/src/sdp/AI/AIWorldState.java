@@ -134,9 +134,16 @@ public class AIWorldState extends WorldState {
 			fps = 5;
 
 		
+		boolean ball_visible = input.getBallCoords().getX() >= 0 && input.getBallCoords().getY() >= 0;
+		
 		WorldState state = Simulator.simulateWs(time_ms, (int) fps,
 				states,
 				true, command, my_team_blue);
+		
+		if (!ball_visible) {
+			Robot my = my_team_blue ? state.getBlueRobot() : state.getYellowRobot();
+			state = new WorldState(my.getFrontCenter(), state.getBlueRobot(), state.getYellowRobot(), state.getWorldImage());
+		}
 		
 		oldtime = System.currentTimeMillis();
 		

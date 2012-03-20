@@ -218,7 +218,7 @@ public class Simulator extends WorldStateProvider {
 		double dt = 1d / fps;
 		double duration = dt*(states.length-1);
 		
-		Simulator sim = new Simulator(false, 0.001);
+		Simulator sim = new Simulator(false, 0.0000000000000000000001);
 		
 		sim.setWorldState(states[0], 0, is_ws_in_cm, command, am_i_blue);
 		sim.setWorldState(states[states.length-1], duration, is_ws_in_cm, command, am_i_blue);

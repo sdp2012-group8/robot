@@ -191,8 +191,8 @@ public class AIMaster extends AIListener {
 					
 					Vector2D myDistance = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(ball));
 					
-					if (myDistance.getLength() < 20)
-						setState(mode.PLAY);
+//					if (myDistance.getLength() < 20)
+//						setState(mode.PLAY);
 				}
 
 	}
@@ -205,15 +205,15 @@ public class AIMaster extends AIListener {
 		System.out.println("Changed State to - " + state);
 
 		
-//		if (state == mode.DEFEND_GOAL) {
-//			Timer t = new Timer();
-//			t.schedule(new TimerTask() {
-//				@Override
-//				public void run() {
-//					setState(AIMaster.mode.PLAY);
-//				}
-//			}, 6000);
-//		}
+		if (state == mode.DEFEND_GOAL) {
+			Timer t = new Timer();
+			t.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					setState(AIMaster.mode.PLAY);
+				}
+			}, 6000);
+		}
 
 		ai.changedState();
 
