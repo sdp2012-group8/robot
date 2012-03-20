@@ -124,7 +124,7 @@ public class AIComm implements sdp.common.Communicator {
 	 * @param args the arguments
 	 */
 	//@Override
-	public void sendMessage(opcode op, short... args) throws IOException {
+	public synchronized void sendMessage(opcode op, short... args) throws IOException {
 		
 		System.out.println(op+" sent");
 		

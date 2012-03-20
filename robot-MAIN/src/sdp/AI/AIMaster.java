@@ -51,7 +51,7 @@ public class AIMaster extends AIListener {
 		this.mComm = comm;
 			mComm.registerListener(new MessageListener() {
 				@Override
-				public void receiveMessage(opcode op, short[] args, Communicator controler) {
+				public synchronized void receiveMessage(opcode op, short[] args, Communicator controler) {
 					//System.out.println(op+" "+args[0]);
 					switch (op) {
 					case SENSOR_KICKER:

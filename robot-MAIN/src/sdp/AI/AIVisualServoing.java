@@ -166,7 +166,7 @@ public class AIVisualServoing extends AI {
 
 
 	@Override
-	protected Command gotBall() throws IOException {
+	protected synchronized Command gotBall() throws IOException {
 		if (Utilities.canWeAttack(ai_world_state)) {
 			point_off = DEFAULT_POINT_OFF;
 			targ_thresh = DEFAULT_TARG_THRESH;
