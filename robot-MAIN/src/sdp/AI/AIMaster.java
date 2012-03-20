@@ -69,10 +69,10 @@ public class AIMaster extends AIListener {
 						
 						break;
 					case SENSOR_LEFT:
-						ai_world_state.setLeft_sensor(args[0] == 1);
+					//	ai_world_state.setLeft_sensor(args[0] == 1);
 						break;
 					case SENSOR_RIGHT:
-						ai_world_state.setRight_sensor(args[0] == 1);
+						//ai_world_state.setRight_sensor(args[0] == 1);
 						break;
 					case BATTERY:
 						ai_world_state.setBattery(args[0]);

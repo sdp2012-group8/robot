@@ -32,7 +32,7 @@ public class Simulator extends WorldStateProvider {
 	private final static Vector2D PITCH_MIDDLE = new Vector2D(0.5,
 			WorldState.PITCH_HEIGHT_CM / (2 * WorldState.PITCH_WIDTH_CM));
 	private final static double BALL_MAX_SPEED = 350; // cm/s
-	private final static double BALL_FRICTION_ACC = 1; // in cm/s/s
+	private final static double BALL_FRICTION_ACC = 10; // in cm/s/s
 	private final static double BALL_RADIUS = 4.27 / 2; // in cm
 
 	private final static double WALL_BOUNCINESS = 0.4; // 0 - inelastic, 1 -

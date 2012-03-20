@@ -25,6 +25,7 @@ public class Painter {
 	private  Robot[] robots;
 	public static Vector2D[] debug;
 	public static double point_off = AIVisualServoing.DEFAULT_POINT_OFF;
+	public static double targ_thresh = AIVisualServoing.DEFAULT_TARG_THRESH;
 
 	public Painter(BufferedImage im, WorldState ws) {
 		g = im.createGraphics();
@@ -202,6 +203,10 @@ public class Painter {
 						g.setStroke(new BasicStroke(1.0f));
 						Vector2D dist = Utilities.raytraceVector(state_cm, target, Vector2D.changeLength(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), target), 200), null, false);
 						drawVector(target, dist, false);
+						
+						g.setColor(new Color(255, 255, 255, 20));
+						fillOval((int)((target.x-targ_thresh)* width / WorldState.PITCH_WIDTH_CM), (int) ((target.y-targ_thresh)* width / WorldState.PITCH_WIDTH_CM), (int) (2*targ_thresh* width / WorldState.PITCH_WIDTH_CM), (int) (2*targ_thresh* width / WorldState.PITCH_WIDTH_CM), true);
+						
 						Vector2D global_dist = Vector2D.add(dist, target);
 						if (global_dist.getY() < 5) {
 							double a = Vector2D.getDirection(dist);

@@ -28,7 +28,7 @@ public class Utilities {
 	private static final double POINT_OFFSET = 1.5 * Robot.LENGTH_CM;
 	
 	/** Size of the ball obstacle. */
-	public static final double SIZE_OF_BALL_OBSTACLE = 2 * Robot.LENGTH_CM;
+	public static final double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
 	
 	/** How close the robot should be to the ball before it attempts to kick it. */
 	public static final double KICKABLE_BALL_DIST = 6;
