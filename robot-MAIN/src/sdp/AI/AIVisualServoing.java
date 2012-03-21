@@ -133,7 +133,8 @@ public class AIVisualServoing extends AI {
 	@Override
 	protected Command defendGoal() throws IOException {
 		
-		if (Math.abs(Utilities.getTurningAngle(ai_world_state.getRobot(), new Vector2D(ai_world_state.getBallCoords()))) < 15) {
+		if (Math.abs(Utilities.getTurningAngle(ai_world_state.getRobot(), new Vector2D(ai_world_state.getBallCoords()))) < 15 &&
+				ai_world_state.getDistanceToBall() < 40) {
 			if (Utilities.canWeAttack(ai_world_state))
 				return gotBall();
 			return new Command(MAX_SPEED_CM_S, 0, false);
@@ -211,7 +212,7 @@ public class AIVisualServoing extends AI {
 
 		if(can_we_go_to_intercept)	{			
 			if (dist > 5)
-				com = getWaypointCommand(getNextWaypoint(new Vector2D(point), false), true, 1, 20);
+				com = getWaypointCommand(getNextWaypoint(new Vector2D(point), false), false, 1, 20);
 			
 			com.acceleration = 150;
 			reduceSpeed(com, dist, 20, 0);
