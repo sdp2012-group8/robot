@@ -132,15 +132,46 @@ public class AIVisualServoing extends AI {
 
 	@Override
 	protected Command defendGoal() throws IOException {
+		
+		if (Math.abs(Utilities.getTurningAngle(ai_world_state.getRobot(), new Vector2D(ai_world_state.getBallCoords()))) < 15) {
+			if (Utilities.canWeAttack(ai_world_state))
+				return gotBall();
+			return new Command(MAX_SPEED_CM_S, 0, false);
+		}
+		
 		Point2D.Double int1;
 		Point2D.Double int2;
+		
 		if (ai_world_state.getMyGoalLeft()){
-			int1 = new Point2D.Double(Math.max(ai_world_state.getRobot().getCoords().x, Robot.LENGTH_CM), Robot.LENGTH_CM);
-			int2 = new Point2D.Double(Math.max(ai_world_state.getRobot().getCoords().x, Robot.LENGTH_CM), WorldState.PITCH_HEIGHT_CM - Robot.LENGTH_CM);
+			
+			double behind_ball =ai_world_state.getBallCoords().x - DEFEND_BALL_THRESHOLD;
+			double rob_ang = Utilities.normaliseAngleToDegrees(ai_world_state.getRobot().getAngle());
+			double x = Math.max(ai_world_state.getRobot().getCoords().x, 30);
+			if (behind_ball < x)
+				x = behind_ball;
+			else if (Math.abs(rob_ang) > 135)
+				x = (x + ai_world_state.getBallCoords().x)/2d;
+			
+			if (x < 50)
+				x = 50;
+			
+			int1 = new Point2D.Double(x, Robot.LENGTH_CM);
+			int2 = new Point2D.Double(x, WorldState.PITCH_HEIGHT_CM - Robot.LENGTH_CM);
 		} else {
-			double goalX = ai_world_state.getMyGoal().getCentre().getX();
-			int1 = new Point2D.Double(WorldState.PITCH_WIDTH_CM - Math.min(ai_world_state.getRobot().getCoords().x, Robot.LENGTH_CM), Robot.LENGTH_CM);
-			int2 = new Point2D.Double(WorldState.PITCH_WIDTH_CM - Math.min(ai_world_state.getRobot().getCoords().x, Robot.LENGTH_CM), WorldState.PITCH_HEIGHT_CM - Robot.LENGTH_CM);
+			
+			double behind_ball =ai_world_state.getBallCoords().x + DEFEND_BALL_THRESHOLD;
+			double rob_ang = Utilities.normaliseAngleToDegrees(ai_world_state.getRobot().getAngle());
+			double x = Math.min(ai_world_state.getRobot().getCoords().x, WorldState.PITCH_WIDTH_CM - 30);
+			if (behind_ball > x)
+				x = behind_ball;
+			else if (Math.abs(rob_ang) < 45)
+				x = (x + ai_world_state.getBallCoords().x)/2d;
+			
+			if (x > WorldState.PITCH_WIDTH_CM-50)
+				x = WorldState.PITCH_WIDTH_CM-50;
+			
+			int1 = new Point2D.Double(x, Robot.LENGTH_CM);
+			int2 = new Point2D.Double(x, WorldState.PITCH_HEIGHT_CM - Robot.LENGTH_CM);
 		}
 
 		Point2D.Double intercept= GeomUtils.getLineIntersection(ai_world_state.getBallCoords(), ai_world_state.getEnemyRobot().getCoords(), int1, int2);
@@ -154,14 +185,7 @@ public class AIVisualServoing extends AI {
 		Point2D.Double point3 = new Point2D.Double(10000, 10000);
 
 		if (intercept != null){
-
-			//TODO: Re-check this
-			/* What is this doing? */
-			if (ai_world_state.getMyGoalLeft()){
-				point= intercept;
-			} else {
-				point= intercept;
-			}
+			point = intercept;
 
 			can_we_go_to_intercept = (intercept.y > Robot.LENGTH_CM)  && (intercept.y < WorldState.PITCH_HEIGHT_CM - Robot.LENGTH_CM);
 			dist = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(point)).getLength();
@@ -178,26 +202,20 @@ public class AIVisualServoing extends AI {
 		double dist2 = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(point2)).getLength();
 		double dist3 = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(point3)).getLength();
 
-		Painter.debug = new Vector2D[] {new Vector2D(point), new Vector2D(point2), new Vector2D(point3)};
+		
 
 
 
 		if(ai_world_state.getEnemyRobot().getAngle()>-90 && ai_world_state.getEnemyRobot().getAngle()<90)
 			return attack(Utilities.AttackMode.Full, false);
 
-		if(can_we_go_to_intercept)	{
-			
-			double behind_ball =ai_world_state.getBallCoords().x +(ai_world_state.getMyGoalLeft() ? -DEFEND_BALL_THRESHOLD : DEFEND_BALL_THRESHOLD);
-			
-			if ((behind_ball < point.x && ai_world_state.getMyGoalLeft()) ||
-					(behind_ball > point.x && !ai_world_state.getMyGoalLeft()))
-				point.y = behind_ball;
-			
+		if(can_we_go_to_intercept)	{			
 			if (dist > 5)
-				com = getWaypointCommand(getNextWaypoint(new Vector2D(point), false), false, 1, 20);
+				com = getWaypointCommand(getNextWaypoint(new Vector2D(point), false), true, 1, 20);
 			
 			com.acceleration = 150;
 			reduceSpeed(com, dist, 20, 0);
+			Painter.debug = new Vector2D[] {new Vector2D(point), new Vector2D(point2), new Vector2D(point3)};
 			return com;
 		}
 
@@ -207,6 +225,7 @@ public class AIVisualServoing extends AI {
 			
 			com.acceleration = 150;
 			reduceSpeed(com, dist2, 20, 0);
+			Painter.debug = new Vector2D[] {new Vector2D(point), new Vector2D(point2), new Vector2D(point3)};
 			return com;
 		}
 
@@ -216,9 +235,11 @@ public class AIVisualServoing extends AI {
 			
 			com.acceleration = 150;
 			reduceSpeed(com, dist3, 20, 0);
+			Painter.debug = new Vector2D[] {new Vector2D(point), new Vector2D(point2), new Vector2D(point3)};
 			return com;
 		}
-
+		
+		Painter.debug = new Vector2D[] {new Vector2D(point), new Vector2D(point2), new Vector2D(point3)};
 		return null;
 	}
 
