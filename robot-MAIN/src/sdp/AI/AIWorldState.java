@@ -106,9 +106,12 @@ public class AIWorldState extends WorldState {
 	
 	private WorldState predict(WorldState input, long time_ms) {
 		
+		
+		boolean ball_visible = input.getBallCoords().getX() >= 0 && input.getBallCoords().getY() >= 0;
+		
 		// handle ball going offscreen5
 		if (last_st != null) {
-			if (input.getBallCoords().getX() == -244d || input.getBallCoords().getX() == -1d)
+			if (!ball_visible)
 				input = new WorldState(last_st.getBallCoords(), input.getBlueRobot(), input.getYellowRobot(), input.getWorldImage());
 		}
 		
@@ -133,16 +136,22 @@ public class AIWorldState extends WorldState {
 		if (fps < 5)
 			fps = 5;
 
-		
-		boolean ball_visible = input.getBallCoords().getX() >= 0 && input.getBallCoords().getY() >= 0;
-		
 		WorldState state = Simulator.simulateWs(time_ms, (int) fps,
 				states,
 				true, command, my_team_blue);
 		
-		if (!ball_visible) {
-			Robot my = my_team_blue ? state.getBlueRobot() : state.getYellowRobot();
+		Robot my = my_team_blue ? state.getBlueRobot() : state.getYellowRobot();
+		
+		if (!ball_visible &&
+				Vector2D.subtract(
+				new Vector2D(input.getBallCoords()),
+				new Vector2D(my.getCoords())).getLength() < 30) {
+			
 			state = new WorldState(my.getFrontCenter(), state.getBlueRobot(), state.getYellowRobot(), state.getWorldImage());
+		}
+		
+		if (Vector2D.subtract(new Vector2D(input.getBallCoords()), new Vector2D(state.getBallCoords())).getLength() > 60) {
+			state = new WorldState(input.getBallCoords(), state.getBlueRobot(), state.getYellowRobot(), state.getWorldImage());
 		}
 		
 		oldtime = System.currentTimeMillis();
