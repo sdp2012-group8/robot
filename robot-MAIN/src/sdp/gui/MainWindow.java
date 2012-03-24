@@ -64,6 +64,7 @@ import java.awt.event.WindowEvent;
 
 
 /**
+ * The GUI class of the main window.
  */
 public class MainWindow extends javax.swing.JFrame implements Runnable {
 	
@@ -97,6 +98,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	
 	/** Active AI subsystem instance. */
 	private AIMaster aiInstance = null;
+	/** Robot communicator instance. */
+	private Communicator communicator = null;
 	/** Flag that indicates whether the robot is running. */
 	private boolean robotRunning = false;
 	
@@ -114,8 +117,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	/** Mouse pointer position on the canvas image. */
 	private Point imageMousePos = null;
 	
-	private Communicator com;
-	
 	
 	/**
 	 * Create the main GUI with the specified components.
@@ -127,17 +128,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 * 		let you adjust vision settings.
 	 */
 	public MainWindow(boolean testMode, WorldStateObserver worldStateObserver, Vision vision) {
-		addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				try {
-					if (com != null)
-						com.sendMessage(opcode.exit);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
 		if (worldStateObserver == null) {
 			throw new NullPointerException("Main window's state provider cannot be null.");
 		} else {
@@ -191,8 +181,21 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		}
 		
 		for (int i = 0; i < AIMaster.mode.values().length; i++) {
-			aiStateCombobox.addItem(AIMaster.mode.values()[i]);
+			robotBehaviourCombobox.addItem(AIMaster.mode.values()[i]);
 		}
+		
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				try {
+					if (communicator != null) {
+						communicator.sendMessage(opcode.exit);
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
 	}
 	
 	
@@ -213,17 +216,17 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	 */
 	private void connectToRobot() {
 		if (robotDebugModeCheckbox.isSelected()) {
-			com = null;
+			communicator = null;
 		} else {
 			try {
-				com = new AIComm();
+				communicator = new AIComm();
 			} catch (IOException e) {
 				LOGGER.warning("Connection with brick failed! Going into test mode.");
-				com = null;
+				communicator = null;
 			}
 		}
 		
-		aiInstance = new AIMaster(com, vision, AIMaster.AIMode.VISUAL_SERVOING);
+		aiInstance = new AIMaster(communicator, vision, AIMaster.AIMode.VISUAL_SERVOING);
 		aiInstance.start(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected());
 		
 		WorldStateObserver aiObserver = new WorldStateObserver(aiInstance);
@@ -1469,11 +1472,26 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		robotSettingPanel = new JPanel();
 		robotControlTabbedPanel.addTab("Robot", null, robotSettingPanel, null);
 		GridBagLayout gbl_robotSettingPanel = new GridBagLayout();
-		gbl_robotSettingPanel.columnWidths = new int[]{0, 0};
-		gbl_robotSettingPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-		gbl_robotSettingPanel.columnWeights = new double[]{0.0, Double.MIN_VALUE};
-		gbl_robotSettingPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_robotSettingPanel.columnWidths = new int[]{0, 0, 0};
+		gbl_robotSettingPanel.rowHeights = new int[]{0, 0, 0, 0, 0};
+		gbl_robotSettingPanel.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
+		gbl_robotSettingPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		robotSettingPanel.setLayout(gbl_robotSettingPanel);
+		
+		robotConnectionPanel = new JPanel();
+		robotConnectionPanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Connection", TitledBorder.CENTER, TitledBorder.TOP, null, new Color(51, 51, 51)));
+		GridBagConstraints gbc_robotConnectionPanel = new GridBagConstraints();
+		gbc_robotConnectionPanel.fill = GridBagConstraints.BOTH;
+		gbc_robotConnectionPanel.insets = new Insets(0, 0, 5, 5);
+		gbc_robotConnectionPanel.gridx = 0;
+		gbc_robotConnectionPanel.gridy = 0;
+		robotSettingPanel.add(robotConnectionPanel, gbc_robotConnectionPanel);
+		GridBagLayout gbl_robotConnectionPanel = new GridBagLayout();
+		gbl_robotConnectionPanel.columnWidths = new int[]{0, 0};
+		gbl_robotConnectionPanel.rowHeights = new int[]{0, 0, 0};
+		gbl_robotConnectionPanel.columnWeights = new double[]{1.0, Double.MIN_VALUE};
+		gbl_robotConnectionPanel.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
+		robotConnectionPanel.setLayout(gbl_robotConnectionPanel);
 		
 		robotDebugModeCheckbox = new JCheckBox("Debug mode");
 		GridBagConstraints gbc_robotDebugModeCheckbox = new GridBagConstraints();
@@ -1481,63 +1499,13 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_robotDebugModeCheckbox.insets = new Insets(0, 0, 5, 0);
 		gbc_robotDebugModeCheckbox.gridx = 0;
 		gbc_robotDebugModeCheckbox.gridy = 0;
-		robotSettingPanel.add(robotDebugModeCheckbox, gbc_robotDebugModeCheckbox);
-		
-		robotColorLabel = new JLabel("Color");
-		GridBagConstraints gbc_robotColorLabel = new GridBagConstraints();
-		gbc_robotColorLabel.anchor = GridBagConstraints.WEST;
-		gbc_robotColorLabel.insets = new Insets(0, 0, 5, 0);
-		gbc_robotColorLabel.gridx = 0;
-		gbc_robotColorLabel.gridy = 1;
-		robotSettingPanel.add(robotColorLabel, gbc_robotColorLabel);
-		
-		robotColorBlueButton = new JRadioButton("Blue");
-		robotColorBlueButton.setSelected(true);
-		robotColorButtonGroup.add(robotColorBlueButton);
-		GridBagConstraints gbc_robotColorBlueButton = new GridBagConstraints();
-		gbc_robotColorBlueButton.anchor = GridBagConstraints.WEST;
-		gbc_robotColorBlueButton.insets = new Insets(0, 0, 5, 0);
-		gbc_robotColorBlueButton.gridx = 0;
-		gbc_robotColorBlueButton.gridy = 2;
-		robotSettingPanel.add(robotColorBlueButton, gbc_robotColorBlueButton);
-		
-		robotColorYellowButton = new JRadioButton("Yellow");
-		robotColorButtonGroup.add(robotColorYellowButton);
-		GridBagConstraints gbc_robotColorYellowButton = new GridBagConstraints();
-		gbc_robotColorYellowButton.insets = new Insets(0, 0, 5, 0);
-		gbc_robotColorYellowButton.anchor = GridBagConstraints.WEST;
-		gbc_robotColorYellowButton.gridx = 0;
-		gbc_robotColorYellowButton.gridy = 3;
-		robotSettingPanel.add(robotColorYellowButton, gbc_robotColorYellowButton);
-		
-		robotGateLabel = new JLabel("Our gate");
-		GridBagConstraints gbc_robotGateLabel = new GridBagConstraints();
-		gbc_robotGateLabel.anchor = GridBagConstraints.WEST;
-		gbc_robotGateLabel.insets = new Insets(0, 0, 5, 0);
-		gbc_robotGateLabel.gridx = 0;
-		gbc_robotGateLabel.gridy = 4;
-		robotSettingPanel.add(robotGateLabel, gbc_robotGateLabel);
-		
-		robotGateLeftButton = new JRadioButton("Left");
-		robotGateLeftButton.setSelected(true);
-		robotGateButtonGroup.add(robotGateLeftButton);
-		GridBagConstraints gbc_robotGateLeftButton = new GridBagConstraints();
-		gbc_robotGateLeftButton.anchor = GridBagConstraints.WEST;
-		gbc_robotGateLeftButton.insets = new Insets(0, 0, 5, 0);
-		gbc_robotGateLeftButton.gridx = 0;
-		gbc_robotGateLeftButton.gridy = 5;
-		robotSettingPanel.add(robotGateLeftButton, gbc_robotGateLeftButton);
-		
-		robotGateRightButton = new JRadioButton("Right");
-		robotGateButtonGroup.add(robotGateRightButton);
-		GridBagConstraints gbc_robotGateRightButton = new GridBagConstraints();
-		gbc_robotGateRightButton.insets = new Insets(0, 0, 5, 0);
-		gbc_robotGateRightButton.anchor = GridBagConstraints.WEST;
-		gbc_robotGateRightButton.gridx = 0;
-		gbc_robotGateRightButton.gridy = 6;
-		robotSettingPanel.add(robotGateRightButton, gbc_robotGateRightButton);
+		robotConnectionPanel.add(robotDebugModeCheckbox, gbc_robotDebugModeCheckbox);
 		
 		robotConnectButton = new JButton("Connect");
+		GridBagConstraints gbc_robotConnectButton = new GridBagConstraints();
+		gbc_robotConnectButton.gridx = 0;
+		gbc_robotConnectButton.gridy = 1;
+		robotConnectionPanel.add(robotConnectButton, gbc_robotConnectButton);
 		robotConnectButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (!robotRunning) {
@@ -1547,68 +1515,231 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 				}
 			}
 		});
-		GridBagConstraints gbc_robotConnectButton = new GridBagConstraints();
-		gbc_robotConnectButton.insets = new Insets(0, 0, 5, 0);
-		gbc_robotConnectButton.gridx = 0;
-		gbc_robotConnectButton.gridy = 7;
-		robotSettingPanel.add(robotConnectButton, gbc_robotConnectButton);
 		
-		robotOverrideVision = new JButton("Vision on/off");
-		robotOverrideVision.addActionListener(new ActionListener() {
+		robotOptionPanel = new JPanel();
+		robotOptionPanel.setBorder(new TitledBorder(new LineBorder(new Color(184, 207, 229)), "Settings", TitledBorder.CENTER, TitledBorder.TOP, null, new Color(51, 51, 51)));
+		GridBagConstraints gbc_robotOptionPanel = new GridBagConstraints();
+		gbc_robotOptionPanel.insets = new Insets(0, 0, 5, 5);
+		gbc_robotOptionPanel.fill = GridBagConstraints.BOTH;
+		gbc_robotOptionPanel.gridx = 0;
+		gbc_robotOptionPanel.gridy = 1;
+		robotSettingPanel.add(robotOptionPanel, gbc_robotOptionPanel);
+		GridBagLayout gbl_robotOptionPanel = new GridBagLayout();
+		gbl_robotOptionPanel.columnWidths = new int[]{0, 0};
+		gbl_robotOptionPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_robotOptionPanel.columnWeights = new double[]{1.0, Double.MIN_VALUE};
+		gbl_robotOptionPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		robotOptionPanel.setLayout(gbl_robotOptionPanel);
+		
+		robotOverrideVisionButton = new JButton("Overlay Vision");
+		GridBagConstraints gbc_robotOverrideVisionButton = new GridBagConstraints();
+		gbc_robotOverrideVisionButton.insets = new Insets(0, 0, 5, 0);
+		gbc_robotOverrideVisionButton.gridx = 0;
+		gbc_robotOverrideVisionButton.gridy = 0;
+		robotOptionPanel.add(robotOverrideVisionButton, gbc_robotOverrideVisionButton);
+		robotOverrideVisionButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				if (aiInstance != null)
+				if (aiInstance != null) {
 					aiInstance.switchOverrideVision();
+				}
 			}
 		});
-		GridBagConstraints gbc_robotOverrideButton = new GridBagConstraints();
-		gbc_robotOverrideButton.insets = new Insets(0, 0, 5, 0);
-		gbc_robotOverrideButton.gridx = 0;
-		gbc_robotOverrideButton.gridy = 11;
-		robotSettingPanel.add(robotOverrideVision, gbc_robotOverrideButton);
 		
-		robotChangeColorGoal = new JButton("Change color/goal");
+		robotColorLabel = new JLabel("Color");
+		GridBagConstraints gbc_robotColorLabel = new GridBagConstraints();
+		gbc_robotColorLabel.anchor = GridBagConstraints.WEST;
+		gbc_robotColorLabel.insets = new Insets(0, 0, 5, 0);
+		gbc_robotColorLabel.gridx = 0;
+		gbc_robotColorLabel.gridy = 1;
+		robotOptionPanel.add(robotColorLabel, gbc_robotColorLabel);
+		
+		robotColorBlueButton = new JRadioButton("Blue");
+		GridBagConstraints gbc_robotColorBlueButton = new GridBagConstraints();
+		gbc_robotColorBlueButton.anchor = GridBagConstraints.WEST;
+		gbc_robotColorBlueButton.insets = new Insets(0, 0, 5, 0);
+		gbc_robotColorBlueButton.gridx = 0;
+		gbc_robotColorBlueButton.gridy = 2;
+		robotOptionPanel.add(robotColorBlueButton, gbc_robotColorBlueButton);
+		robotColorBlueButton.setSelected(true);
+		robotColorButtonGroup.add(robotColorBlueButton);
+		
+		robotColorYellowButton = new JRadioButton("Yellow");
+		GridBagConstraints gbc_robotColorYellowButton = new GridBagConstraints();
+		gbc_robotColorYellowButton.anchor = GridBagConstraints.WEST;
+		gbc_robotColorYellowButton.insets = new Insets(0, 0, 5, 0);
+		gbc_robotColorYellowButton.gridx = 0;
+		gbc_robotColorYellowButton.gridy = 3;
+		robotOptionPanel.add(robotColorYellowButton, gbc_robotColorYellowButton);
+		robotColorButtonGroup.add(robotColorYellowButton);
+		
+		robotGateLabel = new JLabel("Our gate");
+		GridBagConstraints gbc_robotGateLabel = new GridBagConstraints();
+		gbc_robotGateLabel.anchor = GridBagConstraints.WEST;
+		gbc_robotGateLabel.insets = new Insets(0, 0, 5, 0);
+		gbc_robotGateLabel.gridx = 0;
+		gbc_robotGateLabel.gridy = 4;
+		robotOptionPanel.add(robotGateLabel, gbc_robotGateLabel);
+		
+		robotGateLeftButton = new JRadioButton("Left");
+		GridBagConstraints gbc_robotGateLeftButton = new GridBagConstraints();
+		gbc_robotGateLeftButton.anchor = GridBagConstraints.WEST;
+		gbc_robotGateLeftButton.insets = new Insets(0, 0, 5, 0);
+		gbc_robotGateLeftButton.gridx = 0;
+		gbc_robotGateLeftButton.gridy = 5;
+		robotOptionPanel.add(robotGateLeftButton, gbc_robotGateLeftButton);
+		robotGateLeftButton.setSelected(true);
+		robotGateButtonGroup.add(robotGateLeftButton);
+		
+		robotGateRightButton = new JRadioButton("Right");
+		GridBagConstraints gbc_robotGateRightButton = new GridBagConstraints();
+		gbc_robotGateRightButton.anchor = GridBagConstraints.WEST;
+		gbc_robotGateRightButton.insets = new Insets(0, 0, 5, 0);
+		gbc_robotGateRightButton.gridx = 0;
+		gbc_robotGateRightButton.gridy = 6;
+		robotOptionPanel.add(robotGateRightButton, gbc_robotGateRightButton);
+		robotGateButtonGroup.add(robotGateRightButton);
+		
+		robotChangeColorGoal = new JButton("Change Settings");
+		GridBagConstraints gbc_robotChangeColorGoal = new GridBagConstraints();
+		gbc_robotChangeColorGoal.gridx = 0;
+		gbc_robotChangeColorGoal.gridy = 7;
+		robotOptionPanel.add(robotChangeColorGoal, gbc_robotChangeColorGoal);
 		robotChangeColorGoal.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				if (aiInstance != null)
+				if (aiInstance != null) {
 					aiInstance.updateGoalOrTeam(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected());
+				}
 			}
 		});
-		GridBagConstraints gbc_robotChangeColorButton = new GridBagConstraints();
-		gbc_robotChangeColorButton.insets = new Insets(0, 0, 5, 0);
-		gbc_robotChangeColorButton.gridx = 0;
-		gbc_robotChangeColorButton.gridy = 12;
-		robotSettingPanel.add(robotChangeColorGoal, gbc_robotChangeColorButton);
 		
-		robotStateLabel = new JLabel("Robot state");
-		GridBagConstraints gbc_robotStateLabel = new GridBagConstraints();
-		gbc_robotStateLabel.anchor = GridBagConstraints.WEST;
-		gbc_robotStateLabel.insets = new Insets(0, 0, 5, 0);
-		gbc_robotStateLabel.gridx = 0;
-		gbc_robotStateLabel.gridy = 8;
-		robotSettingPanel.add(robotStateLabel, gbc_robotStateLabel);
+		robotBehaviourPanel = new JPanel();
+		robotBehaviourPanel.setBorder(new TitledBorder(null, "Behaviour", TitledBorder.CENTER, TitledBorder.TOP, null, null));
+		GridBagConstraints gbc_robotBehaviourPanel = new GridBagConstraints();
+		gbc_robotBehaviourPanel.insets = new Insets(0, 0, 5, 5);
+		gbc_robotBehaviourPanel.fill = GridBagConstraints.BOTH;
+		gbc_robotBehaviourPanel.gridx = 0;
+		gbc_robotBehaviourPanel.gridy = 2;
+		robotSettingPanel.add(robotBehaviourPanel, gbc_robotBehaviourPanel);
+		GridBagLayout gbl_robotBehaviourPanel = new GridBagLayout();
+		gbl_robotBehaviourPanel.columnWidths = new int[]{0, 0, 0};
+		gbl_robotBehaviourPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_robotBehaviourPanel.columnWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
+		gbl_robotBehaviourPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		robotBehaviourPanel.setLayout(gbl_robotBehaviourPanel);
 		
-		aiStateCombobox = new JComboBox();
-		aiStateCombobox.setBounds(662, 342, 117, 24);
-		GridBagConstraints gbc_aiStateCombobox = new GridBagConstraints();
-		gbc_aiStateCombobox.fill = GridBagConstraints.HORIZONTAL;
-		gbc_aiStateCombobox.insets = new Insets(0, 0, 5, 0);
-		gbc_aiStateCombobox.gridx = 0;
-		gbc_aiStateCombobox.gridy = 9;
-		robotSettingPanel.add(aiStateCombobox, gbc_aiStateCombobox);
+		robotBehMainLabel = new JLabel("Main");
+		GridBagConstraints gbc_robotBehMainLabel = new GridBagConstraints();
+		gbc_robotBehMainLabel.anchor = GridBagConstraints.WEST;
+		gbc_robotBehMainLabel.gridwidth = 2;
+		gbc_robotBehMainLabel.insets = new Insets(0, 0, 5, 0);
+		gbc_robotBehMainLabel.gridx = 0;
+		gbc_robotBehMainLabel.gridy = 0;
+		robotBehaviourPanel.add(robotBehMainLabel, gbc_robotBehMainLabel);
 		
-		JButton changeStateButton = new JButton("Change State");
-		changeStateButton.addActionListener(new ActionListener() {
+		robotPlayButton = new JButton("Play");
+		robotPlayButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				aiInstance.setState(AIMaster.mode.values()[aiStateCombobox.getSelectedIndex()]);
+				if (aiInstance != null) {
+					aiInstance.setState(AIMaster.mode.PLAY);
+				}
 			}
 		});
-		changeStateButton.setBounds(662, 378, 117, 25);
-		GridBagConstraints gbc_changeStateButton = new GridBagConstraints();
-		gbc_changeStateButton.gridx = 0;
-		gbc_changeStateButton.gridy = 10;
-		robotSettingPanel.add(changeStateButton, gbc_changeStateButton);
+		GridBagConstraints gbc_robotPlayButton = new GridBagConstraints();
+		gbc_robotPlayButton.fill = GridBagConstraints.HORIZONTAL;
+		gbc_robotPlayButton.insets = new Insets(0, 0, 5, 5);
+		gbc_robotPlayButton.gridx = 0;
+		gbc_robotPlayButton.gridy = 1;
+		robotBehaviourPanel.add(robotPlayButton, gbc_robotPlayButton);
+		
+		robotSitButton = new JButton("Sit");
+		robotSitButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (aiInstance != null) {
+					aiInstance.setState(AIMaster.mode.SIT);
+				}
+			}
+		});
+		GridBagConstraints gbc_robotSitButton = new GridBagConstraints();
+		gbc_robotSitButton.fill = GridBagConstraints.HORIZONTAL;
+		gbc_robotSitButton.insets = new Insets(0, 0, 5, 0);
+		gbc_robotSitButton.gridx = 1;
+		gbc_robotSitButton.gridy = 1;
+		robotBehaviourPanel.add(robotSitButton, gbc_robotSitButton);
+		
+		robotPenaltiesLabel = new JLabel("Penalties");
+		GridBagConstraints gbc_robotPenaltiesLabel = new GridBagConstraints();
+		gbc_robotPenaltiesLabel.anchor = GridBagConstraints.WEST;
+		gbc_robotPenaltiesLabel.gridwidth = 2;
+		gbc_robotPenaltiesLabel.insets = new Insets(0, 0, 5, 0);
+		gbc_robotPenaltiesLabel.gridx = 0;
+		gbc_robotPenaltiesLabel.gridy = 2;
+		robotBehaviourPanel.add(robotPenaltiesLabel, gbc_robotPenaltiesLabel);
+		
+		robotShootPenaltyButton = new JButton("Shoot");
+		robotShootPenaltyButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (aiInstance != null) {
+					aiInstance.setState(AIMaster.mode.SHOOT_PENALTIES);
+				}
+			}
+		});
+		GridBagConstraints gbc_robotShootPenaltyButton = new GridBagConstraints();
+		gbc_robotShootPenaltyButton.insets = new Insets(0, 0, 5, 5);
+		gbc_robotShootPenaltyButton.fill = GridBagConstraints.HORIZONTAL;
+		gbc_robotShootPenaltyButton.gridx = 0;
+		gbc_robotShootPenaltyButton.gridy = 3;
+		robotBehaviourPanel.add(robotShootPenaltyButton, gbc_robotShootPenaltyButton);
+		
+		robotDefendPenaltyButton = new JButton("Defend");
+		robotDefendPenaltyButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (aiInstance != null) {
+					aiInstance.setState(AIMaster.mode.DEFEND_PENALTIES);
+				}
+			}
+		});
+		GridBagConstraints gbc_robotDefendPenaltyButton = new GridBagConstraints();
+		gbc_robotDefendPenaltyButton.insets = new Insets(0, 0, 5, 0);
+		gbc_robotDefendPenaltyButton.gridx = 1;
+		gbc_robotDefendPenaltyButton.gridy = 3;
+		robotBehaviourPanel.add(robotDefendPenaltyButton, gbc_robotDefendPenaltyButton);
+		
+		robotOtherLabel = new JLabel("Other");
+		GridBagConstraints gbc_robotOtherLabel = new GridBagConstraints();
+		gbc_robotOtherLabel.anchor = GridBagConstraints.WEST;
+		gbc_robotOtherLabel.insets = new Insets(0, 0, 5, 0);
+		gbc_robotOtherLabel.gridwidth = 2;
+		gbc_robotOtherLabel.gridx = 0;
+		gbc_robotOtherLabel.gridy = 4;
+		robotBehaviourPanel.add(robotOtherLabel, gbc_robotOtherLabel);
+		
+		robotBehaviourCombobox = new JComboBox();
+		GridBagConstraints gbc_robotBehaviourCombobox = new GridBagConstraints();
+		gbc_robotBehaviourCombobox.fill = GridBagConstraints.HORIZONTAL;
+		gbc_robotBehaviourCombobox.gridwidth = 2;
+		gbc_robotBehaviourCombobox.insets = new Insets(0, 0, 5, 0);
+		gbc_robotBehaviourCombobox.gridx = 0;
+		gbc_robotBehaviourCombobox.gridy = 5;
+		robotBehaviourPanel.add(robotBehaviourCombobox, gbc_robotBehaviourCombobox);
+		robotBehaviourCombobox.setBounds(662, 342, 117, 24);
+		
+		JButton robotChangeBehaviourButton = new JButton("Change Behaviour");
+		GridBagConstraints gbc_robotChangeBehaviourButton = new GridBagConstraints();
+		gbc_robotChangeBehaviourButton.fill = GridBagConstraints.HORIZONTAL;
+		gbc_robotChangeBehaviourButton.gridwidth = 2;
+		gbc_robotChangeBehaviourButton.gridx = 0;
+		gbc_robotChangeBehaviourButton.gridy = 6;
+		robotBehaviourPanel.add(robotChangeBehaviourButton, gbc_robotChangeBehaviourButton);
+		robotChangeBehaviourButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (aiInstance != null) {
+					aiInstance.setState(AIMaster.mode.values()[robotBehaviourCombobox.getSelectedIndex()]);
+				}
+			}
+		});
+		robotChangeBehaviourButton.setBounds(662, 378, 117, 25);
 		
 		testBenchPanel = new JPanel();
 		robotControlTabbedPanel.addTab("Test Bench", null, testBenchPanel, null);
@@ -1714,6 +1845,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JCheckBox showThreshCheckbox;
 	private JCheckBox showContoursCheckbox;
 	private JCheckBox showBoxesCheckbox;
+	private JCheckBox showStateDataCheckbox;
+	private JCheckBox showWorldCheckbox;
 	
 	private JSpinner fieldLowYSpinner;	
 	private JSpinner fieldLowXSpinner;	
@@ -1747,6 +1880,10 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JLabel blueSizeLabel;
 	private JSpinner blueSizeMinSpinner;
 	private JSpinner blueSizeMaxSpinner;
+	private JCheckBox enableBlueCheckbox;
+	private JCheckBox correctHeightBlueCheckbox;
+	private JLabel blueHeightFactorLabel;
+	private JSpinner blueHeightFactorSpinner;
 	
 	private JPanel yellowThreshPanel;
 	private JLabel yellowHueLabel;
@@ -1761,22 +1898,11 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JLabel yellowSizeLabel;
 	private JSpinner yellowSizeMinSpinner;
 	private JSpinner yellowSizeMaxSpinner;
+	private JCheckBox enableYellowCheckbox;
+	private JCheckBox correctHeightYellowCheckbox;
+	private JLabel yellowHeightFactorLabel;
+	private JSpinner yellowHeightFactorSpinner;
 	
-	private JPanel robotSettingPanel;
-	private JRadioButton robotColorBlueButton;
-	private JRadioButton robotColorYellowButton;
-	private JLabel robotColorLabel;
-	private JRadioButton robotGateLeftButton;
-	private JRadioButton robotGateRightButton;
-	private JLabel robotGateLabel;
-	private JButton robotConnectButton;
-	private JButton robotOverrideVision;
-	private JButton robotChangeColorGoal;
-	private final ButtonGroup robotColorButtonGroup = new ButtonGroup();
-	private final ButtonGroup robotGateButtonGroup = new ButtonGroup();
-	private JCheckBox robotDebugModeCheckbox;
-	private JCheckBox showStateDataCheckbox;
-	private JCheckBox showWorldCheckbox;
 	private JPanel undistortionPanel;
 	private JLabel fxLabel;
 	private JLabel fyLabel;
@@ -1796,23 +1922,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JTextField p2Textfield;
 	private JLabel intristicLabel;
 	private JLabel distortionLabel;
-	private JLabel robotStateLabel;
-	private JComboBox aiStateCombobox;
-	private JPanel testBenchPanel;
-	private JTextField testCaseTextfield;
-	private JTextArea testBenchOutputTextarea;
-	private JScrollPane testBenchOutputScrollPane;
-	private JPanel testBenchOutputPanel;
-	private JLabel testCaseLabel;
-	private JPanel imageCanvasPanel;
-	private JCheckBox enableBlueCheckbox;
-	private JCheckBox correctHeightBlueCheckbox;
-	private JLabel blueHeightFactorLabel;
-	private JSpinner blueHeightFactorSpinner;
-	private JCheckBox enableYellowCheckbox;
-	private JCheckBox correctHeightYellowCheckbox;
-	private JLabel yellowHeightFactorLabel;
-	private JSpinner yellowHeightFactorSpinner;
 	private JTextField k3Textfield;
 	private JTextField k4Textfield;
 	private JTextField k5Textfield;
@@ -1822,4 +1931,38 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JLabel k5Label;
 	private JLabel k6Label;
 	private JCheckBox enableUndistortionCheckbox;
+
+	private JPanel robotSettingPanel;
+	private JPanel robotOptionPanel;
+	private JPanel robotBehaviourPanel;
+	private JPanel robotConnectionPanel;
+	private JRadioButton robotColorBlueButton;
+	private JRadioButton robotColorYellowButton;
+	private JLabel robotColorLabel;
+	private JRadioButton robotGateLeftButton;
+	private JRadioButton robotGateRightButton;
+	private JLabel robotGateLabel;
+	private JButton robotConnectButton;
+	private JButton robotOverrideVisionButton;
+	private JButton robotChangeColorGoal;
+	private final ButtonGroup robotColorButtonGroup = new ButtonGroup();
+	private final ButtonGroup robotGateButtonGroup = new ButtonGroup();
+	private JComboBox robotBehaviourCombobox;
+	private JCheckBox robotDebugModeCheckbox;
+	private JButton robotPlayButton;
+	private JButton robotSitButton;
+	private JButton robotShootPenaltyButton;
+	private JButton robotDefendPenaltyButton;
+	private JLabel robotPenaltiesLabel;
+	private JLabel robotBehMainLabel;
+	private JLabel robotOtherLabel;
+	
+	private JPanel testBenchPanel;
+	private JTextField testCaseTextfield;
+	private JTextArea testBenchOutputTextarea;
+	private JScrollPane testBenchOutputScrollPane;
+	private JPanel testBenchOutputPanel;
+	private JLabel testCaseLabel;
+	
+	private JPanel imageCanvasPanel;
 }
