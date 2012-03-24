@@ -38,6 +38,11 @@ public class AIWorldState extends WorldState {
 	/** The time, by which the world state is advanced into the future, in ms. */
 	private static final long PREDICTION_TIME = 400;
 	
+	/** Low pass filter new angle data weight. */
+	private static final double LPF_ANGLE_WEIGHT = 0.5;
+	/** Low pass filter new position data weight. */
+	private static final double LPF_COORD_WEIGHT = 0.8;
+	
 	/** Top offset of the battery level indicator. */
 	private static final int BATTERY_TOP_OFFSET = 10;
 	/** Right offset of the battery level indicator. */
@@ -57,7 +62,7 @@ public class AIWorldState extends WorldState {
 	
 	
 	/** The low pass filter. */
-	private static LowPassFilter lowPassFilter = new LowPassFilter();
+	private static LowPassFilter lowPassFilter = new LowPassFilter(LPF_ANGLE_WEIGHT, LPF_COORD_WEIGHT);
 	
 	
 	/** A queue with past world states that are used in prediction. */

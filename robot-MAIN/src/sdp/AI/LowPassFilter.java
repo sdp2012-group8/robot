@@ -11,25 +11,12 @@ import sdp.common.geometry.Vector2D;
  * A low pass filter for smoothing data.
  */
 public class LowPassFilter {
-	
-	/** Low pass filter new angle data weight. */
-	private static final double DEFAULT_ANGLE_WEIGHT = 0.5;
-	/** Low pass filter new position data weight. */
-	private static final double DEFAULT_COORD_WEIGHT = 0.8;
-	
-	
+
 	/** New angle value weight. */
 	double angleWeight;
 	/** New coordinate value weight. */
 	double coordWeight;
 	
-	
-	/**
-	 * Create a new low pass filter with default weights.
-	 */
-	public LowPassFilter() {
-		this(DEFAULT_ANGLE_WEIGHT, DEFAULT_COORD_WEIGHT);
-	}
 	
 	/**
 	 * Create a new low pass filter.
