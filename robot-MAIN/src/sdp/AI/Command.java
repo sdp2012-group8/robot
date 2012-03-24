@@ -1,37 +1,74 @@
-/**
- * 
- */
 package sdp.AI;
 
+import sdp.common.Robot;
 import sdp.common.Utilities;
 
+
+/**
+ * A robot command.
+ */
 public class Command {
 	
-	public static final double default_acceleration = 69.81317d;
-	
-	public double speed, turning_speed, acceleration = default_acceleration;
+	/** Robot's acceleration speed. */
+	public double acceleration = Robot.ACCELERATION_SPEED;
+	/** Robot's forward driving speed in cm/s. */
+	public double drivingSpeed = 0.0;
+	/** Robot's turning speed in degrees/s. */
+	public double turningSpeed = 0.0;
+
+	/** Whether should attempt to kick. */
 	public boolean kick = false;
 	
-	public Command(double speed, double turning_speed, boolean kick) {
-		this.speed = speed;
-		this.turning_speed = turning_speed;
+	
+	/**
+	 * Create a new robot command.
+	 * 
+	 * @param drivingSpeed Robot's forward driving speed.
+	 * @param turningSpeed Robot's turning speed.
+	 * @param kick Whether the robot should be ready to kick.
+	 */
+	public Command(double drivingSpeed, double turningSpeed, boolean kick) {
+		this.drivingSpeed = drivingSpeed;
+		this.turningSpeed = turningSpeed;
 		this.kick = kick;
 	}
 	
-	public short getShortSpeed() {
-		return Utilities.normaliseSpeed(Utilities.normaliseAngleToShort(speed));
+	
+	/**
+	 * Get the robot's driving speed as a short.
+	 * 
+	 * @return Robot's driving speed as a short.
+	 */
+	public short getShortDrivingSpeed() {
+		return Utilities.restrictToRobotSpeed(Utilities.restrictToShort(drivingSpeed));
 	}
 	
-	public short getShortTurnSpeed() {
-		return Utilities.normaliseAngleToShort(turning_speed);
+	/**
+	 * Get the robot's turning speed as a short.
+	 * 
+	 * @return Robot's turning speed as a short.
+	 */
+	public short getShortTurningSpeed() {
+		return Utilities.restrictToShort(turningSpeed);
 	}
 	
-	public short getShortAcc() {
-		return Utilities.normaliseAngleToShort(acceleration);
+	/**
+	 * Get the robot's acceleration as a short.
+	 * 
+	 * @return Robot's acceleration as a short.
+	 */
+	public short getShortAcceleration() {
+		return Utilities.restrictToShort(acceleration);
 	}
 	
-	public boolean isDefaultAcc() {
-		return acceleration == default_acceleration;
+	
+	/**
+	 * Get whether the command leaves the acceleration speed intact.
+	 * 
+	 * @return Whether default robot acceleration is unchanged.
+	 */
+	public boolean isAccelerationDefault() {
+		return Utilities.areDoublesEqual(acceleration, Robot.ACCELERATION_SPEED);
 	}
 
 	
@@ -40,6 +77,7 @@ public class Command {
 	 */
 	@Override
 	public String toString() {
-		return "spd: "+getShortSpeed()+", tspd: "+getShortTurnSpeed()+", kick "+kick+", acc: "+getShortAcc();
+		return "dspd: " + getShortDrivingSpeed() + ", tspd: " + getShortTurningSpeed()
+				+ ", kick " + kick + ", acc: " + getShortAcceleration();
 	}
 }

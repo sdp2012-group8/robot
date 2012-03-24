@@ -6,7 +6,6 @@ import java.io.IOException;
 /**
  * Base class for all AI implementations.
  * 
- * @author Gediminas Liktaras
  * @author Martin Marinov
  */
 public abstract class BaseAI {

@@ -182,7 +182,7 @@ public class Simulator extends WorldStateProvider {
 					speeds[id] = proj.x;
 					turning_speeds[id] = first_run ? 0 : (rob.getAngle() - old_rob.getAngle())/dt;
 					try {
-						robot[id].sendMessage(opcode.operate, command.getShortSpeed(), command.getShortTurnSpeed());
+						robot[id].sendMessage(opcode.operate, command.getShortDrivingSpeed(), command.getShortTurningSpeed());
 					} catch (IOException e) {}
 				} else {
 					try {

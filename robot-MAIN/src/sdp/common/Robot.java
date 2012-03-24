@@ -20,6 +20,8 @@ public final class Robot {
 	/** Width of the robot's top plate in normalised coordinates. */
 	public static final double WIDTH = WIDTH_CM / 244d;
 	
+	/** Default robot acceleration speed in cm/s^2. */
+	public static final double ACCELERATION_SPEED = 69.81317;
 	/** Maximum robot driving speed in cm/s. */
 	public static final int MAX_SPEED_CM_S = 53;
 	/** Maximum robot turning speed in zig/ptk. */

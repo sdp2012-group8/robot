@@ -122,23 +122,6 @@ public class Utilities {
 		
 		return angle;
 	}
-	
-
-	/**
-	 * Normalise an angle to fit into interval [Short.MIN_VALUE; Short.MAX_VALUE).
-	 * 
-	 * @param angle Angle, in degrees.
-	 * @return Normalised angle, as described above.
-	 */
-	public static short normaliseAngleToShort(double angle){
-		if (angle > Short.MAX_VALUE) {
-			angle = Short.MAX_VALUE;
-		}
-		if (angle < Short.MIN_VALUE) {
-			angle = Short.MIN_VALUE;
-		}
-		return (short) angle;
-	}
 
 
 	/**
@@ -1275,12 +1258,40 @@ public class Utilities {
 		return new AIWorldState(world_state, my_team_blue, my_goal_left);
 	}
 
-
-	public static short normaliseSpeed(short speed) {
-		if (speed > Robot.MAX_SPEED_CM_S) speed = Robot.MAX_SPEED_CM_S;
-		if (speed < -Robot.MAX_SPEED_CM_S) speed = -Robot.MAX_SPEED_CM_S;
-		return speed;
+	
+	/**
+	 * Bind a double to the interval [Short.MIN_VALUE; Short.MAX_VALUE]. If
+	 * the given value is outside this interval, it is set to the closer
+	 * endpoint.
+	 * 
+	 * @param value A value.
+	 * @return Restricted value, as described above.
+	 */
+	public static short restrictToShort(double value){
+		if (value > Short.MAX_VALUE) {
+			value = Short.MAX_VALUE;
+		}
+		if (value < Short.MIN_VALUE) {
+			value = Short.MIN_VALUE;
+		}
+		return ((short) value);
 	}
 
-	
+	/**
+	 * Bind a short to the interval [-Robot.MAX_SPEED_CM_S; Robot.MAX_SPEED_CM_S].
+	 * If the given value is outside this interval, it is set to the closer
+	 * endpoint.
+	 * 
+	 * @param value A value.
+	 * @return Restricted value, as described above.
+	 */
+	public static short restrictToRobotSpeed(short value) {
+		if (value > Robot.MAX_SPEED_CM_S) {
+			value = Robot.MAX_SPEED_CM_S;
+		}
+		if (value < -Robot.MAX_SPEED_CM_S) {
+			value = -Robot.MAX_SPEED_CM_S;
+		}
+		return value;
+	}
 }

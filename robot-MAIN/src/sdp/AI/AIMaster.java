@@ -108,9 +108,9 @@ public class AIMaster extends AIListener {
 					right_sens = ai_world_state.isRight_sensor();
 			
 			if (left_sens) {
-				command.turning_speed = 90;
+				command.turningSpeed = 90;
 			} else if (right_sens) {
-				command.turning_speed = -90;
+				command.turningSpeed = -90;
 			}
 			
 			if (command != null){
@@ -119,10 +119,10 @@ public class AIMaster extends AIListener {
 			
 	//		ai_world_state.setCommand(command);
 
-			if (command.isDefaultAcc())
-				mComm.sendMessage(opcode.operate, command.getShortSpeed(), command.getShortTurnSpeed());
+			if (command.isAccelerationDefault())
+				mComm.sendMessage(opcode.operate, command.getShortDrivingSpeed(), command.getShortTurningSpeed());
 			else
-				mComm.sendMessage(opcode.operate, command.getShortSpeed(), command.getShortTurnSpeed(), command.getShortAcc());
+				mComm.sendMessage(opcode.operate, command.getShortDrivingSpeed(), command.getShortTurningSpeed(), command.getShortAcceleration());
 			
 			if (command.kick) {
 				System.out.println("kicking");
