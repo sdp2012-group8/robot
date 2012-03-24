@@ -1,10 +1,12 @@
 package sdp.common;
 
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 import sdp.AI.AIWorldState;
+import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
 
 
@@ -31,15 +33,15 @@ public class DeprecatedCode {
 		if (origin.getX() <= 0 || origin.getY() <= 0 || origin.getX() >= WorldState.PITCH_WIDTH_CM || origin.getY() >= WorldState.PITCH_HEIGHT_CM)
 			return Vector2D.ZERO();
 		Vector2D near;
-		Vector2D temp = Utilities.vectorLineIntersection(origin, direction, new Vector2D(0, 0), new Vector2D(WorldState.PITCH_WIDTH_CM, 0));
+		Vector2D temp = GeomUtils.getLocalRaySegmentIntersection(origin, direction, new Vector2D(0, 0), new Vector2D(WorldState.PITCH_WIDTH_CM, 0));
 		near = temp;
-		temp = Utilities.vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM, 0), new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM));
+		temp = GeomUtils.getLocalRaySegmentIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM, 0), new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM));
 		if (temp != null && (near == null || temp.getLength() < near.getLength()))
 			near = temp;
-		temp = Utilities.vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM), new Vector2D(0, WorldState.PITCH_HEIGHT_CM));
+		temp = GeomUtils.getLocalRaySegmentIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM), new Vector2D(0, WorldState.PITCH_HEIGHT_CM));
 		if (temp != null && (near == null || temp.getLength() < near.getLength()))
 			near = temp;
-		temp = Utilities.vectorLineIntersection(origin, direction, new Vector2D(0, WorldState.PITCH_HEIGHT_CM), new Vector2D(0, 0));
+		temp = GeomUtils.getLocalRaySegmentIntersection(origin, direction, new Vector2D(0, WorldState.PITCH_HEIGHT_CM), new Vector2D(0, 0));
 		if (temp != null && (near == null || temp.getLength() < near.getLength()))
 			near = temp;
 		// collision with a Robot
@@ -47,23 +49,23 @@ public class DeprecatedCode {
 			if (ignore_blue != null && ((ignore_blue ? 0 : 1) == i))
 				continue;
 			Robot robot = i == 0 ? ws.getBlueRobot() : ws.getYellowRobot();
-			temp = Utilities.vectorLineIntersection(origin, direction, new Vector2D(robot.getFrontLeft()), new Vector2D(robot.getFrontRight()));
+			temp = GeomUtils.getLocalRaySegmentIntersection(origin, direction, new Vector2D(robot.getFrontLeft()), new Vector2D(robot.getFrontRight()));
 			if (temp != null && (near == null || temp.getLength() < near.getLength()))
 				near = temp;
-			temp = Utilities.vectorLineIntersection(origin, direction, new Vector2D(robot.getFrontRight()), new Vector2D(robot.getBackRight()));
+			temp = GeomUtils.getLocalRaySegmentIntersection(origin, direction, new Vector2D(robot.getFrontRight()), new Vector2D(robot.getBackRight()));
 			if (temp != null && (near == null || temp.getLength() < near.getLength()))
 				near = temp;
-			temp = Utilities.vectorLineIntersection(origin, direction, new Vector2D(robot.getBackRight()), new Vector2D(robot.getBackLeft()));
+			temp = GeomUtils.getLocalRaySegmentIntersection(origin, direction, new Vector2D(robot.getBackRight()), new Vector2D(robot.getBackLeft()));
 			if (temp != null && (near == null || temp.getLength() < near.getLength()))
 				near = temp;
-			temp = Utilities.vectorLineIntersection(origin, direction, new Vector2D(robot.getBackLeft()), new Vector2D(robot.getFrontLeft()));
+			temp = GeomUtils.getLocalRaySegmentIntersection(origin, direction, new Vector2D(robot.getBackLeft()), new Vector2D(robot.getFrontLeft()));
 			if (temp != null && (near == null || temp.getLength() < near.getLength()))
 				near = temp;
 		}
 		// collision with ball
 		if (include_ball_as_obstacle) {
 			Vector2D ball = new Vector2D(ws.getBallCoords());
-			temp = Utilities.vectorLineIntersection(origin, direction, new Vector2D(ball.getX(), ball.getY()-Utilities.SIZE_OF_BALL_OBSTACLE/2), new Vector2D(ball.getX(), ball.getY()+Utilities.SIZE_OF_BALL_OBSTACLE/2));
+			temp = GeomUtils.getLocalRaySegmentIntersection(origin, direction, new Vector2D(ball.getX(), ball.getY()-Utilities.SIZE_OF_BALL_OBSTACLE/2), new Vector2D(ball.getX(), ball.getY()+Utilities.SIZE_OF_BALL_OBSTACLE/2));
 			if (temp != null && (near == null || temp.getLength() < near.getLength()))
 				near = temp;
 		}
@@ -169,7 +171,7 @@ public class DeprecatedCode {
 	
 			//System.out.println(temp_point);
 			
-			if (Utilities.isPointInField(temp_point)) { 
+			if (DeprecatedCode.isPointInField(temp_point)) { 
 				if (!Utilities.isPointAroundRobot(temp_point, enemy_robot) && Utilities.lineIntersectsRobot(temp_point, ws.getBallCoords(),
 						enemy_robot)) {
 					//System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
@@ -253,7 +255,7 @@ public class DeprecatedCode {
 			Point2D.Double point = itr.next();
 			Point2D.Double temp_point = Utilities.getPointBehindBall(point, ws.getBallCoords(), ws.isOwnGoalLeft(), point_offset);
 	
-			if (Utilities.isPointInField(temp_point)) { 
+			if (DeprecatedCode.isPointInField(temp_point)) { 
 				if (!Utilities.isPointAroundRobot(temp_point, enemy_robot)) {
 					//System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
 					//System.out.println("Min distance: "+min_distance);
@@ -369,6 +371,27 @@ public class DeprecatedCode {
 	
 		
 		return true;
+	}
+
+	/**
+	 * Calculates if the given point is within the field.
+	 * Includes an offset equal to half of the length of the robot, to allow
+	 * it to get behind the ball
+	 * 
+	 * TODO: Replace with isPointInPaddedPitch(point, Robot.LENGTH_CM / 2).
+	 * 
+	 * @param point The point to be checked
+	 * @return True if the point is within the bounds of the field.
+	 */
+	@Deprecated
+	public static boolean isPointInField(Point2D.Double point) {
+		double offset = Robot.LENGTH_CM / 2;
+		if (point.getX() >= offset && point.getX() <= (WorldState.PITCH_WIDTH_CM - offset)) {
+			if (point.getY() >= offset && point.getY() <= (WorldState.PITCH_HEIGHT_CM - offset)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

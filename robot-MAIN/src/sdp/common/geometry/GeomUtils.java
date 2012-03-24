@@ -96,6 +96,24 @@ public class GeomUtils {
 		return Point2D.distance(a.x, a.y, b.x, b.y);
 	}
 	
+	
+	/**
+	 * Check whether a point is contained within an axis-aligned box.
+	 * 
+	 * @param p A point of interest.
+	 * @param a One of the corners of the box.
+	 * @param b The opposite corner of the box.
+	 * @return Whether a point is within the box.
+	 */
+	public static boolean isPointInAxisAlignedBox(Point2D.Double p, Point2D.Double a,
+			Point2D.Double b) {
+		double xLow = Math.min(a.x, b.x);
+		double xHigh = Math.max(a.x, b.x);
+		double yLow = Math.min(a.y, b.y);
+		double yHigh = Math.max(a.y, b.y);
+		
+		return ((xLow <= p.x) && (p.x <= xHigh) && (yLow <= p.y) && (p.y <= yHigh)); 
+	}
 
 	/**
 	 * Checks whether a point is contained within some triangle.
@@ -143,7 +161,7 @@ public class GeomUtils {
 	 * @param l2pt2 Second point on the second line.
 	 * @return Point of intersection of the lines.
 	 */
-	public static Point2D.Double getLineIntersection(Point2D.Double l1pt1, Point2D.Double l1pt2,
+	public static Point2D.Double getLineLineIntersection(Point2D.Double l1pt1, Point2D.Double l1pt2,
 			Point2D.Double l2pt1, Point2D.Double l2pt2) {
 		Point2D.Double l1dir = GeomUtils.subtractPoints(l1pt1, l1pt2);
 		Point2D.Double l2dir = GeomUtils.subtractPoints(l2pt1, l2pt2);
@@ -160,6 +178,40 @@ public class GeomUtils {
 			return new Point2D.Double(xi, yi);
 		}
 	}
+	
+	/**
+	 * Return the intersection of a ray with a line segment in ray-local
+	 * coordinates. If there is no intersection, null is returned instead.
+	 * 
+	 * @param rayOrigin Origin of the ray.
+	 * @param rayDir Direction of the ray.
+	 * @param segPt1 First endpoint of the line segment.
+	 * @param segPt2 Second endpoint of the line segment.
+	 * @return Intersection coordinates in ray-local coordinates.
+	 */
+	public static Vector2D getLocalRaySegmentIntersection(Point2D.Double rayOrigin,
+			Vector2D rayDir, Point2D.Double segPt1, Point2D.Double segPt2) {
+		Vector2D segPt1Local = new Vector2D(GeomUtils.getLocalPoint(rayOrigin, rayDir, segPt1));
+		Vector2D segPt2Local = new Vector2D(GeomUtils.getLocalPoint(rayOrigin, rayDir, segPt2));
+		
+		if ((segPt1Local.x < 0) && (segPt2Local.x < 0)) {
+			return null;
+		}
+		
+		if (segPt1Local.y * segPt2Local.y <= 0 ) {
+			double slope = (segPt2Local.x - segPt1Local.x) / (segPt2Local.y - segPt1Local.y);
+			double intDist = segPt1Local.x - (segPt1Local.y * slope);
+			
+			if (intDist < 0) {
+				return null;
+			} else {
+				return Vector2D.changeLength(rayDir, intDist);
+			}
+		} else {
+			return null;
+		}
+	}
+	
 
 	/**
 	 * Check if a line segment intersects the given line.
@@ -178,6 +230,7 @@ public class GeomUtils {
 				GeomUtils.subtractPoints(segPt2, linePt1));
 		return ((cp1 * cp2) >= 0);
 	}
+	
 
 	/**
 	 * Get a cross product of two 2D vectors. The value returned is the cross
@@ -225,7 +278,6 @@ public class GeomUtils {
 	}
 
 
-
 	/**
 	 * Takes points A, B and C and calculates the angle BAC.
 	 * 
@@ -240,6 +292,39 @@ public class GeomUtils {
 		double bc = GeomUtils.pointDistance(b,c);
 	
 		return Math.acos((ac * ac + ab * ab - bc * bc) / (2 * ac * ab));
+	}
+	
+	
+	/**
+	 * Convert a point from some local coordinate system to the global one.
+	 * 
+	 * @param refOrigin Local system's origin.
+	 * @param refDir Local system's 0 degree direction vector.
+	 * @param localPoint Local point to convert.
+	 * @return A corresponding global point.
+	 */
+	public static Point2D.Double getGlobalPoint(Point2D.Double refOrigin, Vector2D refDir,
+			Point2D.Double localPoint) {
+		Point2D.Double globalPoint = GeomUtils.rotatePoint(new Point2D.Double(0.0, 0.0),
+				localPoint, refDir.getDirection());
+		globalPoint = GeomUtils.addPoints(globalPoint, refOrigin);
+		return globalPoint;
+	}
+	
+	/**
+	 * Convert a point from the global coordinate system to some local one.
+	 * 
+	 * @param refOrigin Local system's origin.
+	 * @param refDir Local system's 0 degree direction vector.
+	 * @param globalPoint Global point to convert.
+	 * @return A corresponding local point.
+	 */
+	public static Point2D.Double getLocalPoint(Point2D.Double refOrigin, Vector2D refDir,
+			Point2D.Double globalPoint) {
+		Point2D.Double localPoint = GeomUtils.subtractPoints(globalPoint, refOrigin);
+		localPoint = GeomUtils.rotatePoint(new Point2D.Double(0.0, 0.0),
+				localPoint, -refDir.getDirection());
+		return localPoint;
 	}
 
 }

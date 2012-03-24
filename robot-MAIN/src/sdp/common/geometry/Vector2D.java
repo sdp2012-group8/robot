@@ -164,6 +164,17 @@ public class Vector2D extends Point2D.Double {
 	
 	
 	/**
+	 * Get a vector, perpendicular to the given one.
+	 * 
+	 * @param vector Vector of interest.
+	 * @return Perpendicular vector.
+	 */
+	public static Vector2D getPerpendicular(Vector2D vector) {
+		return new Vector2D(-vector.y, vector.x);
+	}
+	
+	
+	/**
 	 * Get a vector in same direction but with different length.
 	 * 
 	 * @param vector Vector, whose direction should be used.

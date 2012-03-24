@@ -175,7 +175,7 @@ public class AIVisualServoing extends BaseAI {
 			int2 = new Point2D.Double(x, WorldState.PITCH_HEIGHT_CM - Robot.LENGTH_CM);
 		}
 
-		Point2D.Double intercept= GeomUtils.getLineIntersection(aiWorldState.getBallCoords(), aiWorldState.getEnemyRobot().getCoords(), int1, int2);
+		Point2D.Double intercept= GeomUtils.getLineLineIntersection(aiWorldState.getBallCoords(), aiWorldState.getEnemyRobot().getCoords(), int1, int2);
 
 		boolean can_we_go_to_intercept = false;
 		Command com = new Command(0, 0, false);
@@ -284,7 +284,7 @@ public class AIVisualServoing extends BaseAI {
 		//
 		//
 
-		Point2D.Double interceptBall= GeomUtils.getLineIntersection(aiWorldState.getEnemyRobot().getFrontCenter(), aiWorldState.getEnemyRobot().getCoords(), aiWorldState.getOwnRobot().getCoords(), aiWorldState.getOwnRobot().getFrontCenter());
+		Point2D.Double interceptBall= GeomUtils.getLineLineIntersection(aiWorldState.getEnemyRobot().getFrontCenter(), aiWorldState.getEnemyRobot().getCoords(), aiWorldState.getOwnRobot().getCoords(), aiWorldState.getOwnRobot().getFrontCenter());
 		System.out.println("InterceptDistance: " + interceptBall);
 		System.out.println("Our robot's y: " + aiWorldState.getOwnRobot().getCoords().y);
 		double dist = Vector2D.subtract(new Vector2D(aiWorldState.getOwnRobot().getCoords()), new Vector2D(interceptBall)).getLength();

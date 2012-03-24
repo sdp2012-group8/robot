@@ -5,6 +5,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
+import java.util.ArrayList;
 
 import sdp.AI.AIWorldState;
 import sdp.common.geometry.GeomUtils;
@@ -33,6 +34,9 @@ public class Utilities {
 	
 	/** The maximum attack angle for an attacking robot. */
 	public static final double KICKABLE_ATTACK_ANGLE = 40.0;
+	
+	/** Size of the ball obstacle circle. */
+	public static final double BALL_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.7;
 	
 	/** A flag that denotes that ball should be considered an obstacle. */
 	public static final int BALL_IS_OBSTACLE_FLAG = 0x1;
@@ -197,24 +201,6 @@ public class Utilities {
 		}
 	}
 
-	
-	/**
-	 * Calculates if the given point is within the field.
-	 * Includes an offset equal to half of the length of the robot, to allow
-	 * it to get behind the ball
-	 * @param point The point to be checked
-	 * @return True if the point is within the bounds of the field.
-	 */
-	public static boolean isPointInField(Point2D.Double point) {
-		double offset = Robot.LENGTH_CM / 2;
-		if (point.getX() >= offset && point.getX() <= (WorldState.PITCH_WIDTH_CM - offset)) {
-			if (point.getY() >= offset && point.getY() <= (WorldState.PITCH_HEIGHT_CM - offset)) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
 	
 	/**
 	 * Checks whether the given line intersects a robot.
@@ -414,13 +400,38 @@ public class Utilities {
 	
 	
 	/**
-	 * Checks whether coordinates of the given point are both negative.
+	 * Check whether coordinates of the given point are both negative.
 	 * 
 	 * @param point Point in question.
 	 * @return Whether both x and y coordinates are negative.
 	 */
 	public static boolean isPointNegative(Point2D.Double point) {
 		return ((point.x < 0) && (point.y < 0));
+	}
+	
+	
+	/**
+	 * Check whether the given point is inside the football pitch.
+	 * 
+	 * @param point Point in question.
+	 * @return Whether the point is inside the pitch.
+	 */
+	public static boolean isPointInPitch(Point2D.Double point) {
+		return Utilities.isPointInPaddedPitch(point, 0.0);
+	}
+	
+	/**
+	 * Check whether the given point is inside the football pitch with some
+	 * padding added on the sides.
+	 * 
+	 * @param point Point in question.
+	 * @param padding The amount of wall padding of the pitch.
+	 * @return Whether the point is inside the padded pitch.
+	 */
+	public static boolean isPointInPaddedPitch(Point2D.Double point, double padding) {
+		return ((point.x >= padding) && (point.y >= padding)
+				&& (point.x <= (WorldState.PITCH_WIDTH_CM - padding))
+				&& (point.y <= (WorldState.PITCH_HEIGHT_CM - padding)));
 	}
 	
 
@@ -588,62 +599,101 @@ public class Utilities {
 	 */
 	public static Vector2D getClosestCollisionVec(WorldState state, Vector2D origin,
 			Vector2D direction, int obstacles) {
-		boolean ballIsObstacle = ((obstacles & BALL_IS_OBSTACLE_FLAG) != 0);
-		
-		Boolean robotCollision;
-		if ((obstacles & BLUE_IS_OBSTACLE_FLAG) != 0) {
-			if ((obstacles & YELLOW_IS_OBSTACLE_FLAG) != 0) {
-				robotCollision = null;
-			} else {
-				robotCollision = false;
-			}
-		} else {
-			robotCollision = true;
-		}
-		
-		if (origin.getX() <= 0 || origin.getY() <= 0 || origin.getX() >= WorldState.PITCH_WIDTH_CM || origin.getY() >= WorldState.PITCH_HEIGHT_CM)
+		if (!Utilities.isPointInPitch(origin)) {
 			return Vector2D.ZERO();
-		Vector2D near;
-		Vector2D temp = vectorLineIntersection(origin, direction, new Vector2D(0, 0), new Vector2D(WorldState.PITCH_WIDTH_CM, 0));
-		near = temp;
-		temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM, 0), new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM));
-		if (temp != null && (near == null || temp.getLength() < near.getLength()))
-			near = temp;
-		temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM), new Vector2D(0, WorldState.PITCH_HEIGHT_CM));
-		if (temp != null && (near == null || temp.getLength() < near.getLength()))
-			near = temp;
-		temp = vectorLineIntersection(origin, direction, new Vector2D(0, WorldState.PITCH_HEIGHT_CM), new Vector2D(0, 0));
-		if (temp != null && (near == null || temp.getLength() < near.getLength()))
-			near = temp;
-		// collision with a Robot
-		for (int i = 0; i <= 1; i++) {
-			if (robotCollision != null && ((robotCollision ? 0 : 1) == i))
-				continue;
-			Robot robot = i == 0 ? state.getBlueRobot() : state.getYellowRobot();
-			temp = vectorLineIntersection(origin, direction, new Vector2D(robot.getFrontLeft()), new Vector2D(robot.getFrontRight()));
-			if (temp != null && (near == null || temp.getLength() < near.getLength()))
-				near = temp;
-			temp = vectorLineIntersection(origin, direction, new Vector2D(robot.getFrontRight()), new Vector2D(robot.getBackRight()));
-			if (temp != null && (near == null || temp.getLength() < near.getLength()))
-				near = temp;
-			temp = vectorLineIntersection(origin, direction, new Vector2D(robot.getBackRight()), new Vector2D(robot.getBackLeft()));
-			if (temp != null && (near == null || temp.getLength() < near.getLength()))
-				near = temp;
-			temp = vectorLineIntersection(origin, direction, new Vector2D(robot.getBackLeft()), new Vector2D(robot.getFrontLeft()));
-			if (temp != null && (near == null || temp.getLength() < near.getLength()))
-				near = temp;
 		}
-		// collision with ball
-		if (ballIsObstacle) {
-			Vector2D ball = new Vector2D(state.getBallCoords());
-			temp = vectorLineIntersection(origin, direction, new Vector2D(ball.getX(), ball.getY()-SIZE_OF_BALL_OBSTACLE/2), new Vector2D(ball.getX(), ball.getY()+SIZE_OF_BALL_OBSTACLE/2));
-			if (temp != null && (near == null || temp.getLength() < near.getLength()))
-				near = temp;
+
+		class VectorPair {
+			public Vector2D vec1;
+			public Vector2D vec2;
+			
+			public VectorPair(Vector2D vec1, Vector2D vec2) {
+				this.vec1 = vec1;
+				this.vec2 = vec2;
+			}
+		}		
+		ArrayList<VectorPair> segments = new ArrayList<VectorPair>();
+		
+		// Wall collisions.
+		segments.add(new VectorPair(
+				new Vector2D(0.0, 0.0),
+				new Vector2D(WorldState.PITCH_WIDTH_CM, 0.0))
+		);
+		segments.add(new VectorPair(
+				new Vector2D(WorldState.PITCH_WIDTH_CM, 0.0),
+				new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM))
+		);
+		segments.add(new VectorPair(
+				new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM),
+				new Vector2D(0.0, WorldState.PITCH_HEIGHT_CM))
+		);
+		segments.add(new VectorPair(
+				new Vector2D(0.0, WorldState.PITCH_HEIGHT_CM),
+				new Vector2D(0.0, 0.0))
+		);
+		
+		// Ball collisions.
+		if ((obstacles & BALL_IS_OBSTACLE_FLAG) != 0) {
+			Vector2D perpDir = Vector2D.getPerpendicular(direction);
+			Vector2D offsetVec1 = Vector2D.changeLength(perpDir, BALL_OBSTACLE_RADIUS);
+			Vector2D offsetVec2 = Vector2D.changeLength(perpDir, -BALL_OBSTACLE_RADIUS);
+			
+			segments.add(new VectorPair(
+					Vector2D.add(new Vector2D(state.getBallCoords()), offsetVec1),
+					Vector2D.add(new Vector2D(state.getBallCoords()), offsetVec2))
+			);
 		}
-		if (near != null) 
-			return near;
-		return
-				Vector2D.changeLength(direction, WorldState.PITCH_WIDTH_CM);
+		
+		// Blue robot collisions.
+		if ((obstacles & BLUE_IS_OBSTACLE_FLAG) != 0) {
+			segments.add(new VectorPair(
+					new Vector2D(state.getBlueRobot().getFrontLeft()),
+					new Vector2D(state.getBlueRobot().getFrontRight()))
+			);
+			segments.add(new VectorPair(
+					new Vector2D(state.getBlueRobot().getFrontRight()),
+					new Vector2D(state.getBlueRobot().getBackRight()))
+			);
+			segments.add(new VectorPair(
+					new Vector2D(state.getBlueRobot().getBackRight()),
+					new Vector2D(state.getBlueRobot().getBackLeft()))
+			);
+			segments.add(new VectorPair(
+					new Vector2D(state.getBlueRobot().getBackLeft()),
+					new Vector2D(state.getBlueRobot().getFrontLeft()))
+			);
+		}
+		
+		// Yellow robot collisions.
+		if ((obstacles & YELLOW_IS_OBSTACLE_FLAG) != 0) {
+			segments.add(new VectorPair(
+					new Vector2D(state.getYellowRobot().getFrontLeft()),
+					new Vector2D(state.getYellowRobot().getFrontRight()))
+			);
+			segments.add(new VectorPair(
+					new Vector2D(state.getYellowRobot().getFrontRight()),
+					new Vector2D(state.getYellowRobot().getBackRight()))
+			);
+			segments.add(new VectorPair(
+					new Vector2D(state.getYellowRobot().getBackRight()),
+					new Vector2D(state.getYellowRobot().getBackLeft()))
+			);
+			segments.add(new VectorPair(
+					new Vector2D(state.getYellowRobot().getBackLeft()),
+					new Vector2D(state.getYellowRobot().getFrontLeft()))
+			);
+		}
+		
+		// Actual collision test.
+		Vector2D nearest = Vector2D.changeLength(direction, WorldState.PITCH_WIDTH_CM);
+		for (VectorPair segment : segments) {
+			Vector2D current = GeomUtils.getLocalRaySegmentIntersection(origin, direction, segment.vec1, segment.vec2);
+			if ((current != null) && (current.getLength() < nearest.getLength())) {
+				nearest = current;
+			}
+		}
+		
+		return nearest;
 	}
 	
 	/**
@@ -747,31 +797,6 @@ public class Utilities {
 		return true;
 	}
 	
-
-	/**
-	 * Return the intersection of a vector in the given direction, originating from origin.
-	 * @param origin
-	 * @param direction
-	 * @param lineStart
-	 * @param lineEnd
-	 * @return the direction vector with correct length if there is intersection, otherwise returns null
-	 */
-	public static Vector2D vectorLineIntersection(Vector2D origin, Vector2D direction, Vector2D lineStart, Vector2D lineEnd) {
-		Vector2D loc_start = Vector2D.rotateVector(Vector2D.subtract(lineStart, new Vector2D(origin)), -Vector2D.getDirection(direction));
-		Vector2D loc_end = Vector2D.rotateVector(Vector2D.subtract(lineEnd, new Vector2D(origin)), -Vector2D.getDirection(direction));
-		if (loc_start.getX() < 0 && loc_end.getX() < 0)
-			return null; // if the vector is facing the other way
-		if (loc_start.getY() * loc_end.getY() <= 0 ) {
-			// if there is intersection i.e. the local coordinates are on different sides of the local axis
-			double length = loc_start.getX()-(loc_start.getY()*(loc_end.getX()-loc_start.getX())/(loc_end.getY()-loc_start.getY()));
-			if (length < 0)
-				return null;
-			return Vector2D.changeLength(direction, length);
-		} else
-			return null;
-	}
-
-
 
 	/**
 	 * Change in state of a robot
