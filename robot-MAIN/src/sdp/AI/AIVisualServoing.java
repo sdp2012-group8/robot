@@ -115,16 +115,16 @@ public class AIVisualServoing extends BaseAI {
 			if (aiWorldState.isOwnGoalLeft()) {
 				if (angle > 90 || angle < -90) {
 					//System.out.println("REVERSE angle = " + angle);
-					return new Command(-Robot.MAX_SPEED_CM_S, 0, false);
+					return new Command(-Robot.MAX_DRIVING_SPEED, 0, false);
 				}
 			} else {
 				if (Math.abs(angle) <= 90) {
 					//System.out.println("FORWARD");
-					return new Command(-Robot.MAX_SPEED_CM_S, 0, false);
+					return new Command(-Robot.MAX_DRIVING_SPEED, 0, false);
 				}
 			}
 			chasing_target = true;
-			return new Command(Robot.MAX_SPEED_CM_S,0,true);
+			return new Command(Robot.MAX_DRIVING_SPEED,0,true);
 		} else {
 			return chaseBall();
 		}
@@ -137,7 +137,7 @@ public class AIVisualServoing extends BaseAI {
 				aiWorldState.getDistanceToBall() < 40) {
 			if (Utilities.canWeAttack(aiWorldState))
 				return gotBall();
-			return new Command(Robot.MAX_SPEED_CM_S, 0, false);
+			return new Command(Robot.MAX_DRIVING_SPEED, 0, false);
 		}
 		
 		Point2D.Double int1;
@@ -450,13 +450,13 @@ public class AIVisualServoing extends BaseAI {
 
 		// Ball is behind.
 		if (Math.abs(waypoint.getTurningAngle()) > 90) {
-			comm.drivingSpeed = -Robot.MAX_SPEED_CM_S;
+			comm.drivingSpeed = -Robot.MAX_DRIVING_SPEED;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
 				comm.turningSpeed = Utilities.normaliseAngle(waypoint.getTurningAngle() - 180);
 			}		
 			// Ball is in front.
 		} else {
-			comm.drivingSpeed = Robot.MAX_SPEED_CM_S;
+			comm.drivingSpeed = Robot.MAX_DRIVING_SPEED;
 		}
 
 		reactToFrontBackCollisions(comm, true, waypoint.isEndpoint() ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
@@ -483,7 +483,7 @@ public class AIVisualServoing extends BaseAI {
 			}
 		}
 
-		reduceSpeed(comm, waypoint.getDistance(), 30, Robot.MAX_SPEED_CM_S/2);
+		reduceSpeed(comm, waypoint.getDistance(), 30, Robot.MAX_DRIVING_SPEED/2);
 
 		Painter.point_off = point_off;
 		Painter.targ_thresh = targ_thresh;
@@ -566,7 +566,7 @@ public class AIVisualServoing extends BaseAI {
 		boolean haveAnyColl = haveFrontLeftColl || haveFrontRightColl || haveBackLeftColl || haveBackRightColl;
 
 		if (haveAnyColl) {
-			command.drivingSpeed = (haveFrontColl ? -Robot.MAX_SPEED_CM_S : Robot.MAX_SPEED_CM_S);
+			command.drivingSpeed = (haveFrontColl ? -Robot.MAX_DRIVING_SPEED : Robot.MAX_DRIVING_SPEED);
 			command.turningSpeed += (haveFrontColl ? -10 : 10);
 		}
 	}
@@ -639,13 +639,13 @@ public class AIVisualServoing extends BaseAI {
 
 		// Ball is behind.
 		if (Math.abs(comm.turningSpeed) > 90) {
-			comm.drivingSpeed = -Robot.MAX_SPEED_CM_S;
+			comm.drivingSpeed = -Robot.MAX_DRIVING_SPEED;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
 				comm.turningSpeed = Utilities.normaliseAngle(comm.turningSpeed - 180);
 			}		
 			// Ball is in front.
 		} else {
-			comm.drivingSpeed = Robot.MAX_SPEED_CM_S;
+			comm.drivingSpeed = Robot.MAX_DRIVING_SPEED;
 		}
 
 		// if we get within too close (within coll_start) of an obstacle

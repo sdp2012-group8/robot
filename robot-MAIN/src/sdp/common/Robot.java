@@ -23,7 +23,7 @@ public final class Robot {
 	/** Default robot acceleration speed in cm/s^2. */
 	public static final double ACCELERATION_SPEED = 69.81317;
 	/** Maximum robot driving speed in cm/s. */
-	public static final int MAX_SPEED_CM_S = 53;
+	public static final int MAX_DRIVING_SPEED = 53;
 	/** Maximum robot turning speed in zig/ptk. */
 	public static final int MAX_TURNING_SPEED = 127;
 

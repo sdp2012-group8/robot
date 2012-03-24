@@ -471,12 +471,12 @@ public class SimTesterGUI {
 			switch (key_id) {
 			case KeyEvent.VK_UP:
 			case KeyEvent.VK_W:
-				speed = pressed ? Robot.MAX_SPEED_CM_S : 0;
+				speed = pressed ? Robot.MAX_DRIVING_SPEED : 0;
 				//turn_speed = 0;
 				break;
 			case KeyEvent.VK_DOWN:
 			case KeyEvent.VK_S:
-				speed = pressed ? -Robot.MAX_SPEED_CM_S : 0;
+				speed = pressed ? -Robot.MAX_DRIVING_SPEED : 0;
 				//turn_speed = 0;
 				break;
 			case KeyEvent.VK_LEFT:

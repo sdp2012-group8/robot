@@ -1330,11 +1330,11 @@ public class Utilities {
 	 * @return Restricted value, as described above.
 	 */
 	public static short restrictToRobotSpeed(short value) {
-		if (value > Robot.MAX_SPEED_CM_S) {
-			value = Robot.MAX_SPEED_CM_S;
+		if (value > Robot.MAX_DRIVING_SPEED) {
+			value = Robot.MAX_DRIVING_SPEED;
 		}
-		if (value < -Robot.MAX_SPEED_CM_S) {
-			value = -Robot.MAX_SPEED_CM_S;
+		if (value < -Robot.MAX_DRIVING_SPEED) {
+			value = -Robot.MAX_DRIVING_SPEED;
 		}
 		return value;
 	}
