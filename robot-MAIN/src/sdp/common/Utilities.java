@@ -586,8 +586,6 @@ public class Utilities {
 	 * the given parameter and its length will match the distance to the first
 	 * collision.
 	 * 
-	 * TODO: Move all raytracing functionality into this function.
-	 * 
 	 * @param state World state in which to perform the search.
 	 * @param origin The point from which to cast the ray.
 	 * @param direction Direction of the ray.
@@ -687,7 +685,8 @@ public class Utilities {
 		// Actual collision test.
 		Vector2D nearest = Vector2D.changeLength(direction, WorldState.PITCH_WIDTH_CM);
 		for (VectorPair segment : segments) {
-			Vector2D current = GeomUtils.getLocalRaySegmentIntersection(origin, direction, segment.vec1, segment.vec2);
+			Vector2D current = GeomUtils.getLocalRaySegmentIntersection(origin, direction,
+					segment.vec1, segment.vec2);
 			if ((current != null) && (current.getLength() < nearest.getLength())) {
 				nearest = current;
 			}

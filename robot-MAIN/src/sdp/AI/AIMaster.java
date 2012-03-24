@@ -312,10 +312,10 @@ public class AIMaster extends WorldStateProvider {
 			ai = new AIVisualServoing();
 			break;
 		case NEURAL_NETWORKS : 
-			ai = new AITest();
+			ai = new NullAI();
 			break;
 		default :
-			ai = new AITest();
+			ai = new NullAI();
 			break;
 		}
 	}
