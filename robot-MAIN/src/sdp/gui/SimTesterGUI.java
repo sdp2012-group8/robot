@@ -320,7 +320,7 @@ public class SimTesterGUI {
 			comboBlueAIs.addItem(AIType.values()[i]);
 		comboBlueAIs.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				mAI.setAIMode(checkModesBlue());	
+				mAI.setAIType(checkModesBlue());	
 			}
 		});
 		frmAlphaTeamSimulator.getContentPane().add(comboBlueAIs);
@@ -335,7 +335,7 @@ public class SimTesterGUI {
 			comboYellowAIs.addItem(AIType.values()[i]);
 		comboYellowAIs.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				opponentAI.setAIMode(checkModesYellow());
+				opponentAI.setAIType(checkModesYellow());
 			}
 		});
 		frmAlphaTeamSimulator.getContentPane().add(comboYellowAIs);
@@ -356,7 +356,7 @@ public class SimTesterGUI {
 		btnAiVisionOnoff.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (mAI != null)
-					mAI.switchOverrideVision();
+					mAI.toggleDrawingOnWorldImage();
 			}
 		});
 		btnAiVisionOnoff.setBounds(10, 415, 153, 25);
@@ -465,7 +465,11 @@ public class SimTesterGUI {
 	 * @param pressed true if pressed, false if released
 	 */
 	private void keyAction(final int key_id, final boolean pressed) {
-		if (mAI.getState()!= AIState.MANUAL_CONTROL)
+		if (mAI == null) {
+			return;
+		}
+		
+		if (mAI.getState() != AIState.MANUAL_CONTROL)
 			mAI.setState(AIState.MANUAL_CONTROL);
 		try {
 			switch (key_id) {

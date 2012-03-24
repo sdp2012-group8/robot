@@ -1542,7 +1542,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				if (aiInstance != null) {
-					aiInstance.switchOverrideVision();
+					aiInstance.toggleDrawingOnWorldImage();
 				}
 			}
 		});
@@ -1610,7 +1610,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				if (aiInstance != null) {
-					aiInstance.updateGoalOrTeam(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected());
+					aiInstance.setOwnGoalLeft(robotGateLeftButton.isSelected());
+					aiInstance.setOwnTeamBlue(robotColorBlueButton.isSelected());
 				}
 			}
 		});

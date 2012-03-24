@@ -1,7 +1,5 @@
 package sdp.AI;
 
-import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -14,7 +12,6 @@ import sdp.common.WorldStateObserver;
 import sdp.common.Communicator.opcode;
 import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
-import sdp.common.geometry.Vector2D;
 import sdp.vision.processing.ImageProcessorConfig;
 
 
@@ -45,7 +42,7 @@ public class AIMaster extends WorldStateProvider {
 	/** The observer object that provides world state updates. */
 	private WorldStateObserver observer;
 	/** A thread that executes the main logic loop. */
-	private Thread updateThread;
+	private Thread updateThread = null;
 	
 	/** AI implementation in use. */
 	private BaseAI ai;
@@ -72,158 +69,186 @@ public class AIMaster extends WorldStateProvider {
 	private ImageProcessorConfig config;
 	
 	
-	
-	public void switchOverrideVision() {
-		drawOnWorldImage = !drawOnWorldImage;
+	/**
+	 * Create a new AI controller.
+	 * 
+	 * @param comm Robot communicator to use.
+	 * @param observer World state provider to use.
+	 * @param aiType Which AI implementation to use.
+	 */
+	public AIMaster(Communicator comm, WorldStateProvider observer, AIType aiType) {
+		this.observer = new WorldStateObserver(observer);
+
+		this.communicator = comm;
+		communicator.registerListener(new MessageListener() {
+			@Override
+			public synchronized void receiveMessage(opcode op, short[] args, Communicator controller) {
+//				System.out.println(op + " " + args[0]);
+				
+				switch (op) {
+				case SENSOR_KICKER:
+//					try {
+//						communicator.sendMessage(opcode.kick);
+//					} catch (IOException e) {
+//						e.printStackTrace();
+//					}
+					aiWorldState.setFrontSensorActive(args[0] == 1);
+					try {
+						executeCommand(ai.gotBall());
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					
+					break;
+				case SENSOR_LEFT:
+//					aiWorldState.setLeftSensorActive(args[0] == 1);
+					break;
+				case SENSOR_RIGHT:
+//					aiWorldState.setRightSensorActive(args[0] == 1);
+					break;
+				case BATTERY:
+					aiWorldState.setBatteryLevel(args[0]);
+					break;
+				}
+			}
+		});
+
+		setAIType(aiType);
 	}
 	
-	public void setConfiguration(ImageProcessorConfig config) {
-		this.config = config;
-	}
 
 	/**
-	 * Starts the AI in a new decision thread. (Not true, starts a new thread that updates the world state every time it changes)
+	 * Start a new AI execution thread. Permits at most one active thread.
 	 * 
-	 * Don't start more than once!
-	 * @param isOwnTeamBlue true if my team is blue, false if my team is yellow
-	 * @param isOwnGoalLeft true if my goal is on the left of camera, false otherwise
+	 * @param ownTeamBlue true if my team is blue, false if my team is yellow
+	 * @param ownGoalLeft true if my goal is on the left of camera, false otherwise
 	 */
-	public void start(final boolean is_my_team_blue, final boolean is_my_goal_left) {
-		this.isOwnTeamBlue = is_my_team_blue;
-		this.isOwnGoalLeft = is_my_goal_left;
+	public void start(boolean ownTeamBlue, boolean ownGoalLeft) {
+		if (updateThread != null) {
+			stop();
+		}
+		
+		this.isOwnTeamBlue = ownTeamBlue;
+		this.isOwnGoalLeft = ownGoalLeft;
+		
 		updateThread = new Thread() {
 			@Override
 			public void run() {
 				while (!isInterrupted()) {
-					WorldState state = Utilities.toCentimeters(observer.getNextState());
-					// do low pass filtering
+					WorldState state = observer.getNextState();
+					state = Utilities.toCentimeters(state);
+
 					if (worldState == null) {
 						worldState = state;
 						aiWorldState = new AIWorldState(worldState, isOwnTeamBlue, isOwnGoalLeft);
 					} else {
-						BufferedImage im = state.getWorldImage();
 						if (drawOnWorldImage) {
-							aiWorldState.onDraw(im, config);
+							aiWorldState.onDraw(state.getWorldImage(), config);
 						}
 						worldState = state;
 					}
+					
 					aiWorldState.update(worldState, isOwnTeamBlue, isOwnGoalLeft);
 					
-					// pass coordinates to decision making logic
 					setChanged();
 					notifyObservers(worldState);
-					worldChanged();
 					
+					executeNextCommand();
 				}
 			}
 		};
 		updateThread.start();
 	}
 	
-	public void updateGoalOrTeam(final boolean is_my_team_blue, final boolean is_my_goal_left) {
-		this.isOwnTeamBlue = is_my_team_blue;
-		this.isOwnGoalLeft = is_my_goal_left;
-	}
-
-
 	/**
-	 * Stops the AI
+	 * Stop the AI execution thread.
 	 */
 	public void stop() {
-		if (updateThread != null)
+		if (updateThread != null) {
 			updateThread.interrupt();
+			updateThread = null;
+		}
 	}
 
 	
-
-	public AIMaster(Communicator comm, WorldStateProvider obs, AIType ai_mode) {
-		this.observer = new WorldStateObserver(obs);
-
-		this.communicator = comm;
-			communicator.registerListener(new MessageListener() {
-				@Override
-				public synchronized void receiveMessage(opcode op, short[] args, Communicator controler) {
-					//System.out.println(op+" "+args[0]);
-					switch (op) {
-					case SENSOR_KICKER:
-//						try {
-//							mComm.sendMessage(opcode.kick);
-//						} catch (IOException e) {
-//							e.printStackTrace();
-//						}
-						aiWorldState.setFrontSensorActive(args[0] == 1);
-						try {
-							execCommand(ai.gotBall());
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-						
-						break;
-					case SENSOR_LEFT:
-					//	ai_world_state.setLeft_sensor(args[0] == 1);
-						break;
-					case SENSOR_RIGHT:
-						//ai_world_state.setRight_sensor(args[0] == 1);
-						break;
-					case BATTERY:
-						aiWorldState.setBatteryLevel(args[0]);
-						break;
-					}
-
-				}
-			});
-
-		setAIMode(ai_mode);
-	}
-
 	/**
-	 * This method is fired when a new state is available.
-	 * The methods called are in all types of the AI.
+	 * Execute the next command on the current world state.
 	 */
-	protected synchronized void worldChanged() {
-		
-		Command command;
-
-		checkState();
+	private synchronized void executeNextCommand() {
+		updateCurrentAIState();
 		ai.update(aiWorldState);
 		
 		try {
-			execCommand(getCommand());
+			executeCommand(getCommand());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	private void execCommand(Command command) throws IOException {
-			final boolean dist_sens = aiWorldState.isFrontSensorActive(),
-					left_sens = aiWorldState.isLeftSensorActive(),
-					right_sens = aiWorldState.isRightSensorActive();
+	
+	/**
+	 * Check which state should transition to, based on the current world state.
+	 */
+	private void updateCurrentAIState() {
+		if (aiState == AIState.DEFEND_PENALTIES) {
+			// DEFEND_PENALTIES -> PLAY
+			double ballX = aiWorldState.getBallCoords().x;
 			
-			if (left_sens) {
-				command.turningSpeed = 90;
-			} else if (right_sens) {
-				command.turningSpeed = -90;
+			boolean ballCloseEnough = false;
+			ballCloseEnough |= (aiWorldState.isOwnGoalLeft() && (ballX < PENALTIES_THRESH));
+			ballCloseEnough |= (!aiWorldState.isOwnGoalLeft() && (ballX > (WorldState.PITCH_WIDTH_CM - PENALTIES_THRESH)));
+			
+			if (ballCloseEnough) {
+				setState(AIState.PLAY);
 			}
 			
-			if (command != null){
-				aiWorldState.setCommand(command);
+		} else if (aiState == AIState.SHOOT_PENALTIES) {
+			// SHOOT_PENALTIES -> PLAY
+			double ballX = aiWorldState.getBallCoords().x;
 			
-			
-	//		ai_world_state.setCommand(command);
+			boolean ballCloseEnough = false;
+			ballCloseEnough |= (!aiWorldState.isOwnGoalLeft() && (ballX < PENALTIES_THRESH));
+			ballCloseEnough |= (aiWorldState.isOwnGoalLeft() && (ballX > (WorldState.PITCH_WIDTH_CM - PENALTIES_THRESH)));
 
-			if (command.isAccelerationDefault())
-				communicator.sendMessage(opcode.operate, command.getShortDrivingSpeed(), command.getShortTurningSpeed());
-			else
-				communicator.sendMessage(opcode.operate, command.getShortDrivingSpeed(), command.getShortTurningSpeed(), command.getShortAcceleration());
+			if (ballCloseEnough) {
+				setState(AIState.PLAY);
+			}
 			
-			if (command.kick) {
-				System.out.println("kicking");
-				communicator.sendMessage(opcode.kick);
-			}
-			}
-			//System.out.println("ws: "+ai_world_state.getMyGoalLeft());
+		} else if (aiState == AIState.PLAY) {
+			// PLAY -> DEFEND_GOAL
+//			if the enemy robot has the ball and it is close to our goal, go to defend
+//			Vector2D enemyDistance = Vector2D.subtract(new Vector2D(ai_world_state.getEnemyRobot().getCoords()), new Vector2D(ball));
+//			
+//			if ((((my_goal_left && ball.x < DEFEND_THRESH)  || 
+//					(!my_goal_left && ball.x < WorldState.PITCH_WIDTH_CM - DEFEND_THRESH))
+//					&& enemyDistance.getLength() < 30)){
+//				setState(mode.DEFEND_GOAL);
+//			}
+						
+		} else if (aiState == AIState.DEFEND_GOAL) {
+			// DEFEND_GOAL -> PLAY
+//			if the enemy robot is at a greater distance from the ball, go into play mode
+//			Vector2D enemyDistance = Vector2D.subtract(new Vector2D(ai_world_state.getEnemyRobot().getCoords()), new Vector2D(ball));
+//			
+//			if (enemyDistance.getLength() > 30){
+//				setState(mode.PLAY);
+//			}
+//					
+//			Vector2D myDistance = Vector2D.subtract(new Vector2D(aiWorldState.getOwnRobot().getCoords()), new Vector2D(ball));
+//					
+//			if (myDistance.getLength() < 20)
+//				setState(mode.PLAY);
+		}
 	}
-
+	
+	
+	/**
+	 * Get the next command for execution from the AI, based on the AI's
+	 * current state. 
+	 * 
+	 * @return The next command to execute.
+	 * @throws IOException
+	 */
 	private Command getCommand() throws IOException {
 		switch (getState()) {
 		case PLAY:
@@ -240,62 +265,111 @@ public class AIMaster extends WorldStateProvider {
 			return null;
 		}
 	}
-
-	private void checkState() {
-		// Check the new world state and decide what state we should be in.
-
-		final boolean my_goal_left = aiWorldState.isOwnGoalLeft();
-		final Point2D.Double ball = aiWorldState.getBallCoords();
+	
+	
+	/**
+	 * Send the given command to the robot for immediate execution.
+	 * 
+	 * @param command Command to execute.
+	 * @throws IOException
+	 */
+	private void executeCommand(Command command) throws IOException {
+		if (aiWorldState.isLeftSensorActive()) {
+			command.turningSpeed = 90;
+		} else if (aiWorldState.isRightSensorActive()) {
+			command.turningSpeed = -90;
+		}
 		
-		// DEFEND_PENALTIES -> PLAY
-		if (aiState == AIState.DEFEND_PENALTIES) {
-			if (my_goal_left && ball.x < PENALTIES_THRESH ||
-					!my_goal_left && ball.x > WorldState.PITCH_WIDTH_CM - PENALTIES_THRESH) {
-				setState(AIState.PLAY);
+		if (command != null){
+			aiWorldState.setCommand(command);
+	
+			if (command.isAccelerationDefault()) {
+				communicator.sendMessage(opcode.operate, command.getShortDrivingSpeed(),
+						command.getShortTurningSpeed());
+			} else {
+				communicator.sendMessage(opcode.operate, command.getShortDrivingSpeed(),
+						command.getShortTurningSpeed(), command.getShortAcceleration());
 			}
-		} else // SHOOT_PENALTIES -> PLAY
-			if (aiState == AIState.SHOOT_PENALTIES) {
-				if (!my_goal_left && ball.x < PENALTIES_THRESH ||
-						my_goal_left && ball.x > WorldState.PITCH_WIDTH_CM - PENALTIES_THRESH) {
-					setState(AIState.PLAY);
-				}
-		} else  //PLAY->DEFEND_GOAL
-			if (aiState == AIState.PLAY) {
-				//if the enemy robot has the ball and it is close to our goal, go to defend
-//				Vector2D enemyDistance = Vector2D.subtract(new Vector2D(ai_world_state.getEnemyRobot().getCoords()), new Vector2D(ball));
-//				
-//				if ((((my_goal_left && ball.x < DEFEND_THRESH)  || 
-//						(!my_goal_left && ball.x < WorldState.PITCH_WIDTH_CM - DEFEND_THRESH))
-//						&& enemyDistance.getLength() < 30)){
-//					setState(mode.DEFEND_GOAL);
-//				}
-						
+			
+			if (command.kick) {
+				System.out.println("Kicking");
+				communicator.sendMessage(opcode.kick);
 			}
-			else  //DEFEND_GOAL -> PLAY 
-				if (aiState == AIState.DEFEND_GOAL) {
-					//if the enemy robot is at a greater distance from the ball, go into play mode
-//					Vector2D enemyDistance = Vector2D.subtract(new Vector2D(ai_world_state.getEnemyRobot().getCoords()), new Vector2D(ball));
-//					
-//					if (enemyDistance.getLength() > 30){
-//						setState(mode.PLAY);
-//					}
-					
-					Vector2D myDistance = Vector2D.subtract(new Vector2D(aiWorldState.getOwnRobot().getCoords()), new Vector2D(ball));
-					
-//					if (myDistance.getLength() < 20)
-//						setState(mode.PLAY);
-				}
-
+		}
+		
+//		System.out.println("ws: " + aiWorldState.isOwnGoalLeft());
+	}
+	
+	
+	/**
+	 * Change the AI implementation.
+	 * 
+	 * @param aiType Type of AI to change to.
+	 */
+	public void setAIType(AIType aiType){
+		switch (aiType){
+		case VISUAL_SERVOING :
+			ai = new AIVisualServoing();
+			break;
+		case NEURAL_NETWORKS : 
+			ai = new AITest();
+			break;
+		default :
+			ai = new AITest();
+			break;
+		}
+	}
+	
+	
+	/**
+	 * Set current image processor configuration.
+	 * 
+	 * @param config Current image processor configuration.
+	 */
+	public void setConfiguration(ImageProcessorConfig config) {
+		this.config = config;
+	}
+	
+	
+	/**
+	 * Set whether our own goal is on the left side.
+	 * 
+	 * @param isOwnGoalLeft Whether our goal is on the left.
+	 */
+	public void setOwnGoalLeft(boolean isOwnGoalLeft) {
+		this.isOwnGoalLeft = isOwnGoalLeft;
 	}
 
+	
 	/**
-	 * Change mode. Can be used for penalty, freeplay, testing, etc
+	 * Set whether our team is blue.
+	 * 
+	 * @param isOwnTeamBlue Whether our team is blue.
 	 */
-	public void setState(AIState new_state) {
-		aiState = new_state;
+	public void setOwnTeamBlue(boolean isOwnTeamBlue) {
+		this.isOwnTeamBlue = isOwnTeamBlue;
+	}
+	
+	
+	/**
+	 * Get current AI state.
+	 * 
+	 * @return The current AI state.
+	 */
+	public AIState getState() {
+		return aiState;
+	}
+	
+	/**
+	 * Set the new AI state.
+	 * 
+	 * @param newState The new AI state.
+	 */
+	public void setState(AIState newState) {
+		aiState = newState;
 		System.out.println("Changed State to - " + aiState);
-
 		
+		// TODO: Review this bit of logic.
 		if (aiState == AIState.DEFEND_GOAL) {
 			Timer t = new Timer();
 			t.schedule(new TimerTask() {
@@ -307,30 +381,14 @@ public class AIMaster extends WorldStateProvider {
 		}
 
 		ai.changedState();
-
 	}
 	
-	/**
-	 * Change the AI mode. Can be used in the simulator to test separate modes
-	 * @param new_ai
-	 */
-	public void setAIMode(AIType new_ai_mode){
-		switch (new_ai_mode){
-			case VISUAL_SERVOING:
-				ai = new AIVisualServoing();
-				break;
-			case NEURAL_NETWORKS: 
-				ai = new AITest();
-				break;
-		}
-	}
 	
 	/**
-	 * Gets AI mode
-	 * @return
+	 * Toggle the AI drawing on the world image.
 	 */
-	public AIState getState() {
-		return aiState;
+	public void toggleDrawingOnWorldImage() {
+		drawOnWorldImage = !drawOnWorldImage;
 	}
 
 }
