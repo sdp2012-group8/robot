@@ -378,19 +378,9 @@ public class AIVisualServoing extends BaseAI {
 	 * @return The next command to execute.
 	 */
 	private Waypoint getNextWaypoint(Vector2D target, boolean ballIsObstacle) {
-		// Target point data in local coordinates.
 		Vector2D targetLocal = Utilities.getLocalVector(aiWorldState.getOwnRobot(), target);
+		int obstacleFlags = Utilities.makeObstacleFlagsForOpponent(ballIsObstacle, aiWorldState.isOwnTeamBlue());
 
-		// Which objects to consider as obstacles?
-		int obstacleFlags = 0;
-		obstacleFlags |= (aiWorldState.isOwnTeamBlue()
-				? Utilities.YELLOW_IS_OBSTACLE_FLAG
-						: Utilities.BLUE_IS_OBSTACLE_FLAG);
-		if (ballIsObstacle) {
-			obstacleFlags |= Utilities.BALL_IS_OBSTACLE_FLAG;
-		}
-
-		// Check if the target point is directly visible.
 		Vector2D ownCoords = new Vector2D(aiWorldState.getOwnRobot().getCoords());
 		if (Utilities.isDirectPathClear(aiWorldState, ownCoords, target, obstacleFlags)) {
 			return new Waypoint(targetLocal, true);

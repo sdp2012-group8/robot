@@ -125,14 +125,14 @@ public class Painter {
 				robot = am_i_blue ? state_cm.getBlueRobot() : state_cm
 						.getYellowRobot();
 				Vector2D local_origin = new Vector2D(Robot.LENGTH_CM/2+2,0);
-				drawVector(Utilities.getGlobalVector(robot, local_origin),  Utilities.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0), true), true);
+				drawVector(Utilities.getGlobalVector(robot, local_origin),  DeprecatedCode.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0), true), true);
 				if ((my_team_blue && j == 0) || (!my_team_blue && j == 1)) {
 					AIWorldState ai_world_state = Utilities.getAIWorldState(state_cm, my_team_blue, my_goal_left);
 					Vector2D target;
 					
 					try {
 						// p_target = new Vector2D(Utilities.getOptimalPointBehindBall(Utilities.getAIWorldState(state_cm, my_goal_left, my_team_blue, false), point_distance));
-						target = new Vector2D(Utilities.getOptimalPointBehindBall(ai_world_state, point_off));
+						target = new Vector2D(DeprecatedCode.getOptimalPointBehindBall(ai_world_state, point_off));
 
 					} catch (NullPointerException e) {
 						target = new Vector2D(state_cm.getBallCoords());
@@ -146,8 +146,8 @@ public class Painter {
 					double sin = Math.sin(angle)*length;
 					Vector2D right = new Vector2D(cos, sin);
 					Vector2D left = new Vector2D(-cos, -sin);
-					drawVector(Vector2D.add(startPt, right),  Utilities.raytraceVector(state_cm, Vector2D.add(startPt, right), dir, am_i_blue, true), true);
-					drawVector(Vector2D.add(startPt, left), Utilities.raytraceVector(state_cm, Vector2D.add(startPt, left), dir, am_i_blue, true), true);
+					drawVector(Vector2D.add(startPt, right),  DeprecatedCode.raytraceVector(state_cm, Vector2D.add(startPt, right), dir, am_i_blue, true), true);
+					drawVector(Vector2D.add(startPt, left), DeprecatedCode.raytraceVector(state_cm, Vector2D.add(startPt, left), dir, am_i_blue, true), true);
 
 
 
@@ -160,7 +160,7 @@ public class Painter {
 					final Vector2D point_rel = Utilities.getLocalVector(ai_world_state.getOwnRobot(), target);
 					final double point_dir = Vector2D.getDirection(point_rel);
 					final double direct_dist = point_rel.getLength();
-					final double vis_dist = Utilities.visibility2(ai_world_state, target, ai_world_state.isOwnTeamBlue(), include_ball_as_obstacle) + Robot.LENGTH_CM;
+					final double vis_dist = DeprecatedCode.visibility2(ai_world_state, target, ai_world_state.isOwnTeamBlue(), include_ball_as_obstacle) + Robot.LENGTH_CM;
 					final double other_rob_dist = Vector2D.subtract(new Vector2D(ai_world_state.getOwnRobot().getCoords()), new Vector2D(ai_world_state.getEnemyRobot().getCoords())).getLength();
 					final boolean point_visible = vis_dist >= direct_dist;
 					
@@ -174,7 +174,7 @@ public class Painter {
 						for (int i = 0; i < COLL_SECS_COUNT; i++) {
 							double ang = Utilities.normaliseAngle(((-90+i*SEC_ANGLE)+(-90+(i+1)*SEC_ANGLE))/2);
 							Vector2D vec = Vector2D.multiply(Vector2D.rotateVector(new Vector2D(1, 0), ang), point_dist);
-							if (Utilities.reachability(ai_world_state, Utilities.getGlobalVector(ai_world_state.getOwnRobot(), vec), ai_world_state.isOwnTeamBlue(), include_ball_as_obstacle, 1.5)) {	
+							if (DeprecatedCode.reachability(ai_world_state, Utilities.getGlobalVector(ai_world_state.getOwnRobot(), vec), ai_world_state.isOwnTeamBlue(), include_ball_as_obstacle, 1.5)) {	
 								double diff = Utilities.normaliseAngle(ang-point_dir);
 								drawVector(new Vector2D(robot.getCoords()), Vector2D.subtract(Utilities.getGlobalVector(ai_world_state.getOwnRobot(), vec), new Vector2D(robot.getCoords())), false);
 								if (Math.abs(diff) < Math.abs(temp)) {
@@ -201,7 +201,7 @@ public class Painter {
 						fillOval((int)(target.x* width / WorldState.PITCH_WIDTH_CM-3), (int) (target.y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6, true);
 						
 						g.setStroke(new BasicStroke(1.0f));
-						Vector2D dist = Utilities.raytraceVector(state_cm, target, Vector2D.changeLength(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), target), 200), null, false);
+						Vector2D dist = DeprecatedCode.raytraceVector(state_cm, target, Vector2D.changeLength(Vector2D.subtract(new Vector2D(state_cm.getBallCoords()), target), 200), null, false);
 						drawVector(target, dist, false);
 						
 						g.setColor(new Color(255, 255, 255, 20));

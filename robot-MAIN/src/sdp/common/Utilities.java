@@ -5,8 +5,6 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
-import java.util.ArrayList;
-import java.util.Iterator;
 
 import sdp.AI.AIWorldState;
 import sdp.common.geometry.GeomUtils;
@@ -21,11 +19,9 @@ public class Utilities {
 	/** Attack modes for optimal point calculations. */
 	public enum AttackMode { DirectOnly, WallsOnly, Full };
 	
+	
 	/** The double comparison accuracy that is required. */
 	private static final double EPSILON = 1e-8;
-
-	/** The distance from optimal point to the ball. */
-	private static final double POINT_OFFSET = 1.5 * Robot.LENGTH_CM;
 	
 	/** Size of the ball obstacle. */
 	public static final double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
@@ -85,25 +81,6 @@ public class Utilities {
 		return new Point((int)pt.getX(), (int)pt.getY());
 	}
 
-	/**
-	 * Check whether the given value is within specified bounds.
-	 * 
-	 * If lower > upper, the function checks if the given value is within the
-	 * (-INF; upper] OR [lower; +INF) interval.
-	 * 
-	 * @param value Value to check.
-	 * @param lower Lower bound of the interval.
-	 * @param upper Upper bound of the interval.
-	 * @return Whether the value is within the specified interval.
-	 */
-	public static boolean valueWithinBounds(int value, int lower, int upper) {
-		if (lower > upper) {
-			return ((value >= lower) || (value <= upper));
-		} else {
-			return ((value >= lower) && (value <= upper));
-		}
-	}
-
 
 	/**
 	 * Ensure that the given angle in degrees is within the interval [-180; 180).
@@ -123,18 +100,32 @@ public class Utilities {
 		return angle;
 	}
 	
-
+	
 	/**
-	 * Ensure that the given value is within the interval
-	 * [Short.MIN_VALUE; Short.MAX_VALUE]. If the value is outside of this
-	 * interval, the closer endpoint is returned.
+	 * Bind a double to the interval [Short.MIN_VALUE; Short.MAX_VALUE]. If
+	 * the given value is outside this interval, it is set to the closer
+	 * endpoint.
 	 * 
-	 * @param value Value in question.
+	 * @param value A value.
 	 * @return Restricted value, as described above.
 	 */
-	public static <T extends Number> short restrictValueToShort(T value) {
+	public static short restrictToShort(double value) {
 		return restrictValueToInterval(value, Short.MIN_VALUE, Short.MAX_VALUE).shortValue();
 	}
+
+	
+	/**
+	 * Bind a short to the interval [-Robot.MAX_SPEED_CM_S; Robot.MAX_SPEED_CM_S].
+	 * If the given value is outside this interval, it is set to the closer
+	 * endpoint.
+	 * 
+	 * @param value A value.
+	 * @return Restricted value, as described above.
+	 */
+	public static short restrictToRobotSpeed(short value) {
+		return restrictValueToInterval(value, -Robot.MAX_DRIVING_SPEED, Robot.MAX_DRIVING_SPEED).shortValue();
+	}
+	
 	
 	/**
 	 * Ensure that the given value is within the interval [lowerBound; upperBound].
@@ -185,7 +176,28 @@ public class Utilities {
 			return string.substring(start, end);
 		}
 	}
+	
+	
+	/**
+	 * Check whether the given value is within specified bounds.
+	 * 
+	 * If lower > upper, the function checks if the given value is within the
+	 * (-INF; upper] OR [lower; +INF) interval.
+	 * 
+	 * @param value Value to check.
+	 * @param lower Lower bound of the interval.
+	 * @param upper Upper bound of the interval.
+	 * @return Whether the value is within the specified interval.
+	 */
+	public static boolean valueWithinBounds(int value, int lower, int upper) {
+		if (lower > upper) {
+			return ((value >= lower) || (value <= upper));
+		} else {
+			return ((value >= lower) && (value <= upper));
+		}
+	}
 
+	
 	/**
 	 * Calculates if the given point is within the field.
 	 * Includes an offset equal to half of the length of the robot, to allow
@@ -331,170 +343,6 @@ public class Utilities {
 	
 
 	/**
-	 * Calculates all the points behind the ball that would align the robot to shoot and
-	 * returns the point closest to the robot.
-	 * 
-	 * TODO: Replace with getOptimalPoint.
-	 * 
-	 * @return The point closest to the robot that would allow it to shoot.
-	 * @throws NullPointerException Throws exception when the robot can't see a goal.
-	 */
-	@Deprecated
-	public static Point2D.Double getOptimalPointBehindBall(AIWorldState ws, double point_offset) {
-		Goal enemy_goal = new Goal(ws.getEnemyGoal().getCentre(), true);
-		Robot robot = ws.getOwnRobot();
-		Robot enemy_robot = ws.getEnemyRobot();
-
-		ArrayList<Point2D.Double> goal_points = new ArrayList<Point2D.Double>();
-		Point2D.Double min_point = null;
-		double min_distance = WorldState.PITCH_WIDTH_CM*2;
-
-		goal_points.add(enemy_goal.getCentre());
-		goal_points.add(enemy_goal.getTop());
-		goal_points.add(enemy_goal.getBottom());
-		goal_points.add(new Point2D.Double(enemy_goal.getCentre().x, enemy_goal.getCentre().y - WorldState.PITCH_HEIGHT_CM));
-		goal_points.add(new Point2D.Double(enemy_goal.getCentre().x, enemy_goal.getCentre().y + WorldState.PITCH_HEIGHT_CM));
-
-		Iterator<Point2D.Double> itr = goal_points.iterator();
-		while (itr.hasNext()) {
-			Point2D.Double point = itr.next();
-
-			if (point.y < 0) {
-				if (!Utilities.lineIntersectsRobot(point, ws.getBallCoords(),
-						enemy_robot.getTopImage())) {
-					itr.remove();
-
-				}
-			} else if (point.y > WorldState.PITCH_HEIGHT_CM) {
-				if (!Utilities.lineIntersectsRobot(point, ws.getBallCoords(),
-						enemy_robot.getBottomImage())) {
-					itr.remove();
-
-				}
-			} else {
-
-				if (!Utilities.lineIntersectsRobot(point, ws.getBallCoords(),
-						enemy_robot) || point.x > WorldState.PITCH_WIDTH_CM) {
-					itr.remove();
-
-				}
-
-			}
-
-		}
-
-		//System.out.println("begin printing points");
-	
-		itr = goal_points.iterator();
-		while (itr.hasNext()) {
-			Point2D.Double point = itr.next();
-			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(),ws.isOwnGoalLeft(), point_offset);
-
-			//System.out.println(temp_point);
-			
-			if (Utilities.isPointInField(temp_point)) { 
-				if (!isPointAroundRobot(temp_point, enemy_robot) && Utilities.lineIntersectsRobot(temp_point, ws.getBallCoords(),
-						enemy_robot)) {
-					//System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
-					//System.out.println("Min distance: "+min_distance);
-					if (Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength() < min_distance) {
-						min_point = temp_point;
-						min_distance = Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength();
-					}
-				} 
-			} 
-		} 
-		//System.out.println("min point "+min_point); //+ "enemy robot" + enemy_robot.getCoords() + "angle" + enemy_robot.getAngle() + "ball coords "+ws.getBallCoords());
-		return min_point;
-	}
-	
-	
-	/**
-	 * Calculates all the points behind the ball that would align the robot to shoot and
-	 * returns the point closest to the robot.
-	 * It does not take into account the image goals
-	 * 
-	 * TODO: Replace with getOptimalPoint.
-	 * 
-	 * @param ws
-	 * @param my_goal_left
-	 * @param my_team_blue
-	 * @param priority - true is shoot only with walls, false is shoot only with main goal
-	 * @return the optimal point from which it can shoot
-	 * @throws NullPointerException
-	 */
-	@Deprecated
-	public static Point2D.Double getOptimalPointBehindBall(AIWorldState ws, double point_offset, boolean wall_priority) throws NullPointerException {
-		
-		Goal enemy_goal = ws.getEnemyGoal();
-		Robot robot = ws.getOwnRobot();
-		Robot enemy_robot = ws.getEnemyRobot();
-		
-		ArrayList<Point2D.Double> goal_points = new ArrayList<Point2D.Double>();
-		Point2D.Double min_point = null;
-		double min_distance = WorldState.PITCH_WIDTH_CM*2;
-		
-		if (wall_priority){
-			//add only imaginary goals 
-			goal_points.add(new Point2D.Double(enemy_goal.getCentre().x, enemy_goal.getCentre().y - WorldState.PITCH_HEIGHT_CM));
-			goal_points.add(new Point2D.Double(enemy_goal.getCentre().x, enemy_goal.getCentre().y + WorldState.PITCH_HEIGHT_CM));
-		}
-		
-		else {
-		
-			//add only points in mail goal
-			if (ws.isOwnGoalLeft()) {
-				enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_CENTRE_Y ));
-			} else {
-				enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_CENTRE_Y ));
-			}
-		
-			double offset = enemy_goal.getBottom().y - enemy_goal.getTop().y; //offset>0
-			offset = offset/5;
-
-			goal_points.add(enemy_goal.getCentre());
-			goal_points.add(enemy_goal.getTop());
-			goal_points.add(enemy_goal.getBottom());
-
-			for (int i=0; i<4; i++)
-				goal_points.add(new Point2D.Double(enemy_goal.getTop().x, enemy_goal.getTop().y - (i+1)*offset));
-
-		}
-		
-		/* start calculating the optimal point */
-		
-		Iterator<Point2D.Double> itr = goal_points.iterator();
-		while (itr.hasNext()) {
-			Point2D.Double point = itr.next();
-
-			if (!Utilities.lineIntersectsRobot(point, ws.getBallCoords(), enemy_robot)) 
-				itr.remove();
-
-		}
-
-		itr = goal_points.iterator();
-		while (itr.hasNext()) {
-			Point2D.Double point = itr.next();
-			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(), ws.isOwnGoalLeft(), point_offset);
-
-			if (Utilities.isPointInField(temp_point)) { 
-				if (!isPointAroundRobot(temp_point, enemy_robot)) {
-					//System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
-					//System.out.println("Min distance: "+min_distance);
-					if (Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength() < min_distance) {
-						min_point = temp_point;
-						min_distance = Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength();
-					}
-				}
-			}
-		}
-
-
-		return min_point;
-	}
-	
-	
-	/**
 	 * Calculate the optimal point in the current world state. The optimal point
 	 * is a point that the robot should seek to go to next.
 	 * 
@@ -508,11 +356,11 @@ public class Utilities {
 	public static Point2D.Double getOptimalPoint(AIWorldState worldState,
 			double distToBall, AttackMode mode) {
 		if (mode == AttackMode.DirectOnly) {
-			return getOptimalPointBehindBall(worldState, distToBall, false);
+			return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall, false);
 		} else if (mode == AttackMode.WallsOnly) {
-			return getOptimalPointBehindBall(worldState, distToBall, true);
+			return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall, true);
 		} else {	// mode == AttackMode.Full
-			return getOptimalPointBehindBall(worldState, distToBall);
+			return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall);
 		}
 	}
 	
@@ -681,149 +529,46 @@ public class Utilities {
 				Vector2D.rotateVector(local, me.getAngle()),
 				new Vector2D(me.getCoords()));
 	}
-
-	public static Vector2D getNearestCollisionPointFromMyPerspective(Robot me, Point2D.Double my_pos, WorldState worldState, boolean am_i_blue) {
-		return getLocalVector(me, Vector2D.add(new Vector2D(my_pos), getNearestCollisionPoint(worldState, am_i_blue, new Vector2D(my_pos))));
-	}
-
-
-	/**
-	 * Starting from origin in the given direction, find the first point of collision in the scene
-	 * 
-	 * TODO: Replace with getClosestCollisionVec.
-	 * 
-	 * @param origin the start of the vector
-	 * @param direction size doesn't matter, only the angle is relevant
-	 * @param ignore_blue true to ignore blue robot, false to ignore yellow, null to include both
-	 * @return a {@link Vector2D} in the same direction as direction but with greater length (distance from origin to the nearest collision point, raytraced along direction's direction)
-	 */
-	@Deprecated
-	public static Vector2D raytraceVector(WorldState ws, Vector2D origin, Vector2D direction, Boolean ignore_blue, boolean include_ball_as_obstacle) {
-		if (origin.getX() <= 0 || origin.getY() <= 0 || origin.getX() >= WorldState.PITCH_WIDTH_CM || origin.getY() >= WorldState.PITCH_HEIGHT_CM)
-			return Vector2D.ZERO();
-		Vector2D near;
-		Vector2D temp = vectorLineIntersection(origin, direction, new Vector2D(0, 0), new Vector2D(WorldState.PITCH_WIDTH_CM, 0));
-		near = temp;
-		temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM, 0), new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM));
-		if (temp != null && (near == null || temp.getLength() < near.getLength()))
-			near = temp;
-		temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM), new Vector2D(0, WorldState.PITCH_HEIGHT_CM));
-		if (temp != null && (near == null || temp.getLength() < near.getLength()))
-			near = temp;
-		temp = vectorLineIntersection(origin, direction, new Vector2D(0, WorldState.PITCH_HEIGHT_CM), new Vector2D(0, 0));
-		if (temp != null && (near == null || temp.getLength() < near.getLength()))
-			near = temp;
-		// collision with a Robot
-		for (int i = 0; i <= 1; i++) {
-			if (ignore_blue != null && ((ignore_blue ? 0 : 1) == i))
-				continue;
-			Robot robot = i == 0 ? ws.getBlueRobot() : ws.getYellowRobot();
-			temp = vectorLineIntersection(origin, direction, new Vector2D(robot.getFrontLeft()), new Vector2D(robot.getFrontRight()));
-			if (temp != null && (near == null || temp.getLength() < near.getLength()))
-				near = temp;
-			temp = vectorLineIntersection(origin, direction, new Vector2D(robot.getFrontRight()), new Vector2D(robot.getBackRight()));
-			if (temp != null && (near == null || temp.getLength() < near.getLength()))
-				near = temp;
-			temp = vectorLineIntersection(origin, direction, new Vector2D(robot.getBackRight()), new Vector2D(robot.getBackLeft()));
-			if (temp != null && (near == null || temp.getLength() < near.getLength()))
-				near = temp;
-			temp = vectorLineIntersection(origin, direction, new Vector2D(robot.getBackLeft()), new Vector2D(robot.getFrontLeft()));
-			if (temp != null && (near == null || temp.getLength() < near.getLength()))
-				near = temp;
-		}
-		// collision with ball
-		if (include_ball_as_obstacle) {
-			Vector2D ball = new Vector2D(ws.getBallCoords());
-			temp = vectorLineIntersection(origin, direction, new Vector2D(ball.getX(), ball.getY()-SIZE_OF_BALL_OBSTACLE/2), new Vector2D(ball.getX(), ball.getY()+SIZE_OF_BALL_OBSTACLE/2));
-			if (temp != null && (near == null || temp.getLength() < near.getLength()))
-				near = temp;
-		}
-		if (near != null) 
-			return near;
-		return
-				Vector2D.changeLength(direction, WorldState.PITCH_WIDTH_CM);
-	}
+	
 	
 	/**
-	 * Does intersection with the wall in the direction specified from the current position of the robot.
-	 * @param robot
-	 * @param ang an angle local to the robot
-	 * @param wall_offset to shrink the walls with (not coefficient)
-	 * @return
-	 */
-	public static Vector2D internalWallIntersection(Robot robot, double ang, double wall_offset) {
-		final double ang_rad = ang*Math.PI/180;
-		final Vector2D local_direction = new Vector2D(-Math.cos(ang_rad), Math.sin(ang_rad));
-		final Vector2D origin = new Vector2D(robot.getCoords());
-		final Vector2D direction = Vector2D.subtract(origin, getGlobalVector(robot, local_direction));
-		
-		Vector2D near = null;
-		Vector2D temp = null;
-		
-		if (origin.getY() > wall_offset) {
-			temp = vectorLineIntersection(origin, direction, new Vector2D(wall_offset, wall_offset), new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, wall_offset));
-			if (temp != null && (near == null || temp.getLength() < near.getLength()))
-				near = temp;
-		}
-		
-		if (origin.getX() < WorldState.PITCH_WIDTH_CM - wall_offset) {
-			temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, wall_offset), new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset));
-			if (temp != null && (near == null || temp.getLength() < near.getLength()))
-				near = temp;
-		}
-		
-		if (origin.getY() < WorldState.PITCH_HEIGHT_CM - wall_offset) {
-			temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM-wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset), new Vector2D(wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset));
-			if (temp != null && (near == null || temp.getLength() < near.getLength()))
-				near = temp;
-		}
-		
-		if (origin.getX() > wall_offset) {
-			temp = vectorLineIntersection(origin, direction, new Vector2D(wall_offset, WorldState.PITCH_HEIGHT_CM-wall_offset), new Vector2D(wall_offset, wall_offset));
-			if (temp != null && (near == null || temp.getLength() < near.getLength()))
-				near = temp;
-		}
-		
-		if (near != null) 
-			return near;
-		return
-				Vector2D.changeLength(direction, WorldState.PITCH_WIDTH_CM);
-	}
-
-	/**
-	 * TODO: Replace with getClosestCollisionVec.
+	 * Create an obstacle bitfield.
 	 * 
-	 * @param ws
-	 * @param robot
-	 * @param local_origin In robot's coordinate system. Make sure it is outside robot to avoid false readings!
-	 * @param local_direction In robot's coordinate system
-	 * @return same output as {@link #raytraceVector(WorldState, Vector2D, Vector2D)} - in table coordinates
+	 * @param ballIsObstacle Whether the ball is an obstacle.
+	 * @param blueIsObstacle Whether the blue robot is an obstacle.
+	 * @param yellowIsObstacle Whether the yellow robot is an obstacle.
+	 * @return Obstacle bitfield that matches the given parameter values.
 	 */
-	@Deprecated
-	public static Vector2D raytraceVector(WorldState ws, Robot robot, Vector2D local_origin, Vector2D local_direction, boolean include_ball_as_obstacle) {
-		return raytraceVector(ws, robot, local_origin, local_direction, null, include_ball_as_obstacle);
-	}
-
-	/**
-	 * Raytrace vector with relation to a robot
-	 * 
-	 * TODO: Replace with getClosestCollisionVec or an overloaded function.
-	 * 
-	 * @param ws
-	 * @param robot
-	 * @param local_origin In robot's coordinate system. Make sure it is outside robot to avoid false readings!
-	 * @param local_direction In robot's coordinate system
-	 * @param am_i_blue if true, ignores blue if false ignores yellow. To include all robots, use {@link #raytraceVector(WorldState, Robot, Vector2D, Vector2D)}
-	 * @return same output as {@link #raytraceVector(WorldState, Vector2D, Vector2D)} - in table coordinates
-	 */
-	@Deprecated
-	public static Vector2D raytraceVector(WorldState ws, Robot robot, Vector2D local_origin, Vector2D local_direction,  Boolean am_i_blue, boolean include_ball_as_obstacle) {
-		Vector2D origin = getGlobalVector(robot, local_origin);
-		Vector2D direction = Vector2D.subtract(origin, getGlobalVector(robot, local_direction));
-		return raytraceVector(ws, origin, direction, am_i_blue, include_ball_as_obstacle);
+	public static int makeObstacleFlags(boolean ballIsObstacle, boolean blueIsObstacle,
+			boolean yellowIsObstacle) {
+		int flags = 0;
+		if (ballIsObstacle) {
+			flags |= BALL_IS_OBSTACLE_FLAG;
+		}
+		if (blueIsObstacle) {
+			flags |= BLUE_IS_OBSTACLE_FLAG;
+		}
+		if (yellowIsObstacle) {
+			flags |= YELLOW_IS_OBSTACLE_FLAG;
+		}
+		
+		return flags;
 	}
 	
 	
+	/**
+	 * Create an obstacle bitfield to match our opponent robot.
+	 * 
+	 * @param ballIsObstacle Whether the ball is an obstacle.
+	 * @param isOwnTeamBlue Whether our robot is blue.
+	 * @return Obstacle bitfield that matches the opponent robot.
+	 */
+	public static int makeObstacleFlagsForOpponent(boolean ballIsObstacle,
+			boolean isOwnTeamBlue) {
+		return makeObstacleFlags(ballIsObstacle, !isOwnTeamBlue, isOwnTeamBlue);
+	}
+
+
 	/**
 	 * Find the closest collision from the given point in the specified
 	 * direction and return it as a vector. The vector's direction will match
@@ -856,7 +601,49 @@ public class Utilities {
 			robotCollision = true;
 		}
 		
-		return raytraceVector(state, origin, direction, robotCollision, ballIsObstacle);
+		if (origin.getX() <= 0 || origin.getY() <= 0 || origin.getX() >= WorldState.PITCH_WIDTH_CM || origin.getY() >= WorldState.PITCH_HEIGHT_CM)
+			return Vector2D.ZERO();
+		Vector2D near;
+		Vector2D temp = vectorLineIntersection(origin, direction, new Vector2D(0, 0), new Vector2D(WorldState.PITCH_WIDTH_CM, 0));
+		near = temp;
+		temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM, 0), new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM));
+		if (temp != null && (near == null || temp.getLength() < near.getLength()))
+			near = temp;
+		temp = vectorLineIntersection(origin, direction, new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM), new Vector2D(0, WorldState.PITCH_HEIGHT_CM));
+		if (temp != null && (near == null || temp.getLength() < near.getLength()))
+			near = temp;
+		temp = vectorLineIntersection(origin, direction, new Vector2D(0, WorldState.PITCH_HEIGHT_CM), new Vector2D(0, 0));
+		if (temp != null && (near == null || temp.getLength() < near.getLength()))
+			near = temp;
+		// collision with a Robot
+		for (int i = 0; i <= 1; i++) {
+			if (robotCollision != null && ((robotCollision ? 0 : 1) == i))
+				continue;
+			Robot robot = i == 0 ? state.getBlueRobot() : state.getYellowRobot();
+			temp = vectorLineIntersection(origin, direction, new Vector2D(robot.getFrontLeft()), new Vector2D(robot.getFrontRight()));
+			if (temp != null && (near == null || temp.getLength() < near.getLength()))
+				near = temp;
+			temp = vectorLineIntersection(origin, direction, new Vector2D(robot.getFrontRight()), new Vector2D(robot.getBackRight()));
+			if (temp != null && (near == null || temp.getLength() < near.getLength()))
+				near = temp;
+			temp = vectorLineIntersection(origin, direction, new Vector2D(robot.getBackRight()), new Vector2D(robot.getBackLeft()));
+			if (temp != null && (near == null || temp.getLength() < near.getLength()))
+				near = temp;
+			temp = vectorLineIntersection(origin, direction, new Vector2D(robot.getBackLeft()), new Vector2D(robot.getFrontLeft()));
+			if (temp != null && (near == null || temp.getLength() < near.getLength()))
+				near = temp;
+		}
+		// collision with ball
+		if (ballIsObstacle) {
+			Vector2D ball = new Vector2D(state.getBallCoords());
+			temp = vectorLineIntersection(origin, direction, new Vector2D(ball.getX(), ball.getY()-SIZE_OF_BALL_OBSTACLE/2), new Vector2D(ball.getX(), ball.getY()+SIZE_OF_BALL_OBSTACLE/2));
+			if (temp != null && (near == null || temp.getLength() < near.getLength()))
+				near = temp;
+		}
+		if (near != null) 
+			return near;
+		return
+				Vector2D.changeLength(direction, WorldState.PITCH_WIDTH_CM);
 	}
 	
 	/**
@@ -960,169 +747,6 @@ public class Utilities {
 		return true;
 	}
 	
-
-	/**
-	 * Whether there is direct visibility from a point of the pitch to another one.
-	 * 
-	 * TODO: Replace with getClosestCollisionDist or an overloaded function.
-	 * 
-	 * @param ws
-	 * @param robot
-	 * @param startPt
-	 * @param endPt
-	 * @return
-	 */
-	@Deprecated
-	public static boolean visibility(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
-		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
-		Vector2D startPt = new Vector2D(robot.getCoords());
-		Vector2D dir =  Vector2D.subtract(endPt, startPt);
-		Vector2D ray = raytraceVector(ws, startPt, dir, am_i_blue, include_ball_as_obstacle);
-		return ray.getLength() >= dir.getLength();
-	}
-
-	
-	@Deprecated
-	public static boolean visibility(WorldState ws, Vector2D startPoint, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
-		Vector2D dir =  Vector2D.subtract(endPt, startPoint);
-		Vector2D ray = raytraceVector(ws, startPoint, dir, am_i_blue, include_ball_as_obstacle);
-		return ray.getLength() >= dir.getLength();
-	}
-	
-	/**
-	 * Returns the distance to the direct collision in a given direction.
-	 * 
-	 * TODO: Replace with getClosestCollisionDist.
-	 * 
-	 * @param ws
-	 * @param robot
-	 * @param startPt
-	 * @param endPt
-	 * @return
-	 */
-	@Deprecated
-	public static double visibility2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
-		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
-		Vector2D startPt = new Vector2D(robot.getCoords());
-		Vector2D dir =  Vector2D.subtract(endPt, startPt);
-		Vector2D ray = raytraceVector(ws, startPt, dir, am_i_blue, include_ball_as_obstacle);
-		return ray.getLength();
-	}
-	
-	
-	
-
-	/**
-	 * Returns the distance to the collision in a given direction
-	 * 
-	 * TODO: Replace with getClosestSideCollisions.
-	 * 
-	 * @param ws
-	 * @param robot
-	 * @param startPt
-	 * @param endPt
-	 * @return
-	 */
-	@Deprecated
-	public static Vector2D reachabilityRight2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle, double wheel_dist) {
-		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
-		Vector2D startPt = new Vector2D(robot.getCoords());
-		Vector2D dir =  Vector2D.subtract(endPt, startPt);
-		double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
-		final double length = wheel_dist/2;
-		double cos = Math.cos(angle)*length;
-		double sin = Math.sin(angle)*length;
-		Vector2D left = new Vector2D(cos, sin);
-
-		Vector2D ray_right = raytraceVector(ws, Vector2D.add(startPt, left), dir, am_i_blue, include_ball_as_obstacle);
-		return ray_right;
-	}
-
-	/**
-	 * Returns the distance to the collision in a given direction
-	 * 
-	 * TODO: Replace with getClosestSideCollisions.
-	 * 
-	 * @param ws
-	 * @param robot
-	 * @param startPt
-	 * @param endPt
-	 * @return
-	 */
-	@Deprecated
-	public static Vector2D reachabilityLeft2(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle, double wheel_dist) {
-		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
-		Vector2D startPt = new Vector2D(robot.getCoords());
-		Vector2D dir =  Vector2D.subtract(endPt, startPt);
-		double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
-		final double length = wheel_dist/2;
-		double cos = Math.cos(angle)*length;
-		double sin = Math.sin(angle)*length;
-		Vector2D right = new Vector2D(-cos, -sin);
-
-		Vector2D ray_left = raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue, include_ball_as_obstacle);
-		return ray_left;
-	}
-
-
-	/**
-	 * Whether you could reach this point if you turn into its direction and go into straight line.
-	 * 
-	 * TODO: Replace this function with isDirectPathClear.
-	 * 
-	 * @param ws
-	 * @param robot
-	 * @param startPt
-	 * @param endPt
-	 * @return
-	 */
-	@Deprecated
-	public static boolean reachability(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle, double coeff) {
-		if (!visibility(ws, endPt, am_i_blue, include_ball_as_obstacle))
-			return false;
-		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
-		Vector2D startPt = new Vector2D(robot.getCoords());
-		Vector2D dir =  Vector2D.subtract(endPt, startPt);
-		double dir_l = dir.getLength();
-		double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
-		final double length = Robot.LENGTH_CM/2-1;
-		double cos = Math.cos(angle)*length;
-		double sin = Math.sin(angle)*length;
-		Vector2D left = new Vector2D(cos, sin);
-		Vector2D right = new Vector2D(-cos, -sin);
-
-		Vector2D ray_left = raytraceVector(ws, Vector2D.add(startPt, left), dir, am_i_blue, include_ball_as_obstacle);
-		if (ray_left.getLength() < dir_l)
-			return false;
-		Vector2D ray_right = raytraceVector(ws, Vector2D.add(startPt, right), dir, am_i_blue, include_ball_as_obstacle);
-		if (ray_right.getLength() < dir_l)
-			return false;
-		
-		Vector2D left2 = new Vector2D(cos*coeff, sin*coeff);
-		Vector2D global_left2 = Vector2D.add(startPt, left2);
-		Vector2D right2 = new Vector2D(-cos*coeff, -sin*coeff);
-		Vector2D global_right2 = Vector2D.add(startPt, right2);
-		
-		Vector2D ray_left2 = raytraceVector(ws, global_left2, dir, am_i_blue, include_ball_as_obstacle);
-		if (ray_left2.getLength() < dir_l)
-			return false;
-		Vector2D ray_right2 = raytraceVector(ws, global_right2, dir, am_i_blue, include_ball_as_obstacle);
-		if (ray_right2.getLength() < dir_l)
-			return false;
-		
-		Vector2D dir_left = Vector2D.subtract(endPt, global_left2);
-		Vector2D ray_left3 = raytraceVector(ws, global_left2, dir_left, am_i_blue, include_ball_as_obstacle);
-		if (ray_left3.getLength() < dir_l)
-			return false;
-		
-		Vector2D dir_right = Vector2D.subtract(endPt, global_right2);
-		Vector2D ray_right3 = raytraceVector(ws, global_right2, dir_right, am_i_blue, include_ball_as_obstacle);
-		if (ray_right3.getLength() < dir_l)
-			return false;
-
-		
-		return true;
-	}
 
 	/**
 	 * Return the intersection of a vector in the given direction, originating from origin.
@@ -1252,7 +876,7 @@ public class Utilities {
 		final double scan_angle = sector_angle/scan_count;
 		for (double angle = start_angle; Utilities.normaliseAngle(end_angle-angle) * sector_angle >= 0; angle+=scan_angle) {
 			final double ang_rad = angle*Math.PI/180d;
-			final Vector2D distV = raytraceVector(ws, me, zero, new Vector2D(-Math.cos(ang_rad), Math.sin(ang_rad)), am_i_blue, include_ball_as_obstacle);
+			final Vector2D distV = DeprecatedCode.raytraceVector(ws, me, zero, new Vector2D(-Math.cos(ang_rad), Math.sin(ang_rad)), am_i_blue, include_ball_as_obstacle);
 			final double dist = distV.getLength();
 			if (min_dist == null || dist < min_dist) {
 				min_dist = dist;
@@ -1300,42 +924,5 @@ public class Utilities {
 	 */
 	public static AIWorldState getAIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
 		return new AIWorldState(world_state, my_team_blue, my_goal_left);
-	}
-
-	
-	/**
-	 * Bind a double to the interval [Short.MIN_VALUE; Short.MAX_VALUE]. If
-	 * the given value is outside this interval, it is set to the closer
-	 * endpoint.
-	 * 
-	 * @param value A value.
-	 * @return Restricted value, as described above.
-	 */
-	public static short restrictToShort(double value){
-		if (value > Short.MAX_VALUE) {
-			value = Short.MAX_VALUE;
-		}
-		if (value < Short.MIN_VALUE) {
-			value = Short.MIN_VALUE;
-		}
-		return ((short) value);
-	}
-
-	/**
-	 * Bind a short to the interval [-Robot.MAX_SPEED_CM_S; Robot.MAX_SPEED_CM_S].
-	 * If the given value is outside this interval, it is set to the closer
-	 * endpoint.
-	 * 
-	 * @param value A value.
-	 * @return Restricted value, as described above.
-	 */
-	public static short restrictToRobotSpeed(short value) {
-		if (value > Robot.MAX_DRIVING_SPEED) {
-			value = Robot.MAX_DRIVING_SPEED;
-		}
-		if (value < -Robot.MAX_DRIVING_SPEED) {
-			value = -Robot.MAX_DRIVING_SPEED;
-		}
-		return value;
 	}
 }
