@@ -197,6 +197,168 @@ public class AIWorldState extends WorldState {
 		
 		return predictedState;
 	}
+	
+	
+	/**
+	 * Get whether our goal is on the left.
+	 * 
+	 * @return Whether our goal is on the left.
+	 */
+	public boolean isOwnGoalLeft() {
+		return isOwnGoalLeft;
+	}
+
+	/**
+	 * Get whether our robot's colour is blue.
+	 * 
+	 * @return Whether our colour is blue.
+	 */
+	public boolean isOwnTeamBlue() {
+		return isOwnTeamBlue;
+	}
+	
+	
+	/**
+	 * Get our robot.
+	 * 
+	 * @return Our robot.
+	 */
+	public Robot getOwnRobot() {
+		return ownRobot;
+	}
+	
+	/**
+	 * Get the enemy robot.
+	 * 
+	 * @return The enemy robot.
+	 */
+	public Robot getEnemyRobot() {
+		return enemyRobot;
+	}
+
+	
+	/**
+	 * Get our own goal.
+	 * 
+	 * @return Own goal.
+	 */
+	public Goal getOwnGoal() {
+		return ownGoal;
+	}
+	
+	/**
+	 * Get the enemy goal.
+	 * 
+	 * @return The enemy goal.
+	 */
+	public Goal getEnemyGoal() {
+		return enemyGoal;
+	}
+
+
+	/**
+	 * Get whether the left sensor is reporting a collision.
+	 * 
+	 * @return Whether the left sensor is active.
+	 */
+	public boolean isLeftSensorActive() {
+		return isLeftSensorActive;
+	}
+
+	/**
+	 * Set whether the left sensor is reporting a collision.
+	 * 
+	 * @param active Whether the left sensor is active.
+	 */
+	public void setLeftSensorActive(boolean active) {
+		this.isLeftSensorActive = active;
+	}
+
+	
+	/**
+	 * Get whether the right sensor is reporting a collision.
+	 * 
+	 * @return Whether the right sensor is active.
+	 */
+	public boolean isRightSensorActive() {
+		return isRightSensorActive;
+	}
+
+	/**
+	 * Set whether the right sensor is reporting a collision.
+	 * 
+	 * @param active Whether the right sensor is active.
+	 */
+	public void setRightSensorActive(boolean active) {
+		this.isRightSensorActive = active;
+	}
+
+	
+	/**
+	 * Get whether the front sensor is reporting a collision.
+	 * 
+	 * @return Whether the front sensor is active.
+	 */
+	public boolean isFrontSensorActive() {
+		return isFrontSensorActive;
+	}
+
+	/**
+	 * Set whether the front sensor is reporting a collision.
+	 * 
+	 * @param active Whether the front sensor is active.
+	 */
+	public void setFrontSensorActive(boolean active) {
+		this.isFrontSensorActive = active;
+	}
+
+	
+	/**
+	 * Get our robot's battery level.
+	 * 
+	 * @return Our robot's battery level.
+	 */
+	public int getBatteryLevel() {
+		return batteryLevel;
+	}
+
+	/**
+	 * Set our robot's battery level.
+	 * 
+	 * @param newLevel Our robot's new battery level.
+	 */
+	public void setBatteryLevel(int newLevel) {
+		this.batteryLevel = newLevel;
+	}
+	
+	
+	/**
+	 * Set our robot's last executed command.
+	 * 
+	 * @param lastCommand Our robot's last executed command.
+	 */
+	public void setCommand(Command lastCommand) {
+		ownLastCommand = lastCommand;
+	}
+	
+	
+	/**
+	 * Get the distance from the centre of our kicker to the ball.
+	 * 
+	 * @return Distance from the centre of our kicker to the ball.
+	 */
+	public double getDistanceToBall() {
+		return GeomUtils.pointDistance(ownRobot.getFrontCenter(), getBallCoords());
+	}
+
+	/**
+	 * Get the distance from the centre of our robot to the enemy goal.
+	 * 
+	 * @return Distance from the centre of our robot to the enemy goal.
+	 */
+	public double getDistanceToGoal() {
+		return GeomUtils.pointDistance(ownRobot.getCoords(), enemyGoal.getCentre());
+	}
 
 	
 	/**
@@ -246,74 +408,5 @@ public class AIWorldState extends WorldState {
 		}
 		
 		p.dispose();
-	}
-	
-
-	public Robot getEnemyRobot() {
-		return enemyRobot;
-	}
-
-	public Robot getRobot() {
-		return ownRobot;
-	}
-
-	public double getDistanceToBall() {
-		return GeomUtils.pointDistance(ownRobot.getFrontCenter(), getBallCoords());
-	}
-
-	public double getDistanceToGoal() {
-		return GeomUtils.pointDistance(ownRobot.getCoords(), enemyGoal.getCentre());
-	}
-
-	public Goal getEnemyGoal() {
-		return enemyGoal;
-	}
-
-	public Goal getMyGoal() {
-		return ownGoal;
-	}
-
-	public boolean getMyGoalLeft() {
-		return isOwnGoalLeft;
-	}
-
-	public boolean getMyTeamBlue() {
-		return isOwnTeamBlue;
-	}
-	
-	public boolean isLeft_sensor() {
-		return isLeftSensorActive;
-	}
-
-	public void setLeft_sensor(boolean left_sensor) {
-		this.isLeftSensorActive = left_sensor;
-	}
-
-	public boolean isRight_sensor() {
-		return isRightSensorActive;
-	}
-
-	public void setRight_sensor(boolean right_sensor) {
-		this.isRightSensorActive = right_sensor;
-	}
-
-	public boolean isDist_sensor() {
-		return isFrontSensorActive;
-	}
-
-	public void setDist_sensor(boolean dist_sensor) {
-		this.isFrontSensorActive = dist_sensor;
-	}
-
-	public int getBattery() {
-		return batteryLevel;
-	}
-
-	public void setBattery(int battery) {
-		this.batteryLevel = battery;
-	}
-	
-	public void setCommand(Command com) {
-		ownLastCommand = com;
 	}
 }

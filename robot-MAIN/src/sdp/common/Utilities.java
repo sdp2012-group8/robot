@@ -283,7 +283,7 @@ public class Utilities {
 	 * @return Whether the gates can be attacked.
 	 */
 	public static boolean canWeAttack(AIWorldState worldState) {
-		Vector2D localBall = Utilities.getLocalVector(worldState.getRobot(), new Vector2D(worldState.getBallCoords()));
+		Vector2D localBall = Utilities.getLocalVector(worldState.getOwnRobot(), new Vector2D(worldState.getBallCoords()));
 			
 		// Check if the ball is within a certain range in front of us
 		if (!(localBall.x < Robot.LENGTH_CM / 2 + KICKABLE_BALL_DIST && localBall.x > 0 && localBall.y < Robot.WIDTH_CM/2 && localBall.y > -Robot.WIDTH_CM/2)) {
@@ -293,7 +293,7 @@ public class Utilities {
 		}
 		
 		// Check there isn't a robot straight in front of us.
-		if (!Utilities.lineIntersectsRobot(worldState.getRobot().getCoords(), worldState.getRobot().getFrontCenter(), worldState.getEnemyRobot())) {
+		if (!Utilities.lineIntersectsRobot(worldState.getOwnRobot().getCoords(), worldState.getOwnRobot().getFrontCenter(), worldState.getEnemyRobot())) {
 			return false;
 		}
 		
@@ -308,7 +308,7 @@ public class Utilities {
 	 */
 	public static boolean canEnemyAttack(AIWorldState worldState) {
 		Vector2D robotToBallVec = Vector2D.subtract(new Vector2D(worldState.getBallCoords()), new Vector2D(worldState.getEnemyRobot().getCoords()));
-		Vector2D ballToGoalVec = Vector2D.subtract(new Vector2D(worldState.getMyGoal().getCentre()), new Vector2D(worldState.getBallCoords()));
+		Vector2D ballToGoalVec = Vector2D.subtract(new Vector2D(worldState.getOwnGoal().getCentre()), new Vector2D(worldState.getBallCoords()));
 		
 		double attackAngle = robotToBallVec.getDirection() - ballToGoalVec.getDirection();
 		attackAngle = normaliseAngle(attackAngle);
@@ -319,10 +319,10 @@ public class Utilities {
 		if (Math.abs(attackAngle) > KICKABLE_ATTACK_ANGLE) {
 			return false;
 		}
-		if (!Utilities.lineIntersectsRobot(worldState.getMyGoal().getCentre(), worldState.getBallCoords(), worldState.getRobot())) {
+		if (!Utilities.lineIntersectsRobot(worldState.getOwnGoal().getCentre(), worldState.getBallCoords(), worldState.getOwnRobot())) {
 			return false;
 		}
-		if (!Utilities.lineIntersectsRobot(worldState.getEnemyRobot().getCoords(), worldState.getEnemyRobot().getFrontCenter(), worldState.getRobot())) {
+		if (!Utilities.lineIntersectsRobot(worldState.getEnemyRobot().getCoords(), worldState.getEnemyRobot().getFrontCenter(), worldState.getOwnRobot())) {
 			return false;
 		}
 		
@@ -342,7 +342,7 @@ public class Utilities {
 	@Deprecated
 	public static Point2D.Double getOptimalPointBehindBall(AIWorldState ws, double point_offset) {
 		Goal enemy_goal = new Goal(ws.getEnemyGoal().getCentre(), true);
-		Robot robot = ws.getRobot();
+		Robot robot = ws.getOwnRobot();
 		Robot enemy_robot = ws.getEnemyRobot();
 
 		ArrayList<Point2D.Double> goal_points = new ArrayList<Point2D.Double>();
@@ -388,7 +388,7 @@ public class Utilities {
 		itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
-			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(),ws.getMyGoalLeft(), point_offset);
+			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(),ws.isOwnGoalLeft(), point_offset);
 
 			//System.out.println(temp_point);
 			
@@ -427,7 +427,7 @@ public class Utilities {
 	public static Point2D.Double getOptimalPointBehindBall(AIWorldState ws, double point_offset, boolean wall_priority) throws NullPointerException {
 		
 		Goal enemy_goal = ws.getEnemyGoal();
-		Robot robot = ws.getRobot();
+		Robot robot = ws.getOwnRobot();
 		Robot enemy_robot = ws.getEnemyRobot();
 		
 		ArrayList<Point2D.Double> goal_points = new ArrayList<Point2D.Double>();
@@ -443,7 +443,7 @@ public class Utilities {
 		else {
 		
 			//add only points in mail goal
-			if (ws.getMyGoalLeft()) {
+			if (ws.isOwnGoalLeft()) {
 				enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_CENTRE_Y ));
 			} else {
 				enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_CENTRE_Y ));
@@ -475,7 +475,7 @@ public class Utilities {
 		itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
-			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(), ws.getMyGoalLeft(), point_offset);
+			Point2D.Double temp_point = getPointBehindBall(point, ws.getBallCoords(), ws.isOwnGoalLeft(), point_offset);
 
 			if (Utilities.isPointInField(temp_point)) { 
 				if (!isPointAroundRobot(temp_point, enemy_robot)) {

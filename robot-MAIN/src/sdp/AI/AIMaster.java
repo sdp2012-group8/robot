@@ -59,7 +59,7 @@ public class AIMaster extends AIListener {
 //						} catch (IOException e) {
 //							e.printStackTrace();
 //						}
-						ai_world_state.setDist_sensor(args[0] == 1);
+						ai_world_state.setFrontSensorActive(args[0] == 1);
 						try {
 							execCommand(ai.gotBall());
 						} catch (IOException e) {
@@ -74,7 +74,7 @@ public class AIMaster extends AIListener {
 						//ai_world_state.setRight_sensor(args[0] == 1);
 						break;
 					case BATTERY:
-						ai_world_state.setBattery(args[0]);
+						ai_world_state.setBatteryLevel(args[0]);
 						break;
 					}
 
@@ -103,9 +103,9 @@ public class AIMaster extends AIListener {
 	}
 	
 	private void execCommand(Command command) throws IOException {
-			final boolean dist_sens = ai_world_state.isDist_sensor(),
-					left_sens = ai_world_state.isLeft_sensor(),
-					right_sens = ai_world_state.isRight_sensor();
+			final boolean dist_sens = ai_world_state.isFrontSensorActive(),
+					left_sens = ai_world_state.isLeftSensorActive(),
+					right_sens = ai_world_state.isRightSensorActive();
 			
 			if (left_sens) {
 				command.turningSpeed = 90;
@@ -152,7 +152,7 @@ public class AIMaster extends AIListener {
 	private void checkState() {
 		// Check the new world state and decide what state we should be in.
 
-		final boolean my_goal_left = ai_world_state.getMyGoalLeft();
+		final boolean my_goal_left = ai_world_state.isOwnGoalLeft();
 		final Point2D.Double ball = ai_world_state.getBallCoords();
 		
 		// DEFEND_PENALTIES -> PLAY
@@ -188,7 +188,7 @@ public class AIMaster extends AIListener {
 //						setState(mode.PLAY);
 //					}
 					
-					Vector2D myDistance = Vector2D.subtract(new Vector2D(ai_world_state.getRobot().getCoords()), new Vector2D(ball));
+					Vector2D myDistance = Vector2D.subtract(new Vector2D(ai_world_state.getOwnRobot().getCoords()), new Vector2D(ball));
 					
 //					if (myDistance.getLength() < 20)
 //						setState(mode.PLAY);
