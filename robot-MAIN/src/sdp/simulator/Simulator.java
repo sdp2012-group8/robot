@@ -28,27 +28,27 @@ public class Simulator extends WorldStateProvider {
 	private static final float MAX_FPS = 25; // simulation speed
 	private static final double ITERATION_TIME = 1000 / MAX_FPS; // in ms
 
-	private final static Vector2D PITCH_MIDDLE = new Vector2D(0.5,
+	private static final Vector2D PITCH_MIDDLE = new Vector2D(0.5,
 			WorldState.PITCH_HEIGHT_CM / (2 * WorldState.PITCH_WIDTH_CM));
-	private final static double BALL_MAX_SPEED = 350; // cm/s
-	private final static double BALL_FRICTION_ACC = 10; // in cm/s/s
-	private final static double BALL_RADIUS = 4.27 / 2; // in cm
+	private static final double BALL_MAX_SPEED = 350; // cm/s
+	private static final double BALL_FRICTION_ACC = 10; // in cm/s/s
+	private static final double BALL_RADIUS = 4.27 / 2; // in cm
 
-	private final static double WALL_BOUNCINESS = 0.4; // 0 - inelastic, 1 -
+	private static final double WALL_BOUNCINESS = 0.4; // 0 - inelastic, 1 -
 	// elastic
 	private static double ROBOT_BOUNCINESS; // 0 - 1
-	private final static double GOAL_SIZE = 60; // cm
+	private static final double GOAL_SIZE = 60; // cm
 
-	private final static double KICKER_RANGE = 10; // cm
-	private final static double KICKER_MAX_SPEED = 300; // cm/s
-	private final static double KICKER_MIN_SPEED = 50; // cm/s
+	private static final double KICKER_RANGE = 10; // cm
+	private static final double KICKER_MAX_SPEED = 300; // cm/s
+	private static final double KICKER_MIN_SPEED = 50; // cm/s
 
 
-	public final static int IMAGE_WIDTH = 640;
+	public static final int IMAGE_WIDTH = 640;
 	public static final int IMAGE_HEIGHT = (int) (IMAGE_WIDTH * WorldState.PITCH_HEIGHT_CM / WorldState.PITCH_WIDTH_CM);
 	private static final int IMAGE_INFO_SEC_HEIGHT = 100;
 
-	private final static int MAX_NUM_ROBOTS = 2;
+	private static final int MAX_NUM_ROBOTS = 2;
 
 	private int SCORE_LEFT = 0, SCORE_RIGHT = 0;
 

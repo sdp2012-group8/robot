@@ -22,17 +22,17 @@ public class MessageQueueTest {
 	/**
 	 * The number of messages
 	 */
-	private final static int TEST_SIZE = 30;
+	private static final int TEST_SIZE = 30;
 	
 	/**
 	 * Maximum delay between two messages
 	 */
-	private final static int MAX_DELAY_TEST = 1000;
+	private static final int MAX_DELAY_TEST = 1000;
 	
 	/**
 	 * Number of times {@link MessageQueue.#cancelAllMessages()} should be issued
 	 */
-	private final static int NUMBER_CANCELS = 4;
+	private static final int NUMBER_CANCELS = 4;
 	
 	// for private usage
 	private int curr_message_id = 0;

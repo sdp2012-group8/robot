@@ -17,9 +17,9 @@
 //public class AINeuralNetwork extends AI {
 //	
 //	
-//	public final static int got_ball_dist = 20;
+//	public static final int got_ball_dist = 20;
 //	
-//	private final static int network_count = 2;
+//	private static final int network_count = 2;
 //	private AIWorldState oldState = null;
 //	private NeuralNetwork[] nets = new NeuralNetwork[network_count];
 //	private long oldTime = 0;

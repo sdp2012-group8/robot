@@ -25,7 +25,7 @@ public class MessageQueue {
 	private Communicator mComm;
 	private int tasks_pending = 0;
 	
-	private final static Logger LOGGER = Logger.getLogger(MessageQueue.class .getName());
+	private static final Logger LOGGER = Logger.getLogger(MessageQueue.class .getName());
 	
 	/**
 	 * Intialize a new message queue

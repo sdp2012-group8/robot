@@ -16,26 +16,26 @@ public class AIVisualServoing extends BaseAI {
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
 
 	/** The multiplier to the final speed. */
-	private final static double SPEED_MULTIPLIER = 1;
-	private final static double TURN_SPD_MULTIPLIER = 1.8;
+	private static final double SPEED_MULTIPLIER = 1;
+	private static final double TURN_SPD_MULTIPLIER = 1.8;
 
-	private final static int COLL_SECS_COUNT = 222;
-	private final static double SEC_ANGLE = 360d/COLL_SECS_COUNT;
+	private static final int COLL_SECS_COUNT = 222;
+	private static final double SEC_ANGLE = 360d/COLL_SECS_COUNT;
 
 	// corner thresholds
-	private final static int THRESH_CORN_HIGH = 5;
-	private final static int THRESH_CORN_LOW = 2;
+	private static final int THRESH_CORN_HIGH = 5;
+	private static final int THRESH_CORN_LOW = 2;
 
 	// back away threshold
-	private final static int THRESH_BACK_HIGH = 25;
-	private final static int THRESH_BACK_LOW = 15;
+	private static final int THRESH_BACK_HIGH = 25;
+	private static final int THRESH_BACK_LOW = 15;
 
 	/** Threshold for being at the target point */
-	private final static int POINT_ACCURACY = 5;
+	private static final int POINT_ACCURACY = 5;
 
-	public final static double DEFAULT_POINT_OFF = 2*Robot.LENGTH_CM;
+	public static final double DEFAULT_POINT_OFF = 2*Robot.LENGTH_CM;
 	private double point_off = DEFAULT_POINT_OFF;
-	public final static double DEFAULT_TARG_THRESH = 30;
+	public static final double DEFAULT_TARG_THRESH = 30;
 	private double targ_thresh = DEFAULT_TARG_THRESH;
 
 	private static final double DEFEND_BALL_THRESHOLD = 10;

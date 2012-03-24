@@ -44,14 +44,14 @@
 //	/**
 //	 * How many iterations to wait until quitting. For every 1000 input points you have this many iterations
 //	 */
-//	private final static long wait_iter_for_1000_f = 250;
+//	private static final long wait_iter_for_1000_f = 250;
 //	/**
 //	 * Wait for this amount of epochs before doing anything
 //	 */
-//	private final static long skip_first_n = 5;
+//	private static final long skip_first_n = 5;
 //
 //	// how much of the data should be used for testing instead of training
-//	private final static double percentage_test = 25;
+//	private static final double percentage_test = 25;
 //
 //	@SuppressWarnings("unchecked")
 //	private TrainingSet<SupervisedTrainingElement>[] tsets = new TrainingSet[nets.length];

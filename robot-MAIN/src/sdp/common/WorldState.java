@@ -10,12 +10,12 @@ import java.awt.image.BufferedImage;
 public class WorldState {
 	
 	/** Height of the pitch in centimetres. */
-	public final static double PITCH_HEIGHT_CM = 113.7;
+	public static final double PITCH_HEIGHT_CM = 113.7;
 	/** Width of the pitch in centimetres. */
-	public final static double PITCH_WIDTH_CM = 244;
+	public static final double PITCH_WIDTH_CM = 244;
 	
 	/** Height of the goals in centimetres. */
-	public final static double GOAL_HEIGHT_CM = PITCH_HEIGHT_CM / 2;
+	public static final double GOAL_HEIGHT_CM = PITCH_HEIGHT_CM / 2;
 
 
 	/** Location of the ball. */

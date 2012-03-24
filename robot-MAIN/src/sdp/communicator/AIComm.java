@@ -32,7 +32,7 @@ public class AIComm implements sdp.common.Communicator {
 	
 	private static short[] old_operate = null;
 	
-	private final static Logger LOGGER = Logger.getLogger(AIComm.class .getName());
+	private static final Logger LOGGER = Logger.getLogger(AIComm.class .getName());
 
 	// variables
 	private ArrayList<MessageListener> mListener = new ArrayList<MessageListener>();

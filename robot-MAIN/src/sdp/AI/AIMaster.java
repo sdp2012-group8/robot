@@ -36,10 +36,10 @@ public class AIMaster extends AIListener {
 	}
 	
 	/** Distance from the goal when the AI changes from Penalty mode to play mode */
-	private final static int PENALTIES_THRESH = 30; 
+	private static final int PENALTIES_THRESH = 30; 
 
 	/** The threshold distance for defend goal */
-	private final static double DEFEND_THRESH = WorldState.PITCH_WIDTH_CM / 2 - 20;
+	private static final double DEFEND_THRESH = WorldState.PITCH_WIDTH_CM / 2 - 20;
 
 	private BaseAI ai;
 	private mode state = mode.SIT;

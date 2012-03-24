@@ -6,6 +6,9 @@ import sdp.common.Utilities;
 
 /**
  * A robot command.
+ * 
+ * TODO: Could someone encapsulate the variables with getters/setters when
+ * there is more time?
  */
 public class Command {
 	

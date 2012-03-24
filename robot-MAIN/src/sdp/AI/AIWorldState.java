@@ -18,9 +18,13 @@ import sdp.common.geometry.Vector2D;
 import sdp.simulator.Simulator;
 import sdp.vision.processing.ImageProcessorConfig;
 
+
+/**
+ * The state of the field, as seen by AIs.
+ */
 public class AIWorldState extends WorldState {
 	
-	private static final long PREDICTION_TIME = 400; // in ms
+	private static final long PREDICTION_TIME = 400;
 	private static final long PREDICT_FRAME_SPAN = 3;
 	private Queue<WorldState> predict_queue = null;
 	

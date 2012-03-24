@@ -19,7 +19,7 @@ public class Painter {
 	public  Graphics2D g;
 	private  int width, height;
 	private double ratio;
-	private final static double BALL_RADIUS = 4.27 / 2;
+	private static final double BALL_RADIUS = 4.27 / 2;
 	private  WorldState state_cm;
 	private int off_x = 0, off_y = 0;
 	private  Robot[] robots;
