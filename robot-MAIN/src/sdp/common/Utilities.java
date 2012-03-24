@@ -1275,5 +1275,12 @@ public class Utilities {
 		return new AIWorldState(world_state, my_team_blue, my_goal_left);
 	}
 
+
+	public static short normaliseSpeed(short speed) {
+		if (speed > Robot.MAX_SPEED_CM_S) speed = Robot.MAX_SPEED_CM_S;
+		if (speed < -Robot.MAX_SPEED_CM_S) speed = -Robot.MAX_SPEED_CM_S;
+		return speed;
+	}
+
 	
 }

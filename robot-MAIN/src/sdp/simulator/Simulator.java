@@ -2,13 +2,12 @@ package sdp.simulator;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import sdp.AI.AI.Command;
+import sdp.AI.Command;
 import sdp.common.Painter;
 import sdp.common.Robot;
 import sdp.common.Utilities;

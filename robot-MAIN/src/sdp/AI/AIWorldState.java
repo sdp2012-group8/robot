@@ -7,7 +7,7 @@ import java.awt.image.BufferedImage;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import sdp.AI.AI.Command;
+import sdp.AI.Command;
 import sdp.common.Goal;
 import sdp.common.Painter;
 import sdp.common.Robot;

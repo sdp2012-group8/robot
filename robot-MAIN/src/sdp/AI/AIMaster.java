@@ -5,8 +5,7 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-//import sdp.AI.neural.AINeuralNetwork;
-import sdp.AI.AI.Command;
+import sdp.AI.Command;
 import sdp.common.Communicator;
 import sdp.common.MessageListener;
 import sdp.common.Communicator.opcode;
@@ -42,7 +41,7 @@ public class AIMaster extends AIListener {
 	/** The threshold distance for defend goal */
 	private final static double DEFEND_THRESH = WorldState.PITCH_WIDTH_CM / 2 - 20;
 
-	private AI ai;
+	private BaseAI ai;
 	private mode state = mode.SIT;
 	private Communicator mComm;
 
@@ -91,7 +90,7 @@ public class AIMaster extends AIListener {
 	 */
 	protected synchronized void worldChanged() {
 		
-		AI.Command command;
+		Command command;
 
 		checkState();
 		ai.update(ai_world_state);
@@ -133,7 +132,7 @@ public class AIMaster extends AIListener {
 			//System.out.println("ws: "+ai_world_state.getMyGoalLeft());
 	}
 
-	private AI.Command getCommand() throws IOException {
+	private Command getCommand() throws IOException {
 		switch (getState()) {
 		case PLAY:
 			return ai.chaseBall();

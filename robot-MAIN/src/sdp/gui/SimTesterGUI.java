@@ -24,12 +24,12 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import sdp.AI.AI;
 import sdp.AI.AIMaster;
 import sdp.AI.AIMaster.AIMode;
 import sdp.AI.AIMaster.mode;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
+import sdp.common.Robot;
 import sdp.common.geometry.Vector2D;
 import sdp.common.WorldState;
 import sdp.common.WorldStateObserver;
@@ -471,21 +471,21 @@ public class SimTesterGUI {
 			switch (key_id) {
 			case KeyEvent.VK_UP:
 			case KeyEvent.VK_W:
-				speed = pressed ? AI.MAX_SPEED_CM_S : 0;
+				speed = pressed ? Robot.MAX_SPEED_CM_S : 0;
 				//turn_speed = 0;
 				break;
 			case KeyEvent.VK_DOWN:
 			case KeyEvent.VK_S:
-				speed = pressed ? -AI.MAX_SPEED_CM_S : 0;
+				speed = pressed ? -Robot.MAX_SPEED_CM_S : 0;
 				//turn_speed = 0;
 				break;
 			case KeyEvent.VK_LEFT:
 			case KeyEvent.VK_A:
-				turn_speed = pressed ? AI.MAX_TURNING_SPEED : 0;
+				turn_speed = pressed ? Robot.MAX_TURNING_SPEED : 0;
 				break;
 			case KeyEvent.VK_RIGHT:
 			case KeyEvent.VK_D:
-				turn_speed = pressed ? -AI.MAX_TURNING_SPEED : 0;
+				turn_speed = pressed ? -Robot.MAX_TURNING_SPEED : 0;
 				break;
 			case KeyEvent.VK_ENTER:
 			case KeyEvent.VK_E:

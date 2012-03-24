@@ -2,7 +2,7 @@ package sdp.AI;
 
 import java.io.IOException;
 
-public class AITest extends AI{
+public class AITest extends BaseAI{
 	/**
 	 * This is here only to test what would happen if we had more than one AI
 	 */
