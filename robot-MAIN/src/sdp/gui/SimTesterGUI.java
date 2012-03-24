@@ -25,8 +25,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import sdp.AI.AIMaster;
-import sdp.AI.AIMaster.AIMode;
-import sdp.AI.AIMaster.mode;
+import sdp.AI.AIMaster.AIType;
+import sdp.AI.AIMaster.AIState;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.Robot;
@@ -212,8 +212,8 @@ public class SimTesterGUI {
 		 */
 		final JComboBox comboYellowModes = new JComboBox();
 		comboYellowModes.setBounds(662, 388, 136, 24);
-		for (int i = 0; i < mode.values().length; i++)
-			comboYellowModes.addItem(mode.values()[i]);
+		for (int i = 0; i < AIState.values().length; i++)
+			comboYellowModes.addItem(AIState.values()[i]);
 		frmAlphaTeamSimulator.getContentPane().add(comboYellowModes);
 		
 		
@@ -279,8 +279,8 @@ public class SimTesterGUI {
 		 */
 		final JComboBox comboBlueModes = new JComboBox();
 		comboBlueModes.setBounds(662, 288, 136, 27);
-		for (int i = 0; i < mode.values().length; i++)
-			comboBlueModes.addItem(mode.values()[i]);
+		for (int i = 0; i < AIState.values().length; i++)
+			comboBlueModes.addItem(AIState.values()[i]);
 		frmAlphaTeamSimulator.getContentPane().add(comboBlueModes);
 		
 		/**
@@ -290,7 +290,7 @@ public class SimTesterGUI {
 		btnStartBlueAI.setBounds(662, 319, 136, 29);
 		btnStartBlueAI.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				mAI.setState(mode.values()[comboBlueModes.getSelectedIndex()]);
+				mAI.setState(AIState.values()[comboBlueModes.getSelectedIndex()]);
 			}
 		});
 		frmAlphaTeamSimulator.getContentPane().add(btnStartBlueAI);
@@ -304,8 +304,8 @@ public class SimTesterGUI {
 		btnStartBoth.setBounds(533, 415, 117, 29);
 		btnStartBoth.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				mAI.setState(mode.values()[comboBlueModes.getSelectedIndex()]);
-				opponentAI.setState(mode.values()[comboYellowModes.getSelectedIndex()]);				
+				mAI.setState(AIState.values()[comboBlueModes.getSelectedIndex()]);
+				opponentAI.setState(AIState.values()[comboYellowModes.getSelectedIndex()]);				
 			}
 		});
 		frmAlphaTeamSimulator.getContentPane().add(btnStartBoth);
@@ -316,8 +316,8 @@ public class SimTesterGUI {
 		 */
 		comboBlueAIs = new JComboBox();
 		comboBlueAIs.setBounds(662, 259, 136, 27);
-		for (int i = 0; i < AIMode.values().length; i++)
-			comboBlueAIs.addItem(AIMode.values()[i]);
+		for (int i = 0; i < AIType.values().length; i++)
+			comboBlueAIs.addItem(AIType.values()[i]);
 		comboBlueAIs.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
 				mAI.setAIMode(checkModesBlue());	
@@ -331,8 +331,8 @@ public class SimTesterGUI {
 		 */
 		comboYellowAIs = new JComboBox();
 		comboYellowAIs.setBounds(662, 360, 136, 27);
-		for (int i = 0; i < AIMode.values().length; i++)
-			comboYellowAIs.addItem(AIMode.values()[i]);
+		for (int i = 0; i < AIType.values().length; i++)
+			comboYellowAIs.addItem(AIType.values()[i]);
 		comboYellowAIs.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
 				opponentAI.setAIMode(checkModesYellow());
@@ -346,7 +346,7 @@ public class SimTesterGUI {
 		JButton btnStartYellowAI = new JButton("Start Yellow AI");
 		btnStartYellowAI.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				opponentAI.setState(mode.values()[comboYellowModes.getSelectedIndex()]);
+				opponentAI.setState(AIState.values()[comboYellowModes.getSelectedIndex()]);
 			}
 		});
 		btnStartYellowAI.setBounds(662, 417, 136, 25);
@@ -452,8 +452,8 @@ public class SimTesterGUI {
 	 * Reset field
 	 */
 	private void resetField() {
-		mAI.setState(AIMaster.mode.SIT);
-		opponentAI.setState(AIMaster.mode.SIT);
+		mAI.setState(AIMaster.AIState.SIT);
+		opponentAI.setState(AIMaster.AIState.SIT);
 		mSim.putBallAt();
 		mSim.putAt(blue_placement/WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM), 0, blue_placement == PLACEMENT_LEFT ?  0 : 180);
 		mSim.putAt(yellow_placement/WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM), 1, yellow_placement == PLACEMENT_LEFT ?  0 : 180);
@@ -465,8 +465,8 @@ public class SimTesterGUI {
 	 * @param pressed true if pressed, false if released
 	 */
 	private void keyAction(final int key_id, final boolean pressed) {
-		if (mAI.getState()!= mode.MANUAL_CONTROL)
-			mAI.setState(mode.MANUAL_CONTROL);
+		if (mAI.getState()!= AIState.MANUAL_CONTROL)
+			mAI.setState(AIState.MANUAL_CONTROL);
 		try {
 			switch (key_id) {
 			case KeyEvent.VK_UP:
@@ -529,12 +529,12 @@ public class SimTesterGUI {
 		mSim.putBallAt(ballpos.getX(), ballpos.getY());
 	}
 	
-	private AIMode checkModesBlue(){	
-		return AIMode.values()[comboBlueAIs.getSelectedIndex()];
+	private AIType checkModesBlue(){	
+		return AIType.values()[comboBlueAIs.getSelectedIndex()];
 	}
 	
-	private AIMode checkModesYellow(){	
-		return AIMode.values()[comboYellowAIs.getSelectedIndex()];
+	private AIType checkModesYellow(){	
+		return AIType.values()[comboYellowAIs.getSelectedIndex()];
 	}
 }
 

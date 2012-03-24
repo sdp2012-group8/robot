@@ -900,7 +900,7 @@ public class Utilities {
 					return ans;
 	}
 
-	static double[] getTargetInSectors(Vector2D relative, int sector_count) {
+	public static double[] getTargetInSectors(Vector2D relative, int sector_count) {
 		if (sector_count % 2 != 0 || (sector_count / 2) % 2 == 0) {
 			System.out.println("Sectors must be even number which halves should be odd!");
 			return null;

@@ -180,8 +180,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			robotControlTabbedPanel.remove(testBenchPanel);
 		}
 		
-		for (int i = 0; i < AIMaster.mode.values().length; i++) {
-			robotBehaviourCombobox.addItem(AIMaster.mode.values()[i]);
+		for (int i = 0; i < AIMaster.AIState.values().length; i++) {
+			robotBehaviourCombobox.addItem(AIMaster.AIState.values()[i]);
 		}
 		
 		addWindowListener(new WindowAdapter() {
@@ -226,7 +226,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			}
 		}
 		
-		aiInstance = new AIMaster(communicator, vision, AIMaster.AIMode.VISUAL_SERVOING);
+		aiInstance = new AIMaster(communicator, vision, AIMaster.AIType.VISUAL_SERVOING);
 		aiInstance.start(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected());
 		
 		WorldStateObserver aiObserver = new WorldStateObserver(aiInstance);
@@ -311,8 +311,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		} else {
 			ImageProcessorConfig config = getGUIConfiguration();
 			vision.setConfiguration(config);
-			if (aiInstance != null)
+			if (aiInstance != null) {
 				aiInstance.setConfiguration(config);
+			}
 		}
 	}
 
@@ -1642,7 +1643,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		robotPlayButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (aiInstance != null) {
-					aiInstance.setState(AIMaster.mode.PLAY);
+					aiInstance.setState(AIMaster.AIState.PLAY);
 				}
 			}
 		});
@@ -1657,7 +1658,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		robotSitButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (aiInstance != null) {
-					aiInstance.setState(AIMaster.mode.SIT);
+					aiInstance.setState(AIMaster.AIState.SIT);
 				}
 			}
 		});
@@ -1681,7 +1682,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		robotShootPenaltyButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (aiInstance != null) {
-					aiInstance.setState(AIMaster.mode.SHOOT_PENALTIES);
+					aiInstance.setState(AIMaster.AIState.SHOOT_PENALTIES);
 				}
 			}
 		});
@@ -1696,7 +1697,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		robotDefendPenaltyButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (aiInstance != null) {
-					aiInstance.setState(AIMaster.mode.DEFEND_PENALTIES);
+					aiInstance.setState(AIMaster.AIState.DEFEND_PENALTIES);
 				}
 			}
 		});
@@ -1735,7 +1736,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		robotChangeBehaviourButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (aiInstance != null) {
-					aiInstance.setState(AIMaster.mode.values()[robotBehaviourCombobox.getSelectedIndex()]);
+					aiInstance.setState(AIMaster.AIState.values()[robotBehaviourCombobox.getSelectedIndex()]);
 				}
 			}
 		});

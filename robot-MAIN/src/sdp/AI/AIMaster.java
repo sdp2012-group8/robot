@@ -1,6 +1,7 @@
 package sdp.AI;
 
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -8,47 +9,138 @@ import java.util.TimerTask;
 import sdp.AI.Command;
 import sdp.common.Communicator;
 import sdp.common.MessageListener;
+import sdp.common.Utilities;
+import sdp.common.WorldStateObserver;
 import sdp.common.Communicator.opcode;
 import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
 import sdp.common.geometry.Vector2D;
+import sdp.vision.processing.ImageProcessorConfig;
 
 
 /**
- * This class is the controller class for all the AI's.
- * Any other system that needs to use an AI should use this.
- * @author michael
- *
+ * Interface for AI-system communication. This class is responsible for
+ * bridging AI implementations with the rest of the system. 
  */
-public class AIMaster extends AIListener {
+public class AIMaster extends WorldStateProvider {
 
-	// Eclipse shouted at me saying they shouldn't be lowercase.
-	/** The mode the AI is in.
-	 * This should be states common to all AI's.
-	 */
-	public enum mode {
+	/** Operation modes, common to all AI implementations. */
+	public enum AIState {
 		PLAY, DEFEND_GOAL, SIT, DEFEND_PENALTIES, SHOOT_PENALTIES, MANUAL_CONTROL
 	}
 
-	/** The type of AI that is running */
-	public enum AIMode {
+	/** Available AI implementations. */
+	public enum AIType {
 		VISUAL_SERVOING, NEURAL_NETWORKS
 	}
-	
+
+
+	// TODO: Come back here.
+	/** The threshold distance for defend goal */
+	private static final double DEFEND_THRESH = (WorldState.PITCH_WIDTH_CM / 2) - 20;
 	/** Distance from the goal when the AI changes from Penalty mode to play mode */
 	private static final int PENALTIES_THRESH = 30; 
 
-	/** The threshold distance for defend goal */
-	private static final double DEFEND_THRESH = WorldState.PITCH_WIDTH_CM / 2 - 20;
-
+	
+	/** The observer object that provides world state updates. */
+	private WorldStateObserver observer;
+	/** A thread that executes the main logic loop. */
+	private Thread updateThread;
+	
+	/** AI implementation in use. */
 	private BaseAI ai;
-	private mode state = mode.SIT;
-	private Communicator mComm;
+	/** Current AI state. */
+	private AIState aiState = AIState.SIT;
+	
+	/** Robot communicator. */
+	private Communicator communicator;
 
-	public AIMaster(Communicator comm, WorldStateProvider obs, AIMode ai_mode) {
-		super(obs);
-		this.mComm = comm;
-			mComm.registerListener(new MessageListener() {
+	/** Current world state. */
+	private WorldState worldState = null;
+	/** Current AI world state. */
+	private AIWorldState aiWorldState;
+	
+	/** Whether our goal is on the left. */
+	private boolean isOwnGoalLeft;
+	/** Whether our team is blue. */
+	private boolean isOwnTeamBlue;
+	
+	/** Whether the AI should print its state on the world image. */
+	private boolean drawOnWorldImage = false;
+	
+	/** Currently used image processor configuration. */
+	private ImageProcessorConfig config;
+	
+	
+	
+	public void switchOverrideVision() {
+		drawOnWorldImage = !drawOnWorldImage;
+	}
+	
+	public void setConfiguration(ImageProcessorConfig config) {
+		this.config = config;
+	}
+
+	/**
+	 * Starts the AI in a new decision thread. (Not true, starts a new thread that updates the world state every time it changes)
+	 * 
+	 * Don't start more than once!
+	 * @param isOwnTeamBlue true if my team is blue, false if my team is yellow
+	 * @param isOwnGoalLeft true if my goal is on the left of camera, false otherwise
+	 */
+	public void start(final boolean is_my_team_blue, final boolean is_my_goal_left) {
+		this.isOwnTeamBlue = is_my_team_blue;
+		this.isOwnGoalLeft = is_my_goal_left;
+		updateThread = new Thread() {
+			@Override
+			public void run() {
+				while (!isInterrupted()) {
+					WorldState state = Utilities.toCentimeters(observer.getNextState());
+					// do low pass filtering
+					if (worldState == null) {
+						worldState = state;
+						aiWorldState = new AIWorldState(worldState, isOwnTeamBlue, isOwnGoalLeft);
+					} else {
+						BufferedImage im = state.getWorldImage();
+						if (drawOnWorldImage) {
+							aiWorldState.onDraw(im, config);
+						}
+						worldState = state;
+					}
+					aiWorldState.update(worldState, isOwnTeamBlue, isOwnGoalLeft);
+					
+					// pass coordinates to decision making logic
+					setChanged();
+					notifyObservers(worldState);
+					worldChanged();
+					
+				}
+			}
+		};
+		updateThread.start();
+	}
+	
+	public void updateGoalOrTeam(final boolean is_my_team_blue, final boolean is_my_goal_left) {
+		this.isOwnTeamBlue = is_my_team_blue;
+		this.isOwnGoalLeft = is_my_goal_left;
+	}
+
+
+	/**
+	 * Stops the AI
+	 */
+	public void stop() {
+		if (updateThread != null)
+			updateThread.interrupt();
+	}
+
+	
+
+	public AIMaster(Communicator comm, WorldStateProvider obs, AIType ai_mode) {
+		this.observer = new WorldStateObserver(obs);
+
+		this.communicator = comm;
+			communicator.registerListener(new MessageListener() {
 				@Override
 				public synchronized void receiveMessage(opcode op, short[] args, Communicator controler) {
 					//System.out.println(op+" "+args[0]);
@@ -59,7 +151,7 @@ public class AIMaster extends AIListener {
 //						} catch (IOException e) {
 //							e.printStackTrace();
 //						}
-						ai_world_state.setFrontSensorActive(args[0] == 1);
+						aiWorldState.setFrontSensorActive(args[0] == 1);
 						try {
 							execCommand(ai.gotBall());
 						} catch (IOException e) {
@@ -74,7 +166,7 @@ public class AIMaster extends AIListener {
 						//ai_world_state.setRight_sensor(args[0] == 1);
 						break;
 					case BATTERY:
-						ai_world_state.setBatteryLevel(args[0]);
+						aiWorldState.setBatteryLevel(args[0]);
 						break;
 					}
 
@@ -93,7 +185,7 @@ public class AIMaster extends AIListener {
 		Command command;
 
 		checkState();
-		ai.update(ai_world_state);
+		ai.update(aiWorldState);
 		
 		try {
 			execCommand(getCommand());
@@ -103,9 +195,9 @@ public class AIMaster extends AIListener {
 	}
 	
 	private void execCommand(Command command) throws IOException {
-			final boolean dist_sens = ai_world_state.isFrontSensorActive(),
-					left_sens = ai_world_state.isLeftSensorActive(),
-					right_sens = ai_world_state.isRightSensorActive();
+			final boolean dist_sens = aiWorldState.isFrontSensorActive(),
+					left_sens = aiWorldState.isLeftSensorActive(),
+					right_sens = aiWorldState.isRightSensorActive();
 			
 			if (left_sens) {
 				command.turningSpeed = 90;
@@ -114,19 +206,19 @@ public class AIMaster extends AIListener {
 			}
 			
 			if (command != null){
-				ai_world_state.setCommand(command);
+				aiWorldState.setCommand(command);
 			
 			
 	//		ai_world_state.setCommand(command);
 
 			if (command.isAccelerationDefault())
-				mComm.sendMessage(opcode.operate, command.getShortDrivingSpeed(), command.getShortTurningSpeed());
+				communicator.sendMessage(opcode.operate, command.getShortDrivingSpeed(), command.getShortTurningSpeed());
 			else
-				mComm.sendMessage(opcode.operate, command.getShortDrivingSpeed(), command.getShortTurningSpeed(), command.getShortAcceleration());
+				communicator.sendMessage(opcode.operate, command.getShortDrivingSpeed(), command.getShortTurningSpeed(), command.getShortAcceleration());
 			
 			if (command.kick) {
 				System.out.println("kicking");
-				mComm.sendMessage(opcode.kick);
+				communicator.sendMessage(opcode.kick);
 			}
 			}
 			//System.out.println("ws: "+ai_world_state.getMyGoalLeft());
@@ -152,23 +244,23 @@ public class AIMaster extends AIListener {
 	private void checkState() {
 		// Check the new world state and decide what state we should be in.
 
-		final boolean my_goal_left = ai_world_state.isOwnGoalLeft();
-		final Point2D.Double ball = ai_world_state.getBallCoords();
+		final boolean my_goal_left = aiWorldState.isOwnGoalLeft();
+		final Point2D.Double ball = aiWorldState.getBallCoords();
 		
 		// DEFEND_PENALTIES -> PLAY
-		if (state == mode.DEFEND_PENALTIES) {
+		if (aiState == AIState.DEFEND_PENALTIES) {
 			if (my_goal_left && ball.x < PENALTIES_THRESH ||
 					!my_goal_left && ball.x > WorldState.PITCH_WIDTH_CM - PENALTIES_THRESH) {
-				setState(mode.PLAY);
+				setState(AIState.PLAY);
 			}
 		} else // SHOOT_PENALTIES -> PLAY
-			if (state == mode.SHOOT_PENALTIES) {
+			if (aiState == AIState.SHOOT_PENALTIES) {
 				if (!my_goal_left && ball.x < PENALTIES_THRESH ||
 						my_goal_left && ball.x > WorldState.PITCH_WIDTH_CM - PENALTIES_THRESH) {
-					setState(mode.PLAY);
+					setState(AIState.PLAY);
 				}
 		} else  //PLAY->DEFEND_GOAL
-			if (state == mode.PLAY) {
+			if (aiState == AIState.PLAY) {
 				//if the enemy robot has the ball and it is close to our goal, go to defend
 //				Vector2D enemyDistance = Vector2D.subtract(new Vector2D(ai_world_state.getEnemyRobot().getCoords()), new Vector2D(ball));
 //				
@@ -180,7 +272,7 @@ public class AIMaster extends AIListener {
 						
 			}
 			else  //DEFEND_GOAL -> PLAY 
-				if (state == mode.DEFEND_GOAL) {
+				if (aiState == AIState.DEFEND_GOAL) {
 					//if the enemy robot is at a greater distance from the ball, go into play mode
 //					Vector2D enemyDistance = Vector2D.subtract(new Vector2D(ai_world_state.getEnemyRobot().getCoords()), new Vector2D(ball));
 //					
@@ -188,7 +280,7 @@ public class AIMaster extends AIListener {
 //						setState(mode.PLAY);
 //					}
 					
-					Vector2D myDistance = Vector2D.subtract(new Vector2D(ai_world_state.getOwnRobot().getCoords()), new Vector2D(ball));
+					Vector2D myDistance = Vector2D.subtract(new Vector2D(aiWorldState.getOwnRobot().getCoords()), new Vector2D(ball));
 					
 //					if (myDistance.getLength() < 20)
 //						setState(mode.PLAY);
@@ -199,17 +291,17 @@ public class AIMaster extends AIListener {
 	/**
 	 * Change mode. Can be used for penalty, freeplay, testing, etc
 	 */
-	public void setState(mode new_state) {
-		state = new_state;
-		System.out.println("Changed State to - " + state);
+	public void setState(AIState new_state) {
+		aiState = new_state;
+		System.out.println("Changed State to - " + aiState);
 
 		
-		if (state == mode.DEFEND_GOAL) {
+		if (aiState == AIState.DEFEND_GOAL) {
 			Timer t = new Timer();
 			t.schedule(new TimerTask() {
 				@Override
 				public void run() {
-					setState(AIMaster.mode.PLAY);
+					setState(AIMaster.AIState.PLAY);
 				}
 			}, 6000);
 		}
@@ -222,7 +314,7 @@ public class AIMaster extends AIListener {
 	 * Change the AI mode. Can be used in the simulator to test separate modes
 	 * @param new_ai
 	 */
-	public void setAIMode(AIMode new_ai_mode){
+	public void setAIMode(AIType new_ai_mode){
 		switch (new_ai_mode){
 			case VISUAL_SERVOING:
 				ai = new AIVisualServoing();
@@ -237,8 +329,8 @@ public class AIMaster extends AIListener {
 	 * Gets AI mode
 	 * @return
 	 */
-	public mode getState() {
-		return state;
+	public AIState getState() {
+		return aiState;
 	}
 
 }
