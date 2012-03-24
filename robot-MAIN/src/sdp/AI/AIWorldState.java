@@ -2,7 +2,6 @@ package sdp.AI;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -14,7 +13,6 @@ import sdp.common.Robot;
 import sdp.common.Utilities;
 import sdp.common.WorldState;
 import sdp.common.geometry.GeomUtils;
-import sdp.common.geometry.Vector2D;
 import sdp.simulator.Simulator;
 import sdp.vision.processing.ImageProcessorConfig;
 
@@ -24,6 +22,8 @@ import sdp.vision.processing.ImageProcessorConfig;
  */
 public class AIWorldState extends WorldState {
 	
+	/** Whether to draw the battery indicator. */
+	private static final boolean BATTERY_INDICATOR_ENABLED = true;
 	/** Whether the low pass filter is enabled. */
 	private static final boolean LOW_PASS_FILTER_ENABLED = true;
 	/** Whether current state prediction is active. */
@@ -37,11 +37,6 @@ public class AIWorldState extends WorldState {
 	private static final int PREDICTION_MIN_FPS = 5;
 	/** The time, by which the world state is advanced into the future, in ms. */
 	private static final long PREDICTION_TIME = 400;
-	
-	/** Low pass filter new position data weight. Larger value -> new data has more weight. */
-	private static final double LPF_FILTERED_POS_AMOUNT = 0.8;
-	/** Low pass filter new angle data weight. Larger value -> new data has more weight. */
-	private static final double LPF_FILTERED_ANGLE_AMOUNT = 0.5;
 	
 	/** Top offset of the battery level indicator. */
 	private static final int BATTERY_TOP_OFFSET = 10;
@@ -57,6 +52,12 @@ public class AIWorldState extends WorldState {
 	private static final int BATTERY_MAX_VOLTAGE = 79;
 	/** Percentage, at which the battery indicator becomes red. */
 	private static final int BATTERY_LOW_PERCENTAGE = 20;
+	/** Percentage, at which the battery indicator becomes green. */
+	private static final int BATTERY_HIGH_PERCENTAGE = 80;
+	
+	
+	/** The low pass filter. */
+	private static LowPassFilter lowPassFilter = new LowPassFilter();
 	
 	
 	/** A queue with past world states that are used in prediction. */
@@ -122,7 +123,7 @@ public class AIWorldState extends WorldState {
 			worldState = predictCurrentState(worldState);
 		}		
 		if (LOW_PASS_FILTER_ENABLED) {
-			worldState = lowPass(this, worldState);
+			worldState = lowPassFilter.applyOnWorldState(this, worldState);
 		}
 		
 		previousState = worldState;
@@ -158,7 +159,6 @@ public class AIWorldState extends WorldState {
 	 * @return Predicted actual world state.
 	 */
 	private WorldState predictCurrentState(WorldState state) {
-		// If the ball is not located, use ball position from the previous frame.
 		if (previousState != null) {
 			if (!state.isBallPresent()) {
 				state = new WorldState(previousState.getBallCoords(), state.getBlueRobot(),
@@ -166,7 +166,6 @@ public class AIWorldState extends WorldState {
 			}
 		}
 		
-		// Update prediction queue.
 		if (predictionQueue == null) {
 			predictionQueue = new LinkedList<WorldState>();
 			for (int i = 0; i < PREDICT_FRAME_SPAN; i++) {
@@ -176,7 +175,6 @@ public class AIWorldState extends WorldState {
 		predictionQueue.add(state);
 		predictionQueue.poll();
 		
-		// Calculate current time offset.
 		long fps = PREDICTION_MAX_FPS;
 		if (oldTime != -1) {
 			long curTime = System.currentTimeMillis();
@@ -187,12 +185,10 @@ public class AIWorldState extends WorldState {
 		fps = Utilities.restrictValueToInterval(fps, PREDICTION_MIN_FPS, PREDICTION_MAX_FPS).longValue();
 		oldTime = System.currentTimeMillis();
 
-		// Run the simulator to find the predicted state.
 		WorldState[] pqStates = predictionQueue.toArray(new WorldState[0]);
 		WorldState predictedState = Simulator.simulateWs(PREDICTION_TIME, (int) fps,
 				pqStates, true, ownLastCommand, isOwnTeamBlue);
 		
-		// If the ball is still not found, assume that it is in front of the robot.
 		if (!state.isBallPresent()) {
 			Robot ownRobot = (isOwnTeamBlue ? predictedState.getBlueRobot() : predictedState.getYellowRobot());
 			predictedState = new WorldState(ownRobot.getFrontCenter(), predictedState.getBlueRobot(),
@@ -202,146 +198,57 @@ public class AIWorldState extends WorldState {
 		return predictedState;
 	}
 
-
-
-	////////////////////////////////////////////////////////////////
-	// Methods
-	///////////////////////////////////////////////////////////////
-
-
-	/**
-	 * Calculates if the ball has a direct line of sight to the enemy goal.
-	 * @return true if goal is visible
-	 */
-	public boolean isGoalVisible() {
-
-		enemyRobot.setCoords(true); //need to convert robot coords to cm
-
-		if (Utilities.lineIntersectsRobot(getBallCoords(), enemyGoal.getCentre(), enemyRobot)
-				|| Utilities.lineIntersectsRobot(getBallCoords(), enemyGoal.getTop(), enemyRobot) 
-				|| Utilities.lineIntersectsRobot(getBallCoords(), enemyGoal.getBottom(), enemyRobot)) {
-			return true;
-		}
-
-		//Check for "special" case where the ball is between the enemy robot and their goal.
-		if (enemyGoal.getCentre().x == 0) {
-			if (getBallCoords().x < enemyRobot.getCoords().x) return true;
-		} else {
-			if (getBallCoords().x > enemyRobot.getCoords().x) return true;
-		}
-
-		return false; //can't see goal
-	}
-
 	
-	public void onDraw(BufferedImage im, ImageProcessorConfig config) {
-		Painter p = new Painter(im, this);
+	/**
+	 * Draw world state related information onto the given world image.
+	 * 
+	 * @param worldImage World image to modify.
+	 * @param config Image processor configuration that is currently is use.
+	 */
+	public void onDraw(BufferedImage worldImage, ImageProcessorConfig config) {
+		Painter p = new Painter(worldImage, this);
 		if (config != null) {
-			p.setOffsets(config.getFieldLowX(), config.getFieldLowY(), config.getFieldWidth(), config.getFieldHeight());
+			p.setOffsets(config.getFieldLowX(), config.getFieldLowY(),
+					config.getFieldWidth(), config.getFieldHeight());
 		} else {
 			p.setOffsets(0, 0, Simulator.IMAGE_WIDTH, Simulator.IMAGE_HEIGHT);
 		}
-		p.image(isOwnTeamBlue,isOwnGoalLeft);
+		p.image(isOwnTeamBlue, isOwnGoalLeft);
 		
-		// battery status
-		
-		double batt_coeff = (batteryLevel-BATTERY_MIN_VOLTAGE)/(double) (BATTERY_MAX_VOLTAGE-BATTERY_MIN_VOLTAGE);
-		if (batt_coeff < 0)
-			batt_coeff = 0;
-		if (batt_coeff > 1)
-			batt_coeff = 1;
-		if (batteryLevel == -1)
-			batt_coeff = 1;
-		
-		
-		if (batt_coeff*100 < BATTERY_LOW_PERCENTAGE)
-			p.g.setColor(new Color(255,150,150,220));
-		else
-			p.g.setColor(new Color(255,255,255,200));
-		p.g.setStroke(new BasicStroke(2.0f));
-		
-		p.g.drawRoundRect(Simulator.IMAGE_WIDTH-BATTERY_WIDTH-BATTERY_RIGHT_OFFSET,
-				BATTERY_TOP_OFFSET, BATTERY_WIDTH, BATTERY_HEIGHT, 5, 5);
-		p.g.fillRoundRect(Simulator.IMAGE_WIDTH-BATTERY_RIGHT_OFFSET,
-				BATTERY_TOP_OFFSET+BATTERY_HEIGHT/5, 4, BATTERY_HEIGHT-2*BATTERY_HEIGHT/5, 2, 2);
-		
-		if (batt_coeff*100 > 100-BATTERY_LOW_PERCENTAGE)
-			p.g.setColor(new Color(150,255,150,220));
-		
-		p.g.fillRect(Simulator.IMAGE_WIDTH-BATTERY_WIDTH-BATTERY_RIGHT_OFFSET+2,
-				BATTERY_TOP_OFFSET+2,
-				(int) (batt_coeff*(BATTERY_WIDTH-3)), 
-				BATTERY_HEIGHT-3);
-		
-	
+		if (BATTERY_INDICATOR_ENABLED) {
+			double barRatioFull = 1.0;
+			if (batteryLevel >= 0) {
+				double voltageRange = BATTERY_MAX_VOLTAGE - BATTERY_MIN_VOLTAGE;
+				barRatioFull = (batteryLevel - BATTERY_MIN_VOLTAGE) / voltageRange;
+				barRatioFull = Utilities.restrictValueToInterval(barRatioFull, 0.0, 1.0).doubleValue();
+			}
+			
+			if ((barRatioFull * 100) < BATTERY_LOW_PERCENTAGE) {
+				p.g.setColor(new Color(255, 150, 150, 220));
+			} else {
+				p.g.setColor(new Color(255, 255, 255, 200));
+			}
+			p.g.setStroke(new BasicStroke(2.0f));
+			
+			p.g.drawRoundRect(Simulator.IMAGE_WIDTH - BATTERY_WIDTH - BATTERY_RIGHT_OFFSET,
+					BATTERY_TOP_OFFSET, BATTERY_WIDTH, BATTERY_HEIGHT, 5, 5);
+			p.g.fillRoundRect(Simulator.IMAGE_WIDTH - BATTERY_RIGHT_OFFSET,
+					BATTERY_TOP_OFFSET + BATTERY_HEIGHT / 5, 4, BATTERY_HEIGHT - 2 * BATTERY_HEIGHT / 5,
+					2, 2);
+			
+			if ((barRatioFull * 100) > BATTERY_HIGH_PERCENTAGE) {
+				p.g.setColor(new Color(150, 255, 150, 220));
+			}
+			
+			p.g.fillRect(Simulator.IMAGE_WIDTH - BATTERY_WIDTH - BATTERY_RIGHT_OFFSET + 2,
+					BATTERY_TOP_OFFSET + 2,	(int) (barRatioFull * (BATTERY_WIDTH - 3)), 
+					BATTERY_HEIGHT - 3);
+		}
 		
 		p.dispose();
 	}
 	
-	////////////////////////////////////////////////////////
-	// low pass filtering
-	///////////////////////////////////////////////////////
-	
-	
-	/**
-	 * Low pass for angles
-	 * @param old_value
-	 * @param new_value
-	 * @return the filtered angle
-	 */
-	private double lowPass(double old_value, double new_value, boolean angle) {
-		if (Double.isNaN(new_value) || Double.isInfinite(new_value))
-			return old_value;
-		if (!angle)
-			return (old_value+new_value*LPF_FILTERED_POS_AMOUNT)/((double) (LPF_FILTERED_POS_AMOUNT+1));
-		else {
-			Vector2D old_val = Vector2D.rotateVector(new Vector2D(1, 0), old_value);
-			Vector2D new_val = Vector2D.rotateVector(new Vector2D(1, 0), new_value);
-			Vector2D sum = Vector2D.add(old_val, Vector2D.multiply(new_val, LPF_FILTERED_ANGLE_AMOUNT));
-			Vector2D ans = Vector2D.divide(sum, LPF_FILTERED_ANGLE_AMOUNT+1);
-			return ans.getDirection();
-		}
-	}
-	
-	/**
-	 * Low pass on position
-	 * @param old_value
-	 * @param new_value
-	 * @param amount
-	 * @return the filtered position
-	 */
-	private Point2D.Double lowPass(Point2D.Double old_value, Point2D.Double new_value) {
-		return new Point2D.Double (
-				lowPass(old_value.getX(), new_value.getX(), false),
-				lowPass(old_value.getY(), new_value.getY(), false));
-	}
 
-	/**
-	 * Low pass on a robot
-	 * @param old_value
-	 * @param new_value
-	 * @param amount
-	 * @return a new robot with low_pass
-	 */
-	private Robot lowPass(Robot old_value, Robot new_value) {
-		Robot a = new Robot(
-				lowPass(old_value.getCoords(), new_value.getCoords()),
-				lowPass(old_value.getAngle(), new_value.getAngle(), true));
-		a.setCoords(true);
-		return a;
-	}
-	
-	private WorldState lowPass(WorldState old_state, WorldState new_state) {
-		return new WorldState(lowPass(old_state.getBallCoords(), new_state.getBallCoords()),
-				lowPass(old_state.getBlueRobot(), new_state.getBlueRobot()),
-				lowPass(old_state.getYellowRobot(), new_state.getYellowRobot()),
-				new_state.getWorldImage());
-	}
-
-
-	////////////////////////////////////////////////////////
-	// getters and setters
-	///////////////////////////////////////////////////////
 	public Robot getEnemyRobot() {
 		return enemyRobot;
 	}
