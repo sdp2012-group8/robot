@@ -106,12 +106,12 @@ public class Utilities {
 
 
 	/**
-	 * Normalise an angle to fit into interval [-180; 180).
+	 * Ensure that the given angle in degrees is within the interval [-180; 180).
 	 * 
 	 * @param angle Angle, in degrees.
 	 * @return Normalised angle, as described above.
 	 */
-	public static double normaliseAngleToDegrees(double angle) {
+	public static double normaliseAngle(double angle) {
 		angle = angle % 360;
 		if (angle > 180) {
 			angle -= 360;
@@ -122,7 +122,39 @@ public class Utilities {
 		
 		return angle;
 	}
+	
 
+	/**
+	 * Ensure that the given value is within the interval
+	 * [Short.MIN_VALUE; Short.MAX_VALUE]. If the value is outside of this
+	 * interval, the closer endpoint is returned.
+	 * 
+	 * @param value Value in question.
+	 * @return Restricted value, as described above.
+	 */
+	public static <T extends Number> short restrictValueToShort(T value) {
+		return restrictValueToInterval(value, Short.MIN_VALUE, Short.MAX_VALUE).shortValue();
+	}
+	
+	/**
+	 * Ensure that the given value is within the interval [lowerBound; upperBound].
+	 * If the value is outside of this interval, the closer endpoint is returned.
+	 * 
+	 * @param value Value in question.
+	 * @param lowerBound Lower bound of the interval.
+	 * @param upperBound Upper bound of the interval.
+	 * @return Restricted value, as described above.
+	 */
+	public static <T extends Number> T restrictValueToInterval(T value, T lowerBound, T upperBound) {
+		if (value.longValue() < lowerBound.longValue()) {
+			return lowerBound;
+		} else if (value.longValue() > upperBound.longValue()) {
+			return upperBound;
+		} else {
+			return value;
+		}
+	}
+	
 
 	/**
 	 * Strip a string from whitespace.
@@ -279,7 +311,7 @@ public class Utilities {
 		Vector2D ballToGoalVec = Vector2D.subtract(new Vector2D(worldState.getMyGoal().getCentre()), new Vector2D(worldState.getBallCoords()));
 		
 		double attackAngle = robotToBallVec.getDirection() - ballToGoalVec.getDirection();
-		attackAngle = normaliseAngleToDegrees(attackAngle);
+		attackAngle = normaliseAngle(attackAngle);
 		
 		if (robotToBallVec.getLength() > (ENEMY_KICKABLE_BALL_DIST + Robot.LENGTH_CM / 2)) {
 			return false;
@@ -531,6 +563,18 @@ public class Utilities {
 		return GeomUtils.isPointInQuadrilateral(point, frontLeftPoint, frontRightPoint,
 				backRightPoint, backLeftPoint);
 	}
+	
+	
+	/**
+	 * Checks whether coordinates of the given point are both negative.
+	 * 
+	 * @param point Point in question.
+	 * @return Whether both x and y coordinates are negative.
+	 */
+	public static boolean isPointNegative(Point2D.Double point) {
+		return ((point.x < 0) && (point.y < 0));
+	}
+	
 
 	/**
 	 * Returns the vector to the closest collision point in the world (wall or enemy)
@@ -612,7 +656,7 @@ public class Utilities {
 	 * @return
 	 */
 	public static double getTurningAngle(Robot me, Vector2D point) {
-		return Utilities.normaliseAngleToDegrees(-me.getAngle()+Vector2D.getDirection(new Vector2D(-me.getCoords().getX()+point.getX(), -me.getCoords().getY()+point.getY())));
+		return Utilities.normaliseAngle(-me.getAngle()+Vector2D.getDirection(new Vector2D(-me.getCoords().getX()+point.getX(), -me.getCoords().getY()+point.getY())));
 	}
 
 	/**
@@ -1198,15 +1242,15 @@ public class Utilities {
 	 * @return the vector distance to the closest collision point a.k.a. the minimum distance determined by the scanning vector which swept the sector scan_count times.
 	 */
 	public static Vector2D getSector(WorldState ws, boolean am_i_blue, double start_angle, double end_angle, int scan_count, boolean include_ball_as_obstacle) {
-		start_angle = Utilities.normaliseAngleToDegrees(start_angle);
-		end_angle = Utilities.normaliseAngleToDegrees(end_angle);
+		start_angle = Utilities.normaliseAngle(start_angle);
+		end_angle = Utilities.normaliseAngle(end_angle);
 		final Robot me = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
 		final Vector2D zero = Vector2D.ZERO();
 		Double min_dist = null;
 		Vector2D min_vec = null;
-		final double sector_angle = Utilities.normaliseAngleToDegrees(end_angle-start_angle);
+		final double sector_angle = Utilities.normaliseAngle(end_angle-start_angle);
 		final double scan_angle = sector_angle/scan_count;
-		for (double angle = start_angle; Utilities.normaliseAngleToDegrees(end_angle-angle) * sector_angle >= 0; angle+=scan_angle) {
+		for (double angle = start_angle; Utilities.normaliseAngle(end_angle-angle) * sector_angle >= 0; angle+=scan_angle) {
 			final double ang_rad = angle*Math.PI/180d;
 			final Vector2D distV = raytraceVector(ws, me, zero, new Vector2D(-Math.cos(ang_rad), Math.sin(ang_rad)), am_i_blue, include_ball_as_obstacle);
 			final double dist = distV.getLength();
@@ -1227,8 +1271,8 @@ public class Utilities {
 		double sec_angle = 360d/sector_count;
 		for (int i = 0; i < sector_count; i++)
 			ans[i] = normalize_to_1 ?
-					NNetTools.AI_normalizeDistanceTo1(getSector(ws, am_i_blue, Utilities.normaliseAngleToDegrees(-90+i*sec_angle), Utilities.normaliseAngleToDegrees(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle), WorldState.PITCH_WIDTH_CM) :
-						getSector(ws, am_i_blue, Utilities.normaliseAngleToDegrees(-90+i*sec_angle), Utilities.normaliseAngleToDegrees(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle).getLength();
+					NNetTools.AI_normalizeDistanceTo1(getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle), WorldState.PITCH_WIDTH_CM) :
+						getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle).getLength();
 					return ans;
 	}
 
@@ -1240,7 +1284,7 @@ public class Utilities {
 		double[] ans = new double[sector_count];
 		double sec_angle = 360d/sector_count;
 		for (int i = 0; i < sector_count; i++)
-			ans[i] = NNetTools.AI_normalizeDistanceTo1(NNetTools.targetInSector(relative, Utilities.normaliseAngleToDegrees(-90+i*sec_angle), Utilities.normaliseAngleToDegrees(-90+(i+1)*sec_angle)), WorldState.PITCH_WIDTH_CM);
+			ans[i] = NNetTools.AI_normalizeDistanceTo1(NNetTools.targetInSector(relative, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle)), WorldState.PITCH_WIDTH_CM);
 		return ans;
 	}
 	

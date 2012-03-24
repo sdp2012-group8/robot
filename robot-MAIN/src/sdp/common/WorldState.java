@@ -102,6 +102,16 @@ public class WorldState {
 	public final BufferedImage getWorldImage() {
 		return worldImage;
 	}
+	
+	
+	/**
+	 * Get whether the ball is present in the world state.
+	 * 
+	 * @return Whether the ball is present in the world state.
+	 */
+	public final boolean isBallPresent() {
+		return !Utilities.isPointNegative(ballCoords);
+	}
 
 
 	/**

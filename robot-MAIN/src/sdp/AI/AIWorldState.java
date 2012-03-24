@@ -29,10 +29,14 @@ public class AIWorldState extends WorldState {
 	/** Whether current state prediction is active. */
 	private static final boolean PREDICTION_ENABLED = true;
 	
-	/** The time, by which the world state is advanced into the future, in ms. */
-	private static final long PREDICTION_TIME = 400;
 	/** Initial prediction queue size. */
 	private static final long PREDICT_FRAME_SPAN = 3;
+	/** Maximum FPS in prediction logic. */
+	private static final int PREDICTION_MAX_FPS = 25;
+	/** Minimum FPS in prediction logic. */
+	private static final int PREDICTION_MIN_FPS = 5;
+	/** The time, by which the world state is advanced into the future, in ms. */
+	private static final long PREDICTION_TIME = 400;
 	
 	/** Low pass filter new position data weight. Larger value -> new data has more weight. */
 	private static final double LPF_FILTERED_POS_AMOUNT = 0.8;
@@ -88,104 +92,114 @@ public class AIWorldState extends WorldState {
 	/** Robot's battery level. */
 	private int batteryLevel = -1;
 	
-	/** Distance from the centre of our kicker to the ball. */
-	private double ownDistanceToBall;
-	/** Distance from the centre of our robot to the enemy goal. */
-	private double ownDistanceToGoal;
-	
 	/** Previous tick time, used in FPS calculations. */
 	private long oldTime = -1;
 
 
-	public AIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
-		super(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
-
-		update(world_state, my_team_blue, my_goal_left);
+	/**
+	 * Create a new AI world state.
+	 * 
+	 * @param worldState World state to use as a basis.
+	 * @param isOwnTeamBlue Whether our robot is in the blue team.
+	 * @param isOwnGoalLeft Whether our goal is on the left side.
+	 */
+	public AIWorldState(WorldState worldState, boolean isOwnTeamBlue, boolean isOwnGoalLeft) {
+		super(worldState.getBallCoords(), worldState.getBlueRobot(),
+				worldState.getYellowRobot(), worldState.getWorldImage());
+		update(worldState, isOwnTeamBlue, isOwnGoalLeft);
 	}
 
-	public void update(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
+	
+	/**
+	 * Update the world state.
+	 * 
+	 * @param worldState New world state to use as a basis.
+	 * @param isOwnTeamBlue Whether our robot is in the blue team.
+	 * @param isOwnGoalLeft Whether our goal is on the left side.
+	 */
+	public void update(WorldState worldState, boolean isOwnTeamBlue, boolean isOwnGoalLeft) {
 		if (PREDICTION_ENABLED) {
-			world_state = predict(world_state, PREDICTION_TIME);
+			worldState = predictCurrentState(worldState);
 		}		
 		if (LOW_PASS_FILTER_ENABLED) {
-			world_state = lowPass(this, world_state);
+			worldState = lowPass(this, worldState);
 		}
 		
-		previousState = world_state;
+		previousState = worldState;
+		this.isOwnTeamBlue = isOwnTeamBlue;
+		this.isOwnGoalLeft = isOwnGoalLeft;
 		
-		this.isOwnTeamBlue = my_team_blue;
-		this.isOwnGoalLeft = my_goal_left;
+		super.update(worldState.getBallCoords(), worldState.getBlueRobot(),
+				worldState.getYellowRobot(), worldState.getWorldImage());
 
-		if (my_goal_left) {
-			enemyGoal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_CENTRE_Y ));
-			ownGoal = new Goal(new Point2D.Double(0 , WorldState.GOAL_CENTRE_Y ));
+		if (isOwnGoalLeft) {
+			ownGoal = getLeftGoal();
+			enemyGoal = getRightGoal();
 		} else {
-			enemyGoal = new Goal(new Point2D.Double(0 , WorldState.GOAL_CENTRE_Y ));
-			ownGoal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_CENTRE_Y ));
+			ownGoal = getRightGoal();
+			enemyGoal = getLeftGoal();
 		}
 
-		super.update(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
-		//update variables
-		if (my_team_blue) {
+		if (isOwnTeamBlue) {
 			ownRobot = getBlueRobot();
 			enemyRobot = getYellowRobot();
 		} else {
 			ownRobot = (getYellowRobot());
 			enemyRobot = (getBlueRobot());
 		}
-
-
-		ownDistanceToBall = GeomUtils.pointDistance(Utilities.getGlobalVector(ownRobot, new Vector2D(Robot.LENGTH_CM/2, 0)), getBallCoords());
-		ownDistanceToGoal = GeomUtils.pointDistance(ownRobot.getCoords(), enemyGoal.getCentre());
-
 	}
 	
 	
-	private WorldState predict(WorldState input, long time_ms) {
-		
-		// handle ball going offscreen5
+	/**
+	 * Attempt to mitigate camera lag by predicting actual current state from
+	 * available information.
+	 * 
+	 * @param state Freshly observed world state.
+	 * @return Predicted actual world state.
+	 */
+	private WorldState predictCurrentState(WorldState state) {
+		// If the ball is not located, use ball position from the previous frame.
 		if (previousState != null) {
-			if (input.getBallCoords().getX() == -244d || input.getBallCoords().getX() == -1d)
-				input = new WorldState(previousState.getBallCoords(), input.getBlueRobot(), input.getYellowRobot(), input.getWorldImage());
+			if (!state.isBallPresent()) {
+				state = new WorldState(previousState.getBallCoords(), state.getBlueRobot(),
+						state.getYellowRobot(), state.getWorldImage());
+			}
 		}
 		
+		// Update prediction queue.
 		if (predictionQueue == null) {
 			predictionQueue = new LinkedList<WorldState>();
-			for (int i = 0; i < PREDICT_FRAME_SPAN; i++)
-				predictionQueue.add(input);
+			for (int i = 0; i < PREDICT_FRAME_SPAN; i++) {
+				predictionQueue.add(state);
+			}
 		}
-		
-		predictionQueue.add(input);
+		predictionQueue.add(state);
 		predictionQueue.poll();
 		
-		WorldState[] states = predictionQueue.toArray(new WorldState[0]);
-		
-		long fps = 25;
+		// Calculate current time offset.
+		long fps = PREDICTION_MAX_FPS;
 		if (oldTime != -1) {
-			long currtime = System.currentTimeMillis();
-			fps = (long) (1000d/(currtime - oldTime));
-		}
-		
-		if (fps > 25)
-			fps = 25;
-		if (fps < 5)
-			fps = 5;
-
-		
-		boolean ball_visible = input.getBallCoords().getX() >= 0 && input.getBallCoords().getY() >= 0;
-		
-		WorldState state = Simulator.simulateWs(time_ms, (int) fps,
-				states,
-				true, ownLastCommand, isOwnTeamBlue);
-		
-		if (!ball_visible) {
-			Robot my = isOwnTeamBlue ? state.getBlueRobot() : state.getYellowRobot();
-			state = new WorldState(my.getFrontCenter(), state.getBlueRobot(), state.getYellowRobot(), state.getWorldImage());
-		}
-		
+			long curTime = System.currentTimeMillis();
+			if (curTime != oldTime) {
+				fps = (long) (1000 / (curTime - oldTime));
+			}
+		}		
+		fps = Utilities.restrictValueToInterval(fps, PREDICTION_MIN_FPS, PREDICTION_MAX_FPS).longValue();
 		oldTime = System.currentTimeMillis();
+
+		// Run the simulator to find the predicted state.
+		WorldState[] pqStates = predictionQueue.toArray(new WorldState[0]);
+		WorldState predictedState = Simulator.simulateWs(PREDICTION_TIME, (int) fps,
+				pqStates, true, ownLastCommand, isOwnTeamBlue);
 		
-		return state;
+		// If the ball is still not found, assume that it is in front of the robot.
+		if (!state.isBallPresent()) {
+			Robot ownRobot = (isOwnTeamBlue ? predictedState.getBlueRobot() : predictedState.getYellowRobot());
+			predictedState = new WorldState(ownRobot.getFrontCenter(), predictedState.getBlueRobot(),
+					predictedState.getYellowRobot(), predictedState.getWorldImage());
+		}
+		
+		return predictedState;
 	}
 
 
@@ -219,30 +233,6 @@ public class AIWorldState extends WorldState {
 		return false; //can't see goal
 	}
 
-	public double calculateShootAngle() {
-		double topmin = anglebetween(getRobot().getCoords(), enemyGoal.getTop());
-		double midmin = anglebetween(getRobot().getCoords(), enemyGoal.getCentre());
-		double botmin = anglebetween(getRobot().getCoords(), enemyGoal.getBottom());
-
-		if (Math.abs(topmin) < Math.abs(midmin) && Math.abs(topmin) < Math.abs(botmin) && Utilities.lineIntersectsRobot(getBallCoords(), enemyGoal.getTop(), enemyRobot)) {
-			return topmin;
-		} else if (Math.abs(midmin) < Math.abs(botmin) && Utilities.lineIntersectsRobot(getBallCoords(), enemyGoal.getCentre(), enemyRobot)) {
-			return midmin;
-		} else {
-			return botmin;
-		}
-
-	}
-
-	/**
-	 * Gets the angle between two points
-	 * @param A
-	 * @param B
-	 * @return if you stand at A how many degrees should you turn to face B
-	 */
-	protected double anglebetween(Point2D.Double A, Point2D.Double B) {
-		return (180*Math.atan2(-B.getY()+A.getY(), B.getX()-A.getX()))/Math.PI;
-	}
 	
 	public void onDraw(BufferedImage im, ImageProcessorConfig config) {
 		Painter p = new Painter(im, this);
@@ -361,11 +351,11 @@ public class AIWorldState extends WorldState {
 	}
 
 	public double getDistanceToBall() {
-		return ownDistanceToBall;
+		return GeomUtils.pointDistance(ownRobot.getFrontCenter(), getBallCoords());
 	}
 
 	public double getDistanceToGoal() {
-		return ownDistanceToGoal;
+		return GeomUtils.pointDistance(ownRobot.getCoords(), enemyGoal.getCentre());
 	}
 
 	public Goal getEnemyGoal() {

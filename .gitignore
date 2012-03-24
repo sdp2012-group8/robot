@@ -8,3 +8,4 @@ metrics.txt
 *.nxd
 *.nxj
 *.orig
+*.rej

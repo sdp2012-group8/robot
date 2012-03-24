@@ -146,7 +146,7 @@ public class AIVisualServoing extends BaseAI {
 		if (aiWorldState.getMyGoalLeft()){
 			
 			double behind_ball =aiWorldState.getBallCoords().x - DEFEND_BALL_THRESHOLD;
-			double rob_ang = Utilities.normaliseAngleToDegrees(aiWorldState.getRobot().getAngle());
+			double rob_ang = Utilities.normaliseAngle(aiWorldState.getRobot().getAngle());
 			double x = Math.max(aiWorldState.getRobot().getCoords().x, 30);
 			if (behind_ball < x)
 				x = behind_ball;
@@ -159,10 +159,10 @@ public class AIVisualServoing extends BaseAI {
 			int1 = new Point2D.Double(x, Robot.LENGTH_CM);
 			int2 = new Point2D.Double(x, WorldState.PITCH_HEIGHT_CM - Robot.LENGTH_CM);
 		} else {
-			
 			double behind_ball =aiWorldState.getBallCoords().x + DEFEND_BALL_THRESHOLD;
-			double rob_ang = Utilities.normaliseAngleToDegrees(aiWorldState.getRobot().getAngle());
+			double rob_ang = Utilities.normaliseAngle(aiWorldState.getRobot().getAngle());
 			double x = Math.min(aiWorldState.getRobot().getCoords().x, WorldState.PITCH_WIDTH_CM - 30);
+
 			if (behind_ball > x)
 				x = behind_ball;
 			else if (Math.abs(rob_ang) < 45)
@@ -406,14 +406,14 @@ public class AIVisualServoing extends BaseAI {
 		while ((destPoint == null) && (iterations < 5) && (destPointDist > 0)) {
 			for (int i = 0; i < COLL_SECS_COUNT; i++) {
 				double curAngle = -90 + i * SEC_ANGLE + SEC_ANGLE / 2;
-				curAngle = Utilities.normaliseAngleToDegrees(curAngle);
+				curAngle = Utilities.normaliseAngle(curAngle);
 
 				Vector2D rayDir = Vector2D.rotateVector(new Vector2D(1, 0), curAngle);
 				Vector2D rayEndLocal = Vector2D.multiply(rayDir, destPointDist);
 				Vector2D rayEnd = Utilities.getGlobalVector(aiWorldState.getRobot(), rayEndLocal);
 
 				if (Utilities.isDirectPathClear(aiWorldState, ownCoords, rayEnd, obstacleFlags)) {
-					double angleDiff = Utilities.normaliseAngleToDegrees(curAngle - targetLocal.getDirection());
+					double angleDiff = Utilities.normaliseAngle(curAngle - targetLocal.getDirection());
 					if (Math.abs(angleDiff) < Math.abs(minAngle)) {
 						minAngle = angleDiff;
 						destPoint = rayEndLocal;
@@ -452,7 +452,7 @@ public class AIVisualServoing extends BaseAI {
 		if (Math.abs(waypoint.getTurningAngle()) > 90) {
 			comm.drivingSpeed = -Robot.MAX_SPEED_CM_S;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
-				comm.turningSpeed = Utilities.normaliseAngleToDegrees(waypoint.getTurningAngle() - 180);
+				comm.turningSpeed = Utilities.normaliseAngle(waypoint.getTurningAngle() - 180);
 			}		
 			// Ball is in front.
 		} else {
@@ -641,7 +641,7 @@ public class AIVisualServoing extends BaseAI {
 		if (Math.abs(comm.turningSpeed) > 90) {
 			comm.drivingSpeed = -Robot.MAX_SPEED_CM_S;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
-				comm.turningSpeed = Utilities.normaliseAngleToDegrees(comm.turningSpeed - 180);
+				comm.turningSpeed = Utilities.normaliseAngle(comm.turningSpeed - 180);
 			}		
 			// Ball is in front.
 		} else {
