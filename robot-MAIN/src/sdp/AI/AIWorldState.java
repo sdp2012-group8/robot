@@ -24,40 +24,78 @@ import sdp.vision.processing.ImageProcessorConfig;
  */
 public class AIWorldState extends WorldState {
 	
+	/** Whether the low pass filter is enabled. */
+	private static final boolean LOW_PASS_FILTER_ENABLED = true;
+	/** Whether current state prediction is active. */
+	private static final boolean PREDICTION_ENABLED = true;
+	
+	/** The time, by which the world state is advanced into the future, in ms. */
 	private static final long PREDICTION_TIME = 400;
+	/** Initial prediction queue size. */
 	private static final long PREDICT_FRAME_SPAN = 3;
-	private Queue<WorldState> predict_queue = null;
 	
-	private WorldState last_st = null;
-
-	private boolean my_team_blue;
-	private boolean my_goal_left;
-	private Goal enemy_goal;
-	private Goal my_goal;
-
-	//changing variables
-	private Robot robot = null;
-	private Robot enemy_robot = null;
-	private double distance_to_ball;
-	private double distance_to_goal;
+	/** Low pass filter new position data weight. Larger value -> new data has more weight. */
+	private static final double LPF_FILTERED_POS_AMOUNT = 0.8;
+	/** Low pass filter new angle data weight. Larger value -> new data has more weight. */
+	private static final double LPF_FILTERED_ANGLE_AMOUNT = 0.5;
 	
-	// battery indicator
-	private static final int BAT_TOP_OFF = 10;
-	private static final int BAT_RIGHT_OFF = 50;
-	private static final int BAT_WIDTH = 50;
-	private static final int BAT_HEIGHT = 20;
-	private static final int BAT_MIN_VOLT = 70;
-	private static final int BAT_MAX_VOLT = 79;
-	private static final int BAT_RED_BELOW_PER = 20;
+	/** Top offset of the battery level indicator. */
+	private static final int BATTERY_TOP_OFFSET = 10;
+	/** Right offset of the battery level indicator. */
+	private static final int BATTERY_RIGHT_OFFSET = 50;
+	/** Width of the battery level indicator. */
+	private static final int BATTERY_WIDTH = 50;
+	/** Height of the battery level indicator. */
+	private static final int BATTERY_HEIGHT = 20;
+	/** Minimum voltage the battery level indicator displays. */
+	private static final int BATTERY_MIN_VOLTAGE = 70;
+	/** Maximum voltage the battery level indicator displays. */
+	private static final int BATTERY_MAX_VOLTAGE = 79;
+	/** Percentage, at which the battery indicator becomes red. */
+	private static final int BATTERY_LOW_PERCENTAGE = 20;
 	
-	private Command command;
 	
-	private boolean left_sensor = false, right_sensor = false, dist_sensor = false;
+	/** A queue with past world states that are used in prediction. */
+	private Queue<WorldState> predictionQueue = null;
+	
+	/** World state from the previous frame. */
+	private WorldState previousState = null;
+	 
+	/** Whether our team is blue. */
+	private boolean isOwnTeamBlue;
+	/** Whether out goal is on the left. */
+	private boolean isOwnGoalLeft;
+	
+	/** Reference to our robot. */
+	private Robot ownRobot = null;
+	/** Reference to our goal. */
+	private Goal ownGoal;	
+	/** Reference to enemy robot. */
+	private Robot enemyRobot = null;
+	/** Reference to enemy goal. */
+	private Goal enemyGoal;
+	
+	/** The command our robot executed last. */
+	private Command ownLastCommand;
+	
+	/** Whether the front ultrasound sensor is active. */
+	private boolean isFrontSensorActive = false;
+	/** Whether the left collision sensor is active. */
+	private boolean isLeftSensorActive = false;
+	/** Whether the right collision sensor is active. */
+	private boolean isRightSensorActive = false;
+	
+	/** Robot's battery level. */
+	private int batteryLevel = -1;
+	
+	/** Distance from the centre of our kicker to the ball. */
+	private double ownDistanceToBall;
+	/** Distance from the centre of our robot to the enemy goal. */
+	private double ownDistanceToGoal;
+	
+	/** Previous tick time, used in FPS calculations. */
+	private long oldTime = -1;
 
-	private int battery = -1;
-
-	//flags
-	boolean f_ball_on_field = false;
 
 	public AIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
 		super(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
@@ -65,71 +103,67 @@ public class AIWorldState extends WorldState {
 		update(world_state, my_team_blue, my_goal_left);
 	}
 
-	public void update(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {		
-		// To enable or disable the prediction uncomment/comment this line.
-		world_state = predict(world_state, PREDICTION_TIME);
+	public void update(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
+		if (PREDICTION_ENABLED) {
+			world_state = predict(world_state, PREDICTION_TIME);
+		}		
+		if (LOW_PASS_FILTER_ENABLED) {
+			world_state = lowPass(this, world_state);
+		}
 		
-		// To enable or disable low pass, uncomment this line
-		world_state = lowPass(this, world_state);
+		previousState = world_state;
 		
-		last_st = world_state;
-		
-		this.my_team_blue = my_team_blue;
-		this.my_goal_left = my_goal_left;
+		this.isOwnTeamBlue = my_team_blue;
+		this.isOwnGoalLeft = my_goal_left;
 
 		if (my_goal_left) {
-			enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_HEIGHT_CM ));
-			my_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_HEIGHT_CM ));
+			enemyGoal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_CENTRE_Y ));
+			ownGoal = new Goal(new Point2D.Double(0 , WorldState.GOAL_CENTRE_Y ));
 		} else {
-			enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_HEIGHT_CM ));
-			my_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_HEIGHT_CM ));
+			enemyGoal = new Goal(new Point2D.Double(0 , WorldState.GOAL_CENTRE_Y ));
+			ownGoal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_CENTRE_Y ));
 		}
 
 		super.update(world_state.getBallCoords(), world_state.getBlueRobot(),world_state.getYellowRobot(), world_state.getWorldImage());
 		//update variables
 		if (my_team_blue) {
-			robot = getBlueRobot();
-			enemy_robot = getYellowRobot();
+			ownRobot = getBlueRobot();
+			enemyRobot = getYellowRobot();
 		} else {
-			robot = (getYellowRobot());
-			enemy_robot = (getBlueRobot());
+			ownRobot = (getYellowRobot());
+			enemyRobot = (getBlueRobot());
 		}
 
 
-		distance_to_ball = GeomUtils.pointDistance(Utilities.getGlobalVector(robot, new Vector2D(Robot.LENGTH_CM/2, 0)), getBallCoords());
-		distance_to_goal = GeomUtils.pointDistance(robot.getCoords(), enemy_goal.getCentre());
+		ownDistanceToBall = GeomUtils.pointDistance(Utilities.getGlobalVector(ownRobot, new Vector2D(Robot.LENGTH_CM/2, 0)), getBallCoords());
+		ownDistanceToGoal = GeomUtils.pointDistance(ownRobot.getCoords(), enemyGoal.getCentre());
 
-		// check and set flags
-		if (getBallCoords() == new Point2D.Double(-1,-1)) {
-			f_ball_on_field = false;
-		}
 	}
 	
-	private long fps = 25;
-	private long oldtime = -1;
 	
 	private WorldState predict(WorldState input, long time_ms) {
 		
 		// handle ball going offscreen5
-		if (last_st != null) {
+		if (previousState != null) {
 			if (input.getBallCoords().getX() == -244d || input.getBallCoords().getX() == -1d)
-				input = new WorldState(last_st.getBallCoords(), input.getBlueRobot(), input.getYellowRobot(), input.getWorldImage());
+				input = new WorldState(previousState.getBallCoords(), input.getBlueRobot(), input.getYellowRobot(), input.getWorldImage());
 		}
 		
-		if (predict_queue == null) {
-			predict_queue = new LinkedList<WorldState>();
+		if (predictionQueue == null) {
+			predictionQueue = new LinkedList<WorldState>();
 			for (int i = 0; i < PREDICT_FRAME_SPAN; i++)
-				predict_queue.add(input);
+				predictionQueue.add(input);
 		}
 		
-		predict_queue.add(input);
-		predict_queue.poll();
+		predictionQueue.add(input);
+		predictionQueue.poll();
 		
-		WorldState[] states = predict_queue.toArray(new WorldState[0]);
+		WorldState[] states = predictionQueue.toArray(new WorldState[0]);
 		
-		if (oldtime != -1) {
+		long fps = 25;
+		if (oldTime != -1) {
 			long currtime = System.currentTimeMillis();
-			fps = (long) (1000d/(currtime - oldtime));
+			fps = (long) (1000d/(currtime - oldTime));
 		}
 		
 		if (fps > 25)
@@ -142,14 +176,14 @@ public class AIWorldState extends WorldState {
 		
 		WorldState state = Simulator.simulateWs(time_ms, (int) fps,
 				states,
-				true, command, my_team_blue);
+				true, ownLastCommand, isOwnTeamBlue);
 		
 		if (!ball_visible) {
-			Robot my = my_team_blue ? state.getBlueRobot() : state.getYellowRobot();
+			Robot my = isOwnTeamBlue ? state.getBlueRobot() : state.getYellowRobot();
 			state = new WorldState(my.getFrontCenter(), state.getBlueRobot(), state.getYellowRobot(), state.getWorldImage());
 		}
 		
-		oldtime = System.currentTimeMillis();
+		oldTime = System.currentTimeMillis();
 		
 		return state;
 	}
@@ -167,32 +201,32 @@ public class AIWorldState extends WorldState {
 	 */
 	public boolean isGoalVisible() {
 
-		enemy_robot.setCoords(true); //need to convert robot coords to cm
+		enemyRobot.setCoords(true); //need to convert robot coords to cm
 
-		if (Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getCentre(), enemy_robot)
-				|| Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getTop(), enemy_robot) 
-				|| Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getBottom(), enemy_robot)) {
+		if (Utilities.lineIntersectsRobot(getBallCoords(), enemyGoal.getCentre(), enemyRobot)
+				|| Utilities.lineIntersectsRobot(getBallCoords(), enemyGoal.getTop(), enemyRobot) 
+				|| Utilities.lineIntersectsRobot(getBallCoords(), enemyGoal.getBottom(), enemyRobot)) {
 			return true;
 		}
 
 		//Check for "special" case where the ball is between the enemy robot and their goal.
-		if (enemy_goal.getCentre().x == 0) {
-			if (getBallCoords().x < enemy_robot.getCoords().x) return true;
+		if (enemyGoal.getCentre().x == 0) {
+			if (getBallCoords().x < enemyRobot.getCoords().x) return true;
 		} else {
-			if (getBallCoords().x > enemy_robot.getCoords().x) return true;
+			if (getBallCoords().x > enemyRobot.getCoords().x) return true;
 		}
 
 		return false; //can't see goal
 	}
 
 	public double calculateShootAngle() {
-		double topmin = anglebetween(getRobot().getCoords(), enemy_goal.getTop());
-		double midmin = anglebetween(getRobot().getCoords(), enemy_goal.getCentre());
-		double botmin = anglebetween(getRobot().getCoords(), enemy_goal.getBottom());
+		double topmin = anglebetween(getRobot().getCoords(), enemyGoal.getTop());
+		double midmin = anglebetween(getRobot().getCoords(), enemyGoal.getCentre());
+		double botmin = anglebetween(getRobot().getCoords(), enemyGoal.getBottom());
 
-		if (Math.abs(topmin) < Math.abs(midmin) && Math.abs(topmin) < Math.abs(botmin) && Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getTop(), enemy_robot)) {
+		if (Math.abs(topmin) < Math.abs(midmin) && Math.abs(topmin) < Math.abs(botmin) && Utilities.lineIntersectsRobot(getBallCoords(), enemyGoal.getTop(), enemyRobot)) {
 			return topmin;
-		} else if (Math.abs(midmin) < Math.abs(botmin) && Utilities.lineIntersectsRobot(getBallCoords(), enemy_goal.getCentre(), enemy_robot)) {
+		} else if (Math.abs(midmin) < Math.abs(botmin) && Utilities.lineIntersectsRobot(getBallCoords(), enemyGoal.getCentre(), enemyRobot)) {
 			return midmin;
 		} else {
 			return botmin;
@@ -217,37 +251,37 @@ public class AIWorldState extends WorldState {
 		} else {
 			p.setOffsets(0, 0, Simulator.IMAGE_WIDTH, Simulator.IMAGE_HEIGHT);
 		}
-		p.image(my_team_blue,my_goal_left);
+		p.image(isOwnTeamBlue,isOwnGoalLeft);
 		
 		// battery status
 		
-		double batt_coeff = (battery-BAT_MIN_VOLT)/(double) (BAT_MAX_VOLT-BAT_MIN_VOLT);
+		double batt_coeff = (batteryLevel-BATTERY_MIN_VOLTAGE)/(double) (BATTERY_MAX_VOLTAGE-BATTERY_MIN_VOLTAGE);
 		if (batt_coeff < 0)
 			batt_coeff = 0;
 		if (batt_coeff > 1)
 			batt_coeff = 1;
-		if (battery == -1)
+		if (batteryLevel == -1)
 			batt_coeff = 1;
 		
 		
-		if (batt_coeff*100 < BAT_RED_BELOW_PER)
+		if (batt_coeff*100 < BATTERY_LOW_PERCENTAGE)
 			p.g.setColor(new Color(255,150,150,220));
 		else
 			p.g.setColor(new Color(255,255,255,200));
 		p.g.setStroke(new BasicStroke(2.0f));
 		
-		p.g.drawRoundRect(Simulator.IMAGE_WIDTH-BAT_WIDTH-BAT_RIGHT_OFF,
-				BAT_TOP_OFF, BAT_WIDTH, BAT_HEIGHT, 5, 5);
-		p.g.fillRoundRect(Simulator.IMAGE_WIDTH-BAT_RIGHT_OFF,
-				BAT_TOP_OFF+BAT_HEIGHT/5, 4, BAT_HEIGHT-2*BAT_HEIGHT/5, 2, 2);
+		p.g.drawRoundRect(Simulator.IMAGE_WIDTH-BATTERY_WIDTH-BATTERY_RIGHT_OFFSET,
+				BATTERY_TOP_OFFSET, BATTERY_WIDTH, BATTERY_HEIGHT, 5, 5);
+		p.g.fillRoundRect(Simulator.IMAGE_WIDTH-BATTERY_RIGHT_OFFSET,
+				BATTERY_TOP_OFFSET+BATTERY_HEIGHT/5, 4, BATTERY_HEIGHT-2*BATTERY_HEIGHT/5, 2, 2);
 		
-		if (batt_coeff*100 > 100-BAT_RED_BELOW_PER)
+		if (batt_coeff*100 > 100-BATTERY_LOW_PERCENTAGE)
 			p.g.setColor(new Color(150,255,150,220));
 		
-		p.g.fillRect(Simulator.IMAGE_WIDTH-BAT_WIDTH-BAT_RIGHT_OFF+2,
-				BAT_TOP_OFF+2,
-				(int) (batt_coeff*(BAT_WIDTH-3)), 
-				BAT_HEIGHT-3);
+		p.g.fillRect(Simulator.IMAGE_WIDTH-BATTERY_WIDTH-BATTERY_RIGHT_OFFSET+2,
+				BATTERY_TOP_OFFSET+2,
+				(int) (batt_coeff*(BATTERY_WIDTH-3)), 
+				BATTERY_HEIGHT-3);
 		
 	
 		
@@ -258,12 +292,6 @@ public class AIWorldState extends WorldState {
 	// low pass filtering
 	///////////////////////////////////////////////////////
 	
-	// this is the amount of filtering to be done
-	// higher values mean that the new data will "weigh more"
-	// so the more uncertainty in result, the smaller value you should use
-	// don't use values less then 1!
-	private double filteredPositionAmount = 0.8;
-	private double filteredAngleAmount = 0.5;
 	
 	/**
 	 * Low pass for angles
@@ -275,12 +303,12 @@ public class AIWorldState extends WorldState {
 		if (Double.isNaN(new_value) || Double.isInfinite(new_value))
 			return old_value;
 		if (!angle)
-			return (old_value+new_value*filteredPositionAmount)/((double) (filteredPositionAmount+1));
+			return (old_value+new_value*LPF_FILTERED_POS_AMOUNT)/((double) (LPF_FILTERED_POS_AMOUNT+1));
 		else {
 			Vector2D old_val = Vector2D.rotateVector(new Vector2D(1, 0), old_value);
 			Vector2D new_val = Vector2D.rotateVector(new Vector2D(1, 0), new_value);
-			Vector2D sum = Vector2D.add(old_val, Vector2D.multiply(new_val, filteredAngleAmount));
-			Vector2D ans = Vector2D.divide(sum, filteredAngleAmount+1);
+			Vector2D sum = Vector2D.add(old_val, Vector2D.multiply(new_val, LPF_FILTERED_ANGLE_AMOUNT));
+			Vector2D ans = Vector2D.divide(sum, LPF_FILTERED_ANGLE_AMOUNT+1);
 			return ans.getDirection();
 		}
 	}
@@ -325,70 +353,70 @@ public class AIWorldState extends WorldState {
 	// getters and setters
 	///////////////////////////////////////////////////////
 	public Robot getEnemyRobot() {
-		return enemy_robot;
+		return enemyRobot;
 	}
 
 	public Robot getRobot() {
-		return robot;
+		return ownRobot;
 	}
 
 	public double getDistanceToBall() {
-		return distance_to_ball;
+		return ownDistanceToBall;
 	}
 
 	public double getDistanceToGoal() {
-		return distance_to_goal;
+		return ownDistanceToGoal;
 	}
 
 	public Goal getEnemyGoal() {
-		return enemy_goal;
+		return enemyGoal;
 	}
 
 	public Goal getMyGoal() {
-		return my_goal;
+		return ownGoal;
 	}
 
 	public boolean getMyGoalLeft() {
-		return my_goal_left;
+		return isOwnGoalLeft;
 	}
 
 	public boolean getMyTeamBlue() {
-		return my_team_blue;
+		return isOwnTeamBlue;
 	}
 	
 	public boolean isLeft_sensor() {
-		return left_sensor;
+		return isLeftSensorActive;
 	}
 
 	public void setLeft_sensor(boolean left_sensor) {
-		this.left_sensor = left_sensor;
+		this.isLeftSensorActive = left_sensor;
 	}
 
 	public boolean isRight_sensor() {
-		return right_sensor;
+		return isRightSensorActive;
 	}
 
 	public void setRight_sensor(boolean right_sensor) {
-		this.right_sensor = right_sensor;
+		this.isRightSensorActive = right_sensor;
 	}
 
 	public boolean isDist_sensor() {
-		return dist_sensor;
+		return isFrontSensorActive;
 	}
 
 	public void setDist_sensor(boolean dist_sensor) {
-		this.dist_sensor = dist_sensor;
+		this.isFrontSensorActive = dist_sensor;
 	}
 
 	public int getBattery() {
-		return battery;
+		return batteryLevel;
 	}
 
 	public void setBattery(int battery) {
-		this.battery = battery;
+		this.batteryLevel = battery;
 	}
 	
 	public void setCommand(Command com) {
-		command = com;
+		ownLastCommand = com;
 	}
 }

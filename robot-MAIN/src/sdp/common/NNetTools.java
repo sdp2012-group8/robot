@@ -42,7 +42,7 @@ public class NNetTools {
 					);
 		case 1:
 
-			Vector2D goal = my_goal_left ? new Vector2D(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_HEIGHT_CM ) : new Vector2D(0 , WorldState.GOAL_HEIGHT_CM );
+			Vector2D goal = my_goal_left ? new Vector2D(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_CENTRE_Y ) : new Vector2D(0 , WorldState.GOAL_CENTRE_Y );
 			Vector2D goal_rel = Utilities.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), goal);
 			return Utilities.concat(
 					Utilities.getSectors(worldState, am_i_blue, 5, 22, true, false),

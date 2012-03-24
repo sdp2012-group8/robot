@@ -15,7 +15,7 @@ public class WorldState {
 	public static final double PITCH_WIDTH_CM = 244;
 	
 	/** Height of the goals in centimetres. */
-	public static final double GOAL_HEIGHT_CM = PITCH_HEIGHT_CM / 2;
+	public static final double GOAL_CENTRE_Y = PITCH_HEIGHT_CM / 2;
 
 
 	/** Location of the ball. */
@@ -24,6 +24,10 @@ public class WorldState {
 	private Robot blueRobot;
 	/** The yellow robot. */
 	private Robot yellowRobot;
+	/** The left goal. */
+	private Goal leftGoal;
+	/** The right goal. */
+	private Goal rightGoal;
 	
 	/** Picture of the world. */
 	private BufferedImage worldImage;
@@ -39,6 +43,9 @@ public class WorldState {
 	 */
 	public WorldState(Point2D.Double ballCoords, Robot blueRobot, Robot yellowRobot, BufferedImage worldImage) {
 		update(ballCoords, blueRobot, yellowRobot, worldImage);
+		
+		leftGoal = new Goal(new Point2D.Double(0, GOAL_CENTRE_Y));
+		rightGoal = new Goal(new Point2D.Double(PITCH_WIDTH_CM, GOAL_CENTRE_Y));
 	}
 
 	
@@ -70,6 +77,24 @@ public class WorldState {
 	}
 	
 	/**
+	 * Get the left goal.
+	 * 
+	 * @return The left goal.
+	 */
+	public final Goal getLeftGoal() {
+		return leftGoal;
+	}
+	
+	/**
+	 * Get the right goal.
+	 * 
+	 * @return The right goal.
+	 */
+	public final Goal getRightGoal() {
+		return rightGoal;
+	}
+	
+	/**
 	 * Get the image of the world.
 	 * 
 	 * @return The image of the world.
@@ -90,7 +115,8 @@ public class WorldState {
 	 * @param yellowRobot The yellow robot.
 	 * @param worldImage The image of the world.
 	 */
-	public void update(Point2D.Double ballCoords, Robot blueRobot, Robot yellowRobot, BufferedImage worldImage) {
+	public void update(Point2D.Double ballCoords, Robot blueRobot, Robot yellowRobot,
+			BufferedImage worldImage) {
 		this.ballCoords = ballCoords;
 		this.blueRobot = blueRobot;
 		this.yellowRobot = yellowRobot;

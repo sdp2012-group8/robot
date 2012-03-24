@@ -26,7 +26,7 @@ public class Goal {
 	 * 
 	 * @param centre Centre point of the goal.
 	 */
-	public Goal(Point2D.Double centre){
+	public Goal(Point2D.Double centre) {
 		this.centre = centre;
 		this.top = new Point2D.Double(centre.x, centre.y - GOAL_SIZE / 2);
 		this.bottom = new Point2D.Double(centre.x, centre.y + GOAL_SIZE / 2);
@@ -36,7 +36,7 @@ public class Goal {
 	 * Create a new goal.
 	 * 
 	 * @param centre Centre point of the goal.
-	 * @param use_offset Should an offset be taken from the top ad bottom of the goal.
+	 * @param use_offset Should an offset be taken from the top and bottom of the goal.
 	 */
 	public Goal(Point2D.Double centre, boolean use_offset){
 		this.centre = centre;

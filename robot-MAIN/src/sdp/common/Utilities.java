@@ -412,9 +412,9 @@ public class Utilities {
 		
 			//add only points in mail goal
 			if (ws.getMyGoalLeft()) {
-				enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_HEIGHT_CM ));
+				enemy_goal = new Goal(new Point2D.Double(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_CENTRE_Y ));
 			} else {
-				enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_HEIGHT_CM ));
+				enemy_goal = new Goal(new Point2D.Double(0 , WorldState.GOAL_CENTRE_Y ));
 			}
 		
 			double offset = enemy_goal.getBottom().y - enemy_goal.getTop().y; //offset>0
@@ -902,7 +902,7 @@ public class Utilities {
 	public static boolean isDirectPathClear(WorldState state, Vector2D point1,
 			Vector2D point2, int obstacles) {
 		double pathLength = Vector2D.subtract(point2, point1).getLength();		
-		double widthFactors[] = { 0.0, 0.25, 0.5 /*, 0.75, 1.0, 1.25, 1.5 */ };
+		double widthFactors[] = { 0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5 };
 		
 		for (double factor : widthFactors) {
 			Vector2D sideColls[] = Utilities.getClosestSideCollisions(state, point1,

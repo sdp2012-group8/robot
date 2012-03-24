@@ -45,7 +45,7 @@ public final class Robot {
 	private Point2D.Double frontCenterPoint;
 	/** Coordinates of the robot's back-center. */
 	private Point2D.Double backCenterPoint;
-
+	
 	
 	/**
 	 * Create a new robot.
