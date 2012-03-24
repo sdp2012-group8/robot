@@ -195,9 +195,16 @@ public class AIWorldState extends WorldState {
 				pqStates, true, ownLastCommand, isOwnTeamBlue);
 		
 		if (!state.isBallPresent()) {
-			Robot ownRobot = (isOwnTeamBlue ? predictedState.getBlueRobot() : predictedState.getYellowRobot());
-			predictedState = new WorldState(ownRobot.getFrontCenter(), predictedState.getBlueRobot(),
-					predictedState.getYellowRobot(), predictedState.getWorldImage());
+			Robot ownPredictedRobot = (isOwnTeamBlue ? predictedState.getBlueRobot() : predictedState.getYellowRobot());
+			if (GeomUtils.pointDistance(state.getBallCoords(), ownPredictedRobot.getCoords()) < 30) {
+				predictedState = new WorldState(ownPredictedRobot.getFrontCenter(), predictedState.getBlueRobot(),
+						predictedState.getYellowRobot(), predictedState.getWorldImage());
+			}
+		}
+		
+		if (GeomUtils.pointDistance(state.getBallCoords(), predictedState.getBallCoords()) > 60) {
+			predictedState = new WorldState(state.getBallCoords(), predictedState.getBlueRobot(),
+						predictedState.getYellowRobot(), predictedState.getWorldImage());
 		}
 		
 		return predictedState;
