@@ -219,9 +219,7 @@ public class WorldState {
 	 * @param state World state in which to perform the search.
 	 * @param origin The point from which to cast the ray.
 	 * @param direction Direction of the ray.
-	 * @param obstacles A bitfield that is expected to contain any combination
-	 * 		of flags BALL_IS_OBSTACLE_FLAG, BLUE_IS_OBSTACLE_FLAG and
-	 * 		YELLOW_IS_OBSTACLE_FLAG. It denotes which objects are considered
+	 * @param obstacles A bitfield that denotes which objects are considered
 	 * 		to be obstacles.
 	 * @return Collision vector, as described above.
 	 */
@@ -332,9 +330,7 @@ public class WorldState {
 	 * @param state World state in which to perform the search.
 	 * @param origin The point from which to cast the ray.
 	 * @param direction Direction of the ray.
-	 * @param obstacles A bitfield that is expected to contain any combination
-	 * 		of flags BALL_IS_OBSTACLE_FLAG, BLUE_IS_OBSTACLE_FLAG and
-	 * 		YELLOW_IS_OBSTACLE_FLAG. It denotes which objects are considered
+	 * @param obstacles A bitfield that denotes which objects are considered
 	 * 		to be obstacles.
 	 * @return Distance to the closest collision, as described above.
 	 */
@@ -362,9 +358,7 @@ public class WorldState {
 	 * @param dirPt Point, in whose direction the check will be performed.
 	 * @param widthFactor Factor by which the robot width we consider is
 	 * 		modified.
-	 * @param obstacles A bitfield that is expected to contain any combination
-	 * 		of flags BALL_IS_OBSTACLE_FLAG, BLUE_IS_OBSTACLE_FLAG and
-	 * 		YELLOW_IS_OBSTACLE_FLAG. It denotes which objects are considered
+	 * @param obstacles A bitfield that denotes which objects are considered
 	 * 		to be obstacles.
 	 * @return Left and right collision distances, as described above.
 	 */
@@ -401,9 +395,7 @@ public class WorldState {
 	 * @param point2 Another of the path's endpoints.
 	 * @param widthFactor Factor by which the robot width we consider is
 	 * 		modified.
-	 * @param obstacles A bitfield that is expected to contain any combination
-	 * 		of flags BALL_IS_OBSTACLE_FLAG, BLUE_IS_OBSTACLE_FLAG and
-	 * 		YELLOW_IS_OBSTACLE_FLAG. It denotes which objects are considered
+	 * @param obstacles A bitfield that denotes which objects are considered
 	 * 		to be obstacles.
 	 * @return Whether the path between two points is clear.
 	 */
