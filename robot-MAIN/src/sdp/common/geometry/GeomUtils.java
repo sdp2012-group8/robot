@@ -411,4 +411,75 @@ public class GeomUtils {
 		
 		return minVec;
 	}
+
+
+	/**
+	 * Translate a point and change the distance from a circle to some point.
+	 * 
+	 * The resulting point will have the same direction relative to the circle's
+	 * centre, but its distance will be the specified amount.
+	 * 
+	 * @param circle Circle of interest.
+	 * @param point Point to move.
+	 * @param newDist New circle-point distance.
+	 * @return Another point, as described above.
+	 */
+	public static Point2D.Double changePointDistanceToCircle(Circle circle,
+			Point2D.Double point, double newDist) {
+		Vector2D circleToPoint = Vector2D.subtract(new Vector2D(circle.getCentre()), new Vector2D(point));
+		Vector2D newPointOffset = Vector2D.changeLength(circleToPoint, newDist);
+		Vector2D newPoint = Vector2D.add(new Vector2D(circle.getCentre()), newPointOffset);
+		
+		return newPoint;
+	}
+	
+	/**
+	 * Get the tangent line to circle intersection points.
+	 * 
+	 * What the above sentence means is that this function works like so:
+	 * 1) Find two lines that are tangent to the given circle and go through
+	 *    the given point.
+	 * 2) Find the coordinates of the points where lines and the circle touch.
+	 * 3) Return those intersection points.
+	 * 
+	 * If the specified point of interest is inside the circle, null is
+	 * returned instead.
+	 * 
+	 * Helpful graphic:
+	 * 
+	 * -
+	 *  ----
+	 *  /---X---
+	 * |     |  ----
+	 * |  c  |      ----p
+	 * |     |  ----
+	 *  \---X---      c - Circle centre.
+	 *  ----          p - Point of interest.
+	 * -              X - Tangent line collision points.
+	 * 
+	 * @param circle Circle of interest.
+	 * @param point Point of interest.
+	 * @return Circle tangent line intersection points, as described above.
+	 */
+	public static Point2D.Double[] circleTangentPoints(Circle circle, Point2D.Double point) {
+		double hypotenuse = pointDistance(circle.getCentre(), point);
+		if (hypotenuse <= circle.getRadius()) {
+			return null;
+		}
+		
+		double shortLeg = circle.getRadius();
+		double longLeg = Math.sqrt(hypotenuse * hypotenuse - shortLeg * shortLeg);		
+		double angle = Math.asin(circle.getRadius() / hypotenuse);
+		
+		Vector2D pointToCircle = Vector2D.subtract(new Vector2D(circle.getCentre()), new Vector2D(point));
+		Vector2D tangentOffset = Vector2D.changeLength(pointToCircle, longLeg);
+		
+		Vector2D tangent1 = Vector2D.rotateVector(tangentOffset, angle);
+		tangent1 = Vector2D.add(new Vector2D(point), tangent1);
+		
+		Vector2D tangent2 = Vector2D.rotateVector(tangentOffset, -angle);
+		tangent2 = Vector2D.add(new Vector2D(point), tangent2);
+
+		return new Point2D.Double[] { tangent1, tangent2 };
+	}
 }

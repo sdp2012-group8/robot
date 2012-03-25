@@ -4,6 +4,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
+import sdp.common.geometry.Circle;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
 
@@ -20,8 +21,10 @@ public class WorldState {
 	/** A flag that denotes that yellow robot should be considered an obstacle. */
 	public static final int YELLOW_IS_OBSTACLE_FLAG = 0x4;
 	
-	/** Size of the ball obstacle circle. */
-	public static final double BALL_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.7;
+	/** Radius of the ball obstacle circle. */
+	public static final double BALL_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.25;
+	/** Radius of the robot obstacle circle. */
+	public static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.7;
 	
 	/** Height of the pitch in centimetres. */
 	public static final double PITCH_HEIGHT_CM = 113.7;
@@ -207,6 +210,23 @@ public class WorldState {
 	public static int makeObstacleFlagsForOpponent(boolean ballIsObstacle,
 			boolean isOwnTeamBlue) {
 		return makeObstacleFlags(ballIsObstacle, !isOwnTeamBlue, isOwnTeamBlue);
+	}
+	
+	
+	public static ArrayList<Circle> getObstacleCircles(WorldState worldState, int obstacles) {
+		ArrayList<Circle> circles = new ArrayList<Circle>();
+		
+		if ((obstacles & BALL_IS_OBSTACLE_FLAG) != 0) {
+			circles.add(new Circle(worldState.getBallCoords(), BALL_OBSTACLE_RADIUS));
+		}
+		if ((obstacles & BLUE_IS_OBSTACLE_FLAG) != 0) {
+			circles.add(new Circle(worldState.getBlueRobot().getCoords(), ROBOT_OBSTACLE_RADIUS));
+		}
+		if ((obstacles & YELLOW_IS_OBSTACLE_FLAG) != 0) {
+			circles.add(new Circle(worldState.getYellowRobot().getCoords(), ROBOT_OBSTACLE_RADIUS));
+		}
+		
+		return circles;
 	}
 
 	
