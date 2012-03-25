@@ -11,5 +11,10 @@
 	<classpathentry kind="lib" path="lib/encog-engine-2.5.0.jar"/>
 	<classpathentry kind="con" path="org.lejos.nxt.ldt.LEJOS_LIBRARY_CONTAINER/pc"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/robot-NXT"/>
+	<classpathentry kind="lib" path="lib/jbox2d-library-2.1.2.2-jar-with-dependencies.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/robot-MAIN/lib/jbox2d-library-2.1.2.2-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
