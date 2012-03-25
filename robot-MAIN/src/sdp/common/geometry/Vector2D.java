@@ -210,7 +210,7 @@ public class Vector2D extends Point2D.Double {
      * @param angle Angle of rotation in degrees.
      * @return Rotated point.
      */
-    public static Vector2D rotateVector(final Vector2D vector, double angle) {
+    public static Vector2D rotateVector(Vector2D vector, double angle) {
     	return new Vector2D(GeomUtils.rotatePoint(new Point2D.Double(0.0, 0.0), vector, angle));
     }
     
@@ -222,6 +222,17 @@ public class Vector2D extends Point2D.Double {
     public void translateVector(Vector2D offset) {
     	this.x += offset.x;
     	this.y += offset.y;
+    }
+    
+    
+    /**
+     * Get a unit vector, pointing into the specified direction.
+     * 
+     * @param angle Direction in degrees.
+     * @return Unit vector with the specified angle.
+     */
+    public static Vector2D getDirectionUnitVector(double angle) {
+    	return Vector2D.rotateVector(new Vector2D(1.0, 0.0), angle);
     }
     
     

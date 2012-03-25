@@ -28,9 +28,12 @@ public class Utilities {
 	public static final double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
 	
 	/** How close the robot should be to the ball before it attempts to kick it. */
-	public static final double KICKABLE_BALL_DIST = 6;
+	public static final double OWN_BALL_KICK_DIST = 6;
 	/** How close the robot should be to the ball before it attempts to kick it. */
-	public static final double ENEMY_KICKABLE_BALL_DIST = 20;
+	public static final double ENEMY_BALL_KICK_DIST = Robot.LENGTH_CM;
+	
+	/** Distance threshold for ball-robot direction ray tests. */
+	public static final double BALL_TO_DIRECTION_PROXIMITY_THRESHOLD = Robot.WIDTH_CM / 2;
 	
 	/** The maximum attack angle for an attacking robot. */
 	public static final double KICKABLE_ATTACK_ANGLE = 40.0;
@@ -284,7 +287,7 @@ public class Utilities {
 		Vector2D localBall = Utilities.getLocalVector(worldState.getOwnRobot(), new Vector2D(worldState.getBallCoords()));
 			
 		// Check if the ball is within a certain range in front of us
-		if (!(localBall.x < Robot.LENGTH_CM / 2 + KICKABLE_BALL_DIST && localBall.x > 0 && localBall.y < Robot.WIDTH_CM/2 && localBall.y > -Robot.WIDTH_CM/2)) {
+		if (!(localBall.x < Robot.LENGTH_CM / 2 + OWN_BALL_KICK_DIST && localBall.x > 0 && localBall.y < Robot.WIDTH_CM/2 && localBall.y > -Robot.WIDTH_CM/2)) {
 			return false;
 		} else {
 			System.out.println("I can kick da ball!!!!");
@@ -305,22 +308,46 @@ public class Utilities {
 	 * @return Whether the gates can be attacked.
 	 */
 	public static boolean canEnemyAttack(AIWorldState worldState) {
-		Vector2D robotToBallVec = Vector2D.subtract(new Vector2D(worldState.getBallCoords()), new Vector2D(worldState.getEnemyRobot().getCoords()));
-		Vector2D ballToGoalVec = Vector2D.subtract(new Vector2D(worldState.getOwnGoal().getCentre()), new Vector2D(worldState.getBallCoords()));
+		// Check that the ball is between our goal and the enemy.
+		if (worldState.isOwnGoalLeft()) {
+			if (worldState.getEnemyRobot().getCoords().x < worldState.getBallCoords().x) {
+				return false;
+			}
+		} else {
+			if (worldState.getBallCoords().x < worldState.getEnemyRobot().getCoords().x) {
+				return false;
+			}
+		}
 		
-		double attackAngle = robotToBallVec.getDirection() - ballToGoalVec.getDirection();
-		attackAngle = normaliseAngle(attackAngle);
+		// Check that the enemy is pointing at us.
+		double curEnemyAngle = worldState.getEnemyRobot().getAngle();
+		double upperEnemyAngle = Vector2D.subtract(new Vector2D(worldState.getOwnGoal().getTop()),
+				new Vector2D(worldState.getEnemyRobot().getCoords())).getDirection();
+		double lowerEnemyAngle = Vector2D.subtract(new Vector2D(worldState.getOwnGoal().getBottom()),
+				new Vector2D(worldState.getEnemyRobot().getCoords())).getDirection();
 		
-		if (robotToBallVec.getLength() > (ENEMY_KICKABLE_BALL_DIST + Robot.LENGTH_CM / 2)) {
+		double curToLower = GeomUtils.getAngleDifference(lowerEnemyAngle, curEnemyAngle);
+		double curToUpper = GeomUtils.getAngleDifference(upperEnemyAngle, curEnemyAngle);
+		double lowerToUpper = GeomUtils.getAngleDifference(lowerEnemyAngle, upperEnemyAngle);
+		
+		if (!Utilities.areDoublesEqual(curToLower + curToUpper, lowerToUpper)) {
 			return false;
 		}
-		if (Math.abs(attackAngle) > KICKABLE_ATTACK_ANGLE) {
+		
+		// Check that the enemy is in line with the ball.
+		Point2D.Double ballRayPoint = GeomUtils.getClosestPointToLine(worldState.getBallCoords(), 
+				worldState.getEnemyRobot().getCoords(), worldState.getEnemyRobot().getFrontCenter());
+		double ballDistToRay = GeomUtils.pointDistance(worldState.getBallCoords(), ballRayPoint);
+		
+		if (ballDistToRay > BALL_TO_DIRECTION_PROXIMITY_THRESHOLD) {
 			return false;
 		}
-		if (!Utilities.lineIntersectsRobot(worldState.getOwnGoal().getCentre(), worldState.getBallCoords(), worldState.getOwnRobot())) {
-			return false;
-		}
-		if (!Utilities.lineIntersectsRobot(worldState.getEnemyRobot().getCoords(), worldState.getEnemyRobot().getFrontCenter(), worldState.getOwnRobot())) {
+		
+		// Check that the enemy is within shooting distance.
+		double enemyToBallDist = GeomUtils.pointDistance(worldState.getBallCoords(),
+				worldState.getEnemyRobot().getCoords());
+		
+		if (enemyToBallDist > (ENEMY_BALL_KICK_DIST + Robot.LENGTH_CM / 2)) {
 			return false;
 		}
 		
@@ -329,17 +356,17 @@ public class Utilities {
 	
 
 	/**
-	 * Calculate the optimal point in the current world state. The optimal point
-	 * is a point that the robot should seek to go to next.
+	 * Calculate the optimal attack point in the given world state. The robot
+	 * should seek to move to the said point in order to make an attacking move.
 	 * 
 	 * TODO: Move all logic out of deprecated functions here.
 	 * 
 	 * @param worldState Current world state.
 	 * @param distToBall Desired distance to the ball.
 	 * @param mode Robot's attack mode.
-	 * @return Optimal point on the field.
+	 * @return Optimal attack point.
 	 */
-	public static Point2D.Double getOptimalPoint(AIWorldState worldState,
+	public static Point2D.Double getOptimalAttackPoint(AIWorldState worldState,
 			double distToBall, AttackMode mode) {
 		if (mode == AttackMode.DirectOnly) {
 			return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall, false);
@@ -348,6 +375,42 @@ public class Utilities {
 		} else {	// mode == AttackMode.Full
 			return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall);
 		}
+	}
+	
+	
+	/**
+	 * Calculate the optimal defence point in the given world state. The robot
+	 * should seek to move to the said point in order to make a defensive move.
+	 * 
+	 * @param worldState Current world state.
+	 * @return Optimal defence point.
+	 */
+	public static Point2D.Double getOptimalDefencePoint(AIWorldState worldState) {
+		Vector2D ballVec = new Vector2D(worldState.getBallCoords());
+		
+		Vector2D ballGoalVec = Vector2D.subtract(new Vector2D(worldState.getOwnGoal().getCentre()), ballVec);
+		Vector2D ballOffset = Vector2D.changeLength(ballGoalVec, Robot.LENGTH_CM);
+		Vector2D ballPoint = Vector2D.add(ballVec, ballOffset);
+		
+		Vector2D closestPoint = new Vector2D(GeomUtils.getClosestPointToLine(worldState.getOwnRobot().getCoords(),
+				new Vector2D(worldState.getOwnGoal().getCentre()), new Vector2D(worldState.getBallCoords())));
+		
+		double distToClosest = GeomUtils.pointDistance(worldState.getOwnRobot().getCoords(), closestPoint);
+		
+		Vector2D optimalPoint = ballPoint;
+		
+		double goalDir = ballGoalVec.getDirection();
+		double closePtDir = Vector2D.subtract(closestPoint, ballPoint).getDirection();
+		
+		if (Utilities.areDoublesEqual(goalDir, closePtDir)) {
+			optimalPoint = closestPoint;
+			
+			if (distToClosest < Robot.LENGTH_CM / 2) {
+				optimalPoint = ballPoint;
+			}
+		}
+		
+		return optimalPoint;
 	}
 	
 

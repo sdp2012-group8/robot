@@ -83,7 +83,7 @@ public class AIVisualServoing extends BaseAI {
 		
 		Point2D.Double optimalPoint = null;
 		for (int t = 0; t < 20; t++) {
-			optimalPoint = Utilities.getOptimalPoint(aiWorldState, point_off, mode);
+			optimalPoint = Utilities.getOptimalAttackPoint(aiWorldState, point_off, mode);
 			
 			if (optimalPoint == null)
 				point_off *= 0.8;
@@ -132,6 +132,13 @@ public class AIVisualServoing extends BaseAI {
 
 	@Override
 	protected Command defendGoal() throws IOException {
+		boolean useMilestone = false;
+		
+		if (!useMilestone) {
+			Point2D.Double target = Utilities.getOptimalDefencePoint(aiWorldState);
+			Waypoint waypoint = getNextWaypoint(new Vector2D(target), true);
+			return getWaypointCommand(waypoint, false, SPEED_MULTIPLIER, SPEED_MULTIPLIER*180-100);
+		}
 		
 		if (Math.abs(Utilities.getTurningAngle(aiWorldState.getOwnRobot(), new Vector2D(aiWorldState.getBallCoords()))) < 15 &&
 				aiWorldState.getDistanceToBall() < 40) {
@@ -456,8 +463,8 @@ public class AIVisualServoing extends BaseAI {
 			point_off *= 0.5;
 			targ_thresh = point_off*0.5;
 		}
-		if (point_off < Utilities.KICKABLE_BALL_DIST) {
-			point_off = Utilities.KICKABLE_BALL_DIST;
+		if (point_off < Utilities.OWN_BALL_KICK_DIST) {
+			point_off = Utilities.OWN_BALL_KICK_DIST;
 		}
 
 		Vector2D ball = new Vector2D(aiWorldState.getBallCoords());

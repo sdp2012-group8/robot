@@ -212,6 +212,28 @@ public class GeomUtils {
 		}
 	}
 	
+	
+	/**
+	 * Get the closest point from a point to a line.
+	 * 
+	 * @param p Point of interest.
+	 * @param a First point on the line.
+	 * @param b Second point on the line.
+	 * @return Point on the line ab that is closest to p.
+	 */
+	public static Point2D.Double getClosestPointToLine(Point2D.Double p,
+			Point2D.Double a, Point2D.Double b) {
+		Vector2D ap = Vector2D.subtract(new Vector2D(p), new Vector2D(a));
+		Vector2D ab = Vector2D.subtract(new Vector2D(b), new Vector2D(a));
+		double dot = GeomUtils.dotProduct(ap, ab);
+		
+		double abDistSq = Point2D.distanceSq(a.x, a.y, b.x, b.y);
+		
+		double t = dot / abDistSq;
+		
+		return new Point2D.Double(a.x + ab.x * t, a.y + ab.y * t);
+	}
+	
 
 	/**
 	 * Check if a line segment intersects the given line.
@@ -284,7 +306,7 @@ public class GeomUtils {
 	 * @param a Point A.
 	 * @param b Point B.
 	 * @param c Point C.
-	 * @return Angle BAC.
+	 * @return Angle BAC, in radians.
 	 */
 	public static double getAngle(Point2D.Double a, Point2D.Double b, Point2D.Double c) {
 		double ab = GeomUtils.pointDistance(a,b);
@@ -292,6 +314,19 @@ public class GeomUtils {
 		double bc = GeomUtils.pointDistance(b,c);
 	
 		return Math.acos((ac * ac + ab * ab - bc * bc) / (2 * ac * ab));
+	}
+	
+	/**
+	 * Get angular difference between two angles, expressed in degrees.
+	 * 
+	 * @param angle1 First angle.
+	 * @param angle2 Second angle.
+	 * @return Difference between two angles.
+	 */
+	public static double getAngleDifference(double angle1, double angle2) {
+		double diff = (Utilities.normaliseAngle(angle1) - Utilities.normaliseAngle(angle2) + 360) % 360;
+		diff = Math.min(diff, 360 - diff);
+		return diff;
 	}
 	
 	
@@ -326,5 +361,4 @@ public class GeomUtils {
 				localPoint, -refDir.getDirection());
 		return localPoint;
 	}
-
 }
