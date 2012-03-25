@@ -7,9 +7,9 @@ import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
-import sdp.common.Robot;
 import sdp.common.Utilities;
-import sdp.common.WorldState;
+import sdp.common.world.Robot;
+import sdp.common.world.WorldState;
 
 import com.googlecode.javacv.cpp.opencv_core.CvMat;
 import com.googlecode.javacv.cpp.opencv_core.CvPoint;

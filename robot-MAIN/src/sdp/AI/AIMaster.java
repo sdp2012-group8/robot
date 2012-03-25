@@ -10,7 +10,7 @@ import sdp.common.MessageListener;
 import sdp.common.Utilities;
 import sdp.common.WorldStateObserver;
 import sdp.common.Communicator.opcode;
-import sdp.common.WorldState;
+import sdp.common.world.WorldState;
 import sdp.common.WorldStateProvider;
 import sdp.vision.processing.ImageProcessorConfig;
 

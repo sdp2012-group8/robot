@@ -2,9 +2,9 @@ package sdp.AI;
 
 import java.awt.geom.Point2D;
 
-import sdp.common.Robot;
-import sdp.common.WorldState;
 import sdp.common.geometry.Vector2D;
+import sdp.common.world.Robot;
+import sdp.common.world.WorldState;
 
 
 /**

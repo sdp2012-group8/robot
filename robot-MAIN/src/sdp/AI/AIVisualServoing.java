@@ -4,11 +4,11 @@ import java.awt.geom.Point2D;
 import java.io.IOException;
 
 import sdp.common.Painter;
-import sdp.common.Robot;
 import sdp.common.Utilities;
-import sdp.common.WorldState;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
+import sdp.common.world.Robot;
+import sdp.common.world.WorldState;
 
 public class AIVisualServoing extends BaseAI {
 
@@ -140,7 +140,7 @@ public class AIVisualServoing extends BaseAI {
 			return getWaypointCommand(waypoint, false, SPEED_MULTIPLIER, SPEED_MULTIPLIER*180-100);
 		}
 		
-		if (Math.abs(Utilities.getTurningAngle(aiWorldState.getOwnRobot(), new Vector2D(aiWorldState.getBallCoords()))) < 15 &&
+		if (Math.abs(Robot.getTurningAngle(aiWorldState.getOwnRobot(), new Vector2D(aiWorldState.getBallCoords()))) < 15 &&
 				aiWorldState.getDistanceToBall() < 40) {
 			if (Utilities.canWeAttack(aiWorldState))
 				return gotBall();
@@ -153,7 +153,7 @@ public class AIVisualServoing extends BaseAI {
 		if (aiWorldState.isOwnGoalLeft()){
 			
 			double behind_ball =aiWorldState.getBallCoords().x - DEFEND_BALL_THRESHOLD;
-			double rob_ang = Utilities.normaliseAngle(aiWorldState.getOwnRobot().getAngle());
+			double rob_ang = GeomUtils.normaliseAngle(aiWorldState.getOwnRobot().getAngle());
 			double x = Math.max(aiWorldState.getOwnRobot().getCoords().x, 30);
 			if (behind_ball < x)
 				x = behind_ball;
@@ -167,7 +167,7 @@ public class AIVisualServoing extends BaseAI {
 			int2 = new Point2D.Double(x, WorldState.PITCH_HEIGHT_CM - Robot.LENGTH_CM);
 		} else {
 			double behind_ball =aiWorldState.getBallCoords().x + DEFEND_BALL_THRESHOLD;
-			double rob_ang = Utilities.normaliseAngle(aiWorldState.getOwnRobot().getAngle());
+			double rob_ang = GeomUtils.normaliseAngle(aiWorldState.getOwnRobot().getAngle());
 			double x = Math.min(aiWorldState.getOwnRobot().getCoords().x, WorldState.PITCH_WIDTH_CM - 30);
 
 			if (behind_ball > x)
@@ -385,11 +385,11 @@ public class AIVisualServoing extends BaseAI {
 	 * @return The next command to execute.
 	 */
 	private Waypoint getNextWaypoint(Vector2D target, boolean ballIsObstacle) {
-		Vector2D targetLocal = Utilities.getLocalVector(aiWorldState.getOwnRobot(), target);
-		int obstacleFlags = Utilities.makeObstacleFlagsForOpponent(ballIsObstacle, aiWorldState.isOwnTeamBlue());
+		Vector2D targetLocal = Robot.getLocalVector(aiWorldState.getOwnRobot(), target);
+		int obstacleFlags = WorldState.makeObstacleFlagsForOpponent(ballIsObstacle, aiWorldState.isOwnTeamBlue());
 
 		Vector2D ownCoords = new Vector2D(aiWorldState.getOwnRobot().getCoords());
-		if (Utilities.isDirectPathClear(aiWorldState, ownCoords, target, obstacleFlags)) {
+		if (WorldState.isDirectPathClear(aiWorldState, ownCoords, target, obstacleFlags)) {
 			return new Waypoint(targetLocal, true);
 		}
 
@@ -403,14 +403,14 @@ public class AIVisualServoing extends BaseAI {
 		while ((destPoint == null) && (iterations < 5) && (destPointDist > 0)) {
 			for (int i = 0; i < COLL_SECS_COUNT; i++) {
 				double curAngle = -90 + i * SEC_ANGLE + SEC_ANGLE / 2;
-				curAngle = Utilities.normaliseAngle(curAngle);
+				curAngle = GeomUtils.normaliseAngle(curAngle);
 
 				Vector2D rayDir = Vector2D.rotateVector(new Vector2D(1, 0), curAngle);
 				Vector2D rayEndLocal = Vector2D.multiply(rayDir, destPointDist);
-				Vector2D rayEnd = Utilities.getGlobalVector(aiWorldState.getOwnRobot(), rayEndLocal);
+				Vector2D rayEnd = Robot.getGlobalVector(aiWorldState.getOwnRobot(), rayEndLocal);
 
-				if (Utilities.isDirectPathClear(aiWorldState, ownCoords, rayEnd, obstacleFlags)) {
-					double angleDiff = Utilities.normaliseAngle(curAngle - targetLocal.getDirection());
+				if (WorldState.isDirectPathClear(aiWorldState, ownCoords, rayEnd, obstacleFlags)) {
+					double angleDiff = GeomUtils.normaliseAngle(curAngle - targetLocal.getDirection());
 					if (Math.abs(angleDiff) < Math.abs(minAngle)) {
 						minAngle = angleDiff;
 						destPoint = rayEndLocal;
@@ -449,7 +449,7 @@ public class AIVisualServoing extends BaseAI {
 		if (Math.abs(waypoint.getTurningAngle()) > 90) {
 			comm.drivingSpeed = -Robot.MAX_DRIVING_SPEED;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
-				comm.turningSpeed = Utilities.normaliseAngle(waypoint.getTurningAngle() - 180);
+				comm.turningSpeed = GeomUtils.normaliseAngle(waypoint.getTurningAngle() - 180);
 			}		
 			// Ball is in front.
 		} else {
@@ -547,12 +547,12 @@ public class AIVisualServoing extends BaseAI {
 	 * 		tolerance.
 	 */
 	private void reactToCornerCollisions(Command command, double threshold) {
-		Vector2D nearestColl = Utilities.getNearestCollisionPoint(aiWorldState, aiWorldState.isOwnTeamBlue(), aiWorldState.getOwnRobot().getCoords());
+		Vector2D nearestColl = WorldState.getNearestCollisionPoint(aiWorldState, aiWorldState.isOwnTeamBlue(), aiWorldState.getOwnRobot().getCoords());
 
-		Vector2D frontLeft = Utilities.getLocalVector(aiWorldState.getOwnRobot(), Vector2D.add(new Vector2D(aiWorldState.getOwnRobot().getFrontLeft()), nearestColl));
-		Vector2D frontRight = Utilities.getLocalVector(aiWorldState.getOwnRobot(), Vector2D.add(new Vector2D(aiWorldState.getOwnRobot().getFrontRight()), nearestColl));
-		Vector2D backLeft = Utilities.getLocalVector(aiWorldState.getOwnRobot(), Vector2D.add(new Vector2D(aiWorldState.getOwnRobot().getBackLeft()), nearestColl));
-		Vector2D backRight = Utilities.getLocalVector(aiWorldState.getOwnRobot(), Vector2D.add(new Vector2D(aiWorldState.getOwnRobot().getBackRight()), nearestColl));
+		Vector2D frontLeft = Robot.getLocalVector(aiWorldState.getOwnRobot(), Vector2D.add(new Vector2D(aiWorldState.getOwnRobot().getFrontLeft()), nearestColl));
+		Vector2D frontRight = Robot.getLocalVector(aiWorldState.getOwnRobot(), Vector2D.add(new Vector2D(aiWorldState.getOwnRobot().getFrontRight()), nearestColl));
+		Vector2D backLeft = Robot.getLocalVector(aiWorldState.getOwnRobot(), Vector2D.add(new Vector2D(aiWorldState.getOwnRobot().getBackLeft()), nearestColl));
+		Vector2D backRight = Robot.getLocalVector(aiWorldState.getOwnRobot(), Vector2D.add(new Vector2D(aiWorldState.getOwnRobot().getBackRight()), nearestColl));
 
 		boolean haveFrontLeftColl = (frontLeft.getLength() <= threshold);
 		boolean haveFrontRightColl = (frontRight.getLength() <= threshold);
@@ -638,7 +638,7 @@ public class AIVisualServoing extends BaseAI {
 		if (Math.abs(comm.turningSpeed) > 90) {
 			comm.drivingSpeed = -Robot.MAX_DRIVING_SPEED;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
-				comm.turningSpeed = Utilities.normaliseAngle(comm.turningSpeed - 180);
+				comm.turningSpeed = GeomUtils.normaliseAngle(comm.turningSpeed - 180);
 			}		
 			// Ball is in front.
 		} else {

@@ -4,11 +4,11 @@ import java.io.*;
 import java.util.ArrayList;
 
 import sdp.common.VisionTestCase;
-import sdp.common.WorldState;
 import sdp.vision.Vision;
 import sdp.vision.processing.ImageProcessorConfig;
 import sdp.vision.processing.ProcUtils;
 import sdp.common.Utilities;
+import sdp.common.world.WorldState;
 
 
 /**

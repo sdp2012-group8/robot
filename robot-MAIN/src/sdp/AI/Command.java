@@ -1,7 +1,7 @@
 package sdp.AI;
 
-import sdp.common.Robot;
 import sdp.common.Utilities;
+import sdp.common.world.Robot;
 
 
 /**

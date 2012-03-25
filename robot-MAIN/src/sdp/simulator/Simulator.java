@@ -9,12 +9,12 @@ import java.util.Queue;
 
 import sdp.AI.Command;
 import sdp.common.Painter;
-import sdp.common.Robot;
 import sdp.common.Utilities;
-import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
 import sdp.common.Communicator.opcode;
 import sdp.common.geometry.Vector2D;
+import sdp.common.world.Robot;
+import sdp.common.world.WorldState;
 
 
 /**

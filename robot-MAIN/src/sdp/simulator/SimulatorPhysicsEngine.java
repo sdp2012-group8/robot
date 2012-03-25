@@ -4,8 +4,8 @@ import org.jbox2d.collision.AABB;
 import org.jbox2d.common.Vec2;
 import org.jbox2d.dynamics.World;
 
-import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
+import sdp.common.world.WorldState;
 
 public class SimulatorPhysicsEngine extends WorldStateProvider {
 	
@@ -25,7 +25,7 @@ public class SimulatorPhysicsEngine extends WorldStateProvider {
 		worldAABB.upperBound.set(new Vec2((float) 0, (float) 0));  
 		
 		// create the world
-		world = new World(new Vec2(0, 0), true, new );
+		//world = new World(new Vec2(0, 0), true, new );
 		
 	}
 	

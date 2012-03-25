@@ -1,4 +1,4 @@
-package sdp.common;
+package sdp.common.world;
 
 import java.awt.geom.Point2D;
 

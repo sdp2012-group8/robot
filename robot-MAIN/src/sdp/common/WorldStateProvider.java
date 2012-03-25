@@ -3,6 +3,8 @@ package sdp.common;
 import java.util.Observable;
 import java.util.Observer;
 
+import sdp.common.world.WorldState;
+
 
 /**
  * Base class for all classes that provide world state changes to the system.

@@ -7,12 +7,12 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import sdp.AI.Command;
-import sdp.common.Goal;
 import sdp.common.Painter;
-import sdp.common.Robot;
 import sdp.common.Utilities;
-import sdp.common.WorldState;
 import sdp.common.geometry.GeomUtils;
+import sdp.common.world.Goal;
+import sdp.common.world.Robot;
+import sdp.common.world.WorldState;
 import sdp.simulator.Simulator;
 import sdp.vision.processing.ImageProcessorConfig;
 

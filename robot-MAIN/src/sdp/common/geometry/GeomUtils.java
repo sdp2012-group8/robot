@@ -12,6 +12,25 @@ import sdp.common.Utilities;
 public class GeomUtils {
 	
 	/**
+	 * Ensure that the given angle in degrees is within the interval [-180; 180).
+	 * 
+	 * @param angle Angle, in degrees.
+	 * @return Normalised angle, as described above.
+	 */
+	public static double normaliseAngle(double angle) {
+		angle = angle % 360;
+		if (angle > 180) {
+			angle -= 360;
+		}
+		if (angle < -180) {
+			angle += 360;
+		}
+		
+		return angle;
+	}
+	
+	
+	/**
 	 * Add two points.
 	 * 
 	 * @param a First point to add.
@@ -94,6 +113,17 @@ public class GeomUtils {
 	 */
 	public static double pointDistance(Point2D.Double a, Point2D.Double b) {
 		return Point2D.distance(a.x, a.y, b.x, b.y);
+	}
+	
+	
+	/**
+	 * Check whether coordinates of the given point are both negative.
+	 * 
+	 * @param point Point in question.
+	 * @return Whether both x and y coordinates are negative.
+	 */
+	public static boolean isPointNegative(Point2D.Double point) {
+		return ((point.x < 0) && (point.y < 0));
 	}
 	
 	
@@ -324,7 +354,7 @@ public class GeomUtils {
 	 * @return Difference between two angles.
 	 */
 	public static double getAngleDifference(double angle1, double angle2) {
-		double diff = (Utilities.normaliseAngle(angle1) - Utilities.normaliseAngle(angle2) + 360) % 360;
+		double diff = (GeomUtils.normaliseAngle(angle1) - GeomUtils.normaliseAngle(angle2) + 360) % 360;
 		diff = Math.min(diff, 360 - diff);
 		return diff;
 	}
@@ -360,5 +390,25 @@ public class GeomUtils {
 		localPoint = GeomUtils.rotatePoint(new Point2D.Double(0.0, 0.0),
 				localPoint, -refDir.getDirection());
 		return localPoint;
+	}
+
+	
+	/**
+	 * Return the distance to the closest point in the set
+	 * @param points set of points
+	 * @param origin the point we are standing at
+	 * @return the distance from my point to the closest one in the set
+	 */
+	public static Vector2D getMinVectorToPoints(Vector2D[] points, Vector2D origin) {
+		Vector2D minVec = null;
+		
+		for (int i = 0; i < points.length; i++) {
+			Vector2D curVec = Vector2D.subtract(points[i], origin);
+			if ((minVec == null) || (curVec.getLength() < minVec.getLength())) {
+				minVec = curVec;
+			}
+		}
+		
+		return minVec;
 	}
 }

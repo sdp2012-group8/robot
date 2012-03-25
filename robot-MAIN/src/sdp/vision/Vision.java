@@ -2,8 +2,8 @@ package sdp.vision;
 
 import java.awt.image.BufferedImage;
 
-import sdp.common.WorldState;
 import sdp.common.WorldStateProvider;
+import sdp.common.world.WorldState;
 import sdp.vision.processing.ImageProcessorConfig;
 import sdp.vision.processing.MainImageProcessor;
 import sdp.vision.processing.BaseImageProcessor;

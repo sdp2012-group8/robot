@@ -3,7 +3,7 @@ package sdp.vision.testbench;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
-import sdp.common.WorldState;
+import sdp.common.world.WorldState;
 
 
 /**

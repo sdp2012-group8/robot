@@ -5,11 +5,12 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
-import java.util.ArrayList;
 
 import sdp.AI.AIWorldState;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
+import sdp.common.world.Robot;
+import sdp.common.world.WorldState;
 
 
 /**
@@ -24,9 +25,6 @@ public class Utilities {
 	/** The double comparison accuracy that is required. */
 	private static final double EPSILON = 1e-8;
 	
-	/** Size of the ball obstacle. */
-	public static final double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
-	
 	/** How close the robot should be to the ball before it attempts to kick it. */
 	public static final double OWN_BALL_KICK_DIST = 6;
 	/** How close the robot should be to the ball before it attempts to kick it. */
@@ -38,16 +36,6 @@ public class Utilities {
 	/** The maximum attack angle for an attacking robot. */
 	public static final double KICKABLE_ATTACK_ANGLE = 40.0;
 	
-	/** Size of the ball obstacle circle. */
-	public static final double BALL_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.7;
-	
-	/** A flag that denotes that ball should be considered an obstacle. */
-	public static final int BALL_IS_OBSTACLE_FLAG = 0x1;
-	/** A flag that denotes that blue robot should be considered an obstacle. */
-	public static final int BLUE_IS_OBSTACLE_FLAG = 0x2;
-	/** A flag that denotes that yellow robot should be considered an obstacle. */
-	public static final int YELLOW_IS_OBSTACLE_FLAG = 0x4;
-
 	
 	/**
 	 * Checks whether two doubles have close enough values.
@@ -89,25 +77,6 @@ public class Utilities {
 	}
 
 
-	/**
-	 * Ensure that the given angle in degrees is within the interval [-180; 180).
-	 * 
-	 * @param angle Angle, in degrees.
-	 * @return Normalised angle, as described above.
-	 */
-	public static double normaliseAngle(double angle) {
-		angle = angle % 360;
-		if (angle > 180) {
-			angle -= 360;
-		}
-		if (angle < -180) {
-			angle += 360;
-		}
-		
-		return angle;
-	}
-	
-	
 	/**
 	 * Bind a double to the interval [Short.MIN_VALUE; Short.MAX_VALUE]. If
 	 * the given value is outside this interval, it is set to the closer
@@ -254,9 +223,6 @@ public class Utilities {
 		}
 	}
 
-	public static boolean isLeft(Point2D.Double a, Point2D.Double b, Point2D.Double c){
-		return ((b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x)) > 0;
-	}
 
 	private static Point2D.Double toCentimeters(Point2D.Double original) {
 		return new Point2D.Double(original.getX()*WorldState.PITCH_WIDTH_CM, original.getY()*WorldState.PITCH_WIDTH_CM);
@@ -284,7 +250,7 @@ public class Utilities {
 	 * @return Whether the gates can be attacked.
 	 */
 	public static boolean canWeAttack(AIWorldState worldState) {
-		Vector2D localBall = Utilities.getLocalVector(worldState.getOwnRobot(), new Vector2D(worldState.getBallCoords()));
+		Vector2D localBall = Robot.getLocalVector(worldState.getOwnRobot(), new Vector2D(worldState.getBallCoords()));
 			
 		// Check if the ball is within a certain range in front of us
 		if (!(localBall.x < Robot.LENGTH_CM / 2 + OWN_BALL_KICK_DIST && localBall.x > 0 && localBall.y < Robot.WIDTH_CM/2 && localBall.y > -Robot.WIDTH_CM/2)) {
@@ -415,452 +381,6 @@ public class Utilities {
 	
 
 	/**
-	 * Check if the given point is inside the given robot.
-	 * 
-	 * @param point Point to check.
-	 * @param robot Robot to check.
-	 * @return If the point is inside the robot.
-	 */
-	public static boolean isPointInRobot(Point2D.Double point, Robot robot) {
-		return GeomUtils.isPointInQuadrilateral(point, robot.getFrontLeft(),
-				robot.getFrontRight(), robot.getBackRight(), robot.getBackLeft());
-	}
-
-
-	/**
-	 * Check whether the given point is inside or in the vicinity of the
-	 * given robot. Within vicinity means within half robot length to its side.
-	 * 
-	 * @param point Point of interest.
-	 * @param robot Robot in question.
-	 * @return Whether the point is around a robot.
-	 */
-	public static boolean isPointAroundRobot(Point2D.Double point, Robot robot){
-		double offset = Robot.LENGTH_CM/2;
-		double length = Robot.LENGTH_CM;
-		double width = Robot.WIDTH_CM;
-		double angle = robot.getAngle();
-
-		Point2D.Double frontLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
-				new Point2D.Double(length / 2 + offset, width / 2 + offset), angle);
-		GeomUtils.translatePoint(frontLeftPoint, robot.getCoords());
-
-		Point2D.Double frontRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
-				new Point2D.Double(length / 2 + offset, -width / 2 - offset), angle);
-		GeomUtils.translatePoint(frontRightPoint, robot.getCoords());
-
-		Point2D.Double backLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
-				new Point2D.Double(-length / 2 - offset, width / 2 + offset), angle);
-		GeomUtils.translatePoint(backLeftPoint, robot.getCoords());
-
-		Point2D.Double backRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
-				new Point2D.Double(-length / 2 - offset, -width / 2 - offset), angle);
-		GeomUtils.translatePoint(backRightPoint, robot.getCoords());
-		
-		return GeomUtils.isPointInQuadrilateral(point, frontLeftPoint, frontRightPoint,
-				backRightPoint, backLeftPoint);
-	}
-	
-	
-	/**
-	 * Check whether coordinates of the given point are both negative.
-	 * 
-	 * @param point Point in question.
-	 * @return Whether both x and y coordinates are negative.
-	 */
-	public static boolean isPointNegative(Point2D.Double point) {
-		return ((point.x < 0) && (point.y < 0));
-	}
-	
-	
-	/**
-	 * Check whether the given point is inside the football pitch.
-	 * 
-	 * @param point Point in question.
-	 * @return Whether the point is inside the pitch.
-	 */
-	public static boolean isPointInPitch(Point2D.Double point) {
-		return Utilities.isPointInPaddedPitch(point, 0.0);
-	}
-	
-	/**
-	 * Check whether the given point is inside the football pitch with some
-	 * padding added on the sides.
-	 * 
-	 * @param point Point in question.
-	 * @param padding The amount of wall padding of the pitch.
-	 * @return Whether the point is inside the padded pitch.
-	 */
-	public static boolean isPointInPaddedPitch(Point2D.Double point, double padding) {
-		return ((point.x >= padding) && (point.y >= padding)
-				&& (point.x <= (WorldState.PITCH_WIDTH_CM - padding))
-				&& (point.y <= (WorldState.PITCH_HEIGHT_CM - padding)));
-	}
-	
-
-	/**
-	 * Returns the vector to the closest collision point in the world (wall or enemy)
-	 * 
-	 * @param ls current world in centimeters
-	 * @param am_i_blue true if my robot is blue, false otherwise; prevents testing with itself
-	 * @param point the point to be tested, usually a point inside the robot (more usually edges of my robot)
-	 * @return the vector to the closest point when collision may occur
-	 */
-	public static Vector2D getNearestCollisionPoint(WorldState ls, boolean am_i_blue, Point2D.Double point) {
-		return getNearestCollisionPoint(ls, am_i_blue, point, true);
-	}
-
-	/**
-	 * Returns the vector to the closest collision point in the world (wall or enemy)
-	 * 
-	 * @param ls current world in centimeters
-	 * @param am_i_blue true if my robot is blue, false otherwise; prevents testing with itself
-	 * @param point the point to be tested, usually a point inside the robot (more usually edges of my robot)
-	 * @param include_enemy whether to include enemy
-	 * @return the vector to the closest point when collision may occur
-	 */
-	public static Vector2D getNearestCollisionPoint(WorldState ls, boolean am_i_blue, Point2D.Double point, boolean include_enemy) {
-		Robot enemy = am_i_blue ? ls.getYellowRobot() : ls.getBlueRobot();
-		Vector2D[] enemy_pts = new Vector2D[] {
-				new Vector2D(enemy.getFrontLeft()),
-				new Vector2D(enemy.getFrontRight()),
-				new Vector2D(enemy.getBackLeft()),
-				new Vector2D(enemy.getBackRight())
-		};
-		// top wall test
-		Vector2D temp = Vector2D.subtract(new Vector2D(0, WorldState.PITCH_HEIGHT_CM), new Vector2D(0, point.getY()));
-		Vector2D min = temp;
-		// bottom wall test
-		temp = Vector2D.subtract(new Vector2D(0, 0), new Vector2D(0, point.getY()));
-		if (temp.getLength() < min.getLength())
-			min = temp;
-		// left wall test
-		temp = Vector2D.subtract(new Vector2D(0, 0), new Vector2D(point.getX(), 0));
-		if (temp.getLength() < min.getLength())
-			min = temp;
-		// right wall test
-		temp = Vector2D.subtract(new Vector2D(WorldState.PITCH_WIDTH_CM, 0), new Vector2D(point.getX(), 0));
-		if (temp.getLength() < min.getLength())
-			min = temp;
-		// closest distance to enemy
-		if (include_enemy) {
-			temp = closestDistance(enemy_pts, new Vector2D(point));
-			if (temp.getLength() < min.getLength())
-				min = temp;
-		}
-		// we have our point
-		return min;
-	}
-
-	/**
-	 * Return the distance to the closest point in the set
-	 * @param pts set of points
-	 * @param pt the point we are standing at
-	 * @return the distance from my point to the closest one in the set
-	 */
-	private static Vector2D closestDistance(Vector2D[] pts, Vector2D pt) {
-		Vector2D min = null;
-		for (int i = 0; i < pts.length; i++) {
-			Vector2D temp = Vector2D.subtract(pts[i], pt);
-			if (min == null || temp.getLength() < min.getLength())
-				min = temp;
-		}
-		return min;
-	}
-
-
-
-	/**
-	 * Gets how many degrees should a robot turn in order to face a point
-	 * Units don't matter as long as they are consistent.
-	 * @param me
-	 * @param point
-	 * @return
-	 */
-	public static double getTurningAngle(Robot me, Vector2D point) {
-		return Utilities.normaliseAngle(-me.getAngle()+Vector2D.getDirection(new Vector2D(-me.getCoords().getX()+point.getX(), -me.getCoords().getY()+point.getY())));
-	}
-
-	/**
-	 * Transforms a vector from table coVector2D origin = getGlobalVector(robot, local_origin);
-		Vector2D direction = Vector2D.subtract(origin, getGlobalVector(robot, local_direction));ordinates to robot coordinates
-	 * @param me
-	 * @param vector
-	 * @return
-	 */
-	public static Vector2D getLocalVector(Robot me, Vector2D vector) {
-		return Vector2D.rotateVector(Vector2D.subtract(vector, new Vector2D(me.getCoords())), -me.getAngle());
-	}
-
-	/**
-	 * Converts local coordinate (generated by {@link #getLocalVector(Robot, Vector2D)}) to a table coordinate.
-	 * @param me
-	 * @param local
-	 * @return
-	 */
-	public static Vector2D getGlobalVector(Robot me, Vector2D local) {
-		return  Vector2D.add(
-				Vector2D.rotateVector(local, me.getAngle()),
-				new Vector2D(me.getCoords()));
-	}
-	
-	
-	/**
-	 * Create an obstacle bitfield.
-	 * 
-	 * @param ballIsObstacle Whether the ball is an obstacle.
-	 * @param blueIsObstacle Whether the blue robot is an obstacle.
-	 * @param yellowIsObstacle Whether the yellow robot is an obstacle.
-	 * @return Obstacle bitfield that matches the given parameter values.
-	 */
-	public static int makeObstacleFlags(boolean ballIsObstacle, boolean blueIsObstacle,
-			boolean yellowIsObstacle) {
-		int flags = 0;
-		if (ballIsObstacle) {
-			flags |= BALL_IS_OBSTACLE_FLAG;
-		}
-		if (blueIsObstacle) {
-			flags |= BLUE_IS_OBSTACLE_FLAG;
-		}
-		if (yellowIsObstacle) {
-			flags |= YELLOW_IS_OBSTACLE_FLAG;
-		}
-		
-		return flags;
-	}
-	
-	
-	/**
-	 * Create an obstacle bitfield to match our opponent robot.
-	 * 
-	 * @param ballIsObstacle Whether the ball is an obstacle.
-	 * @param isOwnTeamBlue Whether our robot is blue.
-	 * @return Obstacle bitfield that matches the opponent robot.
-	 */
-	public static int makeObstacleFlagsForOpponent(boolean ballIsObstacle,
-			boolean isOwnTeamBlue) {
-		return makeObstacleFlags(ballIsObstacle, !isOwnTeamBlue, isOwnTeamBlue);
-	}
-
-
-	/**
-	 * Find the closest collision from the given point in the specified
-	 * direction and return it as a vector. The vector's direction will match
-	 * the given parameter and its length will match the distance to the first
-	 * collision.
-	 * 
-	 * @param state World state in which to perform the search.
-	 * @param origin The point from which to cast the ray.
-	 * @param direction Direction of the ray.
-	 * @param obstacles A bitfield that is expected to contain any combination
-	 * 		of flags BALL_IS_OBSTACLE_FLAG, BLUE_IS_OBSTACLE_FLAG and
-	 * 		YELLOW_IS_OBSTACLE_FLAG. It denotes which objects are considered
-	 * 		to be obstacles.
-	 * @return Collision vector, as described above.
-	 */
-	public static Vector2D getClosestCollisionVec(WorldState state, Vector2D origin,
-			Vector2D direction, int obstacles) {
-		if (!Utilities.isPointInPitch(origin)) {
-			return Vector2D.ZERO();
-		}
-
-		class VectorPair {
-			public Vector2D vec1;
-			public Vector2D vec2;
-			
-			public VectorPair(Vector2D vec1, Vector2D vec2) {
-				this.vec1 = vec1;
-				this.vec2 = vec2;
-			}
-		}		
-		ArrayList<VectorPair> segments = new ArrayList<VectorPair>();
-		
-		// Wall collisions.
-		segments.add(new VectorPair(
-				new Vector2D(0.0, 0.0),
-				new Vector2D(WorldState.PITCH_WIDTH_CM, 0.0))
-		);
-		segments.add(new VectorPair(
-				new Vector2D(WorldState.PITCH_WIDTH_CM, 0.0),
-				new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM))
-		);
-		segments.add(new VectorPair(
-				new Vector2D(WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM),
-				new Vector2D(0.0, WorldState.PITCH_HEIGHT_CM))
-		);
-		segments.add(new VectorPair(
-				new Vector2D(0.0, WorldState.PITCH_HEIGHT_CM),
-				new Vector2D(0.0, 0.0))
-		);
-		
-		// Ball collisions.
-		if ((obstacles & BALL_IS_OBSTACLE_FLAG) != 0) {
-			Vector2D perpDir = Vector2D.getPerpendicular(direction);
-			Vector2D offsetVec1 = Vector2D.changeLength(perpDir, BALL_OBSTACLE_RADIUS);
-			Vector2D offsetVec2 = Vector2D.changeLength(perpDir, -BALL_OBSTACLE_RADIUS);
-			
-			segments.add(new VectorPair(
-					Vector2D.add(new Vector2D(state.getBallCoords()), offsetVec1),
-					Vector2D.add(new Vector2D(state.getBallCoords()), offsetVec2))
-			);
-		}
-		
-		// Blue robot collisions.
-		if ((obstacles & BLUE_IS_OBSTACLE_FLAG) != 0) {
-			segments.add(new VectorPair(
-					new Vector2D(state.getBlueRobot().getFrontLeft()),
-					new Vector2D(state.getBlueRobot().getFrontRight()))
-			);
-			segments.add(new VectorPair(
-					new Vector2D(state.getBlueRobot().getFrontRight()),
-					new Vector2D(state.getBlueRobot().getBackRight()))
-			);
-			segments.add(new VectorPair(
-					new Vector2D(state.getBlueRobot().getBackRight()),
-					new Vector2D(state.getBlueRobot().getBackLeft()))
-			);
-			segments.add(new VectorPair(
-					new Vector2D(state.getBlueRobot().getBackLeft()),
-					new Vector2D(state.getBlueRobot().getFrontLeft()))
-			);
-		}
-		
-		// Yellow robot collisions.
-		if ((obstacles & YELLOW_IS_OBSTACLE_FLAG) != 0) {
-			segments.add(new VectorPair(
-					new Vector2D(state.getYellowRobot().getFrontLeft()),
-					new Vector2D(state.getYellowRobot().getFrontRight()))
-			);
-			segments.add(new VectorPair(
-					new Vector2D(state.getYellowRobot().getFrontRight()),
-					new Vector2D(state.getYellowRobot().getBackRight()))
-			);
-			segments.add(new VectorPair(
-					new Vector2D(state.getYellowRobot().getBackRight()),
-					new Vector2D(state.getYellowRobot().getBackLeft()))
-			);
-			segments.add(new VectorPair(
-					new Vector2D(state.getYellowRobot().getBackLeft()),
-					new Vector2D(state.getYellowRobot().getFrontLeft()))
-			);
-		}
-		
-		// Actual collision test.
-		Vector2D nearest = Vector2D.changeLength(direction, WorldState.PITCH_WIDTH_CM);
-		for (VectorPair segment : segments) {
-			Vector2D current = GeomUtils.getLocalRaySegmentIntersection(origin, direction,
-					segment.vec1, segment.vec2);
-			if ((current != null) && (current.getLength() < nearest.getLength())) {
-				nearest = current;
-			}
-		}
-		
-		return nearest;
-	}
-	
-	/**
-	 * Find the closest collision from the given point in the specified
-	 * direction and return the distance to it.
-	 * 
-	 * @param state World state in which to perform the search.
-	 * @param origin The point from which to cast the ray.
-	 * @param direction Direction of the ray.
-	 * @param obstacles A bitfield that is expected to contain any combination
-	 * 		of flags BALL_IS_OBSTACLE_FLAG, BLUE_IS_OBSTACLE_FLAG and
-	 * 		YELLOW_IS_OBSTACLE_FLAG. It denotes which objects are considered
-	 * 		to be obstacles.
-	 * @return Distance to the closest collision, as described above.
-	 */
-	public static double getClosestCollisionDist(WorldState state, Vector2D origin,
-			Vector2D direction, int obstacles) {
-		Vector2D collVec = getClosestCollisionVec(state, origin, direction, obstacles);
-		return collVec.getLength();
-	}
-	
-	
-	/**
-	 * Get the closest collision from a robot positioned in the starting
-	 * point, looking into the direction of the specified point. Two values
-	 * are reported: shortest collision of the left and the right sides of
-	 * the robot.
-	 * 
-	 * Here is a "helpful" graphic:
-	 * 
-	 *  v- left side                                   /\ <- obstacle         |
-	 * +----+--------------left collision vector----->[||]                    |
-	 * |o |=| <- robot facing east                     \/       O <- target   |
-	 * +----+--------------right collision vector---------------------------->|
-	 *  ^- right side                                                 wall -> |
-	 * 
-	 * @param state Current world state.
-	 * @param dirPt Point, in whose direction the check will be performed.
-	 * @param widthFactor Factor by which the robot width we consider is
-	 * 		modified.
-	 * @param obstacles A bitfield that is expected to contain any combination
-	 * 		of flags BALL_IS_OBSTACLE_FLAG, BLUE_IS_OBSTACLE_FLAG and
-	 * 		YELLOW_IS_OBSTACLE_FLAG. It denotes which objects are considered
-	 * 		to be obstacles.
-	 * @return Left and right collision distances, as described above.
-	 */
-	public static Vector2D[] getClosestSideCollisions(WorldState state,
-			Vector2D startPt, Vector2D dirPt, double widthFactor, int obstacles) {
-		Vector2D dir = Vector2D.subtract(dirPt, startPt);
-		double angle = (-dir.getDirection() + 90) * Math.PI / 180d;
-		
-		double factor = widthFactor * Robot.WIDTH_CM / 2;
-		double cos = Math.cos(angle);
-		double sin = Math.sin(angle);
-		
-		Vector2D leftOffset = new Vector2D(cos * factor, sin * factor);
-		Vector2D leftStartPt = Vector2D.add(startPt, leftOffset);
-		Vector2D leftColl = getClosestCollisionVec(state, leftStartPt, dir, obstacles);
-		
-		Vector2D rightOffset = new Vector2D(-cos * factor, -sin * factor);
-		Vector2D rightStartPt = Vector2D.add(startPt, rightOffset);
-		Vector2D rightColl = getClosestCollisionVec(state, rightStartPt, dir, obstacles);
-		
-		Vector2D retValue[] = { leftColl, rightColl };
-		return retValue;
-	}
-	
-	
-	/**
-	 * Check whether a robot could drive between two points in a straight line
-	 * without colliding with anything.
-	 * 
-	 * This function is pessimistic, since it considers a tunnel that is a bit
-	 * wider than the robot.
-	 * 
-	 * @param state Current world state.
-	 * @param point1 One of the path's endpoints.
-	 * @param point2 Another of the path's endpoints.
-	 * @param widthFactor Factor by which the robot width we consider is
-	 * 		modified.
-	 * @param obstacles A bitfield that is expected to contain any combination
-	 * 		of flags BALL_IS_OBSTACLE_FLAG, BLUE_IS_OBSTACLE_FLAG and
-	 * 		YELLOW_IS_OBSTACLE_FLAG. It denotes which objects are considered
-	 * 		to be obstacles.
-	 * @return Whether the path between two points is clear.
-	 */
-	public static boolean isDirectPathClear(WorldState state, Vector2D point1,
-			Vector2D point2, int obstacles) {
-		double pathLength = Vector2D.subtract(point2, point1).getLength();		
-		double widthFactors[] = { 0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5 };
-		
-		for (double factor : widthFactors) {
-			Vector2D sideColls[] = Utilities.getClosestSideCollisions(state, point1,
-					point2, factor, obstacles);
-			if ((sideColls[0].getLength() < pathLength)
-					|| (sideColls[1].getLength() < pathLength)) {
-				return false;
-			}
-		}
-		
-		return true;
-	}
-	
-
-	/**
 	 * Change in state of a robot
 	 */
 	private static double delta(Robot old_r, Robot new_r) {
@@ -953,15 +473,15 @@ public class Utilities {
 	 * @return the vector distance to the closest collision point a.k.a. the minimum distance determined by the scanning vector which swept the sector scan_count times.
 	 */
 	public static Vector2D getSector(WorldState ws, boolean am_i_blue, double start_angle, double end_angle, int scan_count, boolean include_ball_as_obstacle) {
-		start_angle = Utilities.normaliseAngle(start_angle);
-		end_angle = Utilities.normaliseAngle(end_angle);
+		start_angle = GeomUtils.normaliseAngle(start_angle);
+		end_angle = GeomUtils.normaliseAngle(end_angle);
 		final Robot me = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot();
 		final Vector2D zero = Vector2D.ZERO();
 		Double min_dist = null;
 		Vector2D min_vec = null;
-		final double sector_angle = Utilities.normaliseAngle(end_angle-start_angle);
+		final double sector_angle = GeomUtils.normaliseAngle(end_angle-start_angle);
 		final double scan_angle = sector_angle/scan_count;
-		for (double angle = start_angle; Utilities.normaliseAngle(end_angle-angle) * sector_angle >= 0; angle+=scan_angle) {
+		for (double angle = start_angle; GeomUtils.normaliseAngle(end_angle-angle) * sector_angle >= 0; angle+=scan_angle) {
 			final double ang_rad = angle*Math.PI/180d;
 			final Vector2D distV = DeprecatedCode.raytraceVector(ws, me, zero, new Vector2D(-Math.cos(ang_rad), Math.sin(ang_rad)), am_i_blue, include_ball_as_obstacle);
 			final double dist = distV.getLength();
@@ -982,8 +502,8 @@ public class Utilities {
 		double sec_angle = 360d/sector_count;
 		for (int i = 0; i < sector_count; i++)
 			ans[i] = normalize_to_1 ?
-					NNetTools.AI_normalizeDistanceTo1(getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle), WorldState.PITCH_WIDTH_CM) :
-						getSector(ws, am_i_blue, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle).getLength();
+					NNetTools.AI_normalizeDistanceTo1(getSector(ws, am_i_blue, GeomUtils.normaliseAngle(-90+i*sec_angle), GeomUtils.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle), WorldState.PITCH_WIDTH_CM) :
+						getSector(ws, am_i_blue, GeomUtils.normaliseAngle(-90+i*sec_angle), GeomUtils.normaliseAngle(-90+(i+1)*sec_angle), scan_count, include_ball_as_obstacle).getLength();
 					return ans;
 	}
 
@@ -995,7 +515,7 @@ public class Utilities {
 		double[] ans = new double[sector_count];
 		double sec_angle = 360d/sector_count;
 		for (int i = 0; i < sector_count; i++)
-			ans[i] = NNetTools.AI_normalizeDistanceTo1(NNetTools.targetInSector(relative, Utilities.normaliseAngle(-90+i*sec_angle), Utilities.normaliseAngle(-90+(i+1)*sec_angle)), WorldState.PITCH_WIDTH_CM);
+			ans[i] = NNetTools.AI_normalizeDistanceTo1(NNetTools.targetInSector(relative, GeomUtils.normaliseAngle(-90+i*sec_angle), GeomUtils.normaliseAngle(-90+(i+1)*sec_angle)), WorldState.PITCH_WIDTH_CM);
 		return ans;
 	}
 	

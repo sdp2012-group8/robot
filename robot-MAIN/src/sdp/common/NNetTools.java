@@ -1,6 +1,9 @@
 package sdp.common;
 
+import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
+import sdp.common.world.Robot;
+import sdp.common.world.WorldState;
 
 /**
  * Neural network shared tools
@@ -31,7 +34,7 @@ public class NNetTools {
 		switch (id) {
 		case 0:
 			Vector2D ball = new Vector2D(worldState.getBallCoords());
-			Vector2D ball_rel = Utilities.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
+			Vector2D ball_rel = Robot.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
 			double reach = DeprecatedCode.reachability(worldState, ball, am_i_blue, false, Robot.LENGTH_CM) ? 1 : -1;
 			return Utilities.concat(
 					Utilities.getSectors(worldState, am_i_blue, 5, 22, true, false),
@@ -43,7 +46,7 @@ public class NNetTools {
 		case 1:
 
 			Vector2D goal = my_goal_left ? new Vector2D(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_CENTRE_Y ) : new Vector2D(0 , WorldState.GOAL_CENTRE_Y );
-			Vector2D goal_rel = Utilities.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), goal);
+			Vector2D goal_rel = Robot.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), goal);
 			return Utilities.concat(
 					Utilities.getSectors(worldState, am_i_blue, 5, 22, true, false),
 					Utilities.getTargetInSectors(goal_rel, 22),
@@ -57,13 +60,13 @@ public class NNetTools {
 	
 	public static Vector2D targetInSector(Vector2D relative, double start_angle, double end_angle) {
 		double ang = Vector2D.getDirection(relative);
-		if (Utilities.normaliseAngle(end_angle - start_angle) < 0) {
+		if (GeomUtils.normaliseAngle(end_angle - start_angle) < 0) {
 			double temp = start_angle;
 			start_angle = end_angle;
 			end_angle = temp;
 		}
 
-		return Utilities.normaliseAngle(ang - start_angle) >= 0 && Utilities.normaliseAngle(ang - end_angle) < 0 ? relative : new Vector2D(5*WorldState.PITCH_WIDTH_CM, 0);
+		return GeomUtils.normaliseAngle(ang - start_angle) >= 0 && GeomUtils.normaliseAngle(ang - end_angle) < 0 ? relative : new Vector2D(5*WorldState.PITCH_WIDTH_CM, 0);
 	}
 	
 

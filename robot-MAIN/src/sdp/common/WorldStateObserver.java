@@ -3,6 +3,8 @@ package sdp.common;
 import java.util.Observable;
 import java.util.Observer;
 
+import sdp.common.world.WorldState;
+
 
 /**
  * A wrapper for WorldStateProvider.getCurrentState() method that allows to

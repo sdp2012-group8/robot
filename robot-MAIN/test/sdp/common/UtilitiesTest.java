@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import sdp.common.geometry.GeomUtils;
+import sdp.common.world.Robot;
 
 public class UtilitiesTest {
 
@@ -36,9 +37,9 @@ public class UtilitiesTest {
 	 * Checks pointInRobot
 	 */
 	public void testPointInRobot(){
-		assertTrue(Utilities.isPointInRobot(new Point2D.Double(0,1), robot)); 
-		assertTrue(Utilities.isPointInRobot(new Point2D.Double(9,8), robot)); 
-		assertTrue(Utilities.isPointInRobot(new Point2D.Double(41.12771286455945, 76.14973554308418), enemyRobot));
+		assertTrue(Robot.isPointInRobot(new Point2D.Double(0,1), robot)); 
+		assertTrue(Robot.isPointInRobot(new Point2D.Double(9,8), robot)); 
+		assertTrue(Robot.isPointInRobot(new Point2D.Double(41.12771286455945, 76.14973554308418), enemyRobot));
 	}
 	
 	@Test
@@ -47,13 +48,13 @@ public class UtilitiesTest {
 	 */
 	public void testPointAroundRobot(){
 
-		assertTrue(Utilities.isPointAroundRobot(new Point2D.Double(0,1), robot)); //inside robot
-		assertTrue(Utilities.isPointAroundRobot(new Point2D.Double(9,8), robot)); //inside robot
-		assertTrue(Utilities.isPointAroundRobot(new Point2D.Double(11,8), robot)); //outside robot
-		assertTrue(Utilities.isPointAroundRobot(new Point2D.Double(-11,-9), robot)); //outside robot
-		assertFalse(Utilities.isPointAroundRobot(new Point2D.Double(-31,-9), robot)); //outside robot
-		assertFalse(Utilities.isPointAroundRobot(new Point2D.Double(40,15), robot)); //outside robot
-		assertTrue(Utilities.isPointAroundRobot(new Point2D.Double(41.12771286455945, 76.14973554308418), enemyRobot)); //outside robot
+		assertTrue(Robot.isPointAroundRobot(new Point2D.Double(0,1), robot)); //inside robot
+		assertTrue(Robot.isPointAroundRobot(new Point2D.Double(9,8), robot)); //inside robot
+		assertTrue(Robot.isPointAroundRobot(new Point2D.Double(11,8), robot)); //outside robot
+		assertTrue(Robot.isPointAroundRobot(new Point2D.Double(-11,-9), robot)); //outside robot
+		assertFalse(Robot.isPointAroundRobot(new Point2D.Double(-31,-9), robot)); //outside robot
+		assertFalse(Robot.isPointAroundRobot(new Point2D.Double(40,15), robot)); //outside robot
+		assertTrue(Robot.isPointAroundRobot(new Point2D.Double(41.12771286455945, 76.14973554308418), enemyRobot)); //outside robot
 		
 	}
 	

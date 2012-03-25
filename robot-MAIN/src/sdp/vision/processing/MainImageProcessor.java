@@ -12,10 +12,10 @@ import com.googlecode.javacpp.Loader;
 import static com.googlecode.javacv.cpp.opencv_core.*;
 import static com.googlecode.javacv.cpp.opencv_imgproc.*;
 
-import sdp.common.Robot;
 import sdp.common.Utilities;
-import sdp.common.WorldState;
 import sdp.common.geometry.GeomUtils;
+import sdp.common.world.Robot;
+import sdp.common.world.WorldState;
 
 
 /**

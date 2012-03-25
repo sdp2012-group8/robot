@@ -7,6 +7,9 @@ import java.util.Iterator;
 import sdp.AI.AIWorldState;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
+import sdp.common.world.Goal;
+import sdp.common.world.Robot;
+import sdp.common.world.WorldState;
 
 
 /**
@@ -64,7 +67,7 @@ public class DeprecatedCode {
 		// collision with ball
 		if (include_ball_as_obstacle) {
 			Vector2D ball = new Vector2D(ws.getBallCoords());
-			temp = GeomUtils.getLocalRaySegmentIntersection(origin, direction, new Vector2D(ball.getX(), ball.getY()-Utilities.SIZE_OF_BALL_OBSTACLE/2), new Vector2D(ball.getX(), ball.getY()+Utilities.SIZE_OF_BALL_OBSTACLE/2));
+			temp = GeomUtils.getLocalRaySegmentIntersection(origin, direction, new Vector2D(ball.getX(), ball.getY()-DeprecatedCode.SIZE_OF_BALL_OBSTACLE/2), new Vector2D(ball.getX(), ball.getY()+DeprecatedCode.SIZE_OF_BALL_OBSTACLE/2));
 			if (temp != null && (near == null || temp.getLength() < near.getLength()))
 				near = temp;
 		}
@@ -102,8 +105,8 @@ public class DeprecatedCode {
 	 */
 	@Deprecated
 	public static Vector2D raytraceVector(WorldState ws, Robot robot, Vector2D local_origin, Vector2D local_direction,  Boolean am_i_blue, boolean include_ball_as_obstacle) {
-		Vector2D origin = Utilities.getGlobalVector(robot, local_origin);
-		Vector2D direction = Vector2D.subtract(origin, Utilities.getGlobalVector(robot, local_direction));
+		Vector2D origin = Robot.getGlobalVector(robot, local_origin);
+		Vector2D direction = Vector2D.subtract(origin, Robot.getGlobalVector(robot, local_direction));
 		return raytraceVector(ws, origin, direction, am_i_blue, include_ball_as_obstacle);
 	}
 	
@@ -171,7 +174,7 @@ public class DeprecatedCode {
 			//System.out.println(temp_point);
 			
 			if (DeprecatedCode.isPointInField(temp_point)) { 
-				if (!Utilities.isPointAroundRobot(temp_point, enemy_robot) && Utilities.lineIntersectsRobot(temp_point, ws.getBallCoords(),
+				if (!Robot.isPointAroundRobot(temp_point, enemy_robot) && Utilities.lineIntersectsRobot(temp_point, ws.getBallCoords(),
 						enemy_robot)) {
 					//System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
 					//System.out.println("Min distance: "+min_distance);
@@ -255,7 +258,7 @@ public class DeprecatedCode {
 			Point2D.Double temp_point = Utilities.getPointBehindBall(point, ws.getBallCoords(), ws.isOwnGoalLeft(), point_offset);
 	
 			if (DeprecatedCode.isPointInField(temp_point)) { 
-				if (!Utilities.isPointAroundRobot(temp_point, enemy_robot)) {
+				if (!Robot.isPointAroundRobot(temp_point, enemy_robot)) {
 					//System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
 					//System.out.println("Min distance: "+min_distance);
 					if (Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength() < min_distance) {
@@ -392,5 +395,8 @@ public class DeprecatedCode {
 		}
 		return false;
 	}
+
+	/** Size of the ball obstacle. */
+	public static final double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
 
 }
