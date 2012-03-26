@@ -22,9 +22,9 @@ public class WorldState {
 	public static final int YELLOW_IS_OBSTACLE_FLAG = 0x4;
 	
 	/** Radius of the ball obstacle circle. */
-	public static final double BALL_OBSTACLE_RADIUS = Robot.LENGTH_CM / 2 + 10;
+	public static final double BALL_OBSTACLE_RADIUS = 10;
 	/** Radius of the robot obstacle circle. */
-	public static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM / 2 + Robot.LENGTH_CM * 0.8;
+	public static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 1.5;
 	
 	/** Height of the pitch in centimetres. */
 	public static final double PITCH_HEIGHT_CM = 113.7;

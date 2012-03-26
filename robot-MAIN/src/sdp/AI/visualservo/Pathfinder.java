@@ -7,6 +7,7 @@ import sdp.AI.AIWorldState;
 import sdp.common.geometry.Circle;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
+import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 
 
@@ -17,9 +18,9 @@ import sdp.common.world.WorldState;
 public class Pathfinder {
 	
 	/** The amount, by which the collision points are pushed from obstacles. */
-	private static double COLLISION_ADJUSTMENT = 10.0;
+	private static double COLLISION_ADJUSTMENT = Robot.LENGTH_CM * 0.6;
 	/** Largest number of waypoints a path can consist of. */
-	private static int MAX_WAYPOINT_COUNT = 10;
+	private static int MAX_WAYPOINT_COUNT = 8;
 	
 	
 	/**
@@ -73,36 +74,39 @@ public class Pathfinder {
 		
 		double minPathCost = Double.MAX_VALUE;
 		ArrayList<Waypoint> bestPath = null;
-		
-		for (Circle curObstacle : obstacles) {
-			if (true) {
-				Point2D.Double obsPoints[] = GeomUtils.circleTangentPoints(curObstacle, startVecAdj);
 				
-				if (obsPoints != null) {
-					for (Point2D.Double pt : obsPoints) {
-						pt = GeomUtils.changePointDistanceToCircle(curObstacle, pt,
-								curObstacle.getRadius() + COLLISION_ADJUSTMENT);
-						Vector2D ptDir = Vector2D.subtract(new Vector2D(pt), startVecAdj);
+		for (Circle curObstacle : obstacles) {
+			if (bestPath != null) {
+				break;
+			}
+			
+			Point2D.Double obsPoints[] = GeomUtils.circleTangentPoints(curObstacle, startVecAdj);
+			if (obsPoints == null) {
+				continue;
+			}
+			
+			for (Point2D.Double pt : obsPoints) {
+				pt = GeomUtils.changePointDistanceToCircle(curObstacle, pt,
+						curObstacle.getRadius() + COLLISION_ADJUSTMENT);
+				Vector2D ptDir = Vector2D.subtract(new Vector2D(pt), startVecAdj);
+				
+				if (!WorldState.isDirectPathClear(worldState, startVecAdj, new Vector2D(pt), obstacleFlag)) {
+					continue;
+				}
+				
+				ArrayList<Waypoint> curPath = getPath(worldState, pt, ptDir.getDirection(),
+						dest, obstacleFlag, depth + 1);
+				
+				if (curPath != null) {
+					double curCost = curPath.get(0).getCostToDest() + ptDir.getLength();
+					if (curCost < minPathCost) {
+						minPathCost = curCost;
+						bestPath = curPath;
 						
-						if (!WorldState.isDirectPathClear(worldState, startVecAdj, new Vector2D(pt), obstacleFlag)) {
-							continue;
-						}
-						
-						ArrayList<Waypoint> curPath = getPath(worldState, pt, ptDir.getDirection(),
-								dest, obstacleFlag, depth + 1);
-						
-						if (curPath != null) {
-							double curCost = curPath.get(0).getCostToDest();
-							if (curCost < minPathCost) {
-								minPathCost = curCost;
-								bestPath = curPath;
-								
-								Point2D.Double ptLocal = GeomUtils.getLocalPoint(startVec,
-										Vector2D.getDirectionUnitVector(startAngle), pt);
-								bestPath.add(0, new Waypoint(new Vector2D(ptLocal),
-										curCost + ptDir.getLength(), false));
-							}
-						}
+						Point2D.Double ptLocal = GeomUtils.getLocalPoint(startVec,
+								Vector2D.getDirectionUnitVector(startAngle), pt);
+						bestPath.add(0, new Waypoint(new Vector2D(ptLocal),
+								curCost, false));
 					}
 				}
 			}
