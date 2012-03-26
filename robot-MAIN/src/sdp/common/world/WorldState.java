@@ -382,6 +382,7 @@ public class WorldState {
 	 *  ^- right side                                                 wall -> |
 	 * 
 	 * @param state Current world state.
+	 * @param startPt Point, from which to begin checks.
 	 * @param dirPt Point, in whose direction the check will be performed.
 	 * @param widthFactor Factor by which the robot width we consider is
 	 * 		modified.
@@ -429,7 +430,7 @@ public class WorldState {
 	public static boolean isDirectPathClear(WorldState state, Vector2D point1,
 			Vector2D point2, int obstacles) {
 		double pathLength = Vector2D.subtract(point2, point1).getLength();		
-		double widthFactors[] = { 0.0, 0.25, 0.5, 0.75, 1.0, 1.2 };
+		double widthFactors[] = { 0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5 };
 		
 		for (double factor : widthFactors) {
 			Vector2D sideColls[] = getClosestSideCollisions(state, point1,
