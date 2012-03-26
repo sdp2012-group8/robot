@@ -62,5 +62,16 @@ public class Circle {
 	public void setRadius(double radius) {
 		this.radius = radius;
 	}
+	
+	
+	/**
+	 * Check whether some point is contained by this circle.
+	 * 
+	 * @param point Point of interest.
+	 * @return Whether the specified point is inside the circle.
+	 */
+	public boolean containsPoint(Point2D.Double point) {
+		return (Point2D.distance(point.x, point.y, centre.x, centre.y) <= radius);
+	}
 
 }

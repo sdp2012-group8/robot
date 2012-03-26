@@ -1,4 +1,4 @@
-package sdp.AI;
+package sdp.AI.visualservo;
 
 import sdp.common.geometry.Vector2D;
 
@@ -17,6 +17,8 @@ public final class Waypoint {
 	/** The angle by which to turn to face the target. */
 	private double targetTurnAngle;
 	
+	/** Path's remaining cost. */
+	private double costToDest;
 	/** Whether the endpoint at the end of a path. */
 	private boolean isEndpoint;
 	
@@ -30,8 +32,24 @@ public final class Waypoint {
 	 * @param target Target point in robot-relative coordinates.
 	 * @param isEndpoint Whether the target is at the end of a path.
 	 */
+	@Deprecated
 	public Waypoint(Vector2D target, boolean isEndpoint) {
+		this(target, 0.0, isEndpoint);
+	}
+	
+	/**
+	 * Create a new waypoint.
+	 * 
+	 * This function assumes that the robot is placed at coordinates
+	 * (0, 0) and is facing direction of 0 degrees.
+	 * 
+	 * @param target Target point in robot-relative coordinates.
+	 * @param costToDest Cost of the path from here to the destination.
+	 * @param isEndpoint Whether the target is at the end of a path.
+	 */
+	public Waypoint(Vector2D target, double costToDest, boolean isEndpoint) {
 		this.targetPoint = target;
+		this.costToDest = costToDest;
 		this.isEndpoint = isEndpoint;
 		
 		targetDist = targetPoint.getLength();
@@ -55,6 +73,15 @@ public final class Waypoint {
 	 */
 	public final double getDistance() {
 		return targetDist;
+	}
+	
+	/**
+	 * Get the remaining cost of the path.
+	 * 
+	 * @return Remaining path cost.
+	 */
+	public final double getCostToDest() {
+		return costToDest;
 	}
 
 	/**

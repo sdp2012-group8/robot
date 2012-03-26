@@ -2,7 +2,10 @@ package sdp.AI;
 
 import java.awt.geom.Point2D;
 import java.io.IOException;
+import java.util.ArrayList;
 
+import sdp.AI.visualservo.Pathfinder;
+import sdp.AI.visualservo.Waypoint;
 import sdp.common.Painter;
 import sdp.common.Utilities;
 import sdp.common.geometry.GeomUtils;
@@ -47,6 +50,9 @@ public class AIVisualServoing extends BaseAI {
 	private boolean chasing_target = true;
 
 	private Vector2D target = null;
+	
+	/** AI's pathfinder. */
+	private Pathfinder pathfinder = new Pathfinder();
 
 
 	/**
@@ -85,10 +91,11 @@ public class AIVisualServoing extends BaseAI {
 		for (int t = 0; t < 20; t++) {
 			optimalPoint = Utilities.getOptimalAttackPoint(aiWorldState, point_off, mode);
 			
-			if (optimalPoint == null)
+			if (optimalPoint == null) {
 				point_off *= 0.8;
-			else
+			} else {
 				break;
+			}
 		}
 
 		if (optimalPoint != null) {
@@ -98,8 +105,17 @@ public class AIVisualServoing extends BaseAI {
 
 		// Generate command to drive towards the target point.
 		boolean mustFaceTarget = (point_off != DEFAULT_TARG_THRESH);
+		
+		ArrayList<Waypoint> path = pathfinder.getPathForOwnRobot(aiWorldState, target, true);
+		Waypoint waypoint = null;
+		
+		if (path == null) {
+			Vector2D targetLocal = Robot.getLocalVector(aiWorldState.getOwnRobot(), target);
+			waypoint = new Waypoint(targetLocal, targetLocal.getLength(), true);
+		} else {
+			waypoint = path.get(0);
+		}
 
-		Waypoint waypoint = getNextWaypoint(target, !chasing_ball_instead);
 		return getWaypointCommand(waypoint, mustFaceTarget, SPEED_MULTIPLIER, SPEED_MULTIPLIER*180-100);
 	}
 
