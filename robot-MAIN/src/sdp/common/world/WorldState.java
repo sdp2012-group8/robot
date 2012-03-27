@@ -22,9 +22,9 @@ public class WorldState {
 	public static final int YELLOW_IS_OBSTACLE_FLAG = 0x4;
 	
 	/** Radius of the ball obstacle circle. */
-	public static final double BALL_OBSTACLE_RADIUS = 10;
+	public static final double BALL_OBSTACLE_RADIUS = 5;
 	/** Radius of the robot obstacle circle. */
-	public static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 1.5;
+	public static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.7;
 	
 	/** Height of the pitch in centimetres. */
 	public static final double PITCH_HEIGHT_CM = 113.7;
@@ -33,6 +33,11 @@ public class WorldState {
 	
 	/** Height of the goals in centimetres. */
 	public static final double GOAL_CENTRE_Y = PITCH_HEIGHT_CM / 2;
+	
+	/** Width increments of the robot ray in clear path calculations. */
+	private static final double ROBOT_RAY_INCREMENT = 0.1;
+	/** Maximum ray width of the robot in clear path calculations. */
+	private static final double ROBOT_RAY_MAX_WIDTH = 1.25;
 
 
 	/** Location of the ball. */
@@ -224,13 +229,16 @@ public class WorldState {
 		ArrayList<Circle> circles = new ArrayList<Circle>();
 		
 		if ((obstacles & BALL_IS_OBSTACLE_FLAG) != 0) {
-			circles.add(new Circle(worldState.getBallCoords(), BALL_OBSTACLE_RADIUS));
+			circles.add(new Circle(worldState.getBallCoords(),
+					BALL_OBSTACLE_RADIUS + Robot.LENGTH_CM / 2));
 		}
 		if ((obstacles & BLUE_IS_OBSTACLE_FLAG) != 0) {
-			circles.add(new Circle(worldState.getBlueRobot().getCoords(), ROBOT_OBSTACLE_RADIUS));
+			circles.add(new Circle(worldState.getBlueRobot().getCoords(),
+					ROBOT_OBSTACLE_RADIUS + Robot.LENGTH_CM / 2));
 		}
 		if ((obstacles & YELLOW_IS_OBSTACLE_FLAG) != 0) {
-			circles.add(new Circle(worldState.getYellowRobot().getCoords(), ROBOT_OBSTACLE_RADIUS));
+			circles.add(new Circle(worldState.getYellowRobot().getCoords(),
+					ROBOT_OBSTACLE_RADIUS + Robot.LENGTH_CM / 2));
 		}
 		
 		return circles;
@@ -429,16 +437,18 @@ public class WorldState {
 	 */
 	public static boolean isDirectPathClear(WorldState state, Vector2D point1,
 			Vector2D point2, int obstacles) {
-		double pathLength = Vector2D.subtract(point2, point1).getLength();		
-		double widthFactors[] = { 0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5 };
+		double pathLength = Vector2D.subtract(point2, point1).getLength();
 		
-		for (double factor : widthFactors) {
+		double factor = 0.0;
+		while (factor < ROBOT_RAY_MAX_WIDTH) {
 			Vector2D sideColls[] = getClosestSideCollisions(state, point1,
 					point2, factor, obstacles);
 			if ((sideColls[0].getLength() < pathLength)
 					|| (sideColls[1].getLength() < pathLength)) {
 				return false;
 			}
+			
+			factor += ROBOT_RAY_INCREMENT;
 		}
 		
 		return true;

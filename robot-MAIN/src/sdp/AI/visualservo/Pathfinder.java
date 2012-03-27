@@ -17,10 +17,15 @@ import sdp.common.world.WorldState;
  */
 public class Pathfinder {
 	
+	/** Radius of checked circles. */
+	private static double CHECKED_CIRCLE_RADIUS = 2.5;
 	/** The amount, by which the collision points are pushed from obstacles. */
-	private static double COLLISION_ADJUSTMENT = Robot.LENGTH_CM * 0.6;
+	private static double COLLISION_ADJUSTMENT = 10.0;
 	/** Largest number of waypoints a path can consist of. */
-	private static int MAX_WAYPOINT_COUNT = 8;
+	private static int MAX_WAYPOINT_COUNT = 30;
+	
+	/** A list of points that have been explored in a search. */
+	private ArrayList<Circle> checkedPoints = new ArrayList<Circle>();
 	
 	
 	/**
@@ -61,8 +66,11 @@ public class Pathfinder {
 			if (curObstacle.containsPoint(startVec)) {
 				startVecAdj = new Vector2D(GeomUtils.changePointDistanceToCircle(curObstacle,
 						startVec, curObstacle.getRadius() + COLLISION_ADJUSTMENT));
+				break;
 			}
 		}
+		
+		checkedPoints.add(new Circle(startVecAdj, CHECKED_CIRCLE_RADIUS));
 		
 		if (WorldState.isDirectPathClear(worldState, startVecAdj, destVec, obstacleFlag)) {
 			Vector2D destDirLocal = Vector2D.rotateVector(destDir, -startAngle);
@@ -76,19 +84,22 @@ public class Pathfinder {
 		ArrayList<Waypoint> bestPath = null;
 				
 		for (Circle curObstacle : obstacles) {
-			if (bestPath != null) {
-				break;
-			}
-			
 			Point2D.Double obsPoints[] = GeomUtils.circleTangentPoints(curObstacle, startVecAdj);
 			if (obsPoints == null) {
 				continue;
 			}
 			
+			obstaclePointLoop:
 			for (Point2D.Double pt : obsPoints) {
 				pt = GeomUtils.changePointDistanceToCircle(curObstacle, pt,
 						curObstacle.getRadius() + COLLISION_ADJUSTMENT);
 				Vector2D ptDir = Vector2D.subtract(new Vector2D(pt), startVecAdj);
+				
+				for (Circle c : checkedPoints) {
+					if (c.containsPoint(pt)) {
+						continue obstaclePointLoop;
+					}
+				}
 				
 				if (!WorldState.isDirectPathClear(worldState, startVecAdj, new Vector2D(pt), obstacleFlag)) {
 					continue;
@@ -126,6 +137,8 @@ public class Pathfinder {
 	 */
 	public ArrayList<Waypoint> getPathForOwnRobot(AIWorldState worldState,
 			Point2D.Double dest, boolean ballIsObstacle) {
+		checkedPoints.clear();
+		
 		int obstacles = WorldState.makeObstacleFlagsForOpponent(ballIsObstacle,
 				worldState.isOwnTeamBlue());
 		return getPath(worldState, worldState.getOwnRobot().getCoords(),

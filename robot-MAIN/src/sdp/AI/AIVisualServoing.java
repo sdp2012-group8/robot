@@ -2,7 +2,9 @@ package sdp.AI;
 
 import java.awt.geom.Point2D;
 import java.io.IOException;
+import java.util.ArrayList;
 
+import sdp.AI.visualservo.Pathfinder;
 import sdp.AI.visualservo.Waypoint;
 import sdp.common.Painter;
 import sdp.common.Utilities;
@@ -48,6 +50,9 @@ public class AIVisualServoing extends BaseAI {
 	private boolean chasing_target = true;
 
 	private Vector2D target = null;
+	
+	/** AI's pathfinder. */
+	private Pathfinder pathfinder = new Pathfinder();
 
 
 	/**
@@ -55,7 +60,7 @@ public class AIVisualServoing extends BaseAI {
 	 */
 	@Override
 	protected Command chaseBall() throws IOException {
-		return attack(Utilities.AttackMode.Full, true);
+		return attack(Utilities.AttackMode.Full);
 	}
 
 
@@ -63,15 +68,10 @@ public class AIVisualServoing extends BaseAI {
 	 * Get a command to attack the opponents.
 	 * 
 	 * @param mode Robot's attack mode. See {@link Utilities.AttackMode}.
-	 * @param defend Whether to consider defending the gate.
 	 * @return The next command the robot should execute.
 	 * @throws IOException 
 	 */
-	protected Command attack(Utilities.AttackMode mode, boolean defend) throws IOException {
-		if (defend && Utilities.canEnemyAttack(aiWorldState)) {
-			return defendGoal();
-		}
-
+	protected Command attack(Utilities.AttackMode mode) throws IOException {
 		// Are we ready to score?
 		if (Utilities.canWeAttack(aiWorldState)) {
 			return gotBall();
@@ -101,7 +101,18 @@ public class AIVisualServoing extends BaseAI {
 		// Generate command to drive towards the target point.
 		boolean mustFaceTarget = (point_off != DEFAULT_TARG_THRESH);
 
-		Waypoint waypoint = getNextWaypoint(target, !chasing_ball_instead);
+//		Waypoint waypoint = getNextWaypoint(target, !chasing_ball_instead);
+		ArrayList<Waypoint> path = pathfinder.getPathForOwnRobot(aiWorldState, target, !chasing_ball_instead);
+		Waypoint waypoint = null;
+		
+		if (path == null) {
+			Vector2D targetLocal = Robot.getLocalVector(aiWorldState.getOwnRobot(), target);
+			waypoint = new Waypoint(targetLocal, targetLocal.getLength(), true);
+		} else {
+			waypoint = path.get(0);
+			System.out.println(waypoint.getCostToDest() + " " + path.size());
+		}
+		
 		return getWaypointCommand(waypoint, mustFaceTarget, SPEED_MULTIPLIER, SPEED_MULTIPLIER*180-100);
 	}
 
@@ -217,7 +228,7 @@ public class AIVisualServoing extends BaseAI {
 
 
 		if(aiWorldState.getEnemyRobot().getAngle()>-90 && aiWorldState.getEnemyRobot().getAngle()<90)
-			return attack(Utilities.AttackMode.Full, false);
+			return attack(Utilities.AttackMode.Full);
 
 		if(can_we_go_to_intercept)	{			
 			if (dist > 5)
@@ -331,7 +342,7 @@ public class AIVisualServoing extends BaseAI {
 	 */
 	@Override
 	protected Command penaltiesAttack() throws IOException {
-		return attack(Utilities.AttackMode.WallsOnly, false);
+		return attack(Utilities.AttackMode.WallsOnly);
 
 		/*
 		Command command = new Command(0,0,false);
