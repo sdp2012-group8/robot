@@ -4,8 +4,10 @@ import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import sdp.AI.visualservo.Pathfinder;
-import sdp.AI.visualservo.Waypoint;
+import sdp.AI.pathfinding.FullPathfinder;
+import sdp.AI.pathfinding.HeuristicPathfinder;
+import sdp.AI.pathfinding.Pathfinder;
+import sdp.AI.pathfinding.Waypoint;
 import sdp.common.Painter;
 import sdp.common.Utilities;
 import sdp.common.geometry.GeomUtils;
@@ -17,13 +19,13 @@ public class AIVisualServoing extends BaseAI {
 
 	/** Whether the robot is allowed to drive in reverse. */
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
+	/** Whether to use the heuristic pathfinder. */
+	private static final boolean USE_HEURISTIC_PATHFINDER = false;
 
 	/** The multiplier to the final speed. */
 	private static final double SPEED_MULTIPLIER = 1;
 	private static final double TURN_SPD_MULTIPLIER = 1.8;
 
-	private static final int COLL_SECS_COUNT = 222;
-	private static final double SEC_ANGLE = 360d/COLL_SECS_COUNT;
 
 	// corner thresholds
 	private static final int THRESH_CORN_HIGH = 5;
@@ -51,8 +53,20 @@ public class AIVisualServoing extends BaseAI {
 
 	private Vector2D target = null;
 	
-	/** AI's pathfinder. */
-	private Pathfinder pathfinder = new Pathfinder();
+	/** AI's heuristic pathfinder. */
+	private Pathfinder pathfinder;
+	
+	
+	/**
+	 * Create a new visual servoing AI instance.
+	 */
+	public AIVisualServoing() {
+		if (USE_HEURISTIC_PATHFINDER) {
+			pathfinder = new HeuristicPathfinder();
+		} else {
+			pathfinder = new FullPathfinder();
+		}
+	}
 
 
 	/**
@@ -101,18 +115,7 @@ public class AIVisualServoing extends BaseAI {
 		// Generate command to drive towards the target point.
 		boolean mustFaceTarget = (point_off != DEFAULT_TARG_THRESH);
 
-//		Waypoint waypoint = getNextWaypoint(target, !chasing_ball_instead);
-		ArrayList<Waypoint> path = pathfinder.getPathForOwnRobot(aiWorldState, target, !chasing_ball_instead);
-		Waypoint waypoint = null;
-		
-		if (path == null) {
-			Vector2D targetLocal = Robot.getLocalVector(aiWorldState.getOwnRobot(), target);
-			waypoint = new Waypoint(targetLocal, targetLocal.getLength(), true);
-		} else {
-			waypoint = path.get(0);
-			System.out.println(waypoint.getCostToDest() + " " + path.size());
-		}
-		
+		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, !chasing_ball_instead);
 		return getWaypointCommand(waypoint, mustFaceTarget, SPEED_MULTIPLIER, SPEED_MULTIPLIER*180-100);
 	}
 
@@ -149,7 +152,8 @@ public class AIVisualServoing extends BaseAI {
 		
 		if (!useMilestone) {
 			Point2D.Double target = Utilities.getOptimalDefencePoint(aiWorldState);
-			Waypoint waypoint = getNextWaypoint(new Vector2D(target), true);
+			Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, true);
+
 			return getWaypointCommand(waypoint, false, SPEED_MULTIPLIER, SPEED_MULTIPLIER*180-100);
 		}
 		
@@ -232,7 +236,7 @@ public class AIVisualServoing extends BaseAI {
 
 		if(can_we_go_to_intercept)	{			
 			if (dist > 5)
-				com = getWaypointCommand(getNextWaypoint(new Vector2D(point), false), false, 1, 20);
+				com = getWaypointCommand(pathfinder.getWaypointForOurRobot(aiWorldState, point, false), false, 1, 20);
 			
 			com.acceleration = 150;
 			reduceSpeed(com, dist, 20, 0);
@@ -242,7 +246,7 @@ public class AIVisualServoing extends BaseAI {
 
 		if(aiWorldState.getEnemyRobot().getAngle()<-90 && aiWorldState.getEnemyRobot().getAngle()>-180) {
 			if (dist2 > 10)
-				com = getWaypointCommand(getNextWaypoint(new Vector2D(point2), false), false, 1, 20);
+				com = getWaypointCommand(pathfinder.getWaypointForOurRobot(aiWorldState, point2, false), false, 1, 20);
 			
 			com.acceleration = 150;
 			reduceSpeed(com, dist2, 20, 0);
@@ -252,7 +256,7 @@ public class AIVisualServoing extends BaseAI {
 
 		if(aiWorldState.getEnemyRobot().getAngle()>90 && aiWorldState.getEnemyRobot().getAngle()<180 ){
 			if (dist3 > 10)
-				com = getWaypointCommand(getNextWaypoint(new Vector2D(point3), false), false, 1, 20);
+				com = getWaypointCommand(pathfinder.getWaypointForOurRobot(aiWorldState, point3, false), false, 1, 20);
 			
 			com.acceleration = 150;
 			reduceSpeed(com, dist3, 20, 0);
@@ -386,60 +390,6 @@ public class AIVisualServoing extends BaseAI {
 				//mComm.sendMessage(opcode.kick);
 			}
 		}  */
-	}
-
-
-	/**
-	 * Find a point that the robot should go to in order to reach the specified
-	 * target point. It robot will attempt to avoid obstacles.
-	 * 
-	 * @param target Point to drive towards.
-	 * @param ballIsObstacle Whether the ball should be considered an obstacle.
-	 * @return The next command to execute.
-	 */
-	private Waypoint getNextWaypoint(Vector2D target, boolean ballIsObstacle) {
-		Vector2D targetLocal = Robot.getLocalVector(aiWorldState.getOwnRobot(), target);
-		int obstacleFlags = WorldState.makeObstacleFlagsForOpponent(ballIsObstacle, aiWorldState.isOwnTeamBlue());
-
-		Vector2D ownCoords = new Vector2D(aiWorldState.getOwnRobot().getCoords());
-		if (WorldState.isDirectPathClear(aiWorldState, ownCoords, target, obstacleFlags)) {
-			return new Waypoint(targetLocal, targetLocal.getLength(), true);
-		}
-
-		// Compute the destination point.
-		Vector2D destPoint = null;
-		double destPointDist = targetLocal.getLength();
-
-		double minAngle = Double.MAX_VALUE;
-		int iterations = 0;
-
-		while ((destPoint == null) && (iterations < 5) && (destPointDist > 0)) {
-			for (int i = 0; i < COLL_SECS_COUNT; i++) {
-				double curAngle = -90 + i * SEC_ANGLE + SEC_ANGLE / 2;
-				curAngle = GeomUtils.normaliseAngle(curAngle);
-
-				Vector2D rayDir = Vector2D.rotateVector(new Vector2D(1, 0), curAngle);
-				Vector2D rayEndLocal = Vector2D.multiply(rayDir, destPointDist);
-				Vector2D rayEnd = Robot.getGlobalVector(aiWorldState.getOwnRobot(), rayEndLocal);
-
-				if (WorldState.isDirectPathClear(aiWorldState, ownCoords, rayEnd, obstacleFlags)) {
-					double angleDiff = GeomUtils.normaliseAngle(curAngle - targetLocal.getDirection());
-					if (Math.abs(angleDiff) < Math.abs(minAngle)) {
-						minAngle = angleDiff;
-						destPoint = rayEndLocal;
-					}
-				}
-			}
-
-			++iterations;
-			destPointDist -= Robot.LENGTH_CM;
-		}
-
-		if (destPoint == null) {
-			destPoint = targetLocal;
-		}
-
-		return new Waypoint(destPoint, destPoint.getLength(), false);
 	}
 
 

@@ -1,4 +1,4 @@
-package sdp.AI.visualservo;
+package sdp.AI.pathfinding;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -12,10 +12,11 @@ import sdp.common.world.WorldState;
 
 
 /**
- * The pathfinder. This class provides facilities to compute paths to get
- * from one point to another one on the pitch.
+ * The full pathfinder. This class provides facilities to compute paths to
+ * get from one point to another one on the pitch. It does so by considering
+ * full paths towards the destination and picking the shortest one.
  */
-public class Pathfinder {
+public class FullPathfinder implements Pathfinder {
 	
 	/** Radius of checked circles. */
 	private static double CHECKED_CIRCLE_RADIUS = 2.5;
@@ -29,10 +30,37 @@ public class Pathfinder {
 	
 	
 	/**
-	 * Create a new pathfinder instance.
+	 * Create a new full pathfinder.
 	 */
-	public Pathfinder() { }
+	public FullPathfinder() { }
 	
+	
+	/**
+	 * Move the given point out of all obstacles.
+	 * 
+	 * @param obstacles A list of obstacles.
+	 * @param point Point of interest.
+	 * @return The given point, moved out of obstacles.
+	 */
+	private Vector2D movePointOutOfObstacle(ArrayList<Circle> obstacles,
+			Vector2D point) {
+		Vector2D newPoint = new Vector2D(point.x, point.y);
+		
+		boolean posChanged = true;
+		while (posChanged) {
+			posChanged = false;
+			
+			for (Circle curObstacle : obstacles) {
+				if (curObstacle.containsPoint(newPoint)) {
+					newPoint = new Vector2D(GeomUtils.changePointDistanceToCircle(curObstacle,
+							newPoint, curObstacle.getRadius() + COLLISION_ADJUSTMENT));
+					posChanged = true;
+				}
+			}
+		}
+		
+		return newPoint;
+	}
 	
 	/**
 	 * Get a path for a robot from one point to another one.
@@ -52,22 +80,14 @@ public class Pathfinder {
 		
 		Vector2D destDir = Vector2D.subtract(destVec, startVec);
 		
-		if (!WorldState.isPointInPitch(start) || !WorldState.isPointInPitch(dest)) {
+		ArrayList<Circle> obstacles = WorldState.getObstacleCircles(worldState, obstacleFlag);
+		Vector2D startVecAdj = movePointOutOfObstacle(obstacles, startVec);
+		
+		if (!WorldState.isPointInPitch(startVecAdj) || !WorldState.isPointInPitch(dest)) {
 			return null;
 		}
 		if (depth >= MAX_WAYPOINT_COUNT) {
 			return null;
-		}
-		
-		Vector2D startVecAdj = startVec;
-		ArrayList<Circle> obstacles = WorldState.getObstacleCircles(worldState, obstacleFlag);
-		
-		for (Circle curObstacle : obstacles) {
-			if (curObstacle.containsPoint(startVec)) {
-				startVecAdj = new Vector2D(GeomUtils.changePointDistanceToCircle(curObstacle,
-						startVec, curObstacle.getRadius() + COLLISION_ADJUSTMENT));
-				break;
-			}
 		}
 		
 		checkedPoints.add(new Circle(startVecAdj, CHECKED_CIRCLE_RADIUS));
@@ -143,6 +163,23 @@ public class Pathfinder {
 				worldState.isOwnTeamBlue());
 		return getPath(worldState, worldState.getOwnRobot().getCoords(),
 				worldState.getOwnRobot().getAngle(), dest, obstacles, 0);
+	}
+
+
+	/**
+	 * @see sdp.AI.pathfinding.Pathfinder#getWaypointForOurRobot(sdp.AI.AIWorldState, java.awt.geom.Point2D.Double, boolean)
+	 */
+	@Override
+	public Waypoint getWaypointForOurRobot(AIWorldState worldState,
+			java.awt.geom.Point2D.Double dest, boolean ballIsObstacle) {
+		ArrayList<Waypoint> path = getPathForOwnRobot(worldState, dest, ballIsObstacle);
+		
+		if (path == null) {
+			Vector2D targetLocal = Robot.getLocalVector(worldState.getOwnRobot(), new Vector2D(dest));
+			return new Waypoint(targetLocal, targetLocal.getLength(), true);
+		} else {
+			return path.get(0);
+		}
 	}
 
 }

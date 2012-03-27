@@ -1,4 +1,4 @@
-package sdp.AI.visualservo;
+package sdp.AI.pathfinding;
 
 import sdp.common.geometry.Vector2D;
 

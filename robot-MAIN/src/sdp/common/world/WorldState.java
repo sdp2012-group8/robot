@@ -37,7 +37,7 @@ public class WorldState {
 	/** Width increments of the robot ray in clear path calculations. */
 	private static final double ROBOT_RAY_INCREMENT = 0.1;
 	/** Maximum ray width of the robot in clear path calculations. */
-	private static final double ROBOT_RAY_MAX_WIDTH = 1.25;
+	private static final double ROBOT_RAY_MAX_WIDTH = 1.5;
 
 
 	/** Location of the ball. */
@@ -440,7 +440,7 @@ public class WorldState {
 		double pathLength = Vector2D.subtract(point2, point1).getLength();
 		
 		double factor = 0.0;
-		while (factor < ROBOT_RAY_MAX_WIDTH) {
+		while (factor <= ROBOT_RAY_MAX_WIDTH) {
 			Vector2D sideColls[] = getClosestSideCollisions(state, point1,
 					point2, factor, obstacles);
 			if ((sideColls[0].getLength() < pathLength)
