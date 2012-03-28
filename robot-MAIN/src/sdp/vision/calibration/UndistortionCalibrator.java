@@ -167,7 +167,7 @@ public class UndistortionCalibrator {
 		
 		UndistortionCalibrator calibrator = new UndistortionCalibrator();		
 		try {
-			calibrator.calibrate("data/images/checkers side", 9, 6,
+			calibrator.calibrate("data/images/checkers main 2", 9, 6,
 					intristic, distortion);
 		} catch (IOException e) {
 			System.err.println(e.getMessage());

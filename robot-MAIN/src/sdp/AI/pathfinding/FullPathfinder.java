@@ -24,10 +24,13 @@ public class FullPathfinder implements Pathfinder {
 	/** The amount, by which the collision points are pushed from obstacles. */
 	private static double COLLISION_ADJUSTMENT = 10.0;
 	/** Largest number of waypoints a path can consist of. */
-	private static int MAX_WAYPOINT_COUNT = 30;
+	private static int MAX_WAYPOINT_COUNT = 10;
 	
 	/** A list of points that have been explored in a search. */
 	private LinkedList<Circle> checkedPoints = new LinkedList<Circle>();
+	
+	/** A fallback pathfinder. */
+	private HeuristicPathfinder fallback = new HeuristicPathfinder();
 	
 	
 	/**
@@ -144,7 +147,7 @@ public class FullPathfinder implements Pathfinder {
 			}
 		}
 		
-		checkedPoints.pop();
+		//checkedPoints.pop();
 		
 		return bestPath;
 	}
@@ -178,8 +181,7 @@ public class FullPathfinder implements Pathfinder {
 		ArrayList<Waypoint> path = getPathForOwnRobot(worldState, dest, ballIsObstacle);
 		
 		if (path == null) {
-			Vector2D targetLocal = Robot.getLocalVector(worldState.getOwnRobot(), new Vector2D(dest));
-			return new Waypoint(targetLocal, targetLocal.getLength(), true);
+			return fallback.getWaypointForOurRobot(worldState, dest, ballIsObstacle);
 		} else {
 			return path.get(0);
 		}

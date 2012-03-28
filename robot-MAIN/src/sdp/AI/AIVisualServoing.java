@@ -591,7 +591,8 @@ public class AIVisualServoing extends BaseAI {
 		} else {		
 			double lossFactor = Math.abs(command.turningSpeed) / stopTurnThreshold;
 			lossFactor *= FORWARD_LOSS_MULTIPLIER;
-			command.drivingSpeed *= 1 - lossFactor;
+			lossFactor = Utilities.restrictValueToInterval(lossFactor, 0.0, 1.0).doubleValue();
+			command.drivingSpeed *= 1.0 - lossFactor;
 		}
 	}
 
