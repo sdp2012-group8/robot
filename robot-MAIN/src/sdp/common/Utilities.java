@@ -25,6 +25,9 @@ public class Utilities {
 	/** The double comparison accuracy that is required. */
 	private static final double EPSILON = 1e-8;
 	
+	/** Whether the robot should attempt to use wall kicks. */
+	public static final boolean WALL_KICKS_ENABLED = true;
+	
 	/** How close the robot should be to the ball before it attempts to kick it. */
 	public static final double OWN_BALL_KICK_DIST = 6;
 	/** How close the robot should be to the ball before it attempts to kick it. */
@@ -339,7 +342,11 @@ public class Utilities {
 		} else if (mode == AttackMode.WallsOnly) {
 			return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall, true);
 		} else {	// mode == AttackMode.Full
-			return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall);
+			if (WALL_KICKS_ENABLED) {
+				return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall);
+			} else {
+				return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall, false);
+			}
 		}
 	}
 	

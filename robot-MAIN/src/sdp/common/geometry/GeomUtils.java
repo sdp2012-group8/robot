@@ -426,7 +426,7 @@ public class GeomUtils {
 	 */
 	public static Point2D.Double changePointDistanceToCircle(Circle circle,
 			Point2D.Double point, double newDist) {
-		Vector2D circleToPoint = Vector2D.subtract(new Vector2D(circle.getCentre()), new Vector2D(point));
+		Vector2D circleToPoint = Vector2D.subtract(new Vector2D(point), new Vector2D(circle.getCentre()));
 		Vector2D newPointOffset = Vector2D.changeLength(circleToPoint, newDist);
 		Vector2D newPoint = Vector2D.add(new Vector2D(circle.getCentre()), newPointOffset);
 		
@@ -469,7 +469,7 @@ public class GeomUtils {
 		
 		double shortLeg = circle.getRadius();
 		double longLeg = Math.sqrt(hypotenuse * hypotenuse - shortLeg * shortLeg);		
-		double angle = Math.asin(circle.getRadius() / hypotenuse);
+		double angle = Math.toDegrees(Math.asin(circle.getRadius() / hypotenuse));
 		
 		Vector2D pointToCircle = Vector2D.subtract(new Vector2D(circle.getCentre()), new Vector2D(point));
 		Vector2D tangentOffset = Vector2D.changeLength(pointToCircle, longLeg);

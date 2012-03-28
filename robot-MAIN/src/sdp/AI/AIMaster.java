@@ -31,6 +31,10 @@ public class AIMaster extends WorldStateProvider {
 		VISUAL_SERVOING, NEURAL_NETWORKS
 	}
 
+	
+	/** Whether the AI's should switch to defence or not. */
+	private static final boolean DEFENCE_ENABLED = false;
+	
 	/** Distance from the goal when the AI changes from Penalty mode to play mode */
 	private static final int PENALTIES_THRESH = 30; 
 
@@ -212,7 +216,7 @@ public class AIMaster extends WorldStateProvider {
 			
 		} else if (aiState == AIState.PLAY) {
 			// PLAY -> DEFEND_GOAL
-			if (Utilities.canEnemyAttack(aiWorldState)) {
+			if (DEFENCE_ENABLED && Utilities.canEnemyAttack(aiWorldState)) {
 				setState(AIState.DEFEND_GOAL);
 			}
 						
