@@ -34,6 +34,7 @@ import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 import sdp.common.WorldStateObserver;
 import sdp.simulator.Simulator;
+import sdp.simulator.SimulatorPhysicsEngine;
 import sdp.simulator.VBrick;
 
 /**
@@ -399,7 +400,7 @@ public class SimTesterGUI {
 	private void Connect(boolean blue_selected, boolean my_goal_left) {
 		mComm = new VBrick();
 		opponentComm = new VBrick();
-		mSim = new Simulator(true);
+		mSim = new SimulatorPhysicsEngine(true);
 		
 		if (blue_selected) {
 			if (my_goal_left) {

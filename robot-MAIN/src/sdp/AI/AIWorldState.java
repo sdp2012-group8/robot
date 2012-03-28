@@ -14,6 +14,8 @@ import sdp.common.world.Goal;
 import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 import sdp.simulator.Simulator;
+import sdp.simulator.SimulatorOld;
+import sdp.simulator.SimulatorPhysicsEngine;
 import sdp.vision.processing.ImageProcessorConfig;
 
 
@@ -59,6 +61,8 @@ public class AIWorldState extends WorldState {
 	private static final int BATTERY_LOW_PERCENTAGE = 20;
 	/** Percentage, at which the battery indicator becomes green. */
 	private static final int BATTERY_HIGH_PERCENTAGE = 80;
+	
+	private static final boolean USE_NEW_SIMULATOR_FOR_PREDICTION = true;
 	
 	
 	/** The low pass filter. */
@@ -191,7 +195,7 @@ public class AIWorldState extends WorldState {
 		oldTime = System.currentTimeMillis();
 
 		WorldState[] pqStates = predictionQueue.toArray(new WorldState[0]);
-		WorldState predictedState = Simulator.simulateWs(PREDICTION_TIME, (int) fps,
+		WorldState predictedState = SimulatorOld.simulateWs(USE_NEW_SIMULATOR_FOR_PREDICTION ? new SimulatorPhysicsEngine(false) : new SimulatorOld(false, 0.000001), PREDICTION_TIME, (int) fps,
 				pqStates, true, ownLastCommand, isOwnTeamBlue);
 		
 		if (!state.isBallPresent()) {

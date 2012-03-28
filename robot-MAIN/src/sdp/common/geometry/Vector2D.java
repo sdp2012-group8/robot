@@ -2,6 +2,8 @@ package sdp.common.geometry;
 
 import java.awt.geom.Point2D;
 
+import org.jbox2d.dynamics.Body;
+
 import sdp.common.Utilities;
 
 /**
@@ -128,15 +130,15 @@ public class Vector2D extends Point2D.Double {
 	/**
 	 * Divide a vector by a scalar.
 	 * 
-	 * @param a Vector to divide.
+	 * @param positions Vector to divide.
 	 * @param k Scalar to divide by.
 	 * @return Scaled vector.
 	 */
-	public static Vector2D divide(Vector2D a, double k) {
+	public static Vector2D divide(Vector2D positions, double k) {
 		if (Utilities.areDoublesEqual(k, 0.0)) {
 			// TODO: Handle division by zero in some meaningful way.
 		}
-		return new Vector2D(a.x / k, a.y / k);
+		return new Vector2D(positions.x / k, positions.y / k);
 	}
 	
 	
