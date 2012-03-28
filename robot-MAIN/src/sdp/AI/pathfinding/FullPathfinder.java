@@ -2,6 +2,7 @@ package sdp.AI.pathfinding;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import sdp.AI.AIWorldState;
 import sdp.common.geometry.Circle;
@@ -26,7 +27,7 @@ public class FullPathfinder implements Pathfinder {
 	private static int MAX_WAYPOINT_COUNT = 30;
 	
 	/** A list of points that have been explored in a search. */
-	private ArrayList<Circle> checkedPoints = new ArrayList<Circle>();
+	private LinkedList<Circle> checkedPoints = new LinkedList<Circle>();
 	
 	
 	/**
@@ -90,7 +91,7 @@ public class FullPathfinder implements Pathfinder {
 			return null;
 		}
 		
-		checkedPoints.add(new Circle(startVecAdj, CHECKED_CIRCLE_RADIUS));
+		checkedPoints.push(new Circle(startVecAdj, CHECKED_CIRCLE_RADIUS));
 		
 		if (WorldState.isDirectPathClear(worldState, startVecAdj, destVec, obstacleFlag)) {
 			Vector2D destDirLocal = Vector2D.rotateVector(destDir, -startAngle);
@@ -142,6 +143,8 @@ public class FullPathfinder implements Pathfinder {
 				}
 			}
 		}
+		
+		checkedPoints.pop();
 		
 		return bestPath;
 	}
