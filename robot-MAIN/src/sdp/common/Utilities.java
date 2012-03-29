@@ -275,6 +275,8 @@ public class Utilities {
 	}
 
 	/**
+	 * TODO: Clean up, update docs, move somewhere more appropriate.
+	 * 
 	 * @param ws
 	 * @param am_i_blue
 	 * @param scan_count

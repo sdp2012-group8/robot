@@ -1,7 +1,6 @@
 package sdp.common;
 
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -406,6 +405,7 @@ public class DeprecatedCode {
 	 * @param point The target point on the goal the robot should be aligned to.
 	 * @return Point2D.Double behind the ball
 	 */
+	@Deprecated
 	public static Point2D.Double getPointBehindBall(Point2D.Double point, Point2D.Double ball, boolean my_goal_left, double point_offset) {
 	
 		if (point.getY() == ball.getY()) {

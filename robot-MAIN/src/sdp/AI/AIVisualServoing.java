@@ -2,6 +2,8 @@ package sdp.AI;
 
 import java.awt.geom.Point2D;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import sdp.AI.pathfinding.FullPathfinder;
 import sdp.AI.pathfinding.HeuristicPathfinder;
@@ -12,6 +14,7 @@ import sdp.common.Painter;
 import sdp.common.Utilities;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
+import sdp.common.world.Goal;
 import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 
@@ -40,6 +43,9 @@ public class AIVisualServoing extends BaseAI {
 	private static final double STOP_TURN_THRESHOLD = 120;
 	/** The multiplier of the final turning speed. */
 	private static final double TURNING_SPEED_MULTIPLIER = 1.8;
+	
+	/** The number of targets, when considering a direct attack. */
+	private static final int DIRECT_ATTACK_TARGET_COUNT = 9;
 	
 	/** How close our robot should be to the ball before it attempts to kick it. */
 	private static final double OWN_BALL_KICK_DIST = 6;
@@ -460,8 +466,8 @@ public class AIVisualServoing extends BaseAI {
 			point_off *= 0.5;
 			targ_thresh = point_off*0.5;
 		}
-		if (point_off < AIVisualServoing.OWN_BALL_KICK_DIST) {
-			point_off = AIVisualServoing.OWN_BALL_KICK_DIST;
+		if (point_off < OWN_BALL_KICK_DIST) {
+			point_off = OWN_BALL_KICK_DIST;
 		}
 
 		Vector2D ball = new Vector2D(aiWorldState.getBallCoords());
@@ -626,17 +632,72 @@ public class AIVisualServoing extends BaseAI {
 	 */
 	private Point2D.Double getOptimalAttackPoint(AIWorldState worldState,
 			double distToBall, AttackMode mode) {
-		if (mode == AttackMode.DirectOnly) {
-			return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall, false);
-		} else if (mode == AttackMode.WallsOnly) {
-			return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall, true);
-		} else {	// mode == AttackMode.Full
-			if (AIVisualServoing.WALL_KICKS_ENABLED) {
-				return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall);
-			} else {
-				return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall, false);
+		ArrayList<Point2D.Double> attackTargets = new ArrayList<Point2D.Double>();
+		
+		// Add direct attack targets, if any.
+		if ((mode == AttackMode.Full) || (mode == AttackMode.DirectOnly)) {
+			double goalHeight = worldState.getEnemyGoal().getBottom().y - worldState.getEnemyGoal().getTop().y;
+			
+			for (int i = 0; i < DIRECT_ATTACK_TARGET_COUNT; ++i) {
+				double ratio = ((double) i) / (DIRECT_ATTACK_TARGET_COUNT - 1);
+				double heightOffset = goalHeight * ratio;
+				
+				attackTargets.add(new Point2D.Double(worldState.getEnemyGoal().getTop().x,
+						worldState.getEnemyGoal().getTop().y + heightOffset));
+			}
+			attackTargets.add(worldState.getEnemyGoal().getCentre());
+		}
+		
+		// Add wall attack targets, if any.
+		if ((WALL_KICKS_ENABLED && (mode == AttackMode.Full))
+				|| (mode == AttackMode.WallsOnly)) {
+			Point2D.Double enemyGoalCentre = worldState.getEnemyGoal().getCentre();
+			attackTargets.add(new Point2D.Double(enemyGoalCentre.x,
+					enemyGoalCentre.y - WorldState.PITCH_HEIGHT_CM));
+			attackTargets.add(new Point2D.Double(enemyGoalCentre.x,
+					enemyGoalCentre.y + WorldState.PITCH_HEIGHT_CM));
+		}
+		
+		// Filter invisible attack targets.
+		Iterator<Point2D.Double> it = attackTargets.iterator();
+		while (it.hasNext()) {
+			Point2D.Double curTarget = it.next();
+			
+			Robot robotImage = worldState.getEnemyRobot();
+			if (curTarget.y < 0) {
+				robotImage = worldState.getEnemyRobot().getTopImage();
+			} else if (curTarget.y > WorldState.PITCH_HEIGHT_CM) {
+				robotImage = worldState.getEnemyRobot().getBottomImage();
+			}
+			
+			if (!Robot.lineIntersectsRobot(curTarget, worldState.getBallCoords(), robotImage)) { 
+				it.remove();
+			} else if (!WorldState.isPointInPitch(curTarget)) {
+				it.remove();
 			}
 		}
+		
+		// Find the optimal attack point.
+		double minOptimalDist = Double.MAX_VALUE;
+		Point2D.Double bestPoint = null;
+		
+		for (Point2D.Double curTarget : attackTargets) {
+			Vector2D ballToTarget = Vector2D.subtract(new Vector2D(curTarget),
+					new Vector2D(worldState.getBallCoords()));
+			Vector2D targetOffset = Vector2D.changeLength(ballToTarget, -distToBall);
+			Point2D.Double curOptimal = GeomUtils.addPoints(worldState.getBallCoords(), targetOffset);
+			double distToOptimal = GeomUtils.pointDistance(worldState.getOwnRobot().getCoords(), curOptimal);
+
+			if (WorldState.isPointInPaddedPitch(curOptimal, Robot.LENGTH_CM / 2)
+					&& !Robot.isPointAroundRobot(curOptimal, worldState.getEnemyRobot())
+					&& Robot.lineIntersectsRobot(curTarget, worldState.getBallCoords(), worldState.getEnemyRobot())
+					&& (distToOptimal < minOptimalDist)) {
+				bestPoint = curOptimal;
+				minOptimalDist = distToOptimal;
+			}
+		}
+	
+		return bestPoint;
 	}
 	
 	/**
@@ -684,7 +745,8 @@ public class AIVisualServoing extends BaseAI {
 	 * @return Whether the gates can be attacked.
 	 */
 	public static boolean canWeAttack(AIWorldState worldState) {
-		Vector2D localBall = Robot.getLocalVector(worldState.getOwnRobot(), new Vector2D(worldState.getBallCoords()));
+		Vector2D localBall = Robot.getLocalVector(worldState.getOwnRobot(),
+				new Vector2D(worldState.getBallCoords()));
 		
 		if (!((localBall.x < (Robot.LENGTH_CM / 2 + OWN_BALL_KICK_DIST))
 				&& (localBall.x > 0)
@@ -743,7 +805,7 @@ public class AIVisualServoing extends BaseAI {
 				worldState.getEnemyRobot().getCoords(), worldState.getEnemyRobot().getFrontCenter());
 		double ballDistToRay = GeomUtils.pointDistance(worldState.getBallCoords(), ballRayPoint);
 		
-		if (ballDistToRay > AIVisualServoing.BALL_TO_DIRECTION_PROXIMITY_THRESHOLD) {
+		if (ballDistToRay > BALL_TO_DIRECTION_PROXIMITY_THRESHOLD) {
 			return false;
 		}
 		
@@ -751,7 +813,7 @@ public class AIVisualServoing extends BaseAI {
 		double enemyToBallDist = GeomUtils.pointDistance(worldState.getBallCoords(),
 				worldState.getEnemyRobot().getCoords());
 		
-		if (enemyToBallDist > (AIVisualServoing.ENEMY_BALL_KICK_DIST + Robot.LENGTH_CM / 2)) {
+		if (enemyToBallDist > (ENEMY_BALL_KICK_DIST + Robot.LENGTH_CM / 2)) {
 			return false;
 		}
 		
