@@ -3,7 +3,6 @@ package sdp.AI.neural;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 import org.neuroph.core.Layer;
 import org.neuroph.core.NeuralNetwork;
@@ -111,12 +110,19 @@ public class AINeuralNet extends AIVisualServoing {
 	
 	// helpers
 	
-	public void getNetworkFromWeights(final double[] weights) {
+	/**
+	 * Put the array as weights of the neural network
+	 * 
+	 * @param weights compatible with the output of {@link #getWeights()}
+	 */
+	public void putWeights(final Double[] weights) {
+		
 		// init network
 		nets = new MultiLayerPerceptron(LAYERS);
 		
-		// TODO - finish it
-		
+		// id to use
+		int id = 0;
+
 		// go through the input layer to the last one
 		for (int l = 0; l < LAYERS.length - 1; l++) {
 			
@@ -128,16 +134,45 @@ public class AINeuralNet extends AIVisualServoing {
 				final Neuron neuron = layer.getNeuronAt(n);
 				
 				final Iterator<Weight> it = neuron.getWeightsVector().iterator();
-				if (it.hasNext()) {
-					
-					final Double value = it.next().value;
-					
-				}
+				if (it.hasNext())
+					it.next().value = weights[++id];
 				
 			}
 			
 		}
 		
+	}
+	
+	/**
+	 * Get the weights of the neural network
+	 * 
+	 * @return weights that are compatible with {@link #putWeights(Double[])}
+	 */
+	public Double[] getWeights() {
+		
+		// result array
+		final ArrayList<Double> weights = new ArrayList<Double>();
+	
+		// go through the input layer to the last one
+		for (int l = 0; l < LAYERS.length - 1; l++) {
+			
+			final Layer layer = nets.getLayerAt(l);
+			
+			// go through all the neurons in the current layer
+			for (int n = 0; n < LAYERS[l]; n++) {
+				
+				final Neuron neuron = layer.getNeuronAt(n);
+				
+				final Iterator<Weight> it = neuron.getWeightsVector().iterator();
+				if (it.hasNext())
+					weights.add(it.next().value);
+
+			}
+			
+		}
+		
+		// return result
+		return weights.toArray(new Double[0]);
 	}
 
 }
