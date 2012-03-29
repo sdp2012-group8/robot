@@ -72,6 +72,15 @@ public class AINeuralNet extends AIVisualServoing {
 	}
 	
 	/**
+	 * Initialise a new neural network with the given set of weights
+	 * @param weights compatible with output of {@link #getWeights()}
+	 * @see #setWeights(Double[])
+	 */
+	public AINeuralNet(final Double[] weights) {
+		setWeights(weights);
+	}
+	
+	/**
 	 * @return current network that is being used
 	 * @see NeuralNetwork#save(String)
 	 */
@@ -115,7 +124,7 @@ public class AINeuralNet extends AIVisualServoing {
 	 * 
 	 * @param weights compatible with the output of {@link #getWeights()}
 	 */
-	public void putWeights(final Double[] weights) {
+	public void setWeights(final Double[] weights) {
 		
 		// init network
 		nets = new MultiLayerPerceptron(LAYERS);
@@ -146,7 +155,7 @@ public class AINeuralNet extends AIVisualServoing {
 	/**
 	 * Get the weights of the neural network
 	 * 
-	 * @return weights that are compatible with {@link #putWeights(Double[])}
+	 * @return weights that are compatible with {@link #setWeights(Double[])}
 	 */
 	public Double[] getWeights() {
 		
@@ -173,6 +182,24 @@ public class AINeuralNet extends AIVisualServoing {
 		
 		// return result
 		return weights.toArray(new Double[0]);
+	}
+	
+	/**
+	 * Returns a random array of weights that could
+	 * be used with {@link #setWeights(Double[])}
+	 * @return output compatible with {@link #setWeights(Double[])}
+	 */
+	public static final Double[] getRandomWeights() {
+		
+		// create a new ai with required network
+		final AINeuralNet temp = new AINeuralNet(new MultiLayerPerceptron(LAYERS));
+		
+		// randomise the weights
+		temp.getNetwork().randomizeWeights();
+		
+		// return
+		return temp.getWeights();
+		
 	}
 
 }
