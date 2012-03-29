@@ -1,10 +1,14 @@
 package sdp.AI.genetic;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.io.*;
+
+import sdp.AI.neural.AINeuralNet;
 
 
 public class GeneticAlgorithm {
@@ -20,9 +24,11 @@ public class GeneticAlgorithm {
 	/** Probability that a mutation will occur */
 	final static float MUTATE_PROB = 0.001F;
 	/** Number of genes in each individual */
-	final static int GENE_NUMBER = 100;
-	/** Number of neighbours each individual plays against */
-	final static int NEIGHBOUR_NUMBER = 10;
+	final static int GENE_NUMBER = AINeuralNet.getRandomWeights().length;
+	/** Number of neighbours each individual plays against. Must be odd*/
+	final static int NEIGHBOUR_NUMBER = 11;
+	
+	final static int MAX_NUM_SIMULT_GAMES = 10;
 
 	int gen = 0;
 	long fitTotal = 0;
@@ -33,6 +39,7 @@ public class GeneticAlgorithm {
 	Double[][] finalPopulation;
 	double[] finalPopFitness;
 	Random rand = new Random();
+	private volatile int currNumRunningGames = 0;
 
 
 	FileWriter fstream;
@@ -131,9 +138,7 @@ public class GeneticAlgorithm {
 		fitTotal = 0;
 
 		for (int i = 0; i < POPSIZE; i++) {
-			for (int j = 0; j < GENE_NUMBER; j++) {
-				population[i][j] = rand.nextDouble();
-			}
+				population[i] = AINeuralNet.getRandomWeights();
 		}
 		calcFitness();
 	}
@@ -195,37 +200,22 @@ public class GeneticAlgorithm {
 		for (int i = 0; i < POPSIZE; i++) {
 			for (int j = 0; j < GENE_NUMBER; j++) {
 				if (rand.nextInt((int) (1/MUTATE_PROB)) == 0) {
-					if (intPopulation[i][j] == 1D) {
-						intPopulation[i][j] = 0D;
-					} else {
-						intPopulation[i][j] = 1D;
-					}
+					intPopulation[i][j] = rand.nextDouble();
 				}
 			}
 		}
 	}
 	
-	/** 
-	 * Calculates the fitness based on the fitness method.
-	 **/
-	private void calcFitness() {
-		fitTotal = 0;
-		
-		for (int i = 0; i < POPSIZE; i++) {
-			popFitness[i] = fitnessAll(population[i]);
-			fitTotal += popFitness[i];
-		}
-		avgFitness[gen] = fitTotal/POPSIZE;
-	}
 	
 	/** 
 	 * Calculates the fitness by running games against each individuals closest neighbours.
 	 * Each game is run in its own thread.
 	 **/
-	private void calcFitnessLimited() {
+	private long[] calcFitness() {
 		fitTotal = 0;
-		HashMap<Integer[], Future<Long>> results = new HashMap<Integer[], Future<Long>>();
-		HashMap<Integer, HashSet<Integer>> alreadyPlayed = new HashMap<Integer, HashSet<Integer>>();
+		final HashMap<Integer, HashSet<Long>> results = new HashMap<Integer, HashSet<Long>>();
+		final HashMap<Integer, HashSet<Integer>> alreadyPlayed = new HashMap<Integer, HashSet<Integer>>();
+		final ArrayList<Game> games = new ArrayList<Game>();
 		for (int i = 0; i < POPSIZE; i++) {
 			for (int j = 0; j < NEIGHBOUR_NUMBER; j++) {
 				int index = j - (NEIGHBOUR_NUMBER-1)/2;
@@ -246,51 +236,83 @@ public class GeneticAlgorithm {
 				
 				
 				// TODO: Test if the match has already been played  //if (alreadyPlayed.containsKey(i) && alreadyPlayed.get(i));
-				Callable<Long> game = new Game(new AINeuralNetwork(population[i]), new AINeuralNetwork(population[j]));
-				popFitness[i] = fitnessAll(population[i]);
-				fitTotal += popFitness[i];
+				games.add(new Game(i, index, population, new GameCallback() {
+					
+					@Override
+					public void onFinished(final long[] fitness, final int[] ids) {
+						
+						currNumRunningGames--;
+						
+						synchronized (results) {
+							for (int i = 0; i < 2; i++) {
+								HashSet<Long> prevFitness = results.get(ids[i]);
+								
+								if (prevFitness == null)
+									prevFitness = new HashSet<Long>();
+								
+								prevFitness.add(fitness[i]);
+								results.put(ids[i], prevFitness);
+							}
+						}
+						
+						// start next available game
+						
+						final Iterator<Game> it = games.iterator();
+						final int numGames = games.size();
+						for (int i = 0; i < numGames; i++)
+							if (it.hasNext()) {
+								final Game game = it.next();
+								if (!game.isRunning()) {
+									game.startInNewThread();
+									currNumRunningGames++;
+									if (currNumRunningGames >= MAX_NUM_SIMULT_GAMES)
+										break;
+								}
+							}
+						
+						
+					}
+				}));
+				
+			}
+			
+		}
+		
+		final Iterator<Game> it = games.iterator();
+		for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++) {
+			if (it.hasNext()) {
+				it.next().startInNewThread();
+				currNumRunningGames++;
 			}
 		}
 		
-		avgFitness[gen] = fitTotal/POPSIZE;
-	}
-
-	/** 
-	 * Calculates an individual's fitness by averaging the results of playing 
-	 * against each individual in the population. 
-	 **/
-	private long fitnessAll(Double[] chromosome) {
-		long total = 0;
-		for (int i = 0; i < POPSIZE; i++) {
-			total += play(chromosome, population[i]);
+		while (currNumRunningGames != 0) {
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {}
 		}
-
-		return total/POPSIZE;
-	}
-
-	/** 
-	 * Calculates an individual's fitness by averaging the results of playing 
-	 * against each individual within a set distance of itself.
-	 * The distance is determined by the constant NEIGHBOUR_NUMBER
-	 **/
-	private long fitnessLimited(Double[] chromosome) {
-		long total = 0;
-		for (int i = 0; i < POPSIZE; i++) {
-			total += play(chromosome, population[i]);
+		
+		final long[] array = new long[results.size()];
+		for (int i = 0; i < array.length; i++) {
+			array[i] = getAverage(results.get(i));
 		}
-
-		return total/POPSIZE;
+	
+		return array;
 	}
-
-	/** 
-	 * Plays p1 against p2 a number times (determined by games constant) and averages the result.
-	 * @param p1 The float array representing the chromosome of individual 1.
-	 * @param p2 The float array representing the chromosome of individual 2.
-	 * @return Returns the average score of p1 against p2.
-	 **/
-	private long play(Double[] p1, Double[] p2) {
-		//TODO: Run simulated games in threads
-		return 0;
+	
+	public static long getAverage(final HashSet<Long> set) {
+		if (set == null)
+			return 0;
+		
+		final int set_count = set.size();
+		
+		long value = 0;
+		
+		final Iterator<Long> it = set.iterator();
+		while (it.hasNext())
+			value += it.next();
+		
+		return value / set_count;
 	}
 
 }
