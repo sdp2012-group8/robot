@@ -1,14 +1,17 @@
 package sdp.AI.genetic;
 
-import java.util.concurrent.Callable;
-
 import sdp.AI.neural.AINeuralNet;
 
-public class Game implements Callable<Long>{
+/**
+ * A game simulation
+ */
+public class Game {
+	
+	public enum state {ready, running, finished};
 	
 	private GameCallback callback;
 	private final int[] ids;
-	private boolean isRunning = false;
+	private volatile state currentState = state.ready;
 	
 	public Game(int i, int j, final double[][] population, GameCallback callback) {
 		new AINeuralNet(population[i]);
@@ -17,28 +20,41 @@ public class Game implements Callable<Long>{
 		this.callback = callback;
 	}
 	
+	/**
+	 * Simulate game in new thread
+	 */
 	public void startInNewThread() {
+		
+		// if already running, don't start
+		if (currentState != state.ready)
+			return;
+		
+		// set running
+		currentState = state.running;
+		
+		// simulate in a new thread
 		new Thread() {
 			public void run() {
-				isRunning = true;
-				
-				// simulation
-				
-				isRunning = false;
-				callback.onFinished(new long[]{0, 1}, ids);
-				
+				simulate();
 			};
 		}.start();
 	}
 	
-	public boolean isRunning() {
-		return isRunning;
+	/**
+	 * Does the simulation in current thread
+	 */
+	public void simulate() {
+		currentState = state.running;
+		
+		currentState = state.finished;
+		callback.onFinished(new long[]{0, 1}, ids);
 	}
-
-	@Override
-	public Long call() throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+	
+	/**
+	 * @return current game state
+	 */
+	public state getState() {
+		return currentState;
 	}
 
 	
