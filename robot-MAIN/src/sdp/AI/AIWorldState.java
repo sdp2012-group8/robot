@@ -195,7 +195,7 @@ public class AIWorldState extends WorldState {
 		oldTime = System.currentTimeMillis();
 
 		WorldState[] pqStates = predictionQueue.toArray(new WorldState[0]);
-		WorldState predictedState = SimulatorOld.simulateWs(USE_NEW_SIMULATOR_FOR_PREDICTION ? new SimulatorPhysicsEngine(false) : new SimulatorOld(false, 0.000001), PREDICTION_TIME, (int) fps,
+		WorldState predictedState = Simulator.simulateWs(USE_NEW_SIMULATOR_FOR_PREDICTION ? new SimulatorPhysicsEngine(false) : new SimulatorOld(false, 0.000001), PREDICTION_TIME, (int) fps,
 				pqStates, true, ownLastCommand, isOwnTeamBlue);
 		
 		if (!state.isBallPresent()) {
