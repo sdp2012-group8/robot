@@ -157,5 +157,13 @@ public class AINeuralNet extends AIVisualServoing {
 		return temp.getWeights();
 		
 	}
+	
+	/**
+	 * Get the expected size of the weight array for the current neural network settings (depends on the {@link #LAYERS} constant)
+	 * @return
+	 */
+	public static final int getWeightsCount() {
+		return NeuralNetworkCODEC.determineArraySize(new MultiLayerPerceptron(LAYERS));
+	}
 
 }

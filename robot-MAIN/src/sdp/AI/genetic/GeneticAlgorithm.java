@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 import java.io.*;
 
 import sdp.AI.neural.AINeuralNet;
@@ -24,7 +22,7 @@ public class GeneticAlgorithm {
 	/** Probability that a mutation will occur */
 	final static float MUTATE_PROB = 0.001F;
 	/** Number of genes in each individual */
-	final static int GENE_NUMBER = AINeuralNet.getRandomWeights().length;
+	final static int GENE_NUMBER = AINeuralNet.getWeightsCount();
 	/** Number of neighbours each individual plays against. Must be odd*/
 	final static int NEIGHBOUR_NUMBER = 11;
 	
@@ -34,9 +32,9 @@ public class GeneticAlgorithm {
 	long fitTotal = 0;
 	long[] popFitness;
 	long[] avgFitness;
-	Double[][] population;
-	Double[][] intPopulation;
-	Double[][] finalPopulation;
+	double[][] population;
+	double[][] intPopulation;
+	double[][] finalPopulation;
 	double[] finalPopFitness;
 	Random rand = new Random();
 	private volatile int currNumRunningGames = 0;
@@ -60,7 +58,7 @@ public class GeneticAlgorithm {
 	public GeneticAlgorithm() throws IOException {
 		fstream = new FileWriter("out.txt");
 		out = new PrintWriter(fstream);
-		finalPopulation = new Double[POPSIZE][GENE_NUMBER];
+		finalPopulation = new double[POPSIZE][GENE_NUMBER];
 		finalPopFitness = new double[POPSIZE+1];
 
 
@@ -130,8 +128,8 @@ public class GeneticAlgorithm {
 	 **/
 	private void setup() {
 		// Create initial random population
-		population = new Double[POPSIZE][GENE_NUMBER];
-		intPopulation = new Double[POPSIZE][GENE_NUMBER];
+		population = new double[POPSIZE][GENE_NUMBER];
+		intPopulation = new double[POPSIZE][GENE_NUMBER];
 		popFitness = new long[POPSIZE];
 		avgFitness = new long[GENERATIONS+1];
 		gen = 0;
@@ -152,7 +150,7 @@ public class GeneticAlgorithm {
 		//roulette();		
 		crossover();
 		mutate();
-		population = new Double[POPSIZE][GENE_NUMBER];
+		population = new double[POPSIZE][GENE_NUMBER];
 		for (int i = 0; i < POPSIZE; i++) {
 			System.arraycopy(intPopulation[i],0,population[i],0,GENE_NUMBER);
 		}

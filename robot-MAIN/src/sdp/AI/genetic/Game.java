@@ -2,9 +2,7 @@ package sdp.AI.genetic;
 
 import java.util.concurrent.Callable;
 
-import sdp.AI.BaseAI;
 import sdp.AI.neural.AINeuralNet;
-import sdp.simulator.Simulator;
 
 public class Game implements Callable<Long>{
 	
@@ -12,7 +10,7 @@ public class Game implements Callable<Long>{
 	private final int[] ids;
 	private boolean isRunning = false;
 	
-	public Game(int i, int j, final Double[][] population, GameCallback callback) {
+	public Game(int i, int j, final double[][] population, GameCallback callback) {
 		new AINeuralNet(population[i]);
 		new AINeuralNet(population[j]);
 		ids = new int[]{i, j};
