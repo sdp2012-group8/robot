@@ -2,7 +2,6 @@ package sdp.AI.genetic;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Random;
 import java.io.*;
 
@@ -204,113 +203,169 @@ public class GeneticAlgorithm {
 		}
 	}
 	
-	
+
 	/** 
 	 * Calculates the fitness by running games against each individuals closest neighbours.
 	 * Each game is run in its own thread.
 	 **/
 	private long[] calcFitness() {
-		fitTotal = 0;
+
+		// reset counter
+		currNumRunningGames = 0;
+
+		// initialize result holder
 		final HashMap<Integer, HashSet<Long>> results = new HashMap<Integer, HashSet<Long>>();
+
+		// initialize already played holder
 		final HashMap<Integer, HashSet<Integer>> alreadyPlayed = new HashMap<Integer, HashSet<Integer>>();
+
+		// initialize thread (Game) holder
 		final ArrayList<Game> games = new ArrayList<Game>();
+
+		// traverse through the population
 		for (int i = 0; i < POPSIZE; i++) {
+
+			// get the neighbors against I have already played
+			HashSet<Integer> currPlayed = alreadyPlayed.get(i);
+
+			// if we don't have it in the DB, create it
+			if (currPlayed == null)
+				currPlayed = new HashSet<Integer>();
+
+			// find neighbor to play against
 			for (int j = 0; j < NEIGHBOUR_NUMBER; j++) {
+
+				// calculate neighbor index
 				int index = j - (NEIGHBOUR_NUMBER-1)/2;
-				/* Limit index to POPSIZE */
+
+				// wrap around neighboring index
 				if (index < 0) index = POPSIZE+index;
 				if (index > POPSIZE) index = index - POPSIZE;
-				
-				HashSet<Integer> currPlayed = alreadyPlayed.get(i);
-				
-				if (currPlayed != null && currPlayed.contains(index))
+
+				// if we have played against this neighbor, skip
+				if (currPlayed.contains(index))
 					continue;
-				
-				if (currPlayed == null)
-					currPlayed = new HashSet<Integer>();
-					
+
+				// mark neighbor
 				currPlayed.add(index);
-				alreadyPlayed.put(i, currPlayed);
-				
-				
-				// TODO: Test if the match has already been played  //if (alreadyPlayed.containsKey(i) && alreadyPlayed.get(i));
+
+				// initialize a game with the given neighbor
 				games.add(new Game(i, index, population, new GameCallback() {
-					
+
+					// when a game thread finishes
 					@Override
 					public void onFinished(final long[] fitness, final int[] ids) {
-						
+
+						// reduce number of running games counter
 						currNumRunningGames--;
-						
+
+						// save result
 						synchronized (results) {
+
+							// for both players
 							for (int i = 0; i < 2; i++) {
+
+								// get previous fitness values
 								HashSet<Long> prevFitness = results.get(ids[i]);
-								
+
+								// if none exist, create the set
 								if (prevFitness == null)
 									prevFitness = new HashSet<Long>();
-								
+
+								// add the current fitness to the set
 								prevFitness.add(fitness[i]);
+
+								// put the results so far back to the id
 								results.put(ids[i], prevFitness);
 							}
 						}
-						
-						// start next available game
-						
-						final Iterator<Game> it = games.iterator();
-						final int numGames = games.size();
-						for (int i = 0; i < numGames; i++)
-							if (it.hasNext()) {
-								final Game game = it.next();
-								if (!game.isRunning()) {
-									game.startInNewThread();
-									currNumRunningGames++;
-									if (currNumRunningGames >= MAX_NUM_SIMULT_GAMES)
-										break;
-								}
-							}
-						
-						
+
+						// start the next game(s)
+						startMoreGames(games);
 					}
 				}));
-				
+
 			}
-			
+
+			// update neighbors list
+			alreadyPlayed.put(i, currPlayed);
+
 		}
 		
-		final Iterator<Game> it = games.iterator();
-		for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++) {
-			if (it.hasNext()) {
-				it.next().startInNewThread();
-				currNumRunningGames++;
-			}
-		}
-		
-		while (currNumRunningGames != 0) {
+		// start the first few games
+		startMoreGames(games);
+
+		// block until all threads have finished
+		while (currNumRunningGames > 0) {
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {}
 		}
+
+		// initialize average array
+		final long[] averageFitness = new long[results.size()];
 		
-		final long[] array = new long[results.size()];
-		for (int i = 0; i < array.length; i++) {
-			array[i] = getAverage(results.get(i));
-		}
-	
-		return array;
+		// calculate average
+		for (int i = 0; i < averageFitness.length; i++)
+			averageFitness[i] = getAverage(results.get(i));
+
+		// return result
+		return averageFitness;
 	}
 	
+	/**
+	 * Ensures that {@value #MAX_NUM_SIMULT_GAMES} {@link Game}s are running at any time.
+	 * 
+	 * @param games list of games to be ran/are running
+	 */
+	private void startMoreGames(final ArrayList<Game> games) {
+		
+		// if too many threads are already running, ignore
+		if (currNumRunningGames >= MAX_NUM_SIMULT_GAMES)
+			return;
+		
+		// loop through all games
+		for (final Game game : games) {
+			
+			// if enough threads are running, exit loop
+			if (currNumRunningGames >= MAX_NUM_SIMULT_GAMES)
+				break;
+
+			// if game is running, ignore
+			if (game.isRunning())
+				continue;
+
+			// if game is not running, start it
+			game.startInNewThread();
+			
+			// increment the number of running threads
+			currNumRunningGames++;
+		}
+	}
+	
+	/**
+	 * Get the average of a hashset
+	 * @param set
+	 * @return
+	 */
 	public static long getAverage(final HashSet<Long> set) {
+		
+		// if set does not exist, then average is 0
 		if (set == null)
 			return 0;
 		
+		// get set count
 		final int set_count = set.size();
 		
-		long value = 0;
+		// sum holder
+		long sum = 0;
 		
-		final Iterator<Long> it = set.iterator();
-		while (it.hasNext())
-			value += it.next();
+		// sum all over the set
+		for (final long fitness : set)
+			sum += fitness;
 		
-		return value / set_count;
+		// calculate average
+		return sum / set_count;
 	}
 
 }
