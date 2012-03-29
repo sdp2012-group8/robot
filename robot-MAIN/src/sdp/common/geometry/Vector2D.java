@@ -2,9 +2,8 @@ package sdp.common.geometry;
 
 import java.awt.geom.Point2D;
 
-import org.jbox2d.dynamics.Body;
-
 import sdp.common.Utilities;
+
 
 /**
  * A two-dimensional vector.
@@ -247,21 +246,7 @@ public class Vector2D extends Point2D.Double {
 		return "(" + String.format("%.2f", getX()).replace(',', '.') + ", "
 				+ String.format("%.2f", getY()).replace(',', '.') + ")";
 	}
-	
-	
-	/**
-	 * Get the dot product of two vectors.
-	 * 
-	 * TODO: Replace with dotProduct found in utilities.
-	 * 
-	 * @param a First operand.
-	 * @param b Second operand.
-	 * @return Dot product of two vectors.
-	 */
-	@Deprecated
-	public static double dot(Vector2D a, Vector2D b) {
-		return GeomUtils.dotProduct(a, b);
-	}
+
 	
 	/**
 	 * Get the direction of the vector.

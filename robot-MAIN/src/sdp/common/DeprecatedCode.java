@@ -1,6 +1,7 @@
 package sdp.common;
 
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -141,20 +142,20 @@ public class DeprecatedCode {
 			Point2D.Double point = itr.next();
 	
 			if (point.y < 0) {
-				if (!Utilities.lineIntersectsRobot(point, ws.getBallCoords(),
+				if (!Robot.lineIntersectsRobot(point, ws.getBallCoords(),
 						enemy_robot.getTopImage())) {
 					itr.remove();
 	
 				}
 			} else if (point.y > WorldState.PITCH_HEIGHT_CM) {
-				if (!Utilities.lineIntersectsRobot(point, ws.getBallCoords(),
+				if (!Robot.lineIntersectsRobot(point, ws.getBallCoords(),
 						enemy_robot.getBottomImage())) {
 					itr.remove();
 	
 				}
 			} else {
 	
-				if (!Utilities.lineIntersectsRobot(point, ws.getBallCoords(),
+				if (!Robot.lineIntersectsRobot(point, ws.getBallCoords(),
 						enemy_robot) || point.x > WorldState.PITCH_WIDTH_CM) {
 					itr.remove();
 	
@@ -169,12 +170,12 @@ public class DeprecatedCode {
 		itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
-			Point2D.Double temp_point = Utilities.getPointBehindBall(point, ws.getBallCoords(),ws.isOwnGoalLeft(), point_offset);
+			Point2D.Double temp_point = DeprecatedCode.getPointBehindBall(point, ws.getBallCoords(),ws.isOwnGoalLeft(), point_offset);
 	
 			//System.out.println(temp_point);
 			
 			if (DeprecatedCode.isPointInField(temp_point)) { 
-				if (!Robot.isPointAroundRobot(temp_point, enemy_robot) && Utilities.lineIntersectsRobot(temp_point, ws.getBallCoords(),
+				if (!Robot.isPointAroundRobot(temp_point, enemy_robot) && Robot.lineIntersectsRobot(temp_point, ws.getBallCoords(),
 						enemy_robot)) {
 					//System.out.println(Vector2D.subtract(new Vector2D(temp_point), new Vector2D(robot.getCoords())).getLength());
 					//System.out.println("Min distance: "+min_distance);
@@ -247,7 +248,7 @@ public class DeprecatedCode {
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
 	
-			if (!Utilities.lineIntersectsRobot(point, ws.getBallCoords(), enemy_robot)) 
+			if (!Robot.lineIntersectsRobot(point, ws.getBallCoords(), enemy_robot)) 
 				itr.remove();
 	
 		}
@@ -255,7 +256,7 @@ public class DeprecatedCode {
 		itr = goal_points.iterator();
 		while (itr.hasNext()) {
 			Point2D.Double point = itr.next();
-			Point2D.Double temp_point = Utilities.getPointBehindBall(point, ws.getBallCoords(), ws.isOwnGoalLeft(), point_offset);
+			Point2D.Double temp_point = DeprecatedCode.getPointBehindBall(point, ws.getBallCoords(), ws.isOwnGoalLeft(), point_offset);
 	
 			if (DeprecatedCode.isPointInField(temp_point)) { 
 				if (!Robot.isPointAroundRobot(temp_point, enemy_robot)) {
@@ -398,5 +399,52 @@ public class DeprecatedCode {
 
 	/** Size of the ball obstacle. */
 	public static final double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
+
+	/**
+	 * Returns the point the robot should go to behind the ball.
+	 * Distance behind the ball set by POINT_OFFSET
+	 * @param point The target point on the goal the robot should be aligned to.
+	 * @return Point2D.Double behind the ball
+	 */
+	public static Point2D.Double getPointBehindBall(Point2D.Double point, Point2D.Double ball, boolean my_goal_left, double point_offset) {
+	
+		if (point.getY() == ball.getY()) {
+			return new Point2D.Double(my_goal_left ? ball.getX() - point_offset : ball.getX() + point_offset, ball.getY());
+		} else {
+			/*double x, y, a, b;
+			a = point.getY() - ball.getY();
+			b = point.getX() - ball.getX();
+	
+			if (my_goal_left) {
+				y = ball.getY() - POINT_OFFSET*a/(Math.sqrt(b*b + a*a));
+				x = ball.getX() + (b*(y - ball.getY())/a);
+			} else {
+				y = ball.getY() + POINT_OFFSET*a/(Math.sqrt(b*b + a*a));
+				x = ball.getX() - (b*(y - ball.getY())/a);
+			}*/
+			
+			Point2D.Double p = Vector2D.changeLength(Vector2D.subtract(new Vector2D(point),new Vector2D(ball)), -point_offset);
+			p = new Point2D.Double(ball.x + p.x, ball.y + p.y);
+			//x = ball.getX() + (b*(y - ball.getY())/a);
+	
+			return p;
+		}
+	}
+
+	/**
+	 * Returns an AIWorldState given the current world state plus some booleans.
+	 * 
+	 * TODO: Replace with a constructor invocation.
+	 * 
+	 * @param world_state
+	 * @param my_team_blue
+	 * @param my_goal_left
+	 * @param do_prediction
+	 * @return
+	 */
+	@Deprecated
+	public static AIWorldState getAIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
+		return new AIWorldState(world_state, my_team_blue, my_goal_left);
+	}
 
 }
