@@ -112,7 +112,7 @@ public class GeneticAlgorithm {
 	 **/
 	private void printPop() {
 		for (int i = 0; i < POPSIZE; i++) {
-			out.print(String.format("%02.3f", popFitness[i]) + " - ");
+			out.print(popFitness[i] + " - ");
 			for (int j = 0; j < GENE_NUMBER; j++) {
 				out.print(population[i][j] + " ");
 			}
@@ -182,7 +182,7 @@ public class GeneticAlgorithm {
 				int cross1 = rand.nextInt(POPSIZE);
 				int cross2 = rand.nextInt(POPSIZE);
 				int crossoverPoint = rand.nextInt(GENE_NUMBER);
-				int[] tmp = new int[crossoverPoint];
+				double[] tmp = new double[crossoverPoint];
 				System.arraycopy(intPopulation[cross1], 0, tmp, 0, crossoverPoint);
 				System.arraycopy(intPopulation[cross2], 0, intPopulation[cross1], 0, crossoverPoint);
 				System.arraycopy(tmp, 0, intPopulation[cross2], 0, crossoverPoint);			
@@ -208,7 +208,7 @@ public class GeneticAlgorithm {
 	 * Calculates the fitness by running games against each individuals closest neighbours.
 	 * Each game is run in its own thread.
 	 **/
-	private long[] calcFitness() {
+	private synchronized long[] calcFitness() {
 
 		// reset counter
 		currNumRunningGames = 0;
@@ -256,9 +256,6 @@ public class GeneticAlgorithm {
 					@Override
 					public void onFinished(final long[] fitness, final int[] ids) {
 
-						// reduce number of running games counter
-						currNumRunningGames--;
-
 						// save result
 						synchronized (results) {
 
@@ -281,7 +278,7 @@ public class GeneticAlgorithm {
 						}
 
 						// start the next game(s)
-						startMoreGames(games);
+						startMoreGames(games, true);
 					}
 				}));
 
@@ -293,7 +290,7 @@ public class GeneticAlgorithm {
 		}
 		
 		// start the first few games
-		startMoreGames(games);
+		startMoreGames(games, false);
 
 		// block until all threads have finished
 		while (currNumRunningGames > 0) {
@@ -317,29 +314,35 @@ public class GeneticAlgorithm {
 	 * Ensures that {@value #MAX_NUM_SIMULT_GAMES} {@link Game}s are running at any time.
 	 * 
 	 * @param games list of games to be ran/are running
+	 * @param oneHasFinished if the number of running threads should be reduced
 	 */
-	private void startMoreGames(final ArrayList<Game> games) {
+	private synchronized void startMoreGames(final ArrayList<Game> games, final boolean oneHasFinished) {
+
+		// reduce number of running games counter
+		if (oneHasFinished)
+			currNumRunningGames--;
 		
 		// if too many threads are already running, ignore
 		if (currNumRunningGames >= MAX_NUM_SIMULT_GAMES)
 			return;
-		
+
 		// loop through all games
 		for (final Game game : games) {
-			
-			// if enough threads are running, exit loop
-			if (currNumRunningGames >= MAX_NUM_SIMULT_GAMES)
-				break;
 
-			// if game is running, ignore
-			if (game.isRunning())
+			// if game is running or ready, ignore
+			if (game.getState() != Game.state.ready)
 				continue;
 
 			// if game is not running, start it
 			game.startInNewThread();
-			
+
 			// increment the number of running threads
 			currNumRunningGames++;
+
+			// if enough threads are running, exit loop
+			if (currNumRunningGames >= MAX_NUM_SIMULT_GAMES)
+				break;
+
 		}
 	}
 	
