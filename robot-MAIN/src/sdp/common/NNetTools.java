@@ -27,35 +27,21 @@ public class NNetTools {
 	 * @param worldState in centimeters
 	 * @param am_i_blue
 	 * @param my_goal_left
-	 * @param id which network is receiving it
 	 * @return the input array
 	 */
-	public static double[] generateAIinput(WorldState worldState, WorldState oldState, double dt, boolean am_i_blue, boolean my_goal_left, int id) {
-		switch (id) {
-		case 0:
-			Vector2D ball = new Vector2D(worldState.getBallCoords());
-			Vector2D ball_rel = Robot.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
-			double reach = DeprecatedCode.reachability(worldState, ball, am_i_blue, false, Robot.LENGTH_CM) ? 1 : -1;
-			return Utilities.concat(
-					Utilities.getSectors(worldState, am_i_blue, 5, 22, true, false),
-					Utilities.getTargetInSectors(ball_rel, 22),
-					new double[] {
-						reach
-					}
-					);
-		case 1:
+	public static double[] generateAIinput(WorldState worldState, boolean am_i_blue, boolean my_goal_left) {
 
-			Vector2D goal = my_goal_left ? new Vector2D(WorldState.PITCH_WIDTH_CM , WorldState.GOAL_CENTRE_Y ) : new Vector2D(0 , WorldState.GOAL_CENTRE_Y );
-			Vector2D goal_rel = Robot.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), goal);
-			return Utilities.concat(
-					Utilities.getSectors(worldState, am_i_blue, 5, 22, true, false),
-					Utilities.getTargetInSectors(goal_rel, 22),
-					new double[] {
-						DeprecatedCode.visibility(worldState, goal, am_i_blue, false) ? 1 : -1
-					}
-					);
-		}
-		return null;		
+		Vector2D ball = new Vector2D(worldState.getBallCoords());
+		Vector2D ball_rel = Robot.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
+		double reach = DeprecatedCode.reachability(worldState, ball, am_i_blue, false, Robot.LENGTH_CM) ? 1 : -1;
+		
+		return Utilities.concat(
+				Utilities.getSectors(worldState, am_i_blue, 5, 22, true, false),
+				Utilities.getTargetInSectors(ball_rel, 22),
+				new double[] {
+					reach
+				}
+				);	
 	}
 	
 	public static Vector2D targetInSector(Vector2D relative, double start_angle, double end_angle) {
@@ -217,56 +203,56 @@ public class NNetTools {
 		return null;
 	}
 	
-	public static int getDesiredSpeed(move_modes mode) {
+	public static int getDesiredSpeed(move_modes mode, int speed) {
 		switch (mode) {
 		case forward:
 		case forward_left:
 		case forward_right:
-			return 35;
+			return speed;
 		case backward:
 		case backward_left:
 		case backward_right:
-			return -35;
+			return -speed;
 		default:
 			return 0;
 		}
 	}
 	
-	public static int getDesiredTurningSpeed(move_modes mode) {
+	public static int getDesiredTurningSpeed(move_modes mode, int turnSpeed) {
 		switch (mode) {
 		case forward_right:
 		case backward_right:
 		//case right:
-			return 90;
+			return turnSpeed;
 		case forward_left:
 		case backward_left:
 		//case left:
-			return -90;
+			return -turnSpeed;
 		default:
 			return 0;
 		}
 	}
 	
-	public static int getDesiredSpeed(got_ball_modes mode) {
+	public static int getDesiredSpeed(got_ball_modes mode, int speed) {
 		switch (mode) {
 		case forward_left:
 		case forward_right:
-			return 35;
+			return speed;
 		default:
 			return 0;
 		}
 	}
 	
-	public static int getDesiredTurningSpeed(got_ball_modes mode) {
+	public static int getDesiredTurningSpeed(got_ball_modes mode, int turn_speed) {
 		switch (mode) {
 		case forward_right:
 		case right:
 		//case right:
-			return 90;
+			return turn_speed;
 		case forward_left:
 		case left:
 		//case left:
-			return -90;
+			return -turn_speed;
 		default:
 			return 0;
 		}
