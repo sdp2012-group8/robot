@@ -1,14 +1,10 @@
 package sdp.AI.neural;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
 
-import org.neuroph.core.Layer;
 import org.neuroph.core.NeuralNetwork;
-import org.neuroph.core.Neuron;
-import org.neuroph.core.Weight;
 import org.neuroph.nnet.MultiLayerPerceptron;
+import org.neuroph.util.NeuralNetworkCODEC;
 
 import sdp.AI.AIVisualServoing;
 import sdp.AI.Command;
@@ -74,9 +70,9 @@ public class AINeuralNet extends AIVisualServoing {
 	/**
 	 * Initialise a new neural network with the given set of weights
 	 * @param weights compatible with output of {@link #getWeights()}
-	 * @see #setWeights(Double[])
+	 * @see #setWeights(double[])
 	 */
-	public AINeuralNet(final Double[] weights) {
+	public AINeuralNet(final double[] weights) {
 		setWeights(weights);
 	}
 	
@@ -124,77 +120,37 @@ public class AINeuralNet extends AIVisualServoing {
 	 * 
 	 * @param weights compatible with the output of {@link #getWeights()}
 	 */
-	public void setWeights(final Double[] weights) {
+	public void setWeights(final double[] weights) {
 		
-		// init network
 		nets = new MultiLayerPerceptron(LAYERS);
-		
-		// id to use
-		int id = 0;
-
-		// go through the input layer to the last one
-		for (int l = 0; l < LAYERS.length - 1; l++) {
-			
-			final Layer layer = nets.getLayerAt(l);
-			
-			// go through all the neurons in the current layer
-			for (int n = 0; n < LAYERS[l]; n++) {
-				
-				final Neuron neuron = layer.getNeuronAt(n);
-				
-				final Iterator<Weight> it = neuron.getWeightsVector().iterator();
-				if (it.hasNext())
-					it.next().value = weights[++id];
-				
-			}
-			
-		}
-		
+		NeuralNetworkCODEC.array2network(weights, nets);
+	
 	}
 	
 	/**
 	 * Get the weights of the neural network
 	 * 
-	 * @return weights that are compatible with {@link #setWeights(Double[])}
+	 * @return weights that are compatible with {@link #setWeights(double[])}
 	 */
-	public Double[] getWeights() {
+	public double[] getWeights() {
 		
-		// result array
-		final ArrayList<Double> weights = new ArrayList<Double>();
+		final double[] result = new double[NeuralNetworkCODEC.determineArraySize(nets)];
+		NeuralNetworkCODEC.network2array(nets, result);
+		return result;
 	
-		// go through the input layer to the last one
-		for (int l = 0; l < LAYERS.length - 1; l++) {
-			
-			final Layer layer = nets.getLayerAt(l);
-			
-			// go through all the neurons in the current layer
-			for (int n = 0; n < LAYERS[l]; n++) {
-				
-				final Neuron neuron = layer.getNeuronAt(n);
-				
-				final Iterator<Weight> it = neuron.getWeightsVector().iterator();
-				if (it.hasNext())
-					weights.add(it.next().value);
-
-			}
-			
-		}
-		
-		// return result
-		return weights.toArray(new Double[0]);
 	}
 	
 	/**
 	 * Returns a random array of weights that could
 	 * be used with {@link #setWeights(Double[])}
-	 * @return output compatible with {@link #setWeights(Double[])}
+	 * @return output compatible with {@link #setWeights(double[])}
 	 */
-	public static final Double[] getRandomWeights() {
+	public static final double[] getRandomWeights() {
 		
 		// create a new ai with required network
 		final AINeuralNet temp = new AINeuralNet(new MultiLayerPerceptron(LAYERS));
 		
-		// randomise the weights
+		// randomize the weights
 		temp.getNetwork().randomizeWeights();
 		
 		// return
