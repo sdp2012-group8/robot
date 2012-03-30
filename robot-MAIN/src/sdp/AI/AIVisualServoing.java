@@ -133,7 +133,7 @@ public class AIVisualServoing extends BaseAI {
 		// Generate command to drive towards the target point.
 		boolean mustFaceTarget = !Utilities.areDoublesEqual(point_off, DEFAULT_TARG_THRESH);
 
-		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, true);
+		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, ballIsObstacle);
 		return getWaypointCommand(waypoint, mustFaceTarget);
 	}
 

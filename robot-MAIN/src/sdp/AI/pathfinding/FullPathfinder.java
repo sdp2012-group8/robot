@@ -19,11 +19,11 @@ import sdp.common.world.WorldState;
 public class FullPathfinder implements Pathfinder {
 	
 	/** Radius of checked circles. */
-	private static double CHECKED_CIRCLE_RADIUS = 1.0;
+	private static double CHECKED_CIRCLE_RADIUS = 2.5;
 	/** The amount, by which the collision points are pushed from obstacles. */
-	private static double COLLISION_ADJUSTMENT = 5.0;
+	private static double COLLISION_ADJUSTMENT = 10.0;
 	/** Largest number of waypoints a path can consist of. */
-	private static int MAX_WAYPOINT_COUNT = 20;
+	private static int MAX_WAYPOINT_COUNT = 10;
 	
 	/** A list of points that have been explored in a search. */
 	private LinkedList<Circle> checkedPoints = new LinkedList<Circle>();
@@ -67,6 +67,22 @@ public class FullPathfinder implements Pathfinder {
 		return newPoint;
 	}
 	
+	private ArrayList<Waypoint> checkForSolvedInstance(Vector2D checkPt, Vector2D point, double dir) {
+		for (PartialPath p : partialAnswers) {
+			if (p.getPathEnd().containsPoint(checkPt)) {
+				ArrayList<Waypoint> bestPath = p.getWaypoints();
+				if (bestPath != null) {
+					Waypoint newSegment = new Waypoint(point, dir,
+							bestPath.get(0).getTarget(), bestPath.get(0).getCostToDest(), true);
+					bestPath.set(0, newSegment);
+				}
+				return bestPath;
+			}
+		}
+		
+		return null;
+	}
+	
 	/**
 	 * Get a path for a robot from one point to another one.
 	 * 
@@ -81,18 +97,11 @@ public class FullPathfinder implements Pathfinder {
 	private ArrayList<Waypoint> getPath(AIWorldState worldState, Point2D.Double start,
 			double startAngle, Point2D.Double dest, int obstacleFlag, int depth) {
 		Vector2D startVec = new Vector2D(start);
-		Vector2D destVec = new Vector2D(dest);
-		
+		Vector2D destVec = new Vector2D(dest);		
 		Vector2D destDir = Vector2D.subtract(destVec, startVec);
-		
+				
 		ArrayList<Circle> obstacles = WorldState.getObstacleCircles(worldState, obstacleFlag);
 		Vector2D startVecAdj = movePointOutOfObstacle(obstacles, startVec);
-		
-		for (PartialPath p : partialAnswers) {
-			if (p.getPathEnd().containsPoint(startVecAdj)) {
-				return p.getWaypoints();
-			}
-		}
 		
 		if (!WorldState.isPointInPitch(startVecAdj) || !WorldState.isPointInPitch(dest)) {
 			return null;
@@ -101,18 +110,22 @@ public class FullPathfinder implements Pathfinder {
 			return null;
 		}
 		
-		checkedPoints.push(new Circle(startVecAdj, CHECKED_CIRCLE_RADIUS));
-		
 		if (WorldState.isDirectPathClear(worldState, startVecAdj, destVec, obstacleFlag)) {
-			Vector2D destDirLocal = Vector2D.rotateVector(destDir, -startAngle);
-
 			ArrayList<Waypoint> path = new ArrayList<Waypoint>();
-			path.add(new Waypoint(destDirLocal, destDir.getLength(), true));
+			path.add(new Waypoint(startVec, startAngle, destVec, destDir.getLength(), true));
 			return path;
 		}
 		
+		ArrayList<Waypoint> bestPath = checkForSolvedInstance(startVecAdj,
+				startVec, startAngle);
+		if (bestPath != null) {
+			partialAnswers.add(new PartialPath(new Circle(startVec, COLLISION_ADJUSTMENT), bestPath));
+			return bestPath;
+		}
+		
+		checkedPoints.push(new Circle(startVecAdj, CHECKED_CIRCLE_RADIUS));
+
 		double minPathCost = Double.MAX_VALUE;
-		ArrayList<Waypoint> bestPath = null;
 				
 		for (Circle curObstacle : obstacles) {
 			Point2D.Double obsPoints[] = GeomUtils.circleTangentPoints(curObstacle, startVecAdj);
@@ -149,12 +162,15 @@ public class FullPathfinder implements Pathfinder {
 								Vector2D.getDirectionUnitVector(startAngle), pt);
 						bestPath.add(0, new Waypoint(new Vector2D(ptLocal),
 								curCost, false));
+						
+						bestPath.add(new Waypoint(startVec, startAngle, new Vector2D(pt),
+								curCost, false));
 					}
 				}
 			}
 		}
 		
-		checkedPoints.pop();		
+		//checkedPoints.pop();		
 		partialAnswers.add(new PartialPath(new Circle(startVecAdj,
 				CHECKED_CIRCLE_RADIUS), bestPath));
 		
