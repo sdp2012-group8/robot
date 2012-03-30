@@ -55,7 +55,7 @@ public class Game {
 		}
 		
 		currentState = state.finished;
-		callback.onFinished(this, new long[]{0, 1});
+		callback.onFinished(this, new long[]{500, 500});
 	}
 	
 	/**

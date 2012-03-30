@@ -11,7 +11,7 @@ import sdp.AI.neural.AINeuralNet;
 public class GeneticAlgorithm {
 
 	/** Number of generations to simulate */
-	final static int GENERATIONS = 50;
+	final static int GENERATIONS = 2;
 	/** Number of games each individual plays against every other */
 	final static int GAMES = 1;
 	/** Size of the population */
@@ -36,7 +36,6 @@ public class GeneticAlgorithm {
 	double[][] population;
 	double[][] intPopulation;
 	double[][] finalPopulation;
-	double[] finalPopFitness;
 	Random rand = new Random();
 	private int totalGames = 0;
 	// locker for concurrency control
@@ -61,64 +60,59 @@ public class GeneticAlgorithm {
 	}
 
 	public GeneticAlgorithm() throws IOException {
-		
+
 		// start workers
 		for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++) {
 			workers[i] = new GameRunner();
 			workers[i].start();
 		}
-		
+
 		fstream = new FileWriter("out.txt");
 		out = new PrintWriter(fstream);
-		finalPopulation = new double[POPSIZE][GENE_NUMBER];
-		finalPopFitness = new double[POPSIZE+1];
-
-
+		System.out.println("Starting setup");
 		setup();
-		out.println("\nInitial population\n");
-		printPop();
-
+		//out.println("\nInitial population\n");
+		//printPop();
+		System.out.println("Starting evolution");
 		for (gen = 1; gen < GENERATIONS+1; gen++) {
 			run();
-			out.println("\nGeneration " + gen);
+			//out.println("\nGeneration " + gen);
 
-			printPop();
+			//printPop(); //TODO: change printpop to print fittest individual in population
 		}
-		System.arraycopy(population, 0, finalPopulation, 0, POPSIZE);
-		System.arraycopy(popFitness, 0, finalPopFitness, 0, POPSIZE);
-		finalPopFitness[POPSIZE] = avgFitness[gen-1];
-		out.println("\n\n");
 
 		out.close();
 
+		long finalPopAvgFitness = avgFitness[gen-1];
+
+		/* Print the final generation */
+		System.out.println("Printing final population");
 		fstream = new FileWriter("finalPopulations.txt");
 		out = new PrintWriter(fstream);
 
 		out.println("Final Population\n");
 
 		for (int j = 0; j < POPSIZE; j++) {
-			out.print(String.format("%02.3f", finalPopFitness[j]) + " - ");
-			for (int k = 0; k < GENE_NUMBER; k++) {
-				out.print(finalPopulation[j][k] + " ");
-			}
-			out.println("");
+			new AINeuralNet(population[j]).getNetwork().save("finalPop" + j);
 		}
-		out.println("Average - " + finalPopFitness[POPSIZE] + "\n");
+		out.println("Average - " + finalPopAvgFitness + "\n");
 
 		out.close();
 
+		/* Print the average fitness of each generation */
+		System.out.println("Printing average fitness of each generation");
 		fstream = new FileWriter("Generations Fitness.txt");
 		out = new PrintWriter(fstream);
 
 		out.println("Generations Fitness\n");
 
-		for (int i = 0; i < GENERATIONS+1; i=i+50) {
+		for (int i = 0; i < GENERATIONS+1; i++) {
 			out.println(avgFitness[i]);
 		}
 		out.close();
 
 		System.out.println("Finished");
-		
+
 		// stop workers
 		for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++)
 			workers[i].interrupt();
@@ -152,9 +146,10 @@ public class GeneticAlgorithm {
 		fitTotal = 0;
 
 		for (int i = 0; i < POPSIZE; i++) {
-				population[i] = AINeuralNet.getRandomWeights();
+			population[i] = AINeuralNet.getRandomWeights();
 		}
-		calcFitness();
+		popFitness = calcFitness();
+		avgFitness[gen] = getAverage(popFitness);
 	}
 
 	/** 
@@ -171,7 +166,8 @@ public class GeneticAlgorithm {
 			System.arraycopy(intPopulation[i],0,population[i],0,GENE_NUMBER);
 		}
 
-		calcFitness();
+		popFitness = calcFitness();
+		avgFitness[gen] = getAverage(popFitness);
 	}
 
 	/** 
@@ -219,7 +215,7 @@ public class GeneticAlgorithm {
 			}
 		}
 	}
-	
+
 
 	/** 
 	 * Calculates the fitness by running games against each individuals closest neighbours.
@@ -366,39 +362,62 @@ public class GeneticAlgorithm {
 		// ----- CALCULATIONS HAVE BEEN DONE BY HERE ----- \\
 
 		// initialize average array
-		final long[] averageFitness = new long[results.size()];
+		final long[] averageFitness = new long[POPSIZE];
 
 		// calculate average
-		for (int i = 0; i < averageFitness.length; i++) {
+		for (int i = 0; i < POPSIZE; i++) {
 			averageFitness[i] = getAverage(results.get(i));
+			//System.out.println("average[" + i + "]: " + averageFitness[i]);
 		}
 
 		// return result
 		return averageFitness;
 	}
-	
-	
+
+
 	/**
 	 * Get the average of a hashset
 	 * @param set
 	 * @return
 	 */
 	public static long getAverage(final HashSet<Long> set) {
-		
+
 		// if set does not exist, then average is 0
 		if (set == null)
 			return 0;
-		
+
 		// get set count
 		final int set_count = set.size();
-		
+
 		// sum holder
 		long sum = 0;
-		
+
 		// sum all over the set
-		for (final long fitness : set)
+		for (final long fitness : set){
 			sum += fitness;
-		
+		}
+
+		// calculate average
+		return sum / set_count;
+	}
+
+	public static long getAverage(final long[] set) {
+
+		// if set does not exist, then average is 0
+		if (set == null)
+			return 0;
+
+		// get set count
+		final int set_count = set.length;
+
+		// sum holder
+		long sum = 0;
+
+		// sum all over the set
+		for (final long fitness : set){
+			sum += fitness;
+		}
+
 		// calculate average
 		return sum / set_count;
 	}
