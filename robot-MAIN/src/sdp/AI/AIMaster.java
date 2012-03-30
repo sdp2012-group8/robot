@@ -24,12 +24,6 @@ public class AIMaster extends WorldStateProvider {
 	public enum AIState {
 		PLAY, DEFEND_GOAL, SIT, DEFEND_PENALTIES, SHOOT_PENALTIES, MANUAL_CONTROL
 	}
-
-	/** Available AI implementations. */
-	public enum AIType {
-		VISUAL_SERVOING, NEURAL_NETWORKS
-	}
-
 	
 	/** Whether the AI's should switch to defence or not. */
 	private static final boolean DEFENCE_ENABLED = false;
@@ -67,6 +61,8 @@ public class AIMaster extends WorldStateProvider {
 	/** Currently used image processor configuration. */
 	private ImageProcessorConfig config;
 	
+	private boolean printStateChanges = true;
+	
 	
 	/**
 	 * Create a new AI controller.
@@ -75,7 +71,8 @@ public class AIMaster extends WorldStateProvider {
 	 * @param observer World state provider to use.
 	 * @param aiType Which AI implementation to use.
 	 */
-	public AIMaster(Communicator comm, WorldStateProvider observer, AIType aiType) {
+	public AIMaster(Communicator comm, WorldStateProvider observer, final BaseAI ai) {
+		this.ai = ai;
 		this.observer = new WorldStateObserver(observer);
 
 		this.communicator = comm;
@@ -93,7 +90,7 @@ public class AIMaster extends WorldStateProvider {
 //					}
 					aiWorldState.setFrontSensorActive(args[0] == 1);
 					try {
-						executeCommand(ai.gotBall());
+						executeCommand(AIMaster.this.ai.gotBall());
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -111,8 +108,7 @@ public class AIMaster extends WorldStateProvider {
 				}
 			}
 		});
-
-		setAIType(aiType);
+		
 	}
 	
 
@@ -154,6 +150,7 @@ public class AIMaster extends WorldStateProvider {
 					
 					executeNextCommand();
 				}
+				//TODO: cleanup
 			}
 		};
 		updateThread.start();
@@ -289,26 +286,6 @@ public class AIMaster extends WorldStateProvider {
 	
 	
 	/**
-	 * Change the AI implementation.
-	 * 
-	 * @param aiType Type of AI to change to.
-	 */
-	public void setAIType(AIType aiType){
-		switch (aiType){
-		case VISUAL_SERVOING :
-			ai = new AIVisualServoing();
-			break;
-		case NEURAL_NETWORKS : 
-			ai = new NullAI();
-			break;
-		default :
-			ai = new NullAI();
-			break;
-		}
-	}
-	
-	
-	/**
 	 * Set current image processor configuration.
 	 * 
 	 * @param config Current image processor configuration.
@@ -347,6 +324,10 @@ public class AIMaster extends WorldStateProvider {
 		return aiState;
 	}
 	
+	public void setPrintStateChanges(boolean printThem) {
+		this.printStateChanges = printThem;
+	}
+	
 	/**
 	 * Set the new AI state.
 	 * 
@@ -354,7 +335,8 @@ public class AIMaster extends WorldStateProvider {
 	 */
 	public void setState(AIState newState) {
 		aiState = newState;
-		System.out.println("Changed State to - " + aiState);
+		if (printStateChanges)
+			System.out.println("Changed State to - " + aiState);
 		
 		// TODO: Review this bit of logic.
 		if (aiState == AIState.DEFEND_GOAL) {

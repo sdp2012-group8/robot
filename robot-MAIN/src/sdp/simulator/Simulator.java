@@ -19,8 +19,8 @@ public abstract class Simulator extends WorldStateProvider {
 	protected static final float MAX_FPS = 25; // simulation speed
 	protected static final double ITERATION_TIME = 1000 / MAX_FPS; // in ms
 	protected static final int DELAY_SIMULATION = 500; // in ms
-	protected Queue<WorldState> delayQueue = new LinkedList<WorldState>();
-	protected static final int DELAY_SIZE = (int) (DELAY_SIMULATION/ITERATION_TIME);
+	public Queue<WorldState> delayQueue = new LinkedList<WorldState>();
+	public static final int DELAY_SIZE = (int) (DELAY_SIMULATION/ITERATION_TIME);
 
 	// image data
 	public static final int IMAGE_WIDTH = 640;
@@ -95,8 +95,7 @@ public abstract class Simulator extends WorldStateProvider {
 						delayQueue.add(current);
 						WorldState state = delayQueue.poll();
 						image(dt, state, current);
-						setChanged();
-						notifyObservers(state);
+						broadcastState(state);
 					}
 					// calculate time required for simulation to return
 					curr_time = System.currentTimeMillis();
@@ -116,6 +115,11 @@ public abstract class Simulator extends WorldStateProvider {
 			};
 
 		}.start();
+	}
+	
+	public void broadcastState(final WorldState state) {
+		setChanged();
+		notifyObservers(state);
 	}
 
 	public WorldState getWorldState() {

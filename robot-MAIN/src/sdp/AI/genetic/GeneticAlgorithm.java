@@ -11,11 +11,11 @@ import sdp.AI.neural.AINeuralNet;
 public class GeneticAlgorithm {
 
 	/** Number of generations to simulate */
-	final static int GENERATIONS = 2;
+	final static int GENERATIONS = 10;
 	/** Number of games each individual plays against every other */
 	final static int GAMES = 1;
 	/** Size of the population */
-	final static int POPSIZE = 20;
+	final static int POPSIZE = 10;
 	/** Probability that a crossover will occur */
 	final static float CROSSOVER_PROB = 0.6F;
 	/** Probability that a mutation will occur */
@@ -23,11 +23,11 @@ public class GeneticAlgorithm {
 	/** Number of genes in each individual */
 	final static int GENE_NUMBER = AINeuralNet.getWeightsCount();
 	/** Number of neighbours each individual plays against. Must be odd*/
-	final static int NEIGHBOUR_NUMBER = 11;
+	final static int NEIGHBOUR_NUMBER = 7;
 	/** Number of threads. Every thread can simulate one game at a time */
-	final static int MAX_NUM_SIMULT_GAMES = 10;
-	/** How much a thread is allowed to be unresponsive (will not always trigger, though) */
-	final static int MAX_THREAD_TIMEOUT = 30000;
+	final static int MAX_NUM_SIMULT_GAMES = 2;
+	
+	final static String OUTPUT_DIR = "data/GA/";
 
 	int gen = 0;
 	long fitTotal = 0;
@@ -67,47 +67,46 @@ public class GeneticAlgorithm {
 			workers[i].start();
 		}
 
-		fstream = new FileWriter("out.txt");
-		out = new PrintWriter(fstream);
 		System.out.println("Starting setup");
 		setup();
 		//out.println("\nInitial population\n");
 		//printPop();
 		System.out.println("Starting evolution");
 		for (gen = 1; gen < GENERATIONS+1; gen++) {
+			
 			run();
+			System.out.println("Generation: " + gen + "  average fitness: " + avgFitness[gen]);
 			//out.println("\nGeneration " + gen);
 
 			//printPop(); //TODO: change printpop to print fittest individual in population
 		}
 
-		out.close();
-
 		long finalPopAvgFitness = avgFitness[gen-1];
 
 		/* Print the final generation */
 		System.out.println("Printing final population");
-		fstream = new FileWriter("finalPopulations.txt");
+		fstream = new FileWriter(OUTPUT_DIR+"finalPopulation.gao");
 		out = new PrintWriter(fstream);
 
 		out.println("Final Population\n");
-
-		for (int j = 0; j < POPSIZE; j++) {
-			new AINeuralNet(population[j]).getNetwork().save("finalPop" + j);
-		}
+		
+		
+		
+		new AINeuralNet(population[findFittest()]).getNetwork().save(OUTPUT_DIR+"finalPop.nnet");
+		
 		out.println("Average - " + finalPopAvgFitness + "\n");
 
 		out.close();
 
 		/* Print the average fitness of each generation */
 		System.out.println("Printing average fitness of each generation");
-		fstream = new FileWriter("Generations Fitness.txt");
+		fstream = new FileWriter(OUTPUT_DIR+"Generations Fitness.csv");
 		out = new PrintWriter(fstream);
 
 		out.println("Generations Fitness\n");
 
 		for (int i = 0; i < GENERATIONS+1; i++) {
-			out.println(avgFitness[i]);
+			out.print(avgFitness[i] + ",");
 		}
 		out.close();
 
@@ -174,7 +173,15 @@ public class GeneticAlgorithm {
 	 * Selects the intermediate population using Stochastic Universal Sampling.
 	 **/
 	private void SUSampling() {
-		int j = 0;
+		/* Elitism 
+		 * Find best individual
+		 * */
+		System.arraycopy(population[findFittest()],0,intPopulation[0],0,GENE_NUMBER);
+		
+		/* Stochastic sampling
+		 * Selects individuals from the population to create the next generation
+		 */
+		int j = 1;
 		double sum = rand.nextDouble()*fitTotal/POPSIZE; // Choose a random starting place
 		for (int i = 0; i < POPSIZE; i++) {
 			sum += popFitness[i];
@@ -214,6 +221,18 @@ public class GeneticAlgorithm {
 				}
 			}
 		}
+	}
+	
+	private int findFittest() {
+		Long max = null;
+		int index = 0;
+		for (int i = 0; i < POPSIZE; i++) {
+			if (max == null || max < popFitness[i]){
+				max = popFitness[i];
+				index = i;
+			}
+		}
+		return index;
 	}
 
 

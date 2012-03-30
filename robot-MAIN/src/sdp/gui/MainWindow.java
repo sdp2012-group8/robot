@@ -18,6 +18,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.JTabbedPane;
 
 import sdp.AI.AIMaster;
+import sdp.AI.AIVisualServoing;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.world.WorldState;
@@ -226,7 +227,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			}
 		}
 		
-		aiInstance = new AIMaster(communicator, vision, AIMaster.AIType.VISUAL_SERVOING);
+		aiInstance = new AIMaster(communicator, vision, new AIVisualServoing());
 		aiInstance.start(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected());
 		
 		WorldStateObserver aiObserver = new WorldStateObserver(aiInstance);

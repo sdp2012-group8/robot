@@ -24,9 +24,13 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import org.neuroph.core.NeuralNetwork;
+
 import sdp.AI.AIMaster;
-import sdp.AI.AIMaster.AIType;
 import sdp.AI.AIMaster.AIState;
+import sdp.AI.AIVisualServoing;
+import sdp.AI.BaseAI;
+import sdp.AI.neural.AINeuralNet;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.geometry.Vector2D;
@@ -44,6 +48,10 @@ import sdp.simulator.VBrick;
  *
  */
 public class SimTesterGUI {
+	
+	private enum AIType {VIS_SERV, NNETS}
+	
+	private static final String NNET_FILE = "data/GA/finalPop.nnet";
 
 	private static final double PLACEMENT_LEFT = 20; // in cm
 	private static final double PLACEMENT_RIGHT = WorldState.PITCH_WIDTH_CM - PLACEMENT_LEFT; // in cm
@@ -321,7 +329,8 @@ public class SimTesterGUI {
 			comboBlueAIs.addItem(AIType.values()[i]);
 		comboBlueAIs.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				mAI.setAIType(checkModesBlue());	
+				if (mSim != null && mComm != null)
+					mAI = new AIMaster(mComm, mSim, checkModesBlue());	
 			}
 		});
 		frmAlphaTeamSimulator.getContentPane().add(comboBlueAIs);
@@ -336,7 +345,8 @@ public class SimTesterGUI {
 			comboYellowAIs.addItem(AIType.values()[i]);
 		comboYellowAIs.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				opponentAI.setAIType(checkModesYellow());
+				if (mSim != null && mComm != null)
+					mAI = new AIMaster(mComm, mSim, checkModesYellow());	
 			}
 		});
 		frmAlphaTeamSimulator.getContentPane().add(comboYellowAIs);
@@ -534,12 +544,24 @@ public class SimTesterGUI {
 		mSim.putBallAt(ballpos.getX(), ballpos.getY());
 	}
 	
-	private AIType checkModesBlue(){	
-		return AIType.values()[comboBlueAIs.getSelectedIndex()];
+	private BaseAI checkModesBlue(){	
+		switch (AIType.values()[comboBlueAIs.getSelectedIndex()]) {
+		case VIS_SERV:
+			return new AIVisualServoing();
+		case NNETS:
+			return new AINeuralNet(NeuralNetwork.load(NNET_FILE));
+		} 
+		return null;
 	}
 	
-	private AIType checkModesYellow(){	
-		return AIType.values()[comboYellowAIs.getSelectedIndex()];
+	private BaseAI checkModesYellow(){	
+		switch (AIType.values()[comboYellowAIs.getSelectedIndex()]) {
+		case VIS_SERV:
+			return new AIVisualServoing();
+		case NNETS:
+			return new AINeuralNet(NeuralNetwork.load(NNET_FILE));
+		} 
+		return null;
 	}
 }
 

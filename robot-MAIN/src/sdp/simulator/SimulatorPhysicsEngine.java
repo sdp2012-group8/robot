@@ -31,7 +31,7 @@ public class SimulatorPhysicsEngine extends Simulator {
 	private static float goal_depth = 5f; // in cm
 	private WorldState old_st = null; // for setting world state
 	private boolean yellowCollision = false, blueCollision = false;
-	private Callback callback = null;
+	public Callback callback = null;
 
 	/**
 	 * Contains the world simulation of box2d
@@ -323,6 +323,8 @@ public class SimulatorPhysicsEngine extends Simulator {
 			// do soft reset
 			if (bodyBall != null) {
 				bodyBall.setTransform(new Vec2(newx, newy), bodyBall.getAngle());
+				bodyBall.setLinearVelocity(new Vec2(0, 0));
+				bodyBall.setAngularVelocity(0);
 				return;
 			}
 			
