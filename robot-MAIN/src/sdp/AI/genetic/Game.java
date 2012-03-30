@@ -1,17 +1,18 @@
 package sdp.AI.genetic;
 
-import java.util.Random;
-
 import sdp.AI.neural.AINeuralNet;
+import sdp.common.world.WorldState;
+import sdp.simulator.SimulatorPhysicsEngine;
+import sdp.simulator.VBrick;
 
 /**
  * A game simulation
  */
-public class Game {
+public class Game implements SimulatorPhysicsEngine.Callback {
 	
 	/** The states that the game could be at
 	 * @see Game#getState() */
-	public enum state {ready, running, finished};
+	public enum gamestate {ready, running, finished};
 	
 	/** use to access the ids of the robots that play in this game */
 	public final int[] ids;
@@ -21,7 +22,74 @@ public class Game {
 	/** callback to be notified when the game ends */
 	private Callback callback;
 	/** current state of the game */
-	private volatile state currentState = state.ready;
+	private volatile gamestate currentState = gamestate.ready;
+	
+	/** DONT FORGET TO SE THIS TO FALSE AFTER THE GAME HAS FINISHED */
+	private boolean simulateGame = false;
+	/** The most up-to-date world state */
+	private WorldState state = null;
+	
+	/** simulation speed */
+	private static final int FPS = 15;
+	/** frame length */
+	private static final int FRAME_TIME = 1000 / FPS;
+	
+	/** the x coordinate of the robot that would be placed on left */
+	private static final double PLACEMENT_LEFT = 20; // in cm
+	/** the x coordinate of the robot that would be placed on right */
+	private static final double PLACEMENT_RIGHT = WorldState.PITCH_WIDTH_CM - PLACEMENT_LEFT; // in cm
+	
+	
+	// calculate fitness section
+	
+	/**
+	 * When new frame is available, analyse the {@link #state}
+	 */
+	public void onNewFrame() {
+		
+	}
+
+	/**
+	 * If the ball goes into the left goal
+	 */
+	@Override
+	public void onLeftScore() {
+		// TODO Auto-generated method stub
+		
+		// mark end of game
+		simulateGame = false;
+	}
+
+	/**
+	 * If the ball goes into the right goal
+	 */
+	@Override
+	public void onRightScore() {
+		// TODO Auto-generated method stub
+		
+		// mark end of game
+		simulateGame = false;
+	}
+
+	/**
+	 * If the yellow robot collides with an obstacle
+	 */
+	@Override
+	public void onYellowCollide() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * If the blue robot collides with an obstacle
+	 */
+	@Override
+	public void onBlueCollide() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	// API and simulation
 	
 	/**
 	 * Initialize a new game
@@ -37,33 +105,48 @@ public class Game {
 		ids = new int[]{i, j};
 		this.callback = callback;
 		this.gameId = gameId;
+		simulateGame = true;
 	}
 	
 	/**
 	 * Does the simulation (in current thread)
 	 */
 	public void simulate() {
-		currentState = state.running;
+		currentState = gamestate.running;
 		
-		// simulate some simulation :)
-		Random r = new Random();
-		for (int i = 0; i < 5; i++) {
-			try {
-				Thread.sleep(r.nextInt(5));
-			} catch (InterruptedException e) {
-			}
+		// create simulator
+		final SimulatorPhysicsEngine sim = new SimulatorPhysicsEngine(false);
+		
+		// reset pitch
+		sim.registerBlue(new VBrick(),
+				PLACEMENT_LEFT,
+				WorldState.PITCH_HEIGHT_CM/2,
+				0);
+		sim.registerYellow(new VBrick(),
+				PLACEMENT_RIGHT,
+				WorldState.PITCH_HEIGHT_CM/2,
+				180);
+		sim.putBallAt();
+		
+		// runs simulation
+		while (simulateGame) {
+			sim.simulate(FRAME_TIME);
+			state = sim.getWorldState();
+			onNewFrame();
 		}
 		
-		currentState = state.finished;
+		// finsih simulation
+		currentState = gamestate.finished;
 		callback.onFinished(this, new long[]{0, 1});
 	}
-	
+
 	/**
 	 * @return current game state
 	 */
-	public state getState() {
+	public gamestate getState() {
 		return currentState;
 	}
+	
 	
 	// callback section
 	

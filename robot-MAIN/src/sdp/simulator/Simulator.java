@@ -118,7 +118,7 @@ public abstract class Simulator extends WorldStateProvider {
 		}.start();
 	}
 
-	private WorldState getWorldState() {
+	public WorldState getWorldState() {
 		
 		final Vector2D[] positions = getRobotPositions();
 		final Vector2D ball = getBall();
@@ -354,7 +354,7 @@ public abstract class Simulator extends WorldStateProvider {
 	 * {@link #getBall()}, {@link #getRbotDirections()} and {@link #getRobotPositions()} safely.
 	 * @param dt simulation time
 	 */
-	protected abstract void simulate(double dt);
+	public abstract void simulate(double dt);
 	
 	private void image(double dt, WorldState state, WorldState real) {
 		final Vector2D[] positions = getRobotPositions();
