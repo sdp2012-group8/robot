@@ -101,4 +101,14 @@ public final class Waypoint {
 	public final boolean isEndpoint() {
 		return isEndpoint;
 	}
+	
+
+	/**
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return String.format("<%s %.4f %.4f %.4f>", targetPoint.toString(),
+				targetDist, targetTurnAngle, costToDest);
+	}
 }

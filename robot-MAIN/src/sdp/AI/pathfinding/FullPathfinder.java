@@ -8,7 +8,6 @@ import sdp.AI.AIWorldState;
 import sdp.common.geometry.Circle;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
-import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 
 
@@ -20,14 +19,16 @@ import sdp.common.world.WorldState;
 public class FullPathfinder implements Pathfinder {
 	
 	/** Radius of checked circles. */
-	private static double CHECKED_CIRCLE_RADIUS = 2.5;
+	private static double CHECKED_CIRCLE_RADIUS = 1.0;
 	/** The amount, by which the collision points are pushed from obstacles. */
-	private static double COLLISION_ADJUSTMENT = 10.0;
+	private static double COLLISION_ADJUSTMENT = 5.0;
 	/** Largest number of waypoints a path can consist of. */
-	private static int MAX_WAYPOINT_COUNT = 10;
+	private static int MAX_WAYPOINT_COUNT = 20;
 	
 	/** A list of points that have been explored in a search. */
 	private LinkedList<Circle> checkedPoints = new LinkedList<Circle>();
+	/** Pathfinder's partial answers. */
+	private ArrayList<PartialPath> partialAnswers = new ArrayList<PartialPath>();
 	
 	/** A fallback pathfinder. */
 	private HeuristicPathfinder fallback = new HeuristicPathfinder();
@@ -87,6 +88,12 @@ public class FullPathfinder implements Pathfinder {
 		ArrayList<Circle> obstacles = WorldState.getObstacleCircles(worldState, obstacleFlag);
 		Vector2D startVecAdj = movePointOutOfObstacle(obstacles, startVec);
 		
+		for (PartialPath p : partialAnswers) {
+			if (p.getPathEnd().containsPoint(startVecAdj)) {
+				return p.getWaypoints();
+			}
+		}
+		
 		if (!WorldState.isPointInPitch(startVecAdj) || !WorldState.isPointInPitch(dest)) {
 			return null;
 		}
@@ -98,7 +105,7 @@ public class FullPathfinder implements Pathfinder {
 		
 		if (WorldState.isDirectPathClear(worldState, startVecAdj, destVec, obstacleFlag)) {
 			Vector2D destDirLocal = Vector2D.rotateVector(destDir, -startAngle);
-			
+
 			ArrayList<Waypoint> path = new ArrayList<Waypoint>();
 			path.add(new Waypoint(destDirLocal, destDir.getLength(), true));
 			return path;
@@ -124,8 +131,8 @@ public class FullPathfinder implements Pathfinder {
 						continue obstaclePointLoop;
 					}
 				}
-				
-				if (!WorldState.isDirectPathClear(worldState, startVecAdj, new Vector2D(pt), obstacleFlag)) {
+				if (!WorldState.isDirectPathClear(worldState, startVecAdj,
+						new Vector2D(pt), obstacleFlag)) {
 					continue;
 				}
 				
@@ -147,7 +154,9 @@ public class FullPathfinder implements Pathfinder {
 			}
 		}
 		
-		//checkedPoints.pop();
+		checkedPoints.pop();		
+		partialAnswers.add(new PartialPath(new Circle(startVecAdj,
+				CHECKED_CIRCLE_RADIUS), bestPath));
 		
 		return bestPath;
 	}
@@ -164,6 +173,7 @@ public class FullPathfinder implements Pathfinder {
 	public ArrayList<Waypoint> getPathForOwnRobot(AIWorldState worldState,
 			Point2D.Double dest, boolean ballIsObstacle) {
 		checkedPoints.clear();
+		partialAnswers.clear();
 		
 		int obstacles = WorldState.makeObstacleFlagsForOpponent(ballIsObstacle,
 				worldState.isOwnTeamBlue());
@@ -187,4 +197,53 @@ public class FullPathfinder implements Pathfinder {
 		}
 	}
 
+}
+
+
+/**
+ * A partial path container.
+ */
+class PartialPath {
+	
+	/** The point where the path ends. */
+	private Circle pathEnd;
+	/** Path's waypoints. */
+	private ArrayList<Waypoint> waypoints;
+	
+	
+	/**
+	 * Create a new partial path.
+	 * 
+	 * @param pathEnd Endpoint of the path.
+	 * @param waypoints Waypoints of the path.
+	 */
+	public PartialPath(Circle pathEnd, ArrayList<Waypoint> waypoints) {
+		this.pathEnd = pathEnd;
+		this.waypoints = waypoints;
+	}
+	
+	
+	/**
+	 * Get the end of the path.
+	 * 
+	 * @return Endpoint of the path.
+	 */
+	public Circle getPathEnd() {
+		return pathEnd;
+	}
+	
+	/**
+	 * Get the waypoints of the path.
+	 * 
+	 * Note that this method returns a copy of the waypoints.
+	 * 
+	 * @return Waypoints of the path.
+	 */
+	public ArrayList<Waypoint> getWaypoints() {
+		if (waypoints == null) {
+			return null;
+		} else {
+			return new ArrayList<Waypoint>(waypoints);
+		}
+	}
 }

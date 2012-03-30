@@ -9,12 +9,10 @@ import sdp.AI.pathfinding.FullPathfinder;
 import sdp.AI.pathfinding.HeuristicPathfinder;
 import sdp.AI.pathfinding.Pathfinder;
 import sdp.AI.pathfinding.Waypoint;
-import sdp.common.DeprecatedCode;
 import sdp.common.Painter;
 import sdp.common.Utilities;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
-import sdp.common.world.Goal;
 import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 
@@ -111,8 +109,6 @@ public class AIVisualServoing extends BaseAI {
 		if (canWeAttack(aiWorldState)) {
 			return gotBall();
 		}
-
-		boolean chasing_ball_instead = false;
 		
 		// Get the point to drive towards.
 		target = new Vector2D(aiWorldState.getBallCoords());
@@ -128,15 +124,16 @@ public class AIVisualServoing extends BaseAI {
 			}
 		}
 
+		boolean ballIsObstacle = false;
 		if (optimalPoint != null) {
 			target = new Vector2D(optimalPoint);
-			chasing_ball_instead = true;
+			ballIsObstacle = true;
 		}
 
 		// Generate command to drive towards the target point.
 		boolean mustFaceTarget = !Utilities.areDoublesEqual(point_off, DEFAULT_TARG_THRESH);
 
-		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, !chasing_ball_instead);
+		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, true);
 		return getWaypointCommand(waypoint, mustFaceTarget);
 	}
 
