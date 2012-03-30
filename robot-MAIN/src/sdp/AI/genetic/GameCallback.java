@@ -4,9 +4,9 @@ public interface GameCallback {
 	
 	/**
 	 * When game finishes, this gets called
+	 * @param the game that the result is coming from
 	 * @param fitness of network 0 and 1
-	 * @param ids
 	 */
-	public void onFinished(final long[] fitness, final int[] ids);
+	public void onFinished(final Game caller, final long[] fitness);
 
 }

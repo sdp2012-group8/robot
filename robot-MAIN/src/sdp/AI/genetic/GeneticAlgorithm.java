@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Random;
 import java.io.*;
 
+import sdp.AI.genetic.Game.state;
 import sdp.AI.neural.AINeuralNet;
 
 
@@ -24,8 +25,10 @@ public class GeneticAlgorithm {
 	final static int GENE_NUMBER = AINeuralNet.getWeightsCount();
 	/** Number of neighbours each individual plays against. Must be odd*/
 	final static int NEIGHBOUR_NUMBER = 11;
-	
+	/** Number of threads. Every thread can simulate one game at a time */
 	final static int MAX_NUM_SIMULT_GAMES = 10;
+	/** How much a thread is allowed to be unresponsive (will not always trigger, though) */
+	final static int MAX_THREAD_TIMEOUT = 30000;
 
 	int gen = 0;
 	long fitTotal = 0;
@@ -36,7 +39,11 @@ public class GeneticAlgorithm {
 	double[][] finalPopulation;
 	double[] finalPopFitness;
 	Random rand = new Random();
-	private volatile int currNumRunningGames = 0;
+	private int totalGames = 0;
+	// locker for concurrency control
+	private GameRunner[] workers = new GameRunner[MAX_NUM_SIMULT_GAMES];
+	private Object lock = new Object();
+
 
 
 	FileWriter fstream;
@@ -55,6 +62,13 @@ public class GeneticAlgorithm {
 	}
 
 	public GeneticAlgorithm() throws IOException {
+		
+		// start workers
+		for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++) {
+			workers[i] = new GameRunner();
+			workers[i].start();
+		}
+		
 		fstream = new FileWriter("out.txt");
 		out = new PrintWriter(fstream);
 		finalPopulation = new double[POPSIZE][GENE_NUMBER];
@@ -105,6 +119,10 @@ public class GeneticAlgorithm {
 		out.close();
 
 		System.out.println("Finished");
+		
+		// stop workers
+		for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++)
+			workers[i].interrupt();
 	}
 
 	/** 
@@ -209,9 +227,8 @@ public class GeneticAlgorithm {
 	 * Each game is run in its own thread.
 	 **/
 	private synchronized long[] calcFitness() {
-
-		// reset counter
-		currNumRunningGames = 0;
+		
+		// ----- INITIALIZATION OF GAMES ----- \\
 
 		// initialize result holder
 		final HashMap<Integer, HashSet<Long>> results = new HashMap<Integer, HashSet<Long>>();
@@ -221,6 +238,9 @@ public class GeneticAlgorithm {
 
 		// initialize thread (Game) holder
 		final ArrayList<Game> games = new ArrayList<Game>();
+
+		// for counting games
+		int game_id = 0;
 
 		// traverse through the population
 		for (int i = 0; i < POPSIZE; i++) {
@@ -254,16 +274,14 @@ public class GeneticAlgorithm {
 
 					// when a game thread finishes
 					@Override
-					public void onFinished(final long[] fitness, final int[] ids) {
+					public void onFinished(final Game caller, final long[] fitness) {
 
-						// save result
 						synchronized (results) {
 
 							// for both players
 							for (int i = 0; i < 2; i++) {
-
 								// get previous fitness values
-								HashSet<Long> prevFitness = results.get(ids[i]);
+								HashSet<Long> prevFitness = results.get(caller.ids[i]);
 
 								// if none exist, create the set
 								if (prevFitness == null)
@@ -273,14 +291,27 @@ public class GeneticAlgorithm {
 								prevFitness.add(fitness[i]);
 
 								// put the results so far back to the id
-								results.put(ids[i], prevFitness);
+								results.put(caller.ids[i], prevFitness);
 							}
+
 						}
 
-						// start the next game(s)
-						startMoreGames(games, true);
+
+						// check whether all workers have finished
+						for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++)
+							if (workers[i].getRemainingGames() != 0)
+								return;
+
+
+						// if all workers are 0
+						synchronized (lock) {
+
+							lock.notifyAll();
+
+						}
+
 					}
-				}));
+				}, game_id++));
 
 			}
 
@@ -288,63 +319,91 @@ public class GeneticAlgorithm {
 			alreadyPlayed.put(i, currPlayed);
 
 		}
+
+		// max number of games
+		totalGames = game_id;
 		
-		// start the first few games
-		startMoreGames(games, false);
+		// ----- ASSIGNING GAMES TO WORKERS ----- \\
+
+		// calculate how many games per worker shoud there be
+		final int gamesPerWorker = totalGames / MAX_NUM_SIMULT_GAMES;
+
+		// pause workers
+		for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++)
+			workers[i].setPause(true);
+
+		// initialize worker id count
+		int workerId = 0;
+
+		for (int i = 0; i < totalGames; i++) {
+
+			// decide when to change worker
+			if (i % gamesPerWorker == 0 && i != 0)
+				workerId++;
+			// limit worker id
+			if (workerId == MAX_NUM_SIMULT_GAMES)
+				workerId = MAX_NUM_SIMULT_GAMES -1;
+
+			// assign a game to a worker
+			workers[workerId].add(games.get(i));
+
+		}
+
+		// unpause workers
+		for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++)
+			workers[i].setPause(false);
+
+		// ----- ENTER BLOCKING SECTION ----- \\
 
 		// block until all threads have finished
-		while (currNumRunningGames > 0) {
+		synchronized (lock) {
 			try {
-				Thread.sleep(50);
+				lock.wait();
 			} catch (InterruptedException e) {}
 		}
 
+		// wait for the last ones to finish
+		int failsafe = 0;
+		while (!allGamesFinished(games)) {
+			try {
+				Thread.sleep(5);
+			} catch (InterruptedException e) {}
+			
+			// if workers are empty but games are still being simulated
+			// this should be rare
+			failsafe++;
+			if (5*failsafe > MAX_THREAD_TIMEOUT) {
+				System.err.println("Waiting for Game thread to finish timed out! Skipping the unterminated ones.");
+				break;
+			}
+		}
+		
+		// ----- CALCULATIONS HAVE BEEN DONE BY HERE ----- \\
+
 		// initialize average array
 		final long[] averageFitness = new long[results.size()];
-		
+
 		// calculate average
-		for (int i = 0; i < averageFitness.length; i++)
+		for (int i = 0; i < averageFitness.length; i++) {
 			averageFitness[i] = getAverage(results.get(i));
+		}
 
 		// return result
 		return averageFitness;
 	}
-	
+
 	/**
-	 * Ensures that {@value #MAX_NUM_SIMULT_GAMES} {@link Game}s are running at any time.
 	 * 
-	 * @param games list of games to be ran/are running
-	 * @param oneHasFinished if the number of running threads should be reduced
+	 * @param games
+	 * @return true if all games have finished
 	 */
-	private synchronized void startMoreGames(final ArrayList<Game> games, final boolean oneHasFinished) {
-
-		// reduce number of running games counter
-		if (oneHasFinished)
-			currNumRunningGames--;
-		
-		// if too many threads are already running, ignore
-		if (currNumRunningGames >= MAX_NUM_SIMULT_GAMES)
-			return;
-
-		// loop through all games
-		for (final Game game : games) {
-
-			// if game is running or ready, ignore
-			if (game.getState() != Game.state.ready)
-				continue;
-
-			// if game is not running, start it
-			game.startInNewThread();
-
-			// increment the number of running threads
-			currNumRunningGames++;
-
-			// if enough threads are running, exit loop
-			if (currNumRunningGames >= MAX_NUM_SIMULT_GAMES)
-				break;
-
-		}
+	private static boolean allGamesFinished(final ArrayList<Game> games) {
+		for (Game game : games)
+			if (game.getState() != state.finished)
+				return false;
+		return true;
 	}
+	
 	
 	/**
 	 * Get the average of a hashset
