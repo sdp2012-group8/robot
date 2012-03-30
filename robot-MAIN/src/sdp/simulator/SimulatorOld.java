@@ -181,7 +181,7 @@ public class SimulatorOld extends Simulator {
 	 * @param dt
 	 *            time elapsed since last call in s
 	 */
-	protected void simulate(double dt) {
+	public void simulate(double dt) {
 		// calculate for a future
 		for (int i = 0; i < robot.length; i++)
 			if (robot[i] != null) {

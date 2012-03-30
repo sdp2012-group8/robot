@@ -31,6 +31,7 @@ public class SimulatorPhysicsEngine extends Simulator {
 	private static float goal_depth = 5f; // in cm
 	private WorldState old_st = null; // for setting world state
 	private boolean yellowCollision = false, blueCollision = false;
+	private Callback callback = null;
 
 	/**
 	 * Contains the world simulation of box2d
@@ -104,6 +105,8 @@ public class SimulatorPhysicsEngine extends Simulator {
 					if ((contact.getFixtureA().getBody() == bodyYellow && contact.getFixtureB().getBody() != bodyBall) ||
 						(contact.getFixtureB().getBody() == bodyYellow && contact.getFixtureA().getBody() != bodyBall)) {
 						yellowCollision = true;
+						if (callback != null)
+							callback.onYellowCollide();
 					}
 					
 					// blue collision
@@ -111,6 +114,8 @@ public class SimulatorPhysicsEngine extends Simulator {
 					if ((contact.getFixtureA().getBody() == bodyBlue && contact.getFixtureB().getBody() != bodyBall) ||
 						(contact.getFixtureB().getBody() == bodyBlue && contact.getFixtureA().getBody() != bodyBall)) {
 						blueCollision = true;
+						if (callback != null)
+							callback.onBlueCollide();
 					}
 					
 					
@@ -173,7 +178,7 @@ public class SimulatorPhysicsEngine extends Simulator {
 	/**
 	 * Do the physics simulation
 	 */
-	protected void simulate(double dt) {	
+	public void simulate(double dt) {	
 
 		synchronized (robot) {
 
@@ -219,9 +224,13 @@ public class SimulatorPhysicsEngine extends Simulator {
 			// check for scores
 			if (bodyBall.getPosition().x < 0) {
 				SCORE_LEFT++;
+				if (callback != null)
+					callback.onLeftScore();
 				putBallAt();
 			} if (bodyBall.getPosition().x > sim_coeff) {
 				SCORE_RIGHT++;
+				if (callback != null)
+					callback.onRightScore();
 				putBallAt();
 			}
 
@@ -505,6 +514,28 @@ public class SimulatorPhysicsEngine extends Simulator {
 		p.drawLine(ball_x, ball_y, ball_x+ball_dir_x, ball_y+ball_dir_y);
 		
 		} catch (Exception e) {}
+	}
+	
+	/**
+	 * Register callback to receive simulator events
+	 * @param callback
+	 */
+	public void registerCallvack(Callback callback) {
+		this.callback = callback;
+	}
+	
+	/**
+	 * A callback for simulator changes
+	 * @author Martin Marinov
+	 *
+	 */
+	public static interface Callback {
+		
+		public void onLeftScore();
+		public void onRightScore();
+		public void onYellowCollide();
+		public void onBlueCollide();
+		
 	}
 
 
