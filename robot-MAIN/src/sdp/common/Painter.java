@@ -130,7 +130,7 @@ public class Painter {
 				Vector2D local_origin = new Vector2D(Robot.LENGTH_CM/2+2,0);
 				drawVector(Robot.getGlobalVector(robot, local_origin),  DeprecatedCode.raytraceVector(state_cm, robot, local_origin, new Vector2D(1,0), true), true);
 				if ((my_team_blue && j == 0) || (!my_team_blue && j == 1)) {
-					AIWorldState ai_world_state = Utilities.getAIWorldState(state_cm, my_team_blue, my_goal_left);
+					AIWorldState ai_world_state = DeprecatedCode.getAIWorldState(state_cm, my_team_blue, my_goal_left);
 					Vector2D target;
 					
 					try {

@@ -231,7 +231,7 @@ public final class Robot {
 		return backCenterPoint;
 	}
 	
-	
+
 	/**
 	 * Get how many degrees the robot will have to rotate to face the given
 	 * point.
@@ -318,5 +318,23 @@ public final class Robot {
 		
 		return GeomUtils.isPointInQuadrilateral(point, frontLeftPoint, frontRightPoint,
 				backRightPoint, backLeftPoint);
+	}
+	
+	
+	/**
+	 * Checks whether the given line intersects a robot.
+	 * 
+	 * @param point1 First point on the line.
+	 * @param point2 Second point on the line.
+	 * @param robot Robot in question.
+	 * @return Whether the line segment in question intersects the robot.
+	 */
+	public static boolean lineIntersectsRobot(Point2D.Double point1, Point2D.Double point2,
+			Robot robot) {
+		boolean diagonal1 = GeomUtils.doesSegmentIntersectLine(robot.getBackLeft(),
+				robot.getFrontRight(), point1, point2);
+		boolean diagonal2 = GeomUtils.doesSegmentIntersectLine(robot.getFrontLeft(),
+				robot.getBackRight(), point1, point2);
+		return (diagonal1 && diagonal2);
 	}
 }

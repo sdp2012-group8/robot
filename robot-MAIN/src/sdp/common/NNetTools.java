@@ -35,7 +35,7 @@ public class NNetTools {
 		Vector2D ball_rel = Robot.getLocalVector(am_i_blue ? worldState.getBlueRobot() : worldState.getYellowRobot(), ball);
 		double reach = DeprecatedCode.reachability(worldState, ball, am_i_blue, false, Robot.LENGTH_CM) ? 1 : -1;
 		
-		return Utilities.concat(
+		return Utilities.flattenArrays(
 				Utilities.getSectors(worldState, am_i_blue, 5, 22, true, false),
 				Utilities.getTargetInSectors(ball_rel, 22),
 				new double[] {

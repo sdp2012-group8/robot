@@ -6,7 +6,6 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
 
-import sdp.AI.AIWorldState;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
 import sdp.common.world.Robot;
@@ -18,26 +17,8 @@ import sdp.common.world.WorldState;
  */
 public class Utilities {
 	
-	/** Attack modes for optimal point calculations. */
-	public enum AttackMode { DirectOnly, WallsOnly, Full };
-	
-	
 	/** The double comparison accuracy that is required. */
 	private static final double EPSILON = 1e-8;
-	
-	/** Whether the robot should attempt to use wall kicks. */
-	public static final boolean WALL_KICKS_ENABLED = true;
-	
-	/** How close the robot should be to the ball before it attempts to kick it. */
-	public static final double OWN_BALL_KICK_DIST = 6;
-	/** How close the robot should be to the ball before it attempts to kick it. */
-	public static final double ENEMY_BALL_KICK_DIST = Robot.LENGTH_CM;
-	
-	/** Distance threshold for ball-robot direction ray tests. */
-	public static final double BALL_TO_DIRECTION_PROXIMITY_THRESHOLD = Robot.WIDTH_CM / 2;
-	
-	/** The maximum attack angle for an attacking robot. */
-	public static final double KICKABLE_ATTACK_ANGLE = 40.0;
 	
 	
 	/**
@@ -176,302 +157,95 @@ public class Utilities {
 		}
 	}
 
-	
-	/**
-	 * Checks whether the given line intersects a robot.
-	 * 
-	 * @param point1 First point on the line.
-	 * @param point2 Second point on the line.
-	 * @param robot Robot in question.
-	 * @return Whether the line segment in question intersects the robot.
-	 */
-	public static boolean lineIntersectsRobot(Point2D.Double point1, Point2D.Double point2,
-			Robot robot) {
-		boolean diagonal1 = GeomUtils.doesSegmentIntersectLine(robot.getBackLeft(),
-				robot.getFrontRight(), point1, point2);
-		boolean diagonal2 = GeomUtils.doesSegmentIntersectLine(robot.getFrontLeft(),
-				robot.getBackRight(), point1, point2);
-		return (diagonal1 && diagonal2);
-	}
-
 
 	/**
-	 * Returns the point the robot should go to behind the ball.
-	 * Distance behind the ball set by POINT_OFFSET
-	 * @param point The target point on the goal the robot should be aligned to.
-	 * @return Point2D.Double behind the ball
-	 */
-	public static Point2D.Double getPointBehindBall(Point2D.Double point, Point2D.Double ball, boolean my_goal_left, double point_offset) {
-
-		if (point.getY() == ball.getY()) {
-			return new Point2D.Double(my_goal_left ? ball.getX() - point_offset : ball.getX() + point_offset, ball.getY());
-		} else {
-			/*double x, y, a, b;
-			a = point.getY() - ball.getY();
-			b = point.getX() - ball.getX();
-
-			if (my_goal_left) {
-				y = ball.getY() - POINT_OFFSET*a/(Math.sqrt(b*b + a*a));
-				x = ball.getX() + (b*(y - ball.getY())/a);
-			} else {
-				y = ball.getY() + POINT_OFFSET*a/(Math.sqrt(b*b + a*a));
-				x = ball.getX() - (b*(y - ball.getY())/a);
-			}*/
-			
-			Point2D.Double p = Vector2D.changeLength(Vector2D.subtract(new Vector2D(point),new Vector2D(ball)), -point_offset);
-			p = new Point2D.Double(ball.x + p.x, ball.y + p.y);
-			//x = ball.getX() + (b*(y - ball.getY())/a);
-
-			return p;
-		}
-	}
-
-
-	private static Point2D.Double toCentimeters(Point2D.Double original) {
-		return new Point2D.Double(original.getX()*WorldState.PITCH_WIDTH_CM, original.getY()*WorldState.PITCH_WIDTH_CM);
-	}
-
-	private static Robot toCentimeters(Robot orig) {
-		Robot robot = new Robot(toCentimeters(orig.getCoords()), orig.getAngle());
-		robot.setCoords(true);
-		return robot;
-	}
-
-	public static WorldState toCentimeters(WorldState orig) {
-		return new WorldState(
-				toCentimeters(orig.getBallCoords()),
-				toCentimeters(orig.getBlueRobot()),
-				toCentimeters(orig.getYellowRobot()),
-				orig.getWorldImage());
-	}
-	
-	
-	/**
-	 * Checks whether our robot can directly attack the enemy goal.
-	 * 
-	 * @param worldState Current world state.
-	 * @return Whether the gates can be attacked.
-	 */
-	public static boolean canWeAttack(AIWorldState worldState) {
-		Vector2D localBall = Robot.getLocalVector(worldState.getOwnRobot(), new Vector2D(worldState.getBallCoords()));
-			
-		// Check if the ball is within a certain range in front of us
-		if (!(localBall.x < Robot.LENGTH_CM / 2 + OWN_BALL_KICK_DIST && localBall.x > 0 && localBall.y < Robot.WIDTH_CM/2 && localBall.y > -Robot.WIDTH_CM/2)) {
-			return false;
-		} else {
-			System.out.println("I can kick da ball!!!!");
-		}
-		
-		// Check there isn't a robot straight in front of us.
-		if (!Utilities.lineIntersectsRobot(worldState.getOwnRobot().getCoords(), worldState.getOwnRobot().getFrontCenter(), worldState.getEnemyRobot())) {
-			return false;
-		}
-		
-		return true;
-	}
-	
-	/**
-	 * Checks whether enemy robot can directly attack our goal.
-	 * 
-	 * @param worldState Current world state.
-	 * @return Whether the gates can be attacked.
-	 */
-	public static boolean canEnemyAttack(AIWorldState worldState) {
-		// Check that the ball is between our goal and the enemy.
-		if (worldState.isOwnGoalLeft()) {
-			if (worldState.getEnemyRobot().getCoords().x < worldState.getBallCoords().x) {
-				return false;
-			}
-		} else {
-			if (worldState.getBallCoords().x < worldState.getEnemyRobot().getCoords().x) {
-				return false;
-			}
-		}
-		
-		// Check that the enemy is pointing at us.
-		double curEnemyAngle = worldState.getEnemyRobot().getAngle();
-		double upperEnemyAngle = Vector2D.subtract(new Vector2D(worldState.getOwnGoal().getTop()),
-				new Vector2D(worldState.getEnemyRobot().getCoords())).getDirection();
-		double lowerEnemyAngle = Vector2D.subtract(new Vector2D(worldState.getOwnGoal().getBottom()),
-				new Vector2D(worldState.getEnemyRobot().getCoords())).getDirection();
-		
-		double curToLower = GeomUtils.getAngleDifference(lowerEnemyAngle, curEnemyAngle);
-		double curToUpper = GeomUtils.getAngleDifference(upperEnemyAngle, curEnemyAngle);
-		double lowerToUpper = GeomUtils.getAngleDifference(lowerEnemyAngle, upperEnemyAngle);
-		
-		if (!Utilities.areDoublesEqual(curToLower + curToUpper, lowerToUpper)) {
-			return false;
-		}
-		
-		// Check that the enemy is in line with the ball.
-		Point2D.Double ballRayPoint = GeomUtils.getClosestPointToLine(worldState.getBallCoords(), 
-				worldState.getEnemyRobot().getCoords(), worldState.getEnemyRobot().getFrontCenter());
-		double ballDistToRay = GeomUtils.pointDistance(worldState.getBallCoords(), ballRayPoint);
-		
-		if (ballDistToRay > BALL_TO_DIRECTION_PROXIMITY_THRESHOLD) {
-			return false;
-		}
-		
-		// Check that the enemy is within shooting distance.
-		double enemyToBallDist = GeomUtils.pointDistance(worldState.getBallCoords(),
-				worldState.getEnemyRobot().getCoords());
-		
-		if (enemyToBallDist > (ENEMY_BALL_KICK_DIST + Robot.LENGTH_CM / 2)) {
-			return false;
-		}
-		
-		return true;
-	}
-	
-
-	/**
-	 * Calculate the optimal attack point in the given world state. The robot
-	 * should seek to move to the said point in order to make an attacking move.
-	 * 
-	 * TODO: Move all logic out of deprecated functions here.
-	 * 
-	 * @param worldState Current world state.
-	 * @param distToBall Desired distance to the ball.
-	 * @param mode Robot's attack mode.
-	 * @return Optimal attack point.
-	 */
-	public static Point2D.Double getOptimalAttackPoint(AIWorldState worldState,
-			double distToBall, AttackMode mode) {
-		if (mode == AttackMode.DirectOnly) {
-			return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall, false);
-		} else if (mode == AttackMode.WallsOnly) {
-			return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall, true);
-		} else {	// mode == AttackMode.Full
-			if (WALL_KICKS_ENABLED) {
-				return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall);
-			} else {
-				return DeprecatedCode.getOptimalPointBehindBall(worldState, distToBall, false);
-			}
-		}
-	}
-	
-	
-	/**
-	 * Calculate the optimal defence point in the given world state. The robot
-	 * should seek to move to the said point in order to make a defensive move.
-	 * 
-	 * @param worldState Current world state.
-	 * @return Optimal defence point.
-	 */
-	public static Point2D.Double getOptimalDefencePoint(AIWorldState worldState) {
-		Vector2D ballVec = new Vector2D(worldState.getBallCoords());
-		
-		Vector2D ballGoalVec = Vector2D.subtract(new Vector2D(worldState.getOwnGoal().getCentre()), ballVec);
-		Vector2D ballOffset = Vector2D.changeLength(ballGoalVec, Robot.LENGTH_CM);
-		Vector2D ballPoint = Vector2D.add(ballVec, ballOffset);
-		
-		Vector2D closestPoint = new Vector2D(GeomUtils.getClosestPointToLine(worldState.getOwnRobot().getCoords(),
-				new Vector2D(worldState.getOwnGoal().getCentre()), new Vector2D(worldState.getBallCoords())));
-		
-		double distToClosest = GeomUtils.pointDistance(worldState.getOwnRobot().getCoords(), closestPoint);
-		
-		Vector2D optimalPoint = ballPoint;
-		
-		double goalDir = ballGoalVec.getDirection();
-		double closePtDir = Vector2D.subtract(closestPoint, ballPoint).getDirection();
-		
-		if (Utilities.areDoublesEqual(goalDir, closePtDir)) {
-			optimalPoint = closestPoint;
-			
-			if (distToClosest < Robot.LENGTH_CM / 2) {
-				optimalPoint = ballPoint;
-			}
-		}
-		
-		return optimalPoint;
-	}
-	
-
-	/**
-	 * Change in state of a robot
-	 */
-	private static double delta(Robot old_r, Robot new_r) {
-		return old_r.getCoords().distance(new_r.getCoords())+Math.abs(new_r.getAngle()-old_r.getAngle());
-	}
-
-	/**
-	 * Returns differences in two world states. If nothing changed a lot, the number would be very small
-	 * 
-	 * @param old_w
-	 * @param new_w
-	 * @return
-	 */
-	public static double delta(WorldState old_w, WorldState new_w) {
-		return delta(old_w.getBlueRobot(), new_w.getBlueRobot())+
-				delta(old_w.getYellowRobot(), new_w.getYellowRobot())+
-				new_w.getBallCoords().distance(old_w.getBallCoords());
-	}
-
-	/**
-	 * Just for printing arrays
-	 * @param array
-	 * @return
+	 * Pretty print an array to a string.
+	 *
+	 * @param array Array to print.
+	 * @return String representation of the given array.
 	 */
 	public static String printArray(Object[] array) {
-		if (array == null || array.length == 0)
+		if ((array == null) || (array.length == 0)) {
 			return "[EMPTY]";
-		if (array.length == 1)
-			return "["+array[0]+"]";
-		String ans = "["+array[0];
-		for (int i = 1; i < array.length; i++)
-			ans=ans+"\t"+array[i];
-		return ans+"]";
+		} else if (array.length == 1) {
+			return ("[" + array[0] + "]");
+		} else {
+			String ans = "[" + array[0];
+			for (int i = 1; i < array.length; i++) {
+				ans += "\t" + array[i];
+			}
+			ans += "]";
+			return ans;
+		}
 	}
 
+	
 	/**
-	 * Just for printing arrays
-	 * @param array
-	 * @return
+	 * Pretty print an integer array to a string.
+	 * 
+	 * @param array An array to pretty print.
+	 * @return String representation of the given array.
 	 */
 	public static String printArray(int[] array) {
 		Integer[] ans = new Integer[array.length];
-		for (int i = 0; i < ans.length; i++)
+		for (int i = 0; i < ans.length; i++) {
 			ans[i] = array[i];
+		}
+		
 		return printArray(ans);
 	}
 
 	/**
-	 * Just for printing arrays
-	 * @param array
-	 * @return
+	 * Pretty print a double array to a string.
+	 * 
+	 * @param array An array to pretty print.
+	 * @return String representation of the given array.
 	 */
 	public static String printArray(double[] array) {
 		Double[] ans = new Double[array.length];
-		for (int i = 0; i < ans.length; i++)
+		for (int i = 0; i < ans.length; i++) {
 			ans[i] = array[i];
+		}
+		
 		return printArray(ans);
 	}
 
+	
 	/**
-	 * Join given arrays into one in the given order
-	 * @param arrays
-	 * @return
+	 * Flatten an array of arrays.
+	 * 
+	 * @param arrays An array of arrays to flatten.
+	 * @return Flattened array of arrays.
 	 */
-	public static double[] concat(double[]...arrays) {
+	public static double[] flattenArrays(double[]...arrays) {
 		int sum = 0;
-		for (int i = 0; i < arrays.length; i++)
+		for (int i = 0; i < arrays.length; i++) {
 			sum += arrays[i].length;
+		}
 		double[] ans = new double[sum];
+		
 		int id = 0;
-		for (int i = 0; i < arrays.length; i++)
+		for (int i = 0; i < arrays.length; i++) {
 			for (int j = 0; j < arrays[i].length; j++) {
 				ans[id] = arrays[i][j];
-				if (ans[id] == Double.NaN)
+				if (ans[id] == Double.NaN) { 	// y u hear?
 					ans[id] = 0;
+				}
 				id++;
 			}
+		}
+		
 		return ans;
 	}
 
+	
 	/**
 	 * Sweeps a scanning vector sensor between the given angles and returns the distance to the closest object. Angles are wrt to the current robot
 	 * where angle 0 means forward, 180 or -180 means backwards, 90 means left, -90 means right of robot. <br/>
 	 * The result could be interpreted as: <i>the distance to nearest obstacle in the specified region about the current robot</i>
+	 * 
+	 * TODO: Clean up, update docs, move somewhere more appropriate.
+	 * 
 	 * @param ws current world state
 	 * @param am_i_blue true if my robot is blue, false if it is yellow
 	 * @param start_angle the starting angle of the segment (the smallest arc will be selected)
@@ -500,6 +274,17 @@ public class Utilities {
 		return min_vec;
 	}
 
+	/**
+	 * TODO: Clean up, update docs, move somewhere more appropriate.
+	 * 
+	 * @param ws
+	 * @param am_i_blue
+	 * @param scan_count
+	 * @param sector_count
+	 * @param normalize_to_1
+	 * @param include_ball_as_obstacle
+	 * @return
+	 */
 	public static double[] getSectors(WorldState ws, boolean am_i_blue, int scan_count, int sector_count, boolean normalize_to_1, boolean include_ball_as_obstacle) {
 		if (sector_count % 2 != 0 || (sector_count / 2) % 2 == 0) {
 			System.out.println("Sectors must be even number which halves should be odd!");
@@ -514,6 +299,14 @@ public class Utilities {
 					return ans;
 	}
 
+	
+	/**
+	 * TODO: Document, clean up, move somewhere into the neural AI.
+	 * 
+	 * @param relative
+	 * @param sector_count
+	 * @return
+	 */
 	public static double[] getTargetInSectors(Vector2D relative, int sector_count) {
 		if (sector_count % 2 != 0 || (sector_count / 2) % 2 == 0) {
 			System.out.println("Sectors must be even number which halves should be odd!");
@@ -524,19 +317,5 @@ public class Utilities {
 		for (int i = 0; i < sector_count; i++)
 			ans[i] = NNetTools.AI_normalizeDistanceTo1(NNetTools.targetInSector(relative, GeomUtils.normaliseAngle(-90+i*sec_angle), GeomUtils.normaliseAngle(-90+(i+1)*sec_angle)), WorldState.PITCH_WIDTH_CM);
 		return ans;
-	}
-	
-	
-	
-	/**
-	 * Returns an AIWorldState given the current world state plus some booleans.
-	 * @param world_state
-	 * @param my_team_blue
-	 * @param my_goal_left
-	 * @param do_prediction
-	 * @return
-	 */
-	public static AIWorldState getAIWorldState(WorldState world_state, boolean my_team_blue, boolean my_goal_left) {
-		return new AIWorldState(world_state, my_team_blue, my_goal_left);
 	}
 }

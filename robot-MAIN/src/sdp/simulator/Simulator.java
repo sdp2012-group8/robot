@@ -8,7 +8,6 @@ import java.util.Queue;
 
 import sdp.AI.Command;
 import sdp.common.Painter;
-import sdp.common.Utilities;
 import sdp.common.WorldStateProvider;
 import sdp.common.geometry.Vector2D;
 import sdp.common.world.Robot;
@@ -159,7 +158,7 @@ public abstract class Simulator extends WorldStateProvider {
 			ws = sim.getWorldState();
 		}
 			
-		return Utilities.toCentimeters(ws);
+		return WorldState.toCentimeters(ws);
 	}	
 
 	
@@ -359,7 +358,7 @@ public abstract class Simulator extends WorldStateProvider {
 					+ IMAGE_INFO_SEC_HEIGHT, BufferedImage.TYPE_INT_RGB);
 		}
 		// draw table
-		WorldState state_cm = Utilities.toCentimeters(state);
+		WorldState state_cm = WorldState.toCentimeters(state);
 		Painter p = new Painter(im, state_cm);
 		p.setOffsets(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
 		p.MOUSE_OVER_BALL = MOUSE_OVER_BALL;

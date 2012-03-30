@@ -2,24 +2,35 @@ package sdp.AI;
 
 import java.awt.geom.Point2D;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import sdp.AI.pathfinding.FullPathfinder;
 import sdp.AI.pathfinding.HeuristicPathfinder;
 import sdp.AI.pathfinding.Pathfinder;
 import sdp.AI.pathfinding.Waypoint;
+import sdp.common.DeprecatedCode;
 import sdp.common.Painter;
 import sdp.common.Utilities;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
+import sdp.common.world.Goal;
 import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 
+
 public class AIVisualServoing extends BaseAI {
+	
+	/** Attack modes for optimal point calculations. */
+	private enum AttackMode { DirectOnly, WallsOnly, Full }
+
 
 	/** Whether the robot is allowed to drive in reverse. */
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
 	/** Whether to use the heuristic pathfinder. */
 	private static final boolean USE_HEURISTIC_PATHFINDER = false;
+	/** Whether the robot should attempt to use wall kicks. */
+	private static final boolean WALL_KICKS_ENABLED = true;
 	
 	/** Distance at which the robot will begin slowing down. */
 	private static final double DECELERATION_DISTANCE = 30;
@@ -32,7 +43,18 @@ public class AIVisualServoing extends BaseAI {
 	private static final double STOP_TURN_THRESHOLD = 120;
 	/** The multiplier of the final turning speed. */
 	private static final double TURNING_SPEED_MULTIPLIER = 1.8;
-
+	
+	/** The number of targets, when considering a direct attack. */
+	private static final int DIRECT_ATTACK_TARGET_COUNT = 9;
+	
+	/** How close our robot should be to the ball before it attempts to kick it. */
+	private static final double OWN_BALL_KICK_DIST = 6;
+	/** How close enemy robot should be to the ball before we think it will kick it. */
+	private static final double ENEMY_BALL_KICK_DIST = Robot.LENGTH_CM;
+	
+	/** Distance threshold for ball-robot direction ray tests. */
+	private static final double BALL_TO_DIRECTION_PROXIMITY_THRESHOLD = Robot.WIDTH_CM / 2;
+	
 
 	// corner thresholds
 	private static final int THRESH_CORN_HIGH = 5;
@@ -73,20 +95,20 @@ public class AIVisualServoing extends BaseAI {
 	 */
 	@Override
 	protected Command chaseBall() throws IOException {
-		return attack(Utilities.AttackMode.Full);
+		return attack(AttackMode.Full);
 	}
 
 
 	/**
 	 * Get a command to attack the opponents.
 	 * 
-	 * @param mode Robot's attack mode. See {@link Utilities.AttackMode}.
+	 * @param mode Robot's attack mode. See {@link AttackMode}.
 	 * @return The next command the robot should execute.
 	 * @throws IOException 
 	 */
-	protected Command attack(Utilities.AttackMode mode) throws IOException {
+	protected Command attack(AttackMode mode) throws IOException {
 		// Are we ready to score?
-		if (Utilities.canWeAttack(aiWorldState)) {
+		if (canWeAttack(aiWorldState)) {
 			return gotBall();
 		}
 
@@ -97,7 +119,7 @@ public class AIVisualServoing extends BaseAI {
 		
 		Point2D.Double optimalPoint = null;
 		for (int t = 0; t < 20; t++) {
-			optimalPoint = Utilities.getOptimalAttackPoint(aiWorldState, point_off, mode);
+			optimalPoint = getOptimalAttackPoint(aiWorldState, point_off, mode);
 			
 			if (optimalPoint == null) {
 				point_off *= 0.8;
@@ -120,7 +142,7 @@ public class AIVisualServoing extends BaseAI {
 
 	@Override
 	protected synchronized Command gotBall() throws IOException {
-		if (Utilities.canWeAttack(aiWorldState)) {
+		if (canWeAttack(aiWorldState)) {
 			point_off = DEFAULT_POINT_OFF;
 			targ_thresh = DEFAULT_TARG_THRESH;
 			Painter.point_off = point_off;
@@ -149,7 +171,7 @@ public class AIVisualServoing extends BaseAI {
 		boolean useMilestone = false;
 		
 		if (!useMilestone) {
-			Point2D.Double target = Utilities.getOptimalDefencePoint(aiWorldState);
+			Point2D.Double target = getOptimalDefencePoint(aiWorldState);
 			Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, true);
 
 			return getWaypointCommand(waypoint, false);
@@ -157,7 +179,7 @@ public class AIVisualServoing extends BaseAI {
 		
 		if (Math.abs(Robot.getTurningAngle(aiWorldState.getOwnRobot(), new Vector2D(aiWorldState.getBallCoords()))) < 15 &&
 				aiWorldState.getDistanceToBall() < 40) {
-			if (Utilities.canWeAttack(aiWorldState))
+			if (canWeAttack(aiWorldState))
 				return gotBall();
 			return new Command(Robot.MAX_DRIVING_SPEED, 0, false);
 		}
@@ -230,7 +252,7 @@ public class AIVisualServoing extends BaseAI {
 
 
 		if(aiWorldState.getEnemyRobot().getAngle()>-90 && aiWorldState.getEnemyRobot().getAngle()<90)
-			return attack(Utilities.AttackMode.Full);
+			return attack(AttackMode.Full);
 
 		if(can_we_go_to_intercept)	{			
 			if (dist > 5)
@@ -344,7 +366,7 @@ public class AIVisualServoing extends BaseAI {
 	 */
 	@Override
 	protected Command penaltiesAttack() throws IOException {
-		return attack(Utilities.AttackMode.WallsOnly);
+		return attack(AttackMode.WallsOnly);
 
 		/*
 		Command command = new Command(0,0,false);
@@ -444,8 +466,8 @@ public class AIVisualServoing extends BaseAI {
 			point_off *= 0.5;
 			targ_thresh = point_off*0.5;
 		}
-		if (point_off < Utilities.OWN_BALL_KICK_DIST) {
-			point_off = Utilities.OWN_BALL_KICK_DIST;
+		if (point_off < OWN_BALL_KICK_DIST) {
+			point_off = OWN_BALL_KICK_DIST;
 		}
 
 		Vector2D ball = new Vector2D(aiWorldState.getBallCoords());
@@ -596,5 +618,205 @@ public class AIVisualServoing extends BaseAI {
 		}
 	}
 
-}
 
+	/**
+	 * Calculate the optimal attack point in the given world state. The robot
+	 * should seek to move to the said point in order to make an attacking move.
+	 * 
+	 * TODO: Move all logic out of deprecated functions here.
+	 * 
+	 * @param worldState Current world state.
+	 * @param distToBall Desired distance to the ball.
+	 * @param mode Robot's attack mode.
+	 * @return Optimal attack point.
+	 */
+	private Point2D.Double getOptimalAttackPoint(AIWorldState worldState,
+			double distToBall, AttackMode mode) {
+		ArrayList<Point2D.Double> attackTargets = new ArrayList<Point2D.Double>();
+		
+		// Add direct attack targets, if any.
+		if ((mode == AttackMode.Full) || (mode == AttackMode.DirectOnly)) {
+			double goalHeight = worldState.getEnemyGoal().getBottom().y - worldState.getEnemyGoal().getTop().y;
+			
+			for (int i = 0; i < DIRECT_ATTACK_TARGET_COUNT; ++i) {
+				double ratio = ((double) i) / (DIRECT_ATTACK_TARGET_COUNT - 1);
+				double heightOffset = goalHeight * ratio;
+				
+				attackTargets.add(new Point2D.Double(worldState.getEnemyGoal().getTop().x,
+						worldState.getEnemyGoal().getTop().y + heightOffset));
+			}
+			attackTargets.add(worldState.getEnemyGoal().getCentre());
+		}
+		
+		// Add wall attack targets, if any.
+		if ((WALL_KICKS_ENABLED && (mode == AttackMode.Full))
+				|| (mode == AttackMode.WallsOnly)) {
+			Point2D.Double enemyGoalCentre = worldState.getEnemyGoal().getCentre();
+			attackTargets.add(new Point2D.Double(enemyGoalCentre.x,
+					enemyGoalCentre.y - WorldState.PITCH_HEIGHT_CM));
+			attackTargets.add(new Point2D.Double(enemyGoalCentre.x,
+					enemyGoalCentre.y + WorldState.PITCH_HEIGHT_CM));
+		}
+		
+		// Filter invisible attack targets.
+		Iterator<Point2D.Double> it = attackTargets.iterator();
+		while (it.hasNext()) {
+			Point2D.Double curTarget = it.next();
+			
+			Robot robotImage = worldState.getEnemyRobot();
+			if (curTarget.y < 0) {
+				robotImage = worldState.getEnemyRobot().getTopImage();
+			} else if (curTarget.y > WorldState.PITCH_HEIGHT_CM) {
+				robotImage = worldState.getEnemyRobot().getBottomImage();
+			}
+			
+			if (!Robot.lineIntersectsRobot(curTarget, worldState.getBallCoords(), robotImage)) { 
+				it.remove();
+			} else if (!WorldState.isPointInPitch(curTarget)) {
+				it.remove();
+			}
+		}
+		
+		// Find the optimal attack point.
+		double minOptimalDist = Double.MAX_VALUE;
+		Point2D.Double bestPoint = null;
+		
+		for (Point2D.Double curTarget : attackTargets) {
+			Vector2D ballToTarget = Vector2D.subtract(new Vector2D(curTarget),
+					new Vector2D(worldState.getBallCoords()));
+			Vector2D targetOffset = Vector2D.changeLength(ballToTarget, -distToBall);
+			Point2D.Double curOptimal = GeomUtils.addPoints(worldState.getBallCoords(), targetOffset);
+			double distToOptimal = GeomUtils.pointDistance(worldState.getOwnRobot().getCoords(), curOptimal);
+
+			if (WorldState.isPointInPaddedPitch(curOptimal, Robot.LENGTH_CM / 2)
+					&& !Robot.isPointAroundRobot(curOptimal, worldState.getEnemyRobot())
+					&& Robot.lineIntersectsRobot(curTarget, worldState.getBallCoords(), worldState.getEnemyRobot())
+					&& (distToOptimal < minOptimalDist)) {
+				bestPoint = curOptimal;
+				minOptimalDist = distToOptimal;
+			}
+		}
+	
+		return bestPoint;
+	}
+	
+	/**
+	 * Calculate the optimal defence point in the given world state. The robot
+	 * should seek to move to the said point in order to make a defensive move.
+	 * 
+	 * @param worldState Current world state.
+	 * @return Optimal defence point.
+	 */
+	private Point2D.Double getOptimalDefencePoint(AIWorldState worldState) {
+		Vector2D ballVec = new Vector2D(worldState.getBallCoords());
+		
+		Vector2D ballGoalVec = Vector2D.subtract(new Vector2D(worldState.getOwnGoal().getCentre()), ballVec);
+		Vector2D ballOffset = Vector2D.changeLength(ballGoalVec, Robot.LENGTH_CM);
+		Vector2D ballPoint = Vector2D.add(ballVec, ballOffset);
+		
+		Vector2D closestPoint = new Vector2D(GeomUtils.getClosestPointToLine(worldState.getOwnRobot().getCoords(),
+				new Vector2D(worldState.getOwnGoal().getCentre()), new Vector2D(worldState.getBallCoords())));
+		
+		double distToClosest = GeomUtils.pointDistance(worldState.getOwnRobot().getCoords(), closestPoint);
+		
+		Vector2D optimalPoint = ballPoint;
+		
+		double goalDir = ballGoalVec.getDirection();
+		double closePtDir = Vector2D.subtract(closestPoint, ballPoint).getDirection();
+		
+		if (Utilities.areDoublesEqual(goalDir, closePtDir)) {
+			optimalPoint = closestPoint;
+			
+			if (distToClosest < Robot.LENGTH_CM / 2) {
+				optimalPoint = ballPoint;
+			}
+		}
+		
+		return optimalPoint;
+	}
+
+
+	/**
+	 * Checks whether our robot can directly attack the enemy goal.
+	 * 
+	 * TODO: Decouple from AI Master, make private.
+	 * 
+	 * @param worldState Current world state.
+	 * @return Whether the gates can be attacked.
+	 */
+	public static boolean canWeAttack(AIWorldState worldState) {
+		Vector2D localBall = Robot.getLocalVector(worldState.getOwnRobot(),
+				new Vector2D(worldState.getBallCoords()));
+		
+		if (!((localBall.x < (Robot.LENGTH_CM / 2 + OWN_BALL_KICK_DIST))
+				&& (localBall.x > 0)
+				&& (localBall.y < (Robot.WIDTH_CM / 2))
+				&& (localBall.y > (-Robot.WIDTH_CM / 2)))) {
+			return false;
+		}
+		
+		if (!Robot.lineIntersectsRobot(worldState.getOwnRobot().getCoords(),
+				worldState.getOwnRobot().getFrontCenter(), worldState.getEnemyRobot())) {
+			return false;
+		}
+		
+		System.out.println("AI thinks it can kick.");
+		
+		return true;
+	}
+	
+	/**
+	 * Checks whether enemy robot can directly attack our goal.
+	 * 
+	 * TODO: Decouple from AIMaster, make private.
+	 * 
+	 * @param worldState Current world state.
+	 * @return Whether the gates can be attacked.
+	 */
+	public static boolean canEnemyAttack(AIWorldState worldState) {
+		// Check that the ball is between our goal and the enemy.
+		if (worldState.isOwnGoalLeft()) {
+			if (worldState.getEnemyRobot().getCoords().x < worldState.getBallCoords().x) {
+				return false;
+			}
+		} else {
+			if (worldState.getBallCoords().x < worldState.getEnemyRobot().getCoords().x) {
+				return false;
+			}
+		}
+		
+		// Check that the enemy is pointing at us.
+		double curEnemyAngle = worldState.getEnemyRobot().getAngle();
+		double upperEnemyAngle = Vector2D.subtract(new Vector2D(worldState.getOwnGoal().getTop()),
+				new Vector2D(worldState.getEnemyRobot().getCoords())).getDirection();
+		double lowerEnemyAngle = Vector2D.subtract(new Vector2D(worldState.getOwnGoal().getBottom()),
+				new Vector2D(worldState.getEnemyRobot().getCoords())).getDirection();
+		
+		double curToLower = GeomUtils.getAngleDifference(lowerEnemyAngle, curEnemyAngle);
+		double curToUpper = GeomUtils.getAngleDifference(upperEnemyAngle, curEnemyAngle);
+		double lowerToUpper = GeomUtils.getAngleDifference(lowerEnemyAngle, upperEnemyAngle);
+		
+		if (!Utilities.areDoublesEqual(curToLower + curToUpper, lowerToUpper)) {
+			return false;
+		}
+		
+		// Check that the enemy is in line with the ball.
+		Point2D.Double ballRayPoint = GeomUtils.getClosestPointToLine(worldState.getBallCoords(), 
+				worldState.getEnemyRobot().getCoords(), worldState.getEnemyRobot().getFrontCenter());
+		double ballDistToRay = GeomUtils.pointDistance(worldState.getBallCoords(), ballRayPoint);
+		
+		if (ballDistToRay > BALL_TO_DIRECTION_PROXIMITY_THRESHOLD) {
+			return false;
+		}
+		
+		// Check that the enemy is within shooting distance.
+		double enemyToBallDist = GeomUtils.pointDistance(worldState.getBallCoords(),
+				worldState.getEnemyRobot().getCoords());
+		
+		if (enemyToBallDist > (ENEMY_BALL_KICK_DIST + Robot.LENGTH_CM / 2)) {
+			return false;
+		}
+		
+		return true;
+	}
+}

@@ -53,8 +53,8 @@ public class WorldState {
 	
 	/** Picture of the world. */
 	private BufferedImage worldImage;
-
 	
+
 	/**
 	 * Create a new world state.
 	 * 
@@ -156,6 +156,48 @@ public class WorldState {
 	}
 	
 	
+	/**
+	 * Convert a 2D point from normal coordinates to real world coordinates
+	 * (i.e. [0; 1] -> centimeters).
+	 * 
+	 * TODO: Move to GeomUtils??
+	 * 
+	 * @param point Point to convert.
+	 * @return Converted point.
+	 */
+	private static Point2D.Double toCentimeters(Point2D.Double point) {
+		return new Point2D.Double(point.getX() * PITCH_WIDTH_CM, point.getY() * PITCH_WIDTH_CM);
+	}
+
+	/**
+	 * Convert robot's location from normal coordinates to real world
+	 * coordinates (i.e. [0; 1] -> centimeters).
+	 * 
+	 * @param robot Robot to convert.
+	 * @return Converted robot.
+	 */
+	private static Robot toCentimeters(Robot robot) {
+		Robot cmRobot = new Robot(WorldState.toCentimeters(robot.getCoords()), robot.getAngle());
+		cmRobot.setCoords(true);
+		return cmRobot;
+	}
+
+	/**
+	 * Convert coordinates in a world state from normal to real world systems
+	 * (i.e. [0; 1] -> centimeters).
+	 * 
+	 * @param worldState World state to convert.
+	 * @return Converted world state.
+	 */
+	public static WorldState toCentimeters(WorldState worldState) {
+		return new WorldState(
+				WorldState.toCentimeters(worldState.getBallCoords()),
+				WorldState.toCentimeters(worldState.getBlueRobot()),
+				WorldState.toCentimeters(worldState.getYellowRobot()),
+				worldState.getWorldImage());
+	}
+
+
 	/**
 	 * Check whether the given point is inside the football pitch.
 	 * 

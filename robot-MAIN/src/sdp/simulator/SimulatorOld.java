@@ -3,7 +3,6 @@ package sdp.simulator;
 import java.io.IOException;
 
 import sdp.AI.Command;
-import sdp.common.Utilities;
 import sdp.common.Communicator.opcode;
 import sdp.common.geometry.Vector2D;
 import sdp.common.world.Robot;
@@ -80,7 +79,7 @@ public class SimulatorOld extends Simulator {
 	@Override
 	public void setWorldState(WorldState ws, double dt, boolean is_ws_in_cm, Command command, Boolean am_i_blue) {
 		if (!is_ws_in_cm)
-			ws = Utilities.toCentimeters(ws);
+			ws = WorldState.toCentimeters(ws);
 		boolean first_run = old_st == null || dt == 0;
 		for (int id = 0; id < 2; id++) {
 			boolean is_it_me = command != null && am_i_blue != null && ((am_i_blue && id == 0) || (!am_i_blue && id == 1));

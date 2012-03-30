@@ -7,7 +7,6 @@ import java.util.TimerTask;
 import sdp.AI.Command;
 import sdp.common.Communicator;
 import sdp.common.MessageListener;
-import sdp.common.Utilities;
 import sdp.common.WorldStateObserver;
 import sdp.common.Communicator.opcode;
 import sdp.common.world.WorldState;
@@ -136,7 +135,7 @@ public class AIMaster extends WorldStateProvider {
 			public void run() {
 				while (!isInterrupted()) {
 					WorldState state = observer.getNextState();
-					state = Utilities.toCentimeters(state);
+					state = WorldState.toCentimeters(state);
 
 					if (worldState == null) {
 						worldState = state;
@@ -216,13 +215,13 @@ public class AIMaster extends WorldStateProvider {
 			
 		} else if (aiState == AIState.PLAY) {
 			// PLAY -> DEFEND_GOAL
-			if (DEFENCE_ENABLED && Utilities.canEnemyAttack(aiWorldState)) {
+			if (DEFENCE_ENABLED && AIVisualServoing.canEnemyAttack(aiWorldState)) {
 				setState(AIState.DEFEND_GOAL);
 			}
 						
 		} else if (aiState == AIState.DEFEND_GOAL) {
 			// DEFEND_GOAL -> PLAY
-			if (!Utilities.canEnemyAttack(aiWorldState)) {
+			if (!AIVisualServoing.canEnemyAttack(aiWorldState)) {
 				setState(AIState.PLAY);
 			}
 
