@@ -32,7 +32,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	/** simulation speed */
 	private static final int FPS = 15;
 	/** frame length */
-	private static final int FRAME_TIME = 1000 / FPS;
+	private static final double FRAME_TIME = 1d / FPS;
 	
 	/** the x coordinate of the robot that would be placed on left */
 	private static final double PLACEMENT_LEFT = 20; // in cm
