@@ -11,8 +11,13 @@ import java.util.Queue;
  */
 public class GameRunner extends Thread {
 	
+	/** get the number of games that have not finished. Don't modify this! */
+	public volatile int count = 0;
+	/** set calback to receive updates. Only one callback can be set per worker */
+	public Callback callback = null;
+	
 	/** game container */
-	private Queue<Game> games_to_run = new LinkedList<Game>();
+	private volatile Queue<Game> games_to_run = new LinkedList<Game>();
 	private boolean pause = false;
 	
 	/**
@@ -20,6 +25,7 @@ public class GameRunner extends Thread {
 	 * @param game
 	 */
 	public void add(final Game game) {
+		count++;
 		games_to_run.add(game);
 	}
 
@@ -37,6 +43,11 @@ public class GameRunner extends Thread {
 					
 					// if not empty, simulate
 					gameToExecute.simulate();
+					count--;
+					
+					// notify callback
+					if (callback != null)
+						callback.allGamesReady();
 					
 				} else {
 					// if empty, sleep a bit
@@ -54,14 +65,6 @@ public class GameRunner extends Thread {
 
 		}
 	}
-
-	/**
-	 * Get the number of games left
-	 * @return
-	 */
-	public int getRemainingGames() {
-		return games_to_run.size();
-	}
 	
 	/**
 	 * Will not simulate any games if paused
@@ -77,5 +80,24 @@ public class GameRunner extends Thread {
 	 */
 	public boolean isPaused() {
 		return pause;
+	}
+	
+	
+	// callback section
+	
+	/**
+	 * Override this to receive a notification when
+	 * all queued games have been simulated.
+	 * 
+	 * @author Martin Marinov
+	 *
+	 */
+	public static interface Callback {
+		
+		/**
+		 * Will get triggered when all queued games have been simulated
+		 */
+		public void allGamesReady();
+
 	}
 }

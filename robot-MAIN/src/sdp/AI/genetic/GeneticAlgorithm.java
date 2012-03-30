@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Random;
 import java.io.*;
 
-import sdp.AI.genetic.Game.state;
 import sdp.AI.neural.AINeuralNet;
 
 
@@ -227,7 +226,7 @@ public class GeneticAlgorithm {
 	 * Each game is run in its own thread.
 	 **/
 	private synchronized long[] calcFitness() {
-		
+
 		// ----- INITIALIZATION OF GAMES ----- \\
 
 		// initialize result holder
@@ -270,46 +269,27 @@ public class GeneticAlgorithm {
 				currPlayed.add(index);
 
 				// initialize a game with the given neighbor
-				games.add(new Game(i, index, population, new GameCallback() {
+				games.add(new Game(i, index, population, new Game.Callback() {
 
 					// when a game thread finishes
 					@Override
-					public void onFinished(final Game caller, final long[] fitness) {
+					public synchronized void onFinished(final Game caller, final long[] fitness) {
 
-						synchronized (results) {
+						// for both players
+						for (int i = 0; i < 2; i++) {
+							// get previous fitness values
+							HashSet<Long> prevFitness = results.get(caller.ids[i]);
 
-							// for both players
-							for (int i = 0; i < 2; i++) {
-								// get previous fitness values
-								HashSet<Long> prevFitness = results.get(caller.ids[i]);
+							// if none exist, create the set
+							if (prevFitness == null)
+								prevFitness = new HashSet<Long>();
 
-								// if none exist, create the set
-								if (prevFitness == null)
-									prevFitness = new HashSet<Long>();
+							// add the current fitness to the set
+							prevFitness.add(fitness[i]);
 
-								// add the current fitness to the set
-								prevFitness.add(fitness[i]);
-
-								// put the results so far back to the id
-								results.put(caller.ids[i], prevFitness);
-							}
-
+							// put the results so far back to the id
+							results.put(caller.ids[i], prevFitness);
 						}
-
-
-						// check whether all workers have finished
-						for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++)
-							if (workers[i].getRemainingGames() != 0)
-								return;
-
-
-						// if all workers are 0
-						synchronized (lock) {
-
-							lock.notifyAll();
-
-						}
-
 					}
 				}, game_id++));
 
@@ -322,15 +302,36 @@ public class GeneticAlgorithm {
 
 		// max number of games
 		totalGames = game_id;
-		
+
 		// ----- ASSIGNING GAMES TO WORKERS ----- \\
 
 		// calculate how many games per worker shoud there be
 		final int gamesPerWorker = totalGames / MAX_NUM_SIMULT_GAMES;
 
-		// pause workers
-		for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++)
+		// pause workers and set callbacks
+		for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++) {
+
 			workers[i].setPause(true);
+
+			workers[i].callback = new GameRunner.Callback() {
+
+				// when all of the games have been simulated
+				@Override
+				public void allGamesReady() {
+
+					// check whether all workers have finished
+					for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++)
+						if (workers[i].count != 0)
+							return;
+
+
+					// if all workers are 0, ublock main thread
+					synchronized (lock) {
+						lock.notifyAll();
+					}
+				}
+			};
+		}
 
 		// initialize worker id count
 		int workerId = 0;
@@ -362,22 +363,6 @@ public class GeneticAlgorithm {
 			} catch (InterruptedException e) {}
 		}
 
-		// wait for the last ones to finish
-		int failsafe = 0;
-		while (!allGamesFinished(games)) {
-			try {
-				Thread.sleep(5);
-			} catch (InterruptedException e) {}
-			
-			// if workers are empty but games are still being simulated
-			// this should be rare
-			failsafe++;
-			if (5*failsafe > MAX_THREAD_TIMEOUT) {
-				System.err.println("Waiting for Game thread to finish timed out! Skipping the unterminated ones.");
-				break;
-			}
-		}
-		
 		// ----- CALCULATIONS HAVE BEEN DONE BY HERE ----- \\
 
 		// initialize average array
@@ -390,18 +375,6 @@ public class GeneticAlgorithm {
 
 		// return result
 		return averageFitness;
-	}
-
-	/**
-	 * 
-	 * @param games
-	 * @return true if all games have finished
-	 */
-	private static boolean allGamesFinished(final ArrayList<Game> games) {
-		for (Game game : games)
-			if (game.getState() != state.finished)
-				return false;
-		return true;
 	}
 	
 	

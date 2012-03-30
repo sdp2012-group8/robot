@@ -9,14 +9,29 @@ import sdp.AI.neural.AINeuralNet;
  */
 public class Game {
 	
+	/** The states that the game could be at
+	 * @see Game#getState() */
 	public enum state {ready, running, finished};
 	
-	private GameCallback callback;
+	/** use to access the ids of the robots that play in this game */
 	public final int[] ids;
+	/** use to get the current game id */
 	public final int gameId;
+	
+	/** callback to be notified when the game ends */
+	private Callback callback;
+	/** current state of the game */
 	private volatile state currentState = state.ready;
 	
-	public Game(int i, int j, final double[][] population, GameCallback callback, int gameId) {
+	/**
+	 * Initialize a new game
+	 * @param i the left robot id
+	 * @param j thr right robot id
+	 * @param population arrays to pick from
+	 * @param callback to be used to notify caller back when game is finished and pass scores
+	 * @param gameId the id of the current game
+	 */
+	public Game(int i, int j, final double[][] population, Callback callback, int gameId) {
 		new AINeuralNet(population[i]);
 		new AINeuralNet(population[j]);
 		ids = new int[]{i, j};
@@ -25,7 +40,7 @@ public class Game {
 	}
 	
 	/**
-	 * Does the simulation in current thread
+	 * Does the simulation (in current thread)
 	 */
 	public void simulate() {
 		currentState = state.running;
@@ -34,7 +49,7 @@ public class Game {
 		Random r = new Random();
 		for (int i = 0; i < 5; i++) {
 			try {
-				Thread.sleep(r.nextInt(100));
+				Thread.sleep(r.nextInt(5));
 			} catch (InterruptedException e) {
 			}
 		}
@@ -48,6 +63,25 @@ public class Game {
 	 */
 	public state getState() {
 		return currentState;
+	}
+	
+	// callback section
+	
+	/**
+	 * A callback that receives fitness scores after the game has been finised
+	 * 
+	 * @author Martin Marinov
+	 *
+	 */
+	public static interface Callback {
+		
+		/**
+		 * When game finishes, this gets called
+		 * @param the game that the result is coming from
+		 * @param fitness of network 0 and 1
+		 */
+		public void onFinished(final Game caller, final long[] fitness);
+
 	}
 
 	
