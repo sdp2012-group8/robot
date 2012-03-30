@@ -3,6 +3,9 @@ package sdp.simulator;
 
 import java.io.IOException;
 
+import org.jbox2d.callbacks.ContactImpulse;
+import org.jbox2d.callbacks.ContactListener;
+import org.jbox2d.collision.Manifold;
 import org.jbox2d.collision.shapes.CircleShape;
 import org.jbox2d.collision.shapes.PolygonShape;
 import org.jbox2d.common.Vec2;
@@ -11,6 +14,7 @@ import org.jbox2d.dynamics.BodyDef;
 import org.jbox2d.dynamics.BodyType;
 import org.jbox2d.dynamics.FixtureDef;
 import org.jbox2d.dynamics.World;
+import org.jbox2d.dynamics.contacts.Contact;
 
 import sdp.AI.Command;
 import sdp.common.Painter;
@@ -26,6 +30,7 @@ public class SimulatorPhysicsEngine extends Simulator {
 	private static float sim_coeff = (float) (WorldState.PITCH_WIDTH_CM/5); // the width of the simulation
 	private static float goal_depth = 5f; // in cm
 	private WorldState old_st = null; // for setting world state
+	private boolean yellowCollision = false, blueCollision = false;
 
 	/**
 	 * Contains the world simulation of box2d
@@ -59,7 +64,59 @@ public class SimulatorPhysicsEngine extends Simulator {
 	public SimulatorPhysicsEngine(boolean realtime_simulation) {		
 
 		// create world
-		world = new World(new Vec2(0, 0), true);
+		world = new World(new Vec2(0, 0), false);
+		
+		world.setContactListener(new ContactListener() {
+			
+			@Override
+			public void preSolve(Contact contact, Manifold oldManifold) {}
+			
+			@Override
+			public void postSolve(Contact contact, ContactImpulse impulse) {}
+			
+			@Override
+			public void endContact(Contact contact) {				
+				synchronized (robot) {
+				
+				// yellow collision
+				
+				if ((contact.getFixtureA().getBody() == bodyYellow && contact.getFixtureB().getBody() != bodyBall) ||
+					(contact.getFixtureB().getBody() == bodyYellow && contact.getFixtureA().getBody() != bodyBall)) {
+					yellowCollision = false;
+				}
+				
+				// blue collision
+				
+				if ((contact.getFixtureA().getBody() == bodyBlue && contact.getFixtureB().getBody() != bodyBall) ||
+					(contact.getFixtureB().getBody() == bodyBlue && contact.getFixtureA().getBody() != bodyBall)) {
+					blueCollision = false;
+				}
+				
+				
+			}}
+			
+			@Override
+			public void beginContact(Contact contact) {
+				synchronized (robot) {
+				
+					// yellow collision
+					
+					if ((contact.getFixtureA().getBody() == bodyYellow && contact.getFixtureB().getBody() != bodyBall) ||
+						(contact.getFixtureB().getBody() == bodyYellow && contact.getFixtureA().getBody() != bodyBall)) {
+						yellowCollision = true;
+					}
+					
+					// blue collision
+					
+					if ((contact.getFixtureA().getBody() == bodyBlue && contact.getFixtureB().getBody() != bodyBall) ||
+						(contact.getFixtureB().getBody() == bodyBlue && contact.getFixtureA().getBody() != bodyBall)) {
+						blueCollision = true;
+					}
+					
+					
+				}
+			}
+		});
 
 		// define table positions
 		final BodyDef[] tableDef = new BodyDef[table.length];
@@ -118,103 +175,132 @@ public class SimulatorPhysicsEngine extends Simulator {
 	 */
 	protected void simulate(double dt) {	
 
-		if (bodyBlue == null || bodyYellow == null || bodyBall == null)
-			return;
+		synchronized (robot) {
 
-		// calculate brick speeds
-		calculateBrickSpeeds(dt);
+			if (bodyBlue == null || bodyYellow == null || bodyBall == null)
+				return;
 
-		// set brick velocities
-		setVector(bodyBlue.getLinearVelocity(), bodyBlue.getAngle(), speeds[0]);
-		setVector(bodyYellow.getLinearVelocity(), bodyYellow.getAngle(), speeds[1]);
+			// calculate brick speeds
+			calculateBrickSpeeds(dt);
 
-		// set turning speeds
-		bodyBlue.setAngularVelocity((float) (turning_speeds[0] * PI / 180));
-		bodyYellow.setAngularVelocity((float) (turning_speeds[1] * PI / 180));
+			// set brick velocities
+			setVector(bodyBlue, bodyBlue.getAngle(), speeds[0]);
+			setVector(bodyYellow, bodyYellow.getAngle(), speeds[1]);
 
-		// do kicking
-		final Vector2D[] positions = getRobotPositions();
-		final Vector2D ball = getBall();
-		final double[] directions = getRbotDirections();
-		for (int i = 0; i < robot.length; i++)
-			if (robot[i].is_kicking) {
-				final Body me = i == 0 ? bodyBlue : bodyYellow;
+			// set turning speeds
+			bodyBlue.setAngularVelocity((float) (turning_speeds[0] * PI / 180));
+			bodyYellow.setAngularVelocity((float) (turning_speeds[1] * PI / 180));
 
-				final Vector2D future_rel_ball = Vector2D.rotateVector(
-						Vector2D.subtract(ball, positions[i]),
-						-directions[i]);
-				final double ball_distance = future_rel_ball.x
-						- VBrick.front_left.getX();
-				if (ball_distance < KICKER_RANGE && ball_distance > 0
-						&& future_rel_ball.y < VBrick.front_left.getY()
-						&& future_rel_ball.y > VBrick.front_right.getY()) {
-					final Vec2 force = new Vec2();
-					setVector(force, me.getAngle(), 400);
-					bodyBall.applyForce(force, bodyBall.getPosition());
-				} else
-					robot[i].is_kicking = false;
+			// do kicking
+			final Vector2D[] positions = getRobotPositions();
+			final Vector2D ball = getBall();
+			final double[] directions = getRbotDirections();
+			for (int i = 0; i < robot.length; i++)
+				if (robot[i].is_kicking) {
+					final Body me = i == 0 ? bodyBlue : bodyYellow;
+
+					final Vector2D future_rel_ball = Vector2D.rotateVector(
+							Vector2D.subtract(ball, positions[i]),
+							-directions[i]);
+					final double ball_distance = future_rel_ball.x
+							- VBrick.front_left.getX();
+					if (ball_distance < KICKER_RANGE && ball_distance > 0
+							&& future_rel_ball.y < VBrick.front_left.getY()
+							&& future_rel_ball.y > VBrick.front_right.getY()) {
+						final Vec2 force = new Vec2((float) (cmToPx(400) * Math.cos(me.getAngle())), (float) (- cmToPx(400) * Math.sin(me.getAngle())));
+						bodyBall.applyForce(force, bodyBall.getPosition());
+					} else
+						robot[i].is_kicking = false;
+				}
+
+			// do simulation
+			world.step((float) dt, 6, 2);
+
+			// check for scores
+			if (bodyBall.getPosition().x < 0) {
+				SCORE_LEFT++;
+				putBallAt();
+			} if (bodyBall.getPosition().x > sim_coeff) {
+				SCORE_RIGHT++;
+				putBallAt();
 			}
 
-		// do simulation
-		world.step((float) dt, 6, 2);
-		
-		// check for scores
-		if (bodyBall.getPosition().x < 0) {
-			SCORE_LEFT++;
-			putBallAt();
-		} if (bodyBall.getPosition().x > sim_coeff) {
-			SCORE_RIGHT++;
-			putBallAt();
 		}
 	}
 
 	@Override
 	public void setWorldState(WorldState ws, double dt, boolean is_ws_in_cm,
 			Command command, Boolean am_i_blue) {
-		if (!is_ws_in_cm)
-			ws = WorldState.toCentimeters(ws);
-		boolean first_run = old_st == null || dt == 0;
-		for (int id = 0; id < 2; id++) {
-			boolean is_it_me = command != null && am_i_blue != null && ((am_i_blue && id == 0) || (!am_i_blue && id == 1));
-			final Robot rob = id == 0 ? ws.getBlueRobot() : ws.getYellowRobot();
-			final Body bodyRob = id == 0 ? bodyBlue : bodyYellow;
-			Robot old_rob = null;
-			if (old_st != null)
-				old_rob = id == 0 ? old_st.getBlueRobot() : old_st.getYellowRobot();
+
+		synchronized (robot) {
+
+			// convert worldstate in cm
+			if (!is_ws_in_cm)
+				ws = WorldState.toCentimeters(ws);
+
+			// is it our first run
+			boolean first_run = old_st == null || dt == 0;
+
+			// loop for the two robots
+			for (int id = 0; id < 2; id++) {
+
+				// is this my robot
+				boolean is_it_me = command != null && am_i_blue != null && ((am_i_blue && id == 0) || (!am_i_blue && id == 1));
+
+				// get my robot
+				final Robot rob = id == 0 ? ws.getBlueRobot() : ws.getYellowRobot();
+				
+				// put it at new coordinate
 				putAt(rob.getCoords().x / WorldState.PITCH_WIDTH_CM, rob.getCoords().y / WorldState.PITCH_WIDTH_CM, id, rob.getAngle());
+
+				// if it is my robot, calculate velocity
 				if (is_it_me) {
+
+					if ((am_i_blue && blueCollision) || (!am_i_blue && yellowCollision)) {
+						// we are in collision
+						command = new Command(0, 0, command.kick);
+					}
 					
-					final Vector2D velocity = first_run ? Vector2D.ZERO() :
-						Vector2D.divide(
-								Vector2D.subtract(new Vector2D(rob.getCoords()), new Vector2D(old_rob.getCoords())),dt);
-					
-					bodyRob.setLinearVelocity(new Vec2(cmToPx(velocity.x), cmToPx(velocity.y)));
-					
-					Vector2D proj = Vector2D.rotateVector(velocity, -rob.getAngle());
-					speeds[id] = proj.x;
-					turning_speeds[id] = first_run ? 0 : (rob.getAngle() - old_rob.getAngle())/dt;
 					try {
+						// send the message to the brick
 						robot[id].sendMessage(opcode.operate, command.getShortDrivingSpeed(), command.getShortTurningSpeed());
 					} catch (IOException e) {}
+
+
+
 				} else {
 					try {
+
+						// send stop message to other brick
 						robot[id].sendMessage(opcode.operate, (short) 0, (short) 0);
+
 					} catch (IOException e) {}
 				}
-		}
-		if (ws.getBallCoords().x != -1 && ws.getBallCoords().y != -1) {
 
-			putBallAt(ws.getBallCoords().x / WorldState.PITCH_WIDTH_CM, ws.getBallCoords().y / WorldState.PITCH_WIDTH_CM);
-			
-			final Vector2D ball_velocity = first_run ? Vector2D.ZERO() : 
-				Vector2D.divide(
-						Vector2D.subtract(new Vector2D(ws.getBallCoords()), new Vector2D(old_st.getBallCoords())), dt);
-			
-			bodyBall.setLinearVelocity(new Vec2(cmToPx(ball_velocity.x), cmToPx(ball_velocity.y)));
+
+			}
+
+			// if the ball is on screen
+			if (ws.getBallCoords().x != -1 && ws.getBallCoords().y != -1) {
+
+				// synchronize ball position
+				putBallAt(ws.getBallCoords().x / WorldState.PITCH_WIDTH_CM, ws.getBallCoords().y / WorldState.PITCH_WIDTH_CM);
+
+				// calculate ball velocity
+				final Vector2D ball_velocity = first_run ? Vector2D.ZERO() : 
+					Vector2D.divide(
+							Vector2D.subtract(new Vector2D(ws.getBallCoords()), new Vector2D(old_st.getBallCoords())), dt);
+
+				// set ball velocity
+				bodyBall.setLinearVelocity(new Vec2(cmToPx(ball_velocity.x), cmToPx(ball_velocity.y)));
+			}
+
+			// buffer old state
+			old_st = ws;
+
+			// get image
+			im = ws.getWorldImage();
 		}
-		
-		old_st = ws;
-		im = ws.getWorldImage();
 	}
 
 	@Override
@@ -225,6 +311,12 @@ public class SimulatorPhysicsEngine extends Simulator {
 			final float newx = (float) (x * sim_coeff);
 			final float newy = (float) (y * sim_coeff);
 
+			// do soft reset
+			if (bodyBall != null) {
+				bodyBall.setTransform(new Vec2(newx, newy), bodyBall.getAngle());
+				return;
+			}
+			
 			// delete body if exists
 			if (bodyBall != null) {
 				world.destroyBody(bodyBall);
@@ -258,26 +350,38 @@ public class SimulatorPhysicsEngine extends Simulator {
 	public void putAt(double x, double y, int id, double direction) {
 		putAt(x, y, id);
 		final float angRad = (float) (direction*PI/180);
+		
+		synchronized (robot) {
+			try {
 
-		try {
+				if (id == 0)
+					bodyBlue.m_sweep.a =  angRad;
+				else if (id == 1)
+					bodyYellow.m_sweep.a = angRad;
 
-			if (id == 0)
-				bodyBlue.m_sweep.a =  angRad;
-			else if (id == 1)
-				bodyYellow.m_sweep.a = angRad;
+			} catch (Exception e) {}
+		}
 
-		} catch (Exception e) {}
 	}
 
 	@Override
 	public void putAt(double x, double y, int id) {
 		try {
 
+			synchronized (robot) {
+			
 			final float newx = (float) (x * sim_coeff);
 			final float newy = (float) (y * sim_coeff);
 
 			switch (id) {
 			case 0:
+				
+				// do soft reset
+				if (bodyBlue != null) {
+					bodyBlue.setTransform(new Vec2(newx, newy), bodyBlue.getAngle());
+					break;
+				}
+				
 				// delete body if exists
 				if (bodyBlue != null) {
 					world.destroyBody(bodyBlue);
@@ -289,7 +393,7 @@ public class SimulatorPhysicsEngine extends Simulator {
 				blueDef.position.set(newx, newy);
 
 				bodyBlue = world.createBody(blueDef);
-
+				
 				final PolygonShape blueShape = new PolygonShape();
 				blueShape.setAsBox(cmToPx(Robot.LENGTH_CM/2), cmToPx(Robot.WIDTH_CM/2));
 
@@ -304,6 +408,12 @@ public class SimulatorPhysicsEngine extends Simulator {
 				break;
 
 			case 1:
+				
+				// do soft reset
+				if (bodyYellow != null) {
+					bodyYellow.setTransform(new Vec2(newx, newy), bodyYellow.getAngle());
+					break;
+				}
 
 				// delete body if exists
 				if (bodyYellow != null) {
@@ -328,9 +438,22 @@ public class SimulatorPhysicsEngine extends Simulator {
 				bodyYellow.createFixture(yellowFixture);
 				break;
 			}
+			
+			
+		}
 
 		} catch (Exception e) {}
 
+	}
+	
+	/**
+	 * Reset simulator before doing prediction
+	 */
+	@Override
+	protected void reset() {
+		synchronized (robot) {
+			old_st = null;
+		}
 	}
 
 	@Override
@@ -357,9 +480,9 @@ public class SimulatorPhysicsEngine extends Simulator {
 	 * @param ang_rad
 	 * @param magnitude cm/sec
 	 */
-	private final static void setVector(Vec2 velocity, double ang_rad, double magnitude) {
+	private final static void setVector(Body body, double ang_rad, double magnitude) {
 		final float pxmag = cmToPx(magnitude);
-		velocity.set((float) (pxmag * Math.cos(ang_rad)), (float) (- pxmag * Math.sin(ang_rad)));
+		body.setLinearVelocity(new Vec2((float) (pxmag * Math.cos(ang_rad)), (float) (- pxmag * Math.sin(ang_rad))));
 	}
 
 	private final static float cmToPx(double cm) {

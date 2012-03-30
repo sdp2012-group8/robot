@@ -131,6 +131,11 @@ public abstract class Simulator extends WorldStateProvider {
 	}
 	
 	/**
+	 * If simulator needs to do any resetting before doing prediction, it must override this method
+	 */
+	protected void reset() {}
+	
+	/**
 	 * Simulate this amount of time with this framerate according to the iternal state of the simulator.
 	 * 
 	 * @param a simulator to be used. Best to create a new simulator here
@@ -143,6 +148,9 @@ public abstract class Simulator extends WorldStateProvider {
 	 * @return what the world is expected to be after this amount of time
 	 */
 	public static WorldState simulateWs(Simulator sim, long time_ms, int fps, WorldState[] states, boolean is_ws_in_cm, Command command, boolean am_i_blue) {
+		
+		sim.reset();
+		
 		double sec = time_ms / 1000d;
 		double dt = 1d / fps;
 		double duration = dt*(states.length-1);

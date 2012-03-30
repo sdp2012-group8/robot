@@ -63,6 +63,7 @@ public class AIWorldState extends WorldState {
 	private static final int BATTERY_HIGH_PERCENTAGE = 80;
 	
 	private static final boolean USE_NEW_SIMULATOR_FOR_PREDICTION = true;
+	private final Simulator newSim;
 	
 	
 	/** The low pass filter. */
@@ -116,9 +117,11 @@ public class AIWorldState extends WorldState {
 	public AIWorldState(WorldState worldState, boolean isOwnTeamBlue, boolean isOwnGoalLeft) {
 		super(worldState.getBallCoords(), worldState.getBlueRobot(),
 				worldState.getYellowRobot(), worldState.getWorldImage());
+		
+		newSim = USE_NEW_SIMULATOR_FOR_PREDICTION ? new SimulatorPhysicsEngine(false) : null;
 		update(worldState, isOwnTeamBlue, isOwnGoalLeft);
+		
 	}
-
 	
 	/**
 	 * Update the world state.
@@ -195,7 +198,7 @@ public class AIWorldState extends WorldState {
 		oldTime = System.currentTimeMillis();
 
 		WorldState[] pqStates = predictionQueue.toArray(new WorldState[0]);
-		WorldState predictedState = Simulator.simulateWs(USE_NEW_SIMULATOR_FOR_PREDICTION ? new SimulatorPhysicsEngine(false) : new SimulatorOld(false, 0.000001), PREDICTION_TIME, (int) fps,
+		WorldState predictedState = Simulator.simulateWs(USE_NEW_SIMULATOR_FOR_PREDICTION ? newSim : new SimulatorOld(false, 0.000001), PREDICTION_TIME, (int) fps,
 				pqStates, true, ownLastCommand, isOwnTeamBlue);
 		
 		if (!state.isBallPresent()) {
