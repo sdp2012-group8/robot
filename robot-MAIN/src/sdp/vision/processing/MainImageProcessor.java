@@ -14,6 +14,7 @@ import static com.googlecode.javacv.cpp.opencv_imgproc.*;
 
 import sdp.common.Utilities;
 import sdp.common.geometry.GeomUtils;
+import sdp.common.geometry.Vector2D;
 import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 
@@ -38,6 +39,11 @@ public class MainImageProcessor extends BaseImageProcessor {
 	private static final int DIR_LINE_LENGTH = 40;
 	/** Size of the position marker. */
 	private static final int POSITION_MARKER_SIZE = 4;
+	
+	/** Robot length in pixels. */
+	private static final double ROBOT_PIXEL_LENGTH = 50;
+	/** Robot width in pixels. */
+	private static final double ROBOT_PIXEL_WIDTH = 45;
 	
 	
 	/** OpenCV memory storage. */
@@ -499,6 +505,20 @@ public class MainImageProcessor extends BaseImageProcessor {
 		
 		if (dirPt != null) {
 			g.drawLine(posPt.x, posPt.y, dirPt.x, dirPt.y);
+			
+			double angle = (new Vector2D(dirPt.x - posPt.x, dirPt.y - posPt.y)).getDirection();
+			Point2D.Double corners[] = GeomUtils.positionRectangle(ROBOT_PIXEL_LENGTH,
+					ROBOT_PIXEL_WIDTH, new Point2D.Double(posPt.x, posPt.y), angle);
+			
+			Point frontLeft = Utilities.pointFromPoint2D(corners[0]);
+			Point frontRight = Utilities.pointFromPoint2D(corners[1]);
+			Point backRight = Utilities.pointFromPoint2D(corners[2]);
+			Point backLeft = Utilities.pointFromPoint2D(corners[3]);
+			
+			g.drawLine(frontLeft.x, frontLeft.y, frontRight.x, frontRight.y);
+			g.drawLine(frontRight.x, frontRight.y, backRight.x, backRight.y);
+			g.drawLine(backRight.x, backRight.y, backLeft.x, backLeft.y);
+			g.drawLine(backLeft.x, backLeft.y, frontLeft.x, frontLeft.y);
 		}
 	}
 	
