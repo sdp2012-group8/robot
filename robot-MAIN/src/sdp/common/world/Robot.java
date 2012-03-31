@@ -99,17 +99,12 @@ public final class Robot {
 		double length = (cm ? LENGTH_CM : LENGTH);
 		double width = (cm ? WIDTH_CM : WIDTH);
 		
-		frontLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, width / 2), angle);
-		GeomUtils.translatePoint(frontLeftPoint, coords);
-		
-		frontRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, -width / 2), angle);
-		GeomUtils.translatePoint(frontRightPoint, coords);
-		
-		backLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, width / 2), angle);
-		GeomUtils.translatePoint(backLeftPoint, coords);
-		
-		backRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(-length / 2, -width / 2), angle);
-		GeomUtils.translatePoint(backRightPoint, coords);
+		Point2D.Double corners[] = GeomUtils.positionRectangle(length,
+				width, coords, angle);
+		frontLeftPoint = corners[0];
+		frontRightPoint = corners[1];
+		backRightPoint = corners[2];
+		backLeftPoint = corners[3];
 		
 		frontCenterPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0), new Point2D.Double(length / 2, 0), angle);
 		GeomUtils.translatePoint(frontCenterPoint, coords);
@@ -294,30 +289,12 @@ public final class Robot {
 	 * @param robot Robot in question.
 	 * @return Whether the point is around a robot.
 	 */
-	public static boolean isPointAroundRobot(Point2D.Double point, Robot robot){
-		double offset = LENGTH_CM/2;
-		double length = LENGTH_CM;
-		double width = WIDTH_CM;
-		double angle = robot.getAngle();
-	
-		Point2D.Double frontLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
-				new Point2D.Double(length / 2 + offset, width / 2 + offset), angle);
-		GeomUtils.translatePoint(frontLeftPoint, robot.getCoords());
-	
-		Point2D.Double frontRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
-				new Point2D.Double(length / 2 + offset, -width / 2 - offset), angle);
-		GeomUtils.translatePoint(frontRightPoint, robot.getCoords());
-	
-		Point2D.Double backLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
-				new Point2D.Double(-length / 2 - offset, width / 2 + offset), angle);
-		GeomUtils.translatePoint(backLeftPoint, robot.getCoords());
-	
-		Point2D.Double backRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
-				new Point2D.Double(-length / 2 - offset, -width / 2 - offset), angle);
-		GeomUtils.translatePoint(backRightPoint, robot.getCoords());
-		
-		return GeomUtils.isPointInQuadrilateral(point, frontLeftPoint, frontRightPoint,
-				backRightPoint, backLeftPoint);
+	public static boolean isPointAroundRobot(Point2D.Double point, Robot robot) {
+		Point2D.Double corners[] = GeomUtils.positionRectangle(2 * LENGTH_CM,
+				WIDTH_CM + LENGTH_CM, robot.getCoords(), robot.getAngle());
+
+		return GeomUtils.isPointInQuadrilateral(point, corners[0], corners[1],
+				corners[2], corners[3]);
 	}
 	
 	

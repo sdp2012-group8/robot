@@ -411,6 +411,41 @@ public class GeomUtils {
 		
 		return minVec;
 	}
+	
+	
+	/**
+	 * Get corners of a rectangle, positioned in the specified location.
+	 * 
+	 * @param width Width of the rectangle.
+	 * @param height Height of the rectangle.
+	 * @param pos Position of the rectangle.
+	 * @param angle Direction the rectangle is facing, in angles.
+	 * @return Angles of the positioned rectangle. Returned values are front
+	 * 		left, front right, back right and back left point, in an array,
+	 * 		in that order.
+	 */
+	public static Point2D.Double[] positionRectangle(double width,
+			double height, Point2D.Double pos, double angle) {
+		Point2D.Double frontLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
+				new Point2D.Double(width / 2, height / 2), angle);
+		GeomUtils.translatePoint(frontLeftPoint, pos);
+		
+		Point2D.Double frontRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
+				new Point2D.Double(width / 2, -height / 2), angle);
+		GeomUtils.translatePoint(frontRightPoint, pos);
+		
+		Point2D.Double backLeftPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
+				new Point2D.Double(-width / 2, height / 2), angle);
+		GeomUtils.translatePoint(backLeftPoint, pos);
+		
+		Point2D.Double backRightPoint = GeomUtils.rotatePoint(new Point2D.Double(0, 0),
+				new Point2D.Double(-width / 2, -height / 2), angle);
+		GeomUtils.translatePoint(backRightPoint, pos);
+		
+		return new Point2D.Double[] {
+				frontLeftPoint, frontRightPoint, backRightPoint, backLeftPoint
+		};
+	}
 
 
 	/**

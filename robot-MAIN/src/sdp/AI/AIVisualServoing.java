@@ -9,12 +9,10 @@ import sdp.AI.pathfinding.FullPathfinder;
 import sdp.AI.pathfinding.HeuristicPathfinder;
 import sdp.AI.pathfinding.Pathfinder;
 import sdp.AI.pathfinding.Waypoint;
-import sdp.common.DeprecatedCode;
 import sdp.common.Painter;
 import sdp.common.Utilities;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
-import sdp.common.world.Goal;
 import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 
@@ -111,8 +109,6 @@ public class AIVisualServoing extends BaseAI {
 		if (canWeAttack(aiWorldState)) {
 			return gotBall();
 		}
-
-		boolean chasing_ball_instead = false;
 		
 		// Get the point to drive towards.
 		target = new Vector2D(aiWorldState.getBallCoords());
@@ -128,16 +124,17 @@ public class AIVisualServoing extends BaseAI {
 			}
 		}
 
+		boolean ballIsObstacle = false;
 		if (optimalPoint != null) {
 			target = new Vector2D(optimalPoint);
-			chasing_ball_instead = true;
+			ballIsObstacle = true;
 		}
 
 		// Generate command to drive towards the target point.
-		//boolean mustFaceTarget = !Utilities.areDoublesEqual(point_off, DEFAULT_TARG_THRESH);
+		boolean mustFaceTarget = !Utilities.areDoublesEqual(point_off, DEFAULT_POINT_OFF);
 
-		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, !chasing_ball_instead);
-		return getWaypointCommand(waypoint, true);
+		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, ballIsObstacle);
+		return getWaypointCommand(waypoint, mustFaceTarget);
 	}
 
 	@Override
@@ -451,9 +448,8 @@ public class AIVisualServoing extends BaseAI {
 		if (Math.abs(waypoint.getTurningAngle()) > 90) {
 			comm.drivingSpeed = -Robot.MAX_DRIVING_SPEED;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
-				System.out.println("Going backwards");
 				comm.turningSpeed = GeomUtils.normaliseAngle(waypoint.getTurningAngle() - 180);
-			}		
+			}
 		// Ball is in front.
 		} else {
 			comm.drivingSpeed = Robot.MAX_DRIVING_SPEED;
@@ -495,7 +491,7 @@ public class AIVisualServoing extends BaseAI {
 		comm.acceleration = 100;
 
 		normalizeSpeed(comm, stopTurnThreshold);
-
+		
 		return comm;
 	}
 
