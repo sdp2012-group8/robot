@@ -8,7 +8,6 @@ import sdp.AI.AIWorldState;
 import sdp.common.geometry.Circle;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
-import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 
 
@@ -20,14 +19,16 @@ import sdp.common.world.WorldState;
 public class FullPathfinder implements Pathfinder {
 	
 	/** Radius of checked circles. */
-	private static double CHECKED_CIRCLE_RADIUS = 2.5;
+	private static double CHECKED_CIRCLE_RADIUS = 5.0;
 	/** The amount, by which the collision points are pushed from obstacles. */
 	private static double COLLISION_ADJUSTMENT = 10.0;
 	/** Largest number of waypoints a path can consist of. */
-	private static int MAX_WAYPOINT_COUNT = 10;
+	private static int MAX_WAYPOINT_COUNT = 6;
 	
 	/** A list of points that have been explored in a search. */
 	private LinkedList<Circle> checkedPoints = new LinkedList<Circle>();
+	/** Pathfinder's partial answers. */
+	private ArrayList<PartialPath> partialAnswers = new ArrayList<PartialPath>();
 	
 	/** A fallback pathfinder. */
 	private HeuristicPathfinder fallback = new HeuristicPathfinder();
@@ -67,6 +68,32 @@ public class FullPathfinder implements Pathfinder {
 	}
 	
 	/**
+	 * Check if there is a solved pathfinding problem from the given point and
+	 * return the stored solution.
+	 * 
+	 * @param checkPt Point to use for a solution check.
+	 * @param point Current robot position.
+	 * @param dir Current robot direction.
+	 * @return Cached solution if one exists and null if it does not.
+	 */
+	private ArrayList<Waypoint> checkForSolvedInstance(Vector2D checkPt, Vector2D point, double dir) {
+		for (PartialPath p : partialAnswers) {
+			if (p.getPathEnd().containsPoint(checkPt)) {
+				ArrayList<Waypoint> bestPath = p.getWaypoints();
+				if (bestPath != null) {
+					Waypoint newSegment = new Waypoint(point, dir,
+							bestPath.get(0).getTarget(), bestPath.get(0).getCostToDest(), true);
+					bestPath.set(0, newSegment);
+				}
+				return bestPath;
+			}
+		}
+		
+		return null;
+	}
+	
+	
+	/**
 	 * Get a path for a robot from one point to another one.
 	 * 
 	 * @param worldState Current world state.
@@ -80,13 +107,13 @@ public class FullPathfinder implements Pathfinder {
 	private ArrayList<Waypoint> getPath(AIWorldState worldState, Point2D.Double start,
 			double startAngle, Point2D.Double dest, int obstacleFlag, int depth) {
 		Vector2D startVec = new Vector2D(start);
-		Vector2D destVec = new Vector2D(dest);
-		
+		Vector2D destVec = new Vector2D(dest);		
 		Vector2D destDir = Vector2D.subtract(destVec, startVec);
-		
+				
 		ArrayList<Circle> obstacles = WorldState.getObstacleCircles(worldState, obstacleFlag);
 		Vector2D startVecAdj = movePointOutOfObstacle(obstacles, startVec);
 		
+		// Check for failure conditions.
 		if (!WorldState.isPointInPitch(startVecAdj) || !WorldState.isPointInPitch(dest)) {
 			return null;
 		}
@@ -94,18 +121,24 @@ public class FullPathfinder implements Pathfinder {
 			return null;
 		}
 		
-		checkedPoints.push(new Circle(startVecAdj, CHECKED_CIRCLE_RADIUS));
-		
+		// Check for a direct path solution.
 		if (WorldState.isDirectPathClear(worldState, startVecAdj, destVec, obstacleFlag)) {
-			Vector2D destDirLocal = Vector2D.rotateVector(destDir, -startAngle);
-			
 			ArrayList<Waypoint> path = new ArrayList<Waypoint>();
-			path.add(new Waypoint(destDirLocal, destDir.getLength(), true));
+			path.add(new Waypoint(startVec, startAngle, destVec, destDir.getLength(), true));
 			return path;
 		}
 		
+		// Check for a cached solution.
+		ArrayList<Waypoint> bestPath = checkForSolvedInstance(startVecAdj,
+				startVec, startAngle);
+		if (bestPath != null) {
+			return bestPath;
+		}
+		
+		// Start recursive descent.
+		checkedPoints.push(new Circle(startVecAdj, CHECKED_CIRCLE_RADIUS));
+
 		double minPathCost = Double.MAX_VALUE;
-		ArrayList<Waypoint> bestPath = null;
 				
 		for (Circle curObstacle : obstacles) {
 			Point2D.Double obsPoints[] = GeomUtils.circleTangentPoints(curObstacle, startVecAdj);
@@ -124,8 +157,8 @@ public class FullPathfinder implements Pathfinder {
 						continue obstaclePointLoop;
 					}
 				}
-				
-				if (!WorldState.isDirectPathClear(worldState, startVecAdj, new Vector2D(pt), obstacleFlag)) {
+				if (!WorldState.isDirectPathClear(worldState, startVecAdj,
+						new Vector2D(pt), obstacleFlag)) {
 					continue;
 				}
 				
@@ -138,16 +171,16 @@ public class FullPathfinder implements Pathfinder {
 						minPathCost = curCost;
 						bestPath = curPath;
 						
-						Point2D.Double ptLocal = GeomUtils.getLocalPoint(startVec,
-								Vector2D.getDirectionUnitVector(startAngle), pt);
-						bestPath.add(0, new Waypoint(new Vector2D(ptLocal),
-								curCost, false));
+						bestPath.add(0, new Waypoint(startVec, startAngle,
+								new Vector2D(pt), curCost, false));
 					}
 				}
 			}
 		}
 		
-		//checkedPoints.pop();
+		checkedPoints.pop();		
+		partialAnswers.add(new PartialPath(new Circle(startVecAdj,
+				CHECKED_CIRCLE_RADIUS), bestPath));
 		
 		return bestPath;
 	}
@@ -164,6 +197,7 @@ public class FullPathfinder implements Pathfinder {
 	public ArrayList<Waypoint> getPathForOwnRobot(AIWorldState worldState,
 			Point2D.Double dest, boolean ballIsObstacle) {
 		checkedPoints.clear();
+		partialAnswers.clear();
 		
 		int obstacles = WorldState.makeObstacleFlagsForOpponent(ballIsObstacle,
 				worldState.isOwnTeamBlue());
@@ -187,4 +221,53 @@ public class FullPathfinder implements Pathfinder {
 		}
 	}
 
+}
+
+
+/**
+ * A partial path container.
+ */
+class PartialPath {
+	
+	/** The point where the path ends. */
+	private Circle pathEnd;
+	/** Path's waypoints. */
+	private ArrayList<Waypoint> waypoints;
+	
+	
+	/**
+	 * Create a new partial path.
+	 * 
+	 * @param pathEnd Endpoint of the path.
+	 * @param waypoints Waypoints of the path.
+	 */
+	public PartialPath(Circle pathEnd, ArrayList<Waypoint> waypoints) {
+		this.pathEnd = pathEnd;
+		this.waypoints = waypoints;
+	}
+	
+	
+	/**
+	 * Get the end of the path.
+	 * 
+	 * @return Endpoint of the path.
+	 */
+	public Circle getPathEnd() {
+		return pathEnd;
+	}
+	
+	/**
+	 * Get the waypoints of the path.
+	 * 
+	 * Note that this method returns a copy of the waypoints.
+	 * 
+	 * @return Waypoints of the path.
+	 */
+	public ArrayList<Waypoint> getWaypoints() {
+		if (waypoints == null) {
+			return null;
+		} else {
+			return new ArrayList<Waypoint>(waypoints);
+		}
+	}
 }

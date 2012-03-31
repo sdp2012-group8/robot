@@ -40,7 +40,8 @@ public class HeuristicPathfinder implements Pathfinder {
 	
 		Vector2D ownCoords = new Vector2D(aiWorldState.getOwnRobot().getCoords());
 		if (WorldState.isDirectPathClear(aiWorldState, ownCoords, targetVec, obstacleFlags)) {
-			return new Waypoint(targetVecLocal, targetVecLocal.getLength(), true);
+			return new Waypoint(ownCoords, aiWorldState.getOwnRobot().getAngle(),
+					targetVec, targetVecLocal.getLength(), true);
 		}
 	
 		Vector2D destPoint = null;
@@ -62,7 +63,7 @@ public class HeuristicPathfinder implements Pathfinder {
 					double angleDiff = GeomUtils.normaliseAngle(curAngle - targetVecLocal.getDirection());
 					if (Math.abs(angleDiff) < Math.abs(minAngle)) {
 						minAngle = angleDiff;
-						destPoint = rayEndLocal;
+						destPoint = rayEnd;
 					}
 				}
 			}
@@ -72,9 +73,11 @@ public class HeuristicPathfinder implements Pathfinder {
 		}
 	
 		if (destPoint == null) {
-			destPoint = targetVecLocal;
+			destPoint = targetVec;
 		}
 	
-		return new Waypoint(destPoint, destPoint.getLength(), false);
+		return new Waypoint(new Vector2D(aiWorldState.getOwnRobot().getCoords()),
+				aiWorldState.getOwnRobot().getAngle(), new Vector2D(destPoint),
+				Vector2D.subtract(destPoint, ownCoords).getLength(), false);
 	}
 }
