@@ -314,4 +314,13 @@ public final class Robot {
 				robot.getBackRight(), point1, point2);
 		return (diagonal1 && diagonal2);
 	}
+
+	
+	/**
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "(Robot: " + coords + ", " + angle + ")";
+	}
 }
