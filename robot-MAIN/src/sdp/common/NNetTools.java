@@ -1,5 +1,7 @@
 package sdp.common;
 
+import java.util.ArrayList;
+
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
 import sdp.common.world.Robot;
@@ -275,6 +277,38 @@ public class NNetTools {
 		for (int i = 0; i < output.length; i++)
 			sum+=output[i];
 		return output[item]/sum;
+	}
+	
+	public static String diff(final double[] a, final double[] b) {
+		String result = "";
+		for (int i = 0; i < a.length; i++)
+			if (a[i] != b[i])
+				result += a[i]+"!="+b[i]+" at "+i+", ";
+		return result;
+	}
+	
+	public static String printArray(double[] things, final String separator) {
+		final Double[] array = new Double[things.length];
+		for (int i = 0; i < things.length; i++)
+			array[i] = things[i];
+		return printArray(array, separator);
+	}
+	
+	public static String printArray(Object[] things, final String separator) {
+		if (things == null)
+			return "null";
+		
+		if (things.length == 0)
+			return "{}";
+		
+		String result = "{"+things[0];
+		
+		for (int i = 1; i < things.length; i++)
+			result+=separator+things[i];
+		
+		return result+"}";
+		
+		
 	}
 	
 }

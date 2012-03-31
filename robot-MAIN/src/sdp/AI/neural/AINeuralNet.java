@@ -1,8 +1,14 @@
 package sdp.AI.neural;
 
 import java.io.IOException;
+import java.util.Arrays;
 
+import javax.swing.text.Utilities;
+
+import org.neuroph.core.Layer;
 import org.neuroph.core.NeuralNetwork;
+import org.neuroph.core.Neuron;
+import org.neuroph.core.Connection;
 import org.neuroph.nnet.MultiLayerPerceptron;
 import org.neuroph.util.NeuralNetworkCODEC;
 
@@ -42,9 +48,12 @@ public class AINeuralNet extends AIVisualServoing {
 	private Command play() {
 		
 		// feed current state through the network and get result
-		nets.setInput(NNetTools.generateAIinput(aiWorldState, aiWorldState.isOwnTeamBlue(), aiWorldState.isOwnGoalLeft()));
+		final double[] input = NNetTools.generateAIinput(aiWorldState, aiWorldState.isOwnTeamBlue(), aiWorldState.isOwnGoalLeft());
+		nets.setInput(input);
 		nets.calculate();
 		final double[] result = nets.getOutput();
+		
+		System.out.println(NNetTools.printArray(result, ","));
 		
 		// convert result into speeds
 		final int speed = NNetTools.getDesiredSpeed(NNetTools.recoverGotBallOutputMode(result), Robot.MAX_DRIVING_SPEED);
@@ -123,9 +132,27 @@ public class AINeuralNet extends AIVisualServoing {
 	public void setWeights(final double[] weights) {
 		
 		nets = new MultiLayerPerceptron(LAYERS);
-		NeuralNetworkCODEC.array2network(weights, nets);
+		array2network(weights, nets);
 	
 	}
+	
+    /**
+     * Decode a network from an array.
+     * @param array The array used to decode.
+     * @param network The network to decode into.
+     */
+    public static void array2network(double[] array, NeuralNetwork network) {
+        int index = 0;
+ 
+        for (Layer layer : network.getLayers()) {
+            for (Neuron neuron : layer.getNeurons()) {
+                for (Connection connection : neuron.getOutConnections()) {
+                    connection.getWeight().setValue(array[index++]);
+                    //connection.getWeight().setPreviousValue(array[index++]);
+                }
+            }
+        }
+    }
 	
 	/**
 	 * Get the weights of the neural network

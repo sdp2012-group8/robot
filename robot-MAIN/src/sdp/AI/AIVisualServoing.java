@@ -28,7 +28,7 @@ public class AIVisualServoing extends BaseAI {
 	/** Whether the robot is allowed to drive in reverse. */
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
 	/** Whether to use the heuristic pathfinder. */
-	private static final boolean USE_HEURISTIC_PATHFINDER = false;
+	private static final boolean USE_HEURISTIC_PATHFINDER = true;
 	/** Whether the robot should attempt to use wall kicks. */
 	private static final boolean WALL_KICKS_ENABLED = true;
 	
@@ -134,10 +134,10 @@ public class AIVisualServoing extends BaseAI {
 		}
 
 		// Generate command to drive towards the target point.
-		boolean mustFaceTarget = !Utilities.areDoublesEqual(point_off, DEFAULT_TARG_THRESH);
+		//boolean mustFaceTarget = !Utilities.areDoublesEqual(point_off, DEFAULT_TARG_THRESH);
 
 		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, !chasing_ball_instead);
-		return getWaypointCommand(waypoint, mustFaceTarget);
+		return getWaypointCommand(waypoint, true);
 	}
 
 	@Override
@@ -451,6 +451,7 @@ public class AIVisualServoing extends BaseAI {
 		if (Math.abs(waypoint.getTurningAngle()) > 90) {
 			comm.drivingSpeed = -Robot.MAX_DRIVING_SPEED;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
+				System.out.println("Going backwards");
 				comm.turningSpeed = GeomUtils.normaliseAngle(waypoint.getTurningAngle() - 180);
 			}		
 		// Ball is in front.
