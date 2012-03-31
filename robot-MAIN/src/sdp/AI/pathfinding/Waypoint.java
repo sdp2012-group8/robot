@@ -33,43 +33,6 @@ public final class Waypoint {
 	/**
 	 * Create a new waypoint.
 	 * 
-	 * This function assumes that the robot is placed at coordinates
-	 * (0, 0) and is facing direction of 0 degrees.
-	 * 
-	 * @param target Target point in robot-relative coordinates.
-	 * @param isEndpoint Whether the target is at the end of a path.
-	 */
-	@Deprecated
-	public Waypoint(Vector2D target, boolean isEndpoint) {
-		this(target, 0.0, isEndpoint);
-	}
-	
-	/**
-	 * Create a new waypoint.
-	 * 
-	 * This function assumes that the robot is placed at coordinates
-	 * (0, 0) and is facing direction of 0 degrees.
-	 * 
-	 * @param target Target point in robot-relative coordinates.
-	 * @param costToDest Cost of the path from here to the destination.
-	 * @param isEndpoint Whether the target is at the end of a path.
-	 */
-	public Waypoint(Vector2D target, double costToDest, boolean isEndpoint) {
-		this.originPos = new Vector2D(0.0, 0.0);
-		this.originDir = target.getDirection();
-		this.target = target;
-		this.costToDest = costToDest;
-		this.isEndpoint = isEndpoint;
-
-		this.targetLocal = target;
-		targetDist = targetLocal.getLength();
-		targetTurnAngle = targetLocal.getDirection();
-	}
-	
-	
-	/**
-	 * Create a new waypoint.
-	 * 
 	 * @param originPos Starting robot coordinates in global coordinates.
 	 * @param originDir Starting robot direction in degrees.
 	 * @param target Target point in global coordinates.
@@ -171,7 +134,8 @@ public final class Waypoint {
 	 */
 	@Override
 	public String toString() {
-		return String.format("<%s %.4f %.4f %.4f>", targetLocal.toString(),
-				targetDist, targetTurnAngle, costToDest);
+		return String.format("<%s %.2f %s %s %.4f %.4f %.4f>", originPos.toString(),
+				originDir, target.toString(), targetLocal.toString(), targetDist,
+				targetTurnAngle, costToDest);
 	}
 }

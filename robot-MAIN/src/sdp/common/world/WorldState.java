@@ -28,6 +28,9 @@ public class WorldState {
 	/** The amount by which obstacles are increased in extraction. */
 	private static final double OBSTACLE_SIZE_INCREASE = Robot.LENGTH_CM * 0.5;
 	
+	/** Direct path collision check tolerance. */
+	private static final double DIRECT_PATH_CHECK_TOLERANCE = 0.001;
+	
 	/** Height of the pitch in centimetres. */
 	public static final double PITCH_HEIGHT_CM = 113.7;
 	/** Width of the pitch in centimetres. */
@@ -482,6 +485,7 @@ public class WorldState {
 	public static boolean isDirectPathClear(WorldState state, Vector2D point1,
 			Vector2D point2, int obstacles) {
 		double pathLength = Vector2D.subtract(point2, point1).getLength();
+		pathLength -= DIRECT_PATH_CHECK_TOLERANCE;
 		
 		double factor = 0.0;
 		while (factor <= ROBOT_RAY_MAX_WIDTH) {

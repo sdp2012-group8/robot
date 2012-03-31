@@ -131,7 +131,7 @@ public class AIVisualServoing extends BaseAI {
 		}
 
 		// Generate command to drive towards the target point.
-		boolean mustFaceTarget = !Utilities.areDoublesEqual(point_off, DEFAULT_TARG_THRESH);
+		boolean mustFaceTarget = !Utilities.areDoublesEqual(point_off, DEFAULT_POINT_OFF);
 
 		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, ballIsObstacle);
 		return getWaypointCommand(waypoint, mustFaceTarget);
@@ -449,7 +449,7 @@ public class AIVisualServoing extends BaseAI {
 			comm.drivingSpeed = -Robot.MAX_DRIVING_SPEED;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
 				comm.turningSpeed = GeomUtils.normaliseAngle(waypoint.getTurningAngle() - 180);
-			}		
+			}
 		// Ball is in front.
 		} else {
 			comm.drivingSpeed = Robot.MAX_DRIVING_SPEED;
@@ -491,7 +491,7 @@ public class AIVisualServoing extends BaseAI {
 		comm.acceleration = 100;
 
 		normalizeSpeed(comm, stopTurnThreshold);
-
+		
 		return comm;
 	}
 
