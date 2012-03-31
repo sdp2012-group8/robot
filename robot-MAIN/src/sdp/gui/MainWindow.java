@@ -1620,41 +1620,26 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		robotBehaviourPanel = new JPanel();
 		robotBehaviourPanel.setBorder(new TitledBorder(null, "Behaviour", TitledBorder.CENTER, TitledBorder.TOP, null, null));
 		GridBagConstraints gbc_robotBehaviourPanel = new GridBagConstraints();
-		gbc_robotBehaviourPanel.insets = new Insets(0, 0, 5, 5);
+		gbc_robotBehaviourPanel.insets = new Insets(0, 0, 5, 0);
 		gbc_robotBehaviourPanel.fill = GridBagConstraints.BOTH;
 		gbc_robotBehaviourPanel.gridx = 0;
 		gbc_robotBehaviourPanel.gridy = 2;
 		robotSettingPanel.add(robotBehaviourPanel, gbc_robotBehaviourPanel);
 		GridBagLayout gbl_robotBehaviourPanel = new GridBagLayout();
 		gbl_robotBehaviourPanel.columnWidths = new int[]{0, 0, 0};
-		gbl_robotBehaviourPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_robotBehaviourPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0};
 		gbl_robotBehaviourPanel.columnWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
-		gbl_robotBehaviourPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_robotBehaviourPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
 		robotBehaviourPanel.setLayout(gbl_robotBehaviourPanel);
 		
-		robotBehMainLabel = new JLabel("Main");
-		GridBagConstraints gbc_robotBehMainLabel = new GridBagConstraints();
-		gbc_robotBehMainLabel.anchor = GridBagConstraints.WEST;
-		gbc_robotBehMainLabel.gridwidth = 2;
-		gbc_robotBehMainLabel.insets = new Insets(0, 0, 5, 0);
-		gbc_robotBehMainLabel.gridx = 0;
-		gbc_robotBehMainLabel.gridy = 0;
-		robotBehaviourPanel.add(robotBehMainLabel, gbc_robotBehMainLabel);
-		
-		robotPlayButton = new JButton("Play");
-		robotPlayButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				if (aiInstance != null) {
-					aiInstance.setState(AIMaster.AIState.PLAY);
-				}
-			}
-		});
-		GridBagConstraints gbc_robotPlayButton = new GridBagConstraints();
-		gbc_robotPlayButton.fill = GridBagConstraints.HORIZONTAL;
-		gbc_robotPlayButton.insets = new Insets(0, 0, 5, 5);
-		gbc_robotPlayButton.gridx = 0;
-		gbc_robotPlayButton.gridy = 1;
-		robotBehaviourPanel.add(robotPlayButton, gbc_robotPlayButton);
+		robotBehPlayLabel = new JLabel("Playing");
+		GridBagConstraints gbc_robotBehPlayLabel = new GridBagConstraints();
+		gbc_robotBehPlayLabel.anchor = GridBagConstraints.WEST;
+		gbc_robotBehPlayLabel.gridwidth = 2;
+		gbc_robotBehPlayLabel.insets = new Insets(0, 0, 5, 0);
+		gbc_robotBehPlayLabel.gridx = 0;
+		gbc_robotBehPlayLabel.gridy = 0;
+		robotBehaviourPanel.add(robotBehPlayLabel, gbc_robotBehPlayLabel);
 		
 		robotSitButton = new JButton("Sit");
 		robotSitButton.addActionListener(new ActionListener() {
@@ -1664,11 +1649,42 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 				}
 			}
 		});
+		
+		robotResumeButton = new JButton("Resume");
+		robotResumeButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (aiInstance != null) {
+					aiInstance.setState(AIMaster.AIState.PLAY);
+				}
+			}
+		});
+		
+		robotStartButton = new JButton("Start");
+		robotStartButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (aiInstance != null) {
+					aiInstance.setState(AIMaster.AIState.START);
+				}
+			}
+		});
+		GridBagConstraints gbc_robotStartButton = new GridBagConstraints();
+		gbc_robotStartButton.fill = GridBagConstraints.HORIZONTAL;
+		gbc_robotStartButton.insets = new Insets(0, 0, 5, 5);
+		gbc_robotStartButton.gridx = 0;
+		gbc_robotStartButton.gridy = 1;
+		robotBehaviourPanel.add(robotStartButton, gbc_robotStartButton);
+		GridBagConstraints gbc_robotResumeButton = new GridBagConstraints();
+		gbc_robotResumeButton.fill = GridBagConstraints.HORIZONTAL;
+		gbc_robotResumeButton.insets = new Insets(0, 0, 5, 5);
+		gbc_robotResumeButton.gridx = 1;
+		gbc_robotResumeButton.gridy = 1;
+		robotBehaviourPanel.add(robotResumeButton, gbc_robotResumeButton);
 		GridBagConstraints gbc_robotSitButton = new GridBagConstraints();
+		gbc_robotSitButton.gridwidth = 2;
 		gbc_robotSitButton.fill = GridBagConstraints.HORIZONTAL;
-		gbc_robotSitButton.insets = new Insets(0, 0, 5, 0);
-		gbc_robotSitButton.gridx = 1;
-		gbc_robotSitButton.gridy = 1;
+		gbc_robotSitButton.insets = new Insets(0, 0, 5, 5);
+		gbc_robotSitButton.gridx = 0;
+		gbc_robotSitButton.gridy = 2;
 		robotBehaviourPanel.add(robotSitButton, gbc_robotSitButton);
 		
 		robotPenaltiesLabel = new JLabel("Penalties");
@@ -1677,7 +1693,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_robotPenaltiesLabel.gridwidth = 2;
 		gbc_robotPenaltiesLabel.insets = new Insets(0, 0, 5, 0);
 		gbc_robotPenaltiesLabel.gridx = 0;
-		gbc_robotPenaltiesLabel.gridy = 2;
+		gbc_robotPenaltiesLabel.gridy = 3;
 		robotBehaviourPanel.add(robotPenaltiesLabel, gbc_robotPenaltiesLabel);
 		
 		robotShootPenaltyButton = new JButton("Shoot");
@@ -1692,7 +1708,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_robotShootPenaltyButton.insets = new Insets(0, 0, 5, 5);
 		gbc_robotShootPenaltyButton.fill = GridBagConstraints.HORIZONTAL;
 		gbc_robotShootPenaltyButton.gridx = 0;
-		gbc_robotShootPenaltyButton.gridy = 3;
+		gbc_robotShootPenaltyButton.gridy = 4;
 		robotBehaviourPanel.add(robotShootPenaltyButton, gbc_robotShootPenaltyButton);
 		
 		robotDefendPenaltyButton = new JButton("Defend");
@@ -1704,9 +1720,10 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			}
 		});
 		GridBagConstraints gbc_robotDefendPenaltyButton = new GridBagConstraints();
-		gbc_robotDefendPenaltyButton.insets = new Insets(0, 0, 5, 0);
+		gbc_robotDefendPenaltyButton.fill = GridBagConstraints.HORIZONTAL;
+		gbc_robotDefendPenaltyButton.insets = new Insets(0, 0, 5, 5);
 		gbc_robotDefendPenaltyButton.gridx = 1;
-		gbc_robotDefendPenaltyButton.gridy = 3;
+		gbc_robotDefendPenaltyButton.gridy = 4;
 		robotBehaviourPanel.add(robotDefendPenaltyButton, gbc_robotDefendPenaltyButton);
 		
 		robotOtherLabel = new JLabel("Other");
@@ -1715,25 +1732,26 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_robotOtherLabel.insets = new Insets(0, 0, 5, 0);
 		gbc_robotOtherLabel.gridwidth = 2;
 		gbc_robotOtherLabel.gridx = 0;
-		gbc_robotOtherLabel.gridy = 4;
+		gbc_robotOtherLabel.gridy = 5;
 		robotBehaviourPanel.add(robotOtherLabel, gbc_robotOtherLabel);
 		
 		robotBehaviourCombobox = new JComboBox();
 		GridBagConstraints gbc_robotBehaviourCombobox = new GridBagConstraints();
 		gbc_robotBehaviourCombobox.fill = GridBagConstraints.HORIZONTAL;
 		gbc_robotBehaviourCombobox.gridwidth = 2;
-		gbc_robotBehaviourCombobox.insets = new Insets(0, 0, 5, 0);
+		gbc_robotBehaviourCombobox.insets = new Insets(0, 0, 5, 5);
 		gbc_robotBehaviourCombobox.gridx = 0;
-		gbc_robotBehaviourCombobox.gridy = 5;
+		gbc_robotBehaviourCombobox.gridy = 6;
 		robotBehaviourPanel.add(robotBehaviourCombobox, gbc_robotBehaviourCombobox);
 		robotBehaviourCombobox.setBounds(662, 342, 117, 24);
 		
 		JButton robotChangeBehaviourButton = new JButton("Change Behaviour");
 		GridBagConstraints gbc_robotChangeBehaviourButton = new GridBagConstraints();
+		gbc_robotChangeBehaviourButton.insets = new Insets(0, 0, 0, 5);
 		gbc_robotChangeBehaviourButton.fill = GridBagConstraints.HORIZONTAL;
 		gbc_robotChangeBehaviourButton.gridwidth = 2;
 		gbc_robotChangeBehaviourButton.gridx = 0;
-		gbc_robotChangeBehaviourButton.gridy = 6;
+		gbc_robotChangeBehaviourButton.gridy = 7;
 		robotBehaviourPanel.add(robotChangeBehaviourButton, gbc_robotChangeBehaviourButton);
 		robotChangeBehaviourButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -1952,12 +1970,12 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private final ButtonGroup robotGateButtonGroup = new ButtonGroup();
 	private JComboBox robotBehaviourCombobox;
 	private JCheckBox robotDebugModeCheckbox;
-	private JButton robotPlayButton;
+	private JButton robotResumeButton;
 	private JButton robotSitButton;
 	private JButton robotShootPenaltyButton;
 	private JButton robotDefendPenaltyButton;
 	private JLabel robotPenaltiesLabel;
-	private JLabel robotBehMainLabel;
+	private JLabel robotBehPlayLabel;
 	private JLabel robotOtherLabel;
 	
 	private JPanel testBenchPanel;
@@ -1968,4 +1986,5 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	private JLabel testCaseLabel;
 	
 	private JPanel imageCanvasPanel;
+	private JButton robotStartButton;
 }

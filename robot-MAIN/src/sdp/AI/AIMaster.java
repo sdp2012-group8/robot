@@ -1,7 +1,6 @@
 package sdp.AI;
 
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
