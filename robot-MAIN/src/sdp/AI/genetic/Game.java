@@ -1,12 +1,16 @@
 package sdp.AI.genetic;
 
+import java.io.File;
+import java.util.LinkedList;
+import java.util.Queue;
+
 import sdp.AI.AIMaster;
 import sdp.AI.AIVisualServoing;
 import sdp.AI.AIMaster.AIState;
 import sdp.AI.neural.AINeuralNet;
+import sdp.common.WorldStateRandomizer;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.world.WorldState;
-import sdp.common.world.WorldStateRandomizer;
 import sdp.simulator.Simulator;
 import sdp.simulator.SimulatorPhysicsEngine;
 import sdp.simulator.VBrick;
@@ -69,6 +73,10 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	
 	private int leftGoals = 0, rightGoals = 0;
 	
+	private static final int REPLAY_FRAME_COUNT = FPS*30;
+	private Queue<WorldState> replay = new LinkedList<WorldState>();
+	private static int replays = 0;
+	
 	// calculate fitness section
 	
 	/**
@@ -105,6 +113,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		scores[0]-=30000;
 		leftGoals++;
 		resetPitch();
+		
+		//saveReplay("data/movies/left"+(replays++)+"-"+String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]));
 	}
 
 	/**
@@ -117,6 +127,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		scores[1]-=30000;
 		rightGoals++;
 		resetPitch();
+		
+		//saveReplay("data/movies/right"+(replays++)+"-"+String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]));
 	}
 
 	/**
@@ -212,7 +224,12 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		
 		for (int i = 0; i < Simulator.DELAY_SIZE; i++) {
 			sim.simulate(FRAME_TIME);
-			sim.delayQueue.add(sim.getWorldState());
+			state = sim.getWorldState();
+			sim.delayQueue.add(state);
+		}
+		
+		for (int i = 0; i < REPLAY_FRAME_COUNT; i++) {
+			replay.add(state);
 		}
 		
 		// runs simulation
@@ -221,6 +238,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 			state = sim.getWorldState();
 			sim.delayQueue.add(state);
 			sim.broadcastState(sim.delayQueue.poll());
+			replay.add(state);
+			replay.poll();
 			timeElapsed += FRAME_TIME;
 			onNewFrame();
 			if (timeElapsed > GAMETIME) {
@@ -261,6 +280,11 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		return currentState;
 	}
 	
+	private void saveReplay(String path) {
+		new File(path).mkdirs();
+		WorldState.saveMovie(replay.toArray(new WorldState[0]), path);
+	}
+	
 	
 	// callback section
 	
@@ -280,6 +304,5 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		public void onFinished(final Game caller, final long[] fitness);
 
 	}
-
-	
+		
 }

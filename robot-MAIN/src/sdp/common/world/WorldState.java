@@ -645,6 +645,10 @@ public class WorldState {
 		return min;
 	}
 	
+	public static void saveMovie(WorldState[] states, String dir) {
+		for (int i = 0; i < states.length; i++)
+			writeWorldState(states[i], dir+"/frame"+i+".xml");
+	}
 	
 	/**
 	 * @see java.lang.Object#toString()

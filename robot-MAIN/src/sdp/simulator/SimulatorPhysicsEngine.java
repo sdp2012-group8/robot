@@ -18,11 +18,11 @@ import org.jbox2d.dynamics.contacts.Contact;
 
 import sdp.AI.Command;
 import sdp.common.Painter;
+import sdp.common.WorldStateRandomizer;
 import sdp.common.Communicator.opcode;
 import sdp.common.geometry.Vector2D;
 import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
-import sdp.common.world.WorldStateRandomizer;
 
 import static java.lang.Math.PI;
 
