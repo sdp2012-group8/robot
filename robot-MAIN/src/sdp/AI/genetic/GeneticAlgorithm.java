@@ -271,9 +271,6 @@ public class GeneticAlgorithm {
 
 			// find neighbor to play against
 			for (int j = -1; j < NEIGHBOUR_NUMBER; j++) {
-				
-				if (i == -1 && j == -1)
-					continue;
 
 				// calculate neighbor index
 				int index = j - (NEIGHBOUR_NUMBER-1)/2;
@@ -281,6 +278,9 @@ public class GeneticAlgorithm {
 				// wrap around neighboring index
 				if (index < -1) index = POPSIZE+index;
 				if (index > POPSIZE) index = index - POPSIZE -1;
+				
+				if (i == -1 && index == -1)
+					continue;
 
 				// if we have played against this neighbor, skip
 				if (currPlayed.contains(index))

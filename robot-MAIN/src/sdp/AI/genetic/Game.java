@@ -67,6 +67,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	
 	private boolean inCollBlue = false, inCollYellow = false;
 	
+	private int leftGoals = 0, rightGoals = 0;
+	
 	// calculate fitness section
 	
 	/**
@@ -89,6 +91,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	public void onTimeOut() {
 		// mark end of game
 		simulateGame = false;
+		if (ids[0] == -1 || ids[1] == -1)
+			System.out.printf("(id %02d) %02d:%02d (%02d id)\n", ids[0], leftGoals, rightGoals, ids[1]);
 	}
 
 	/**
@@ -97,8 +101,9 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	@Override
 	public void onLeftScore() {
 		//System.out.println("LEFT SCORE");
-		scores[1]+=5000;
-		scores[0]-=3000;
+		scores[1]+=50000;
+		scores[0]-=30000;
+		leftGoals++;
 		resetPitch();
 	}
 
@@ -108,8 +113,9 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	@Override
 	public void onRightScore() {
 		//System.out.println("RIGHT SCORE");
-		scores[0]+=5000;
-		scores[1]-=3000;
+		scores[0]+=50000;
+		scores[1]-=30000;
+		rightGoals++;
 		resetPitch();
 	}
 

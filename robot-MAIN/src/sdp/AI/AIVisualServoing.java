@@ -792,7 +792,7 @@ public class AIVisualServoing extends BaseAI {
 			return false;
 		}
 		
-		System.out.println("AI thinks it can kick.");
+		//System.out.println("AI thinks it can kick.");
 		
 		return true;
 	}
