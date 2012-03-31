@@ -99,6 +99,12 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		scores[1]-=100;
 	}
 
+	@Override
+	public void onYellowStopCollide() {
+		scores[1]+=50;
+	}
+
+	
 	/**
 	 * If the blue robot collides with an obstacle
 	 */
@@ -106,6 +112,11 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	public void onBlueCollide() {
 		//System.out.println("Blue collided");
 		scores[0]-=100;
+	}
+	
+	@Override
+	public void onBlueStopCollide() {
+		scores[0]+=50;
 	}
 	
 	// API and simulation

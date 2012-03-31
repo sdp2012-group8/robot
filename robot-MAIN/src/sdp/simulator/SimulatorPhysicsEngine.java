@@ -89,6 +89,8 @@ public class SimulatorPhysicsEngine extends Simulator {
 				if ((contact.getFixtureA().getBody() == bodyYellow && contact.getFixtureB().getBody() != bodyBall) ||
 					(contact.getFixtureB().getBody() == bodyYellow && contact.getFixtureA().getBody() != bodyBall)) {
 					yellowCollision = false;
+					if (callback != null)
+						callback.onYellowStopCollide();
 				}
 				
 				// blue collision
@@ -96,6 +98,8 @@ public class SimulatorPhysicsEngine extends Simulator {
 				if ((contact.getFixtureA().getBody() == bodyBlue && contact.getFixtureB().getBody() != bodyBall) ||
 					(contact.getFixtureB().getBody() == bodyBlue && contact.getFixtureA().getBody() != bodyBall)) {
 					blueCollision = false;
+					if (callback != null)
+						callback.onBlueStopCollide();
 				}
 				
 				
@@ -549,6 +553,8 @@ public class SimulatorPhysicsEngine extends Simulator {
 		public void onRightScore();
 		public void onYellowCollide();
 		public void onBlueCollide();
+		public void onYellowStopCollide();
+		public void onBlueStopCollide();
 		
 	}
 
