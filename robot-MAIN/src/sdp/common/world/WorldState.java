@@ -2,17 +2,26 @@ package sdp.common.world;
 
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.logging.Logger;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import sdp.common.geometry.Circle;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
+import sdp.common.xml.XmlUtils;
 
 
 /**
  * The state of the field.
  */
 public class WorldState {
+	
+	/** The class' logger. */
+	private static final Logger LOGGER = Logger.getLogger("sdp.common.world.WorldState");
 	
 	/** A flag that denotes that ball should be considered an obstacle. */
 	public static final int BALL_IS_OBSTACLE_FLAG = 0x1;
@@ -159,8 +168,8 @@ public class WorldState {
 		this.yellowRobot = yellowRobot;
 		this.worldImage = worldImage;
 	}
-	
-	
+
+
 	/**
 	 * Convert a 2D point from normal coordinates to real world coordinates
 	 * (i.e. [0; 1] -> centimeters).
@@ -504,6 +513,81 @@ public class WorldState {
 	
 	
 	/**
+	 * Read a world state from an XML file and return it.
+	 * 
+	 * @param filename Name of the file that contains the world state.
+	 * @return An appropriate WorldState instance.
+	 */
+	public static WorldState loadWorldState(String filename) {
+		File file = new File(filename);
+		if (!file.exists()) {
+			LOGGER.info("The given world state file does not exist.");
+			return null;
+		}
+				
+		Document doc = XmlUtils.openXmlDocument(file);
+		
+		Element rootElement = (Element) doc.getElementsByTagName("worldstate").item(0);
+				
+		Element ballElem = (Element) rootElement.getElementsByTagName("ball").item(0);
+		double ballX = XmlUtils.getChildDouble(ballElem, "x");
+		double ballY = XmlUtils.getChildDouble(ballElem, "y");
+		Point2D.Double ball = new Point2D.Double(ballX, ballY);
+		
+		Element blueElem = (Element) rootElement.getElementsByTagName("bluerobot").item(0);
+		double blueX = XmlUtils.getChildDouble(blueElem, "x");
+		double blueY = XmlUtils.getChildDouble(blueElem, "y");
+		double blueAngle = XmlUtils.getChildDouble(blueElem, "angle");
+		Point2D.Double bluePos = new Point2D.Double(blueX, blueY);
+		Robot blueRobot = new Robot(bluePos, blueAngle);
+		
+		Element yellowElem = (Element) rootElement.getElementsByTagName("yellowrobot").item(0);
+		double yellowX = XmlUtils.getChildDouble(yellowElem, "x");
+		double yellowY = XmlUtils.getChildDouble(yellowElem, "y");
+		double yellowAngle = XmlUtils.getChildDouble(yellowElem, "angle");
+		Point2D.Double yellowPos = new Point2D.Double(yellowX, yellowY);
+		Robot yellowRobot = new Robot(yellowPos, yellowAngle);
+		
+		WorldState worldState = new WorldState(ball, blueRobot, yellowRobot, null);
+		
+		return worldState;
+	}
+	
+	
+	/**
+	 * Writes the given world state into an XML file.
+	 * 
+	 * @param config Configuration to output.
+	 * @param filename Output filename.
+	 */
+	public static void writeWorldState(WorldState worldState, String filename) {
+		Document doc = XmlUtils.createBlankXmlDocument();
+		
+		Element rootElement = doc.createElement("worldstate");
+		doc.appendChild(rootElement);
+		
+		Element ballElem = (Element) doc.createElement("ball");
+		XmlUtils.addChildDouble(doc, ballElem, "x", worldState.getBallCoords().x);
+		XmlUtils.addChildDouble(doc, ballElem, "y", worldState.getBallCoords().y);
+		rootElement.appendChild(ballElem);
+		
+		Element blueElem = (Element) doc.createElement("bluerobot");
+		XmlUtils.addChildDouble(doc, blueElem, "x", worldState.getBlueRobot().getCoords().x);
+		XmlUtils.addChildDouble(doc, blueElem, "y", worldState.getBlueRobot().getCoords().y);
+		XmlUtils.addChildDouble(doc, blueElem, "angle", worldState.getBlueRobot().getAngle());
+		rootElement.appendChild(blueElem);
+		
+		Element yellowElem = (Element) doc.createElement("yellowrobot");
+		XmlUtils.addChildDouble(doc, yellowElem, "x", worldState.getYellowRobot().getCoords().x);
+		XmlUtils.addChildDouble(doc, yellowElem, "y", worldState.getYellowRobot().getCoords().y);
+		XmlUtils.addChildDouble(doc, yellowElem, "angle", worldState.getYellowRobot().getAngle());
+		rootElement.appendChild(yellowElem);
+
+		XmlUtils.writeXmlDocument(doc, filename);
+	}
+
+	
+	/**
 	 * Returns the vector to the closest collision point in the world (wall or enemy)
 	 * 
 	 * TODO: Clean up.
@@ -559,5 +643,15 @@ public class WorldState {
 		}
 		// we have our point
 		return min;
+	}
+	
+	
+	/**
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "(WorldState: BALL=" + getBallCoords() + ", BLUE=" + getBlueRobot()
+				+ ", YELLOW=" + getYellowRobot() + ")";
 	}
 }
