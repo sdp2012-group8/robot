@@ -135,7 +135,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		timeElapsed = 0;
 		
 		// create simulator
-		sim = new SimulatorPhysicsEngine(false);
+		sim = new SimulatorPhysicsEngine(false, true);
 		
 		final VBrick leftBrick = new VBrick(),
 					rightBrick = new VBrick();

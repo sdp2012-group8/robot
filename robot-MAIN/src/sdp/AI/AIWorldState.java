@@ -118,7 +118,7 @@ public class AIWorldState extends WorldState {
 		super(worldState.getBallCoords(), worldState.getBlueRobot(),
 				worldState.getYellowRobot(), worldState.getWorldImage());
 		
-		newSim = USE_NEW_SIMULATOR_FOR_PREDICTION ? new SimulatorPhysicsEngine(false) : null;
+		newSim = USE_NEW_SIMULATOR_FOR_PREDICTION ? new SimulatorPhysicsEngine(false, false) : null;
 		update(worldState, isOwnTeamBlue, isOwnGoalLeft);
 		
 	}

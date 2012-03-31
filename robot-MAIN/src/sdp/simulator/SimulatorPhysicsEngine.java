@@ -22,6 +22,7 @@ import sdp.common.Communicator.opcode;
 import sdp.common.geometry.Vector2D;
 import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
+import sdp.common.world.WorldStateRandomizer;
 
 import static java.lang.Math.PI;
 
@@ -32,6 +33,7 @@ public class SimulatorPhysicsEngine extends Simulator {
 	private WorldState old_st = null; // for setting world state
 	private boolean yellowCollision = false, blueCollision = false;
 	public Callback callback = null;
+	private final boolean randomnessEnabled;
 
 	/**
 	 * Contains the world simulation of box2d
@@ -61,9 +63,12 @@ public class SimulatorPhysicsEngine extends Simulator {
 	 * 
 	 * @param realtime_simulation
 	 * @param robot_bounciness
+	 * @param randomnessEnabled
 	 */
-	public SimulatorPhysicsEngine(boolean realtime_simulation) {		
+	public SimulatorPhysicsEngine(final boolean realtime_simulation, final boolean randomnessEnabled) {		
 
+		this.randomnessEnabled = randomnessEnabled;
+		
 		// create world
 		world = new World(new Vec2(0, 0), false);
 		
@@ -455,6 +460,13 @@ public class SimulatorPhysicsEngine extends Simulator {
 
 		} catch (Exception e) {}
 
+	}
+	
+	@Override
+	public WorldState getWorldState() {
+		return randomnessEnabled ?
+				WorldStateRandomizer.randomize(super.getWorldState(), 0.2/WorldState.PITCH_WIDTH_CM, 1)
+				: super.getWorldState();
 	}
 	
 	/**
