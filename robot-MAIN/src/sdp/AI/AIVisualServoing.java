@@ -66,6 +66,10 @@ public class AIVisualServoing extends BaseAI {
 	/** How many times to try to find the optimal point. */
 	private static final int OPTIMAL_POINT_SEARCH_TRIES = 20;
 	
+	/** Size of the pitch's horizontal edge region. */
+	private static final double PITCH_H_EDGE_REGION_SIZE = Robot.LENGTH_CM * 0.7;
+	/** Size of the pitch's vertical edge region. */
+	private static final double PITCH_V_EDGE_REGION_SIZE = Robot.LENGTH_CM * 0.7;
 	
 
 	// corner thresholds
@@ -426,6 +430,10 @@ public class AIVisualServoing extends BaseAI {
 			return gotBall();
 		}
 		
+		// Get which walls the ball is next to.
+		boolean ballAdjacency[] = getWallsBallIsAdjacentTo();
+		System.out.println(Utilities.arrayToString(ballAdjacency));
+		
 		// Get the point to drive towards.
 		Vector2D target = new Vector2D(aiWorldState.getBallCoords());
 		
@@ -649,6 +657,57 @@ public class AIVisualServoing extends BaseAI {
 			command.drivingSpeed *= 1.0 - lossFactor;
 		}
 	}
+	
+	
+	/**
+	 * Get which walls the ball is adjacent to.
+	 * 
+	 * @return Whether the ball is next our wall, side wall and enemy wall,
+	 * 		as an array, in that order.
+	 */
+	private boolean[] getWallsBallIsAdjacentTo() {
+		boolean ballAdjToOwnWall = false;
+		boolean ballAdjToSideWall = false;
+		boolean ballAdjToEnemyWall = false;
+		
+		Point2D.Double ball = aiWorldState.getBallCoords();
+		
+		// Is the ball next to a side wall?
+		if ((ball.y < PITCH_H_EDGE_REGION_SIZE)
+				|| (ball.y > (WorldState.PITCH_HEIGHT_CM - PITCH_H_EDGE_REGION_SIZE))) {
+			ballAdjToSideWall = true;
+		}
+		
+		// Is the ball next to our side wall?
+		if ((ball.y < aiWorldState.getOwnGoal().getTop().y)
+				|| (ball.y > aiWorldState.getOwnGoal().getBottom().y)) {
+			if (aiWorldState.isOwnGoalLeft()) {
+				if (ball.x < PITCH_V_EDGE_REGION_SIZE) {
+					ballAdjToOwnWall = true;
+				}
+			} else {
+				if (ball.x > (WorldState.PITCH_WIDTH_CM - PITCH_V_EDGE_REGION_SIZE)) {
+					ballAdjToOwnWall = true;
+				}
+			}
+		}
+		
+		// Is the ball next to enemy side wall?
+		if ((ball.y < aiWorldState.getEnemyGoal().getTop().y)
+				|| (ball.y > aiWorldState.getEnemyGoal().getBottom().y)) {
+			if (aiWorldState.isOwnGoalLeft()) {
+				if (ball.x > (WorldState.PITCH_WIDTH_CM - PITCH_V_EDGE_REGION_SIZE)) {
+					ballAdjToEnemyWall = true;
+				}
+			} else {
+				if (ball.x < PITCH_V_EDGE_REGION_SIZE) {
+					ballAdjToEnemyWall = true;
+				}
+			}
+		}
+		
+		return new boolean[] { ballAdjToOwnWall, ballAdjToSideWall, ballAdjToEnemyWall };
+	}
 
 
 	/**
@@ -792,7 +851,7 @@ public class AIVisualServoing extends BaseAI {
 			return false;
 		}
 		
-		System.out.println("AI thinks it can kick.");
+		//System.out.println("AI thinks it can kick.");
 		
 		return true;
 	}

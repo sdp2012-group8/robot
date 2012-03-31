@@ -1,9 +1,12 @@
 package sdp.AI.genetic;
 
 import sdp.AI.AIMaster;
+import sdp.AI.AIVisualServoing;
 import sdp.AI.AIMaster.AIState;
 import sdp.AI.neural.AINeuralNet;
+import sdp.common.geometry.GeomUtils;
 import sdp.common.world.WorldState;
+import sdp.common.world.WorldStateRandomizer;
 import sdp.simulator.Simulator;
 import sdp.simulator.SimulatorPhysicsEngine;
 import sdp.simulator.VBrick;
@@ -44,6 +47,14 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	/** the x coordinate of the robot that would be placed on right */
 	private static final double PLACEMENT_RIGHT = WorldState.PITCH_WIDTH_CM - PLACEMENT_LEFT; // in cm
 	
+	public static final double PLACEMENT_X_RAND = 3;
+	public static final double PLACEMENT_Y_RAND = 30;
+	public static final double ANGLE_RAND = 20;
+	public static final double BALL_RAND = 2;
+	
+	private static final int MAX_BALL_SCORE = 20;
+	private static final int MAX_BALL_DISTANCE = 70;
+	
 	private static final int GAMETIME = 3*60; // in sec
 	
 	private long[] scores = new long[2];
@@ -54,18 +65,34 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	
 	private SimulatorPhysicsEngine sim;
 	
+	private boolean inCollBlue = false, inCollYellow = false;
+	
+	private int leftGoals = 0, rightGoals = 0;
+	
 	// calculate fitness section
 	
 	/**
 	 * When new frame is available, analyse the {@link #state}
 	 */
 	public void onNewFrame() {
+		if (inCollBlue)
+			scores[0]-=10;
+		if (inCollYellow)
+			scores[1]-=10;
+		
+		final double yellowBall = GeomUtils.pointDistance(state.getYellowRobot().getFrontCenter(), state.getBallCoords());
+		final double blueBall = GeomUtils.pointDistance(state.getBlueRobot().getFrontCenter(), state.getBallCoords());
+		
+		scores[0]+= (int) (MAX_BALL_SCORE - MAX_BALL_SCORE*blueBall/MAX_BALL_DISTANCE);
+		scores[1]+= (int) (MAX_BALL_SCORE - MAX_BALL_SCORE*yellowBall/MAX_BALL_DISTANCE);		
 		
 	}
 	
 	public void onTimeOut() {
 		// mark end of game
 		simulateGame = false;
+		if (ids[0] == -1 || ids[1] == -1)
+			System.out.printf("(id %02d) %02d:%02d (%02d id)\n", ids[0], leftGoals, rightGoals, ids[1]);
 	}
 
 	/**
@@ -74,8 +101,9 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	@Override
 	public void onLeftScore() {
 		//System.out.println("LEFT SCORE");
-		scores[1]+=5000;
-		scores[0]-=3000;
+		scores[1]+=50000;
+		scores[0]-=30000;
+		leftGoals++;
 		resetPitch();
 	}
 
@@ -85,8 +113,9 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	@Override
 	public void onRightScore() {
 		//System.out.println("RIGHT SCORE");
-		scores[0]+=5000;
-		scores[1]-=3000;
+		scores[0]+=50000;
+		scores[1]-=30000;
+		rightGoals++;
 		resetPitch();
 	}
 
@@ -96,12 +125,14 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	@Override
 	public void onYellowCollide() {
 		//System.out.println("Yellow collided");
-		scores[1]-=100;
+		scores[1]-=500;
+		inCollYellow = true;
 	}
 
 	@Override
 	public void onYellowStopCollide() {
-		scores[1]+=50;
+		scores[1]+=500;
+		inCollYellow = false;
 	}
 
 	
@@ -111,12 +142,14 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	@Override
 	public void onBlueCollide() {
 		//System.out.println("Blue collided");
-		scores[0]-=100;
+		scores[0]-=500;
+		inCollBlue = true;
 	}
 	
 	@Override
 	public void onBlueStopCollide() {
-		scores[0]+=50;
+		scores[0]+=500;
+		inCollBlue = false;
 	}
 	
 	// API and simulation
@@ -151,9 +184,9 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		final VBrick leftBrick = new VBrick(),
 					rightBrick = new VBrick();
 		
-		leftAI = new AIMaster(leftBrick, sim, new AINeuralNet(population[ids[0]]));
+		leftAI = new AIMaster(leftBrick, sim, ids[0] != -1 ? new AINeuralNet(population[ids[0]]) : new AIVisualServoing());
 		leftAI.setPrintStateChanges(false);
-		rightAI = new AIMaster(rightBrick, sim, new AINeuralNet(population[ids[1]]));
+		rightAI = new AIMaster(rightBrick, sim, ids[1] != -1 ? new AINeuralNet(population[ids[1]]) : new AIVisualServoing());
 		rightAI.setPrintStateChanges(false);
 		
 		// reset pitch
@@ -166,6 +199,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 				WorldState.PITCH_HEIGHT_CM/2,
 				180);
 		sim.putBallAt();
+		
+		resetPitch();
 		
 		sim.callback = this;
 		
@@ -205,9 +240,18 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	}
 	
 	private void resetPitch() {
-		sim.putAt(PLACEMENT_LEFT, WorldState.PITCH_HEIGHT_CM/2, 0, 0);
-		sim.putAt(PLACEMENT_RIGHT, WorldState.PITCH_HEIGHT_CM/2, 1, 180);
-		sim.putBallAt();
+		
+		sim.putBallAt(0.5 + WorldStateRandomizer.getRandom()*BALL_RAND/ WorldState.PITCH_WIDTH_CM,
+					WorldState.PITCH_HEIGHT_CM / (2 * WorldState.PITCH_WIDTH_CM) + WorldStateRandomizer.getRandom()*BALL_RAND/ WorldState.PITCH_WIDTH_CM);
+		
+		sim.putAt((PLACEMENT_LEFT + PLACEMENT_X_RAND*WorldStateRandomizer.getRandom())/WorldState.PITCH_WIDTH_CM,
+				WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM) + PLACEMENT_Y_RAND*WorldStateRandomizer.getRandom()/WorldState.PITCH_WIDTH_CM,
+				0, WorldStateRandomizer.getRandom()*ANGLE_RAND);
+		
+		sim.putAt((PLACEMENT_RIGHT + PLACEMENT_X_RAND*WorldStateRandomizer.getRandom())/WorldState.PITCH_WIDTH_CM,
+				WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM) + PLACEMENT_Y_RAND*WorldStateRandomizer.getRandom()/WorldState.PITCH_WIDTH_CM,
+				1, 180+WorldStateRandomizer.getRandom()*ANGLE_RAND);
+		
 	}
 
 	/**
