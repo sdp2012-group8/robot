@@ -67,8 +67,18 @@ public abstract class BaseAI {
 	 * @return The next command that has to be executed.
 	 * @throws IOException
 	 */
-	public Command sit() throws IOException {
+	protected Command sit() throws IOException {
 		return new Command(0, 0, false);
+	}
+	
+	/**
+	 * Robot's starting behaviour.
+	 * 
+	 * @return The next command that has to be executed.
+	 * @throws IOException
+	 */
+	protected Command start() throws IOException {
+		return chaseBall();
 	}
 	
 	
