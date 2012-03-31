@@ -51,6 +51,8 @@ public class AINeuralNet extends AIVisualServoing {
 		final double[] output = nets.getOutput();
 		NNetTools.move_modes mode = NNetTools.recoverMoveOutputMode(output);
 		
+		//System.out.println(mode+": "+NNetTools.printArray(output, ",", output.length));
+		
 		// convert result into speeds
 		final int speed = NNetTools.getDesiredSpeed(mode, Robot.MAX_DRIVING_SPEED);
 		final int turn_speed = NNetTools.getDesiredTurningSpeed(mode, MAX_TURNING_SPEED);

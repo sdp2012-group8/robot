@@ -30,12 +30,14 @@ import sdp.AI.AIMaster;
 import sdp.AI.AIMaster.AIState;
 import sdp.AI.AIVisualServoing;
 import sdp.AI.BaseAI;
+import sdp.AI.genetic.Game;
 import sdp.AI.neural.AINeuralNet;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.geometry.Vector2D;
 import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
+import sdp.common.world.WorldStateRandomizer;
 import sdp.common.WorldStateObserver;
 import sdp.simulator.Simulator;
 import sdp.simulator.SimulatorPhysicsEngine;
@@ -55,6 +57,12 @@ public class SimTesterGUI {
 
 	private static final double PLACEMENT_LEFT = 20; // in cm
 	private static final double PLACEMENT_RIGHT = WorldState.PITCH_WIDTH_CM - PLACEMENT_LEFT; // in cm
+	
+	private static final double PLACEMENT_X_RAND = Game.PLACEMENT_X_RAND;
+	private static final double PLACEMENT_Y_RAND = Game.PLACEMENT_Y_RAND;
+	private static final double ANGLE_RAND = Game.ANGLE_RAND;
+	private static final double BALL_RAND = Game.BALL_RAND;
+	
 	
 	private JFrame frmAlphaTeamSimulator;
 	
@@ -465,9 +473,17 @@ public class SimTesterGUI {
 	private void resetField() {
 		mAI.setState(AIMaster.AIState.SIT);
 		opponentAI.setState(AIMaster.AIState.SIT);
-		mSim.putBallAt();
-		mSim.putAt(blue_placement/WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM), 0, blue_placement == PLACEMENT_LEFT ?  0 : 180);
-		mSim.putAt(yellow_placement/WorldState.PITCH_WIDTH_CM, WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM), 1, yellow_placement == PLACEMENT_LEFT ?  0 : 180);
+
+		mSim.putBallAt(0.5 + WorldStateRandomizer.getRandom()*BALL_RAND/ WorldState.PITCH_WIDTH_CM,
+				WorldState.PITCH_HEIGHT_CM / (2 * WorldState.PITCH_WIDTH_CM) + WorldStateRandomizer.getRandom()*BALL_RAND/ WorldState.PITCH_WIDTH_CM);
+
+		mSim.putAt((PLACEMENT_LEFT + PLACEMENT_X_RAND*WorldStateRandomizer.getRandom())/WorldState.PITCH_WIDTH_CM,
+				WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM) + PLACEMENT_Y_RAND*WorldStateRandomizer.getRandom()/WorldState.PITCH_WIDTH_CM,
+				0, WorldStateRandomizer.getRandom()*ANGLE_RAND);
+
+		mSim.putAt((PLACEMENT_RIGHT + PLACEMENT_X_RAND*WorldStateRandomizer.getRandom())/WorldState.PITCH_WIDTH_CM,
+				WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM) + PLACEMENT_Y_RAND*WorldStateRandomizer.getRandom()/WorldState.PITCH_WIDTH_CM,
+				1, 180+WorldStateRandomizer.getRandom()*ANGLE_RAND);
 	}
 	
 	/**

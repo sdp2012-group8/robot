@@ -293,7 +293,7 @@ public class AIMaster extends WorldStateProvider {
 			}
 			
 			if (command.kick) {
-				System.out.println("Kicking");
+				//System.out.println("Kicking");
 				communicator.sendMessage(opcode.kick);
 			}
 		}
