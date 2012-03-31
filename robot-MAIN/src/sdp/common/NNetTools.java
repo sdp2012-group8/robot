@@ -18,10 +18,6 @@ public class NNetTools {
 	public static enum move_modes {
 		forward_left, forward_right,  backward_left, backward_right, forward, backward
 	}
-	
-	public static enum got_ball_modes {
-		forward_left, forward_right,  left, right, kick
-	}
 
 	/**
 	 * Generates input array for the AI
@@ -112,12 +108,6 @@ public class NNetTools {
 			return null;
 		return generateOutput(mode.ordinal(), move_modes.values().length);
 	}
-	
-	public static double[] generateOutput(got_ball_modes mode) {
-		if (mode == null)
-			return null;
-		return generateOutput(mode.ordinal(), got_ball_modes.values().length);
-	}
 
 	/**
 	 * What was the original condition
@@ -148,11 +138,6 @@ public class NNetTools {
 		return move_modes.values()[id];
 	}
 	
-	public static got_ball_modes recoverGotBallOutputMode(double[] output) {
-		int id = recoverOutputInt(output);
-		return got_ball_modes.values()[id];
-	}
-	
 	public static move_modes getMoveMode(int desired_speed, int desired_turning) {
 		if (desired_speed > 0 && desired_turning > 0)
 			return move_modes.forward_right;
@@ -178,32 +163,6 @@ public class NNetTools {
 		return null;
 	}
 	
-	public static got_ball_modes getGotBallMode(int desired_speed, int desired_turning, boolean is_kicking) {
-		if (desired_speed > 0 && desired_turning > 0)
-			return got_ball_modes.forward_right;
-		if (desired_speed > 0 && desired_turning == 0)
-			return null; //got_ball_modes.forward;
-		if (desired_speed > 0 && desired_turning < 0)
-			return got_ball_modes.forward_left;
-		
-		if (desired_speed == 0 && desired_turning > 0)
-			return got_ball_modes.right;
-		if (desired_speed == 0 && desired_turning == 0)
-			return null; //got_ball_modes.stop;
-		if (desired_speed == 0 && desired_turning < 0)
-			return got_ball_modes.left;
-
-		if (desired_speed < 0 && desired_turning > 0)
-			return null; //got_ball_modes.backward_right;
-		if (desired_speed < 0 && desired_turning == 0)
-			return null; //got_ball_modes.backward;
-		if (desired_speed < 0 && desired_turning < 0)
-			return null;//got_ball_modes.backward_left;
-		
-		if (is_kicking)
-			return got_ball_modes.kick;
-		return null;
-	}
 	
 	public static int getDesiredSpeed(move_modes mode, int speed) {
 		switch (mode) {
@@ -235,34 +194,6 @@ public class NNetTools {
 		}
 	}
 	
-	public static int getDesiredSpeed(got_ball_modes mode, int speed) {
-		switch (mode) {
-		case forward_left:
-		case forward_right:
-			return speed;
-		default:
-			return 0;
-		}
-	}
-	
-	public static int getDesiredTurningSpeed(got_ball_modes mode, int turn_speed) {
-		switch (mode) {
-		case forward_right:
-		case right:
-		//case right:
-			return turn_speed;
-		case forward_left:
-		case left:
-		//case left:
-			return -turn_speed;
-		default:
-			return 0;
-		}
-	}
-	
-	public static boolean getKicking(got_ball_modes mode) {
-		return mode == got_ball_modes.kick;
-	}
 	
 	/**
 	 * AI:
@@ -287,14 +218,14 @@ public class NNetTools {
 		return result;
 	}
 	
-	public static String printArray(double[] things, final String separator) {
+	public static String printArray(double[] things, final String separator, int length) {
 		final Double[] array = new Double[things.length];
 		for (int i = 0; i < things.length; i++)
 			array[i] = things[i];
-		return printArray(array, separator);
+		return printArray(array, separator, length);
 	}
 	
-	public static String printArray(Object[] things, final String separator) {
+	public static String printArray(Object[] things, final String separator, int length) {
 		if (things == null)
 			return "null";
 		
@@ -303,7 +234,7 @@ public class NNetTools {
 		
 		String result = "{"+things[0];
 		
-		for (int i = 1; i < things.length; i++)
+		for (int i = 1; i < length; i++)
 			result+=separator+things[i];
 		
 		return result+"}";

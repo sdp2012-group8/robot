@@ -73,8 +73,9 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	 */
 	@Override
 	public void onLeftScore() {
-		System.out.println("LEFT SCORE");
+		//System.out.println("LEFT SCORE");
 		scores[1]+=5000;
+		scores[0]-=3000;
 		resetPitch();
 	}
 
@@ -83,8 +84,9 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	 */
 	@Override
 	public void onRightScore() {
-		System.out.println("RIGHT SCORE");
+		//System.out.println("RIGHT SCORE");
 		scores[0]+=5000;
+		scores[1]-=3000;
 		resetPitch();
 	}
 

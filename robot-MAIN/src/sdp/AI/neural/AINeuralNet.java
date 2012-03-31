@@ -1,9 +1,6 @@
 package sdp.AI.neural;
 
 import java.io.IOException;
-import java.util.Arrays;
-
-import javax.swing.text.Utilities;
 
 import org.neuroph.core.Layer;
 import org.neuroph.core.NeuralNetwork;
@@ -32,7 +29,7 @@ public class AINeuralNet extends AIVisualServoing {
 	/** NNetwork layers count. {1, 2, 3} would mean
 	 *  network with 1 input, 3 outputs and one hidden
 	 *  layer with 2 neurons */
-	private static final int[] LAYERS = new int[] {45, 91, NNetTools.move_modes.values().length};
+	private static final int[] LAYERS = new int[] {45, NNetTools.move_modes.values().length};
 	
 	/** The brain that is controlling the AI */
 	private NeuralNetwork nets;
@@ -51,13 +48,12 @@ public class AINeuralNet extends AIVisualServoing {
 		final double[] input = NNetTools.generateAIinput(aiWorldState, aiWorldState.isOwnTeamBlue(), aiWorldState.isOwnGoalLeft());
 		nets.setInput(input);
 		nets.calculate();
-		final double[] result = nets.getOutput();
-		
-		System.out.println(NNetTools.printArray(result, ","));
+		final double[] output = nets.getOutput();
+		NNetTools.move_modes mode = NNetTools.recoverMoveOutputMode(output);
 		
 		// convert result into speeds
-		final int speed = NNetTools.getDesiredSpeed(NNetTools.recoverGotBallOutputMode(result), Robot.MAX_DRIVING_SPEED);
-		final int turn_speed = NNetTools.getDesiredTurningSpeed(NNetTools.recoverGotBallOutputMode(result), MAX_TURNING_SPEED);
+		final int speed = NNetTools.getDesiredSpeed(mode, Robot.MAX_DRIVING_SPEED);
+		final int turn_speed = NNetTools.getDesiredTurningSpeed(mode, MAX_TURNING_SPEED);
 		
 		// return the command
 		return new Command(speed, turn_speed, false);	
@@ -82,6 +78,7 @@ public class AINeuralNet extends AIVisualServoing {
 	 * @see #setWeights(double[])
 	 */
 	public AINeuralNet(final double[] weights) {
+		nets = new MultiLayerPerceptron(LAYERS);
 		setWeights(weights);
 	}
 	
@@ -130,10 +127,7 @@ public class AINeuralNet extends AIVisualServoing {
 	 * @param weights compatible with the output of {@link #getWeights()}
 	 */
 	public void setWeights(final double[] weights) {
-		
-		nets = new MultiLayerPerceptron(LAYERS);
 		array2network(weights, nets);
-	
 	}
 	
     /**
@@ -141,14 +135,13 @@ public class AINeuralNet extends AIVisualServoing {
      * @param array The array used to decode.
      * @param network The network to decode into.
      */
-    public static void array2network(double[] array, NeuralNetwork network) {
+    public static void array2network(final double[] array, final NeuralNetwork network) {
         int index = 0;
  
         for (Layer layer : network.getLayers()) {
             for (Neuron neuron : layer.getNeurons()) {
                 for (Connection connection : neuron.getOutConnections()) {
                     connection.getWeight().setValue(array[index++]);
-                    //connection.getWeight().setPreviousValue(array[index++]);
                 }
             }
         }

@@ -549,7 +549,7 @@ public class SimTesterGUI {
 		case VIS_SERV:
 			return new AIVisualServoing();
 		case NNETS:
-			return new AINeuralNet(AINeuralNet.getRandomWeights());//NeuralNetwork.load(NNET_FILE));
+			return new AINeuralNet(NeuralNetwork.load(NNET_FILE));
 		} 
 		return null;
 	}
