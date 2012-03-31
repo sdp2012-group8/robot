@@ -164,7 +164,7 @@ public class Utilities {
 	 * @param array Array to print.
 	 * @return String representation of the given array.
 	 */
-	public static String printArray(Object[] array) {
+	public static String arrayToString(Object[] array) {
 		if ((array == null) || (array.length == 0)) {
 			return "[EMPTY]";
 		} else if (array.length == 1) {
@@ -181,18 +181,18 @@ public class Utilities {
 
 	
 	/**
-	 * Pretty print an integer array to a string.
+	 * Pretty print a boolean array to a string.
 	 * 
 	 * @param array An array to pretty print.
 	 * @return String representation of the given array.
 	 */
-	public static String printArray(int[] array) {
-		Integer[] ans = new Integer[array.length];
+	public static String arrayToString(boolean[] array) {
+		Boolean[] ans = new Boolean[array.length];
 		for (int i = 0; i < ans.length; i++) {
 			ans[i] = array[i];
 		}
 		
-		return printArray(ans);
+		return arrayToString(ans);
 	}
 
 	/**
@@ -201,13 +201,28 @@ public class Utilities {
 	 * @param array An array to pretty print.
 	 * @return String representation of the given array.
 	 */
-	public static String printArray(double[] array) {
+	public static String arrayToString(double[] array) {
 		Double[] ans = new Double[array.length];
 		for (int i = 0; i < ans.length; i++) {
 			ans[i] = array[i];
 		}
 		
-		return printArray(ans);
+		return arrayToString(ans);
+	}
+	
+	/**
+	 * Pretty print an integer array to a string.
+	 * 
+	 * @param array An array to pretty print.
+	 * @return String representation of the given array.
+	 */
+	public static String arrayToString(int[] array) {
+		Integer[] ans = new Integer[array.length];
+		for (int i = 0; i < ans.length; i++) {
+			ans[i] = array[i];
+		}
+		
+		return arrayToString(ans);
 	}
 
 	
