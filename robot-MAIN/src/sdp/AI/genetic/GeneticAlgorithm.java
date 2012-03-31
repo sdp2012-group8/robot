@@ -46,75 +46,78 @@ public class GeneticAlgorithm {
 
 	FileWriter fstream;
 	PrintWriter out;
+	
+	private volatile boolean run = true;
 
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		try {
-			new GeneticAlgorithm();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	public void stop() {
+		run = false;
 	}
-
-	public GeneticAlgorithm() throws IOException {
-
+	
+	public void start() {
+		run = true;
+		
 		// start workers
-		for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++) {
-			workers[i] = new GameRunner();
-			workers[i].start();
-		}
+				for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++) {
+					workers[i] = new GameRunner();
+					workers[i].start();
+				}
 
-		System.out.println("Starting setup");
-		setup();
-		//out.println("\nInitial population\n");
-		//printPop();
-		System.out.println("Starting evolution");
-		for (gen = 1; gen < GENERATIONS+1; gen++) {
-			
-			run();
-			System.out.println("Generation: " + gen + "  average fitness: " + avgFitness[gen]);
-			//out.println("\nGeneration " + gen);
+				System.out.println("Starting setup");
+				setup();
+				//out.println("\nInitial population\n");
+				//printPop();
+				System.out.println("Starting evolution");
+				for (gen = 1; run; gen++) {
+					
+					run();
+					System.out.println("Generation: " + gen + "  average fitness: " + avgFitness[gen]);
+					//out.println("\nGeneration " + gen);
 
-			//printPop(); //TODO: change printpop to print fittest individual in population
-		}
+					//printPop(); //TODO: change printpop to print fittest individual in population
+				}
 
-		long finalPopAvgFitness = avgFitness[gen-1];
+				long finalPopAvgFitness = avgFitness[gen-1];
 
-		/* Print the final generation */
-		System.out.println("Printing final population");
-		fstream = new FileWriter(OUTPUT_DIR+"finalPopulation.gao");
-		out = new PrintWriter(fstream);
+				/* Print the final generation */
+				System.out.println("Printing final population");
+				try {
+					fstream = new FileWriter(OUTPUT_DIR+"finalPopulation.gao");
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				out = new PrintWriter(fstream);
 
-		out.println("Final Population\n");
-		
-		
-		
-		new AINeuralNet(population[findFittest()]).getNetwork().save(OUTPUT_DIR+"finalPop.nnet");
-		
-		out.println("Average - " + finalPopAvgFitness + "\n");
+				out.println("Final Population\n");
+				
+				
+				
+				new AINeuralNet(population[findFittest()]).getNetwork().save(OUTPUT_DIR+"finalPop.nnet");
+				
+				out.println("Average - " + finalPopAvgFitness + "\n");
 
-		out.close();
+				out.close();
 
-		/* Print the average fitness of each generation */
-		System.out.println("Printing average fitness of each generation");
-		fstream = new FileWriter(OUTPUT_DIR+"Generations Fitness.csv");
-		out = new PrintWriter(fstream);
+				/* Print the average fitness of each generation */
+				System.out.println("Printing average fitness of each generation");
+				try {
+					fstream = new FileWriter(OUTPUT_DIR+"Generations Fitness.csv");
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				out = new PrintWriter(fstream);
 
-		out.println("Generations Fitness\n");
+				out.println("Generations Fitness\n");
 
-		for (int i = 0; i < GENERATIONS+1; i++) {
-			out.print(avgFitness[i] + ",");
-		}
-		out.close();
+				for (int i = 0; i < GENERATIONS+1; i++) {
+					out.print(avgFitness[i] + ",");
+				}
+				out.close();
 
-		System.out.println("Finished");
+				System.out.println("Finished");
 
-		// stop workers
-		for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++)
-			workers[i].interrupt();
+				// stop workers
+				for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++)
+					workers[i].interrupt();
 	}
 
 	/** 
@@ -257,7 +260,7 @@ public class GeneticAlgorithm {
 		int game_id = 0;
 
 		// traverse through the population
-		for (int i = 0; i < POPSIZE; i++) {
+		for (int i = -1; i < POPSIZE; i++) {
 
 			// get the neighbors against I have already played
 			HashSet<Integer> currPlayed = alreadyPlayed.get(i);
@@ -267,14 +270,17 @@ public class GeneticAlgorithm {
 				currPlayed = new HashSet<Integer>();
 
 			// find neighbor to play against
-			for (int j = 0; j < NEIGHBOUR_NUMBER; j++) {
+			for (int j = -1; j < NEIGHBOUR_NUMBER; j++) {
+				
+				if (i == -1 && j == -1)
+					continue;
 
 				// calculate neighbor index
 				int index = j - (NEIGHBOUR_NUMBER-1)/2;
 
 				// wrap around neighboring index
-				if (index < 0) index = POPSIZE+index;
-				if (index > POPSIZE) index = index - POPSIZE;
+				if (index < -1) index = POPSIZE+index;
+				if (index > POPSIZE) index = index - POPSIZE -1;
 
 				// if we have played against this neighbor, skip
 				if (currPlayed.contains(index))
