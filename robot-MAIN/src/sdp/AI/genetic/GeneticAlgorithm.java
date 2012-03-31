@@ -15,7 +15,7 @@ public class GeneticAlgorithm {
 	/** Number of games each individual plays against every other */
 	final static int GAMES = 1;
 	/** Size of the population */
-	final static int POPSIZE = 10;
+	final static int POPSIZE = 20;
 	/** Probability that a crossover will occur */
 	final static float CROSSOVER_PROB = 0.6F;
 	/** Probability that a mutation will occur */
@@ -23,7 +23,7 @@ public class GeneticAlgorithm {
 	/** Number of genes in each individual */
 	final static int GENE_NUMBER = AINeuralNet.getWeightsCount();
 	/** Number of neighbours each individual plays against. Must be odd*/
-	final static int NEIGHBOUR_NUMBER = 7;
+	final static int NEIGHBOUR_NUMBER = 11;
 	/** Number of threads. Every thread can simulate one game at a time */
 	final static int MAX_NUM_SIMULT_GAMES = 2;
 	

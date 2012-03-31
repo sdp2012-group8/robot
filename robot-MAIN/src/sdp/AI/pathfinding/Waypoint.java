@@ -9,9 +9,16 @@ import sdp.common.geometry.Vector2D;
  * @author Gediminas Liktaras
  */
 public final class Waypoint {
+	
+	/** Starting position. */
+	private Vector2D originPos;
+	/** Starting direction. */
+	private double originDir;
+	/** Point to go towards in global coordinates. */
+	private Vector2D target;
 
-	/** Point to get to in robot-relative coordinates. */
-	private Vector2D targetPoint;
+	/** Point to go towards in robot-relative coordinates. */
+	private Vector2D targetLocal;
 	/** Distance to the target point. */
 	private double targetDist;
 	/** The angle by which to turn to face the target. */
@@ -26,44 +33,63 @@ public final class Waypoint {
 	/**
 	 * Create a new waypoint.
 	 * 
-	 * This function assumes that the robot is placed at coordinates
-	 * (0, 0) and is facing direction of 0 degrees.
-	 * 
-	 * @param target Target point in robot-relative coordinates.
-	 * @param isEndpoint Whether the target is at the end of a path.
+	 * @param originPos Starting robot coordinates in global coordinates.
+	 * @param originDir Starting robot direction in degrees.
+	 * @param target Target point in global coordinates.
+	 * @param costToDest Cost of the path from here to the final destination.
+	 * @param isEndpoint Whether the target is at the end of the path.
 	 */
-	@Deprecated
-	public Waypoint(Vector2D target, boolean isEndpoint) {
-		this(target, 0.0, isEndpoint);
-	}
-	
-	/**
-	 * Create a new waypoint.
-	 * 
-	 * This function assumes that the robot is placed at coordinates
-	 * (0, 0) and is facing direction of 0 degrees.
-	 * 
-	 * @param target Target point in robot-relative coordinates.
-	 * @param costToDest Cost of the path from here to the destination.
-	 * @param isEndpoint Whether the target is at the end of a path.
-	 */
-	public Waypoint(Vector2D target, double costToDest, boolean isEndpoint) {
-		this.targetPoint = target;
+	public Waypoint(Vector2D originPos, double originDir, Vector2D target,
+			double costToDest, boolean isEndpoint) {
+		this.originPos = originPos;
+		this.originDir = originDir;
+		this.target = target;
 		this.costToDest = costToDest;
 		this.isEndpoint = isEndpoint;
 		
-		targetDist = targetPoint.getLength();
-		targetTurnAngle = targetPoint.getDirection();
+		targetLocal = Vector2D.subtract(target, originPos);
+		targetLocal = Vector2D.rotateVector(targetLocal, -originDir);
+		
+		targetDist = targetLocal.getLength();
+		targetTurnAngle = targetLocal.getDirection();
 	}
 	
 	
 	/**
-	 * Get the waypoint coordinates in robot-relative coordinate space.
+	 * Get the starting position.
 	 * 
-	 * @return Next waypoint coordinates.
+	 * @return Starting position.
 	 */
-	public final Vector2D getLocalCoords() {
-		return targetPoint;
+	public final Vector2D getOriginPos() {
+		return originPos;
+	}
+
+	/**
+	 * Get the starting direction.
+	 * 
+	 * @return Starting direction.
+	 */
+	public final double getOriginDir() {
+		return originDir;
+	}
+	
+
+	/**
+	 * Get the destination in global coordinates.
+	 * 
+	 * @return Destination in global coordinates.
+	 */
+	public final Vector2D getTarget() {
+		return target;
+	}
+
+	/**
+	 * Get the destination is robot-relative coordinates.
+	 * 
+	 * @return Destination in local coordinates.
+	 */
+	public final Vector2D getTargetLocal() {
+		return targetLocal;
 	}
 
 	/**
@@ -100,5 +126,16 @@ public final class Waypoint {
 	 */
 	public final boolean isEndpoint() {
 		return isEndpoint;
+	}
+	
+
+	/**
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return String.format("<%s %.2f %s %s %.4f %.4f %.4f>", originPos.toString(),
+				originDir, target.toString(), targetLocal.toString(), targetDist,
+				targetTurnAngle, costToDest);
 	}
 }

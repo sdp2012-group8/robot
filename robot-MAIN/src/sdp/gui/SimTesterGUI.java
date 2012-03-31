@@ -410,7 +410,7 @@ public class SimTesterGUI {
 	private void Connect(boolean blue_selected, boolean my_goal_left) {
 		mComm = new VBrick();
 		opponentComm = new VBrick();
-		mSim = new SimulatorPhysicsEngine(true);
+		mSim = new SimulatorPhysicsEngine(true, true);
 		
 		if (blue_selected) {
 			if (my_goal_left) {

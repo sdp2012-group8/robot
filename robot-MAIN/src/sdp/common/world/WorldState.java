@@ -22,9 +22,14 @@ public class WorldState {
 	public static final int YELLOW_IS_OBSTACLE_FLAG = 0x4;
 	
 	/** Radius of the ball obstacle circle. */
-	public static final double BALL_OBSTACLE_RADIUS = 5;
+	private static final double BALL_OBSTACLE_RADIUS = 5;
 	/** Radius of the robot obstacle circle. */
-	public static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.7;
+	private static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.7;
+	/** The amount by which obstacles are increased in extraction. */
+	private static final double OBSTACLE_SIZE_INCREASE = Robot.LENGTH_CM * 0.5;
+	
+	/** Direct path collision check tolerance. */
+	private static final double DIRECT_PATH_CHECK_TOLERANCE = 0.001;
 	
 	/** Height of the pitch in centimetres. */
 	public static final double PITCH_HEIGHT_CM = 113.7;
@@ -35,9 +40,9 @@ public class WorldState {
 	public static final double GOAL_CENTRE_Y = PITCH_HEIGHT_CM / 2;
 	
 	/** Width increments of the robot ray in clear path calculations. */
-	private static final double ROBOT_RAY_INCREMENT = 0.1;
+	private static final double ROBOT_RAY_INCREMENT = 0.05;
 	/** Maximum ray width of the robot in clear path calculations. */
-	private static final double ROBOT_RAY_MAX_WIDTH = 1.5;
+	private static final double ROBOT_RAY_MAX_WIDTH = 1.2;
 
 
 	/** Location of the ball. */
@@ -272,15 +277,15 @@ public class WorldState {
 		
 		if ((obstacles & BALL_IS_OBSTACLE_FLAG) != 0) {
 			circles.add(new Circle(worldState.getBallCoords(),
-					BALL_OBSTACLE_RADIUS + Robot.LENGTH_CM / 2));
+					BALL_OBSTACLE_RADIUS + OBSTACLE_SIZE_INCREASE));
 		}
 		if ((obstacles & BLUE_IS_OBSTACLE_FLAG) != 0) {
 			circles.add(new Circle(worldState.getBlueRobot().getCoords(),
-					ROBOT_OBSTACLE_RADIUS + Robot.LENGTH_CM / 2));
+					ROBOT_OBSTACLE_RADIUS + OBSTACLE_SIZE_INCREASE));
 		}
 		if ((obstacles & YELLOW_IS_OBSTACLE_FLAG) != 0) {
 			circles.add(new Circle(worldState.getYellowRobot().getCoords(),
-					ROBOT_OBSTACLE_RADIUS + Robot.LENGTH_CM / 2));
+					ROBOT_OBSTACLE_RADIUS + OBSTACLE_SIZE_INCREASE));
 		}
 		
 		return circles;
@@ -480,6 +485,7 @@ public class WorldState {
 	public static boolean isDirectPathClear(WorldState state, Vector2D point1,
 			Vector2D point2, int obstacles) {
 		double pathLength = Vector2D.subtract(point2, point1).getLength();
+		pathLength -= DIRECT_PATH_CHECK_TOLERANCE;
 		
 		double factor = 0.0;
 		while (factor <= ROBOT_RAY_MAX_WIDTH) {
@@ -489,10 +495,10 @@ public class WorldState {
 					|| (sideColls[1].getLength() < pathLength)) {
 				return false;
 			}
-			
+
 			factor += ROBOT_RAY_INCREMENT;
 		}
-		
+
 		return true;
 	}
 	

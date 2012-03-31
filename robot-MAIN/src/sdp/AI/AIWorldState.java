@@ -38,7 +38,7 @@ public class AIWorldState extends WorldState {
 	/** Minimum FPS in prediction logic. */
 	private static final int PREDICTION_MIN_FPS = 5;
 	/** The time, by which the world state is advanced into the future, in ms. */
-	private static final long PREDICTION_TIME = 400;
+	private static final long PREDICTION_TIME = 200;
 	
 	/** Low pass filter new angle data weight. */
 	private static final double LPF_ANGLE_WEIGHT = 0.5;
@@ -118,7 +118,7 @@ public class AIWorldState extends WorldState {
 		super(worldState.getBallCoords(), worldState.getBlueRobot(),
 				worldState.getYellowRobot(), worldState.getWorldImage());
 		
-		newSim = USE_NEW_SIMULATOR_FOR_PREDICTION ? new SimulatorPhysicsEngine(false) : null;
+		newSim = USE_NEW_SIMULATOR_FOR_PREDICTION ? new SimulatorPhysicsEngine(false, false) : null;
 		update(worldState, isOwnTeamBlue, isOwnGoalLeft);
 		
 	}

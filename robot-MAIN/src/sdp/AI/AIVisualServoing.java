@@ -9,12 +9,10 @@ import sdp.AI.pathfinding.FullPathfinder;
 import sdp.AI.pathfinding.HeuristicPathfinder;
 import sdp.AI.pathfinding.Pathfinder;
 import sdp.AI.pathfinding.Waypoint;
-import sdp.common.DeprecatedCode;
 import sdp.common.Painter;
 import sdp.common.Utilities;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
-import sdp.common.world.Goal;
 import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 
@@ -24,11 +22,12 @@ public class AIVisualServoing extends BaseAI {
 	/** Attack modes for optimal point calculations. */
 	private enum AttackMode { DirectOnly, WallsOnly, Full }
 
-
+	/** Whether the robot is required to face the ball before kicking. */
+	private static final boolean REQUIRE_FACE_BALL_TO_KICK = false;
 	/** Whether the robot is allowed to drive in reverse. */
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
 	/** Whether to use the heuristic pathfinder. */
-	private static final boolean USE_HEURISTIC_PATHFINDER = false;
+	private static final boolean USE_HEURISTIC_PATHFINDER = true;
 	/** Whether the robot should attempt to use wall kicks. */
 	private static final boolean WALL_KICKS_ENABLED = true;
 	
@@ -55,6 +54,19 @@ public class AIVisualServoing extends BaseAI {
 	/** Distance threshold for ball-robot direction ray tests. */
 	private static final double BALL_TO_DIRECTION_PROXIMITY_THRESHOLD = Robot.WIDTH_CM / 2;
 	
+	/** At what distance to the ball should the robot begin turning in game start. */
+	private static final double START_TURNING_DISTANCE = 40;
+	/** X value offset of the target when the ball is reached in game start. */
+	private static final double START_TURNING_X_SHIFT = 30;
+	/** Y value offset of the target when the ball is reached in game start. */
+	private static final double START_TURNING_Y_SHIFT = 30;
+	
+	/** The ratio by which optimal distance gets adjusted in each attempt. */
+	private static final double OPTIMAL_POINT_ADJUST = 0.8;
+	/** How many times to try to find the optimal point. */
+	private static final int OPTIMAL_POINT_SEARCH_TRIES = 20;
+	
+	
 
 	// corner thresholds
 	private static final int THRESH_CORN_HIGH = 5;
@@ -70,9 +82,7 @@ public class AIVisualServoing extends BaseAI {
 	private double targ_thresh = DEFAULT_TARG_THRESH;
 
 	private static final double DEFEND_BALL_THRESHOLD = 10;
-
-
-	private Vector2D target = null;
+	
 	
 	/** AI's heuristic pathfinder. */
 	private Pathfinder pathfinder;
@@ -100,46 +110,8 @@ public class AIVisualServoing extends BaseAI {
 
 
 	/**
-	 * Get a command to attack the opponents.
-	 * 
-	 * @param mode Robot's attack mode. See {@link AttackMode}.
-	 * @return The next command the robot should execute.
-	 * @throws IOException 
+	 * @see sdp.AI.BaseAI#gotBall()
 	 */
-	protected Command attack(AttackMode mode) throws IOException {
-		// Are we ready to score?
-		if (canWeAttack(aiWorldState)) {
-			return gotBall();
-		}
-
-		boolean chasing_ball_instead = false;
-		
-		// Get the point to drive towards.
-		target = new Vector2D(aiWorldState.getBallCoords());
-		
-		Point2D.Double optimalPoint = null;
-		for (int t = 0; t < 20; t++) {
-			optimalPoint = getOptimalAttackPoint(aiWorldState, point_off, mode);
-			
-			if (optimalPoint == null) {
-				point_off *= 0.8;
-			} else {
-				break;
-			}
-		}
-
-		if (optimalPoint != null) {
-			target = new Vector2D(optimalPoint);
-			chasing_ball_instead = true;
-		}
-
-		// Generate command to drive towards the target point.
-		boolean mustFaceTarget = !Utilities.areDoublesEqual(point_off, DEFAULT_TARG_THRESH);
-
-		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, !chasing_ball_instead);
-		return getWaypointCommand(waypoint, mustFaceTarget);
-	}
-
 	@Override
 	protected synchronized Command gotBall() throws IOException {
 		if (canWeAttack(aiWorldState)) {
@@ -166,6 +138,10 @@ public class AIVisualServoing extends BaseAI {
 		}
 	}
 
+	
+	/**
+	 * @see sdp.AI.BaseAI#defendGoal()
+	 */
 	@Override
 	protected Command defendGoal() throws IOException {
 		boolean useMilestone = false;
@@ -288,8 +264,9 @@ public class AIVisualServoing extends BaseAI {
 		return null;
 	}
 
+	
 	/**
-	 * This is called by the AIMaster every time the state is changed
+	 * @see sdp.AI.BaseAI#changedState()
 	 */
 	protected void changedState() {
 		point_off = DEFAULT_POINT_OFF;
@@ -298,6 +275,9 @@ public class AIVisualServoing extends BaseAI {
 		Painter.targ_thresh = targ_thresh;
 	}
 
+	/**
+	 * @see sdp.AI.BaseAI#penaltiesDefend()
+	 */
 	@Override
 	protected Command penaltiesDefend() throws IOException {
 
@@ -411,6 +391,68 @@ public class AIVisualServoing extends BaseAI {
 			}
 		}  */
 	}
+	
+	
+	/**
+	 * @see sdp.AI.BaseAI#start()
+	 */
+	@Override
+	protected Command start() throws IOException {
+		Vector2D target = new Vector2D(aiWorldState.getBallCoords());
+		
+		double robotToBallDist = GeomUtils.pointDistance(aiWorldState.getOwnRobot().getFrontCenter(), target);
+		if (robotToBallDist < START_TURNING_DISTANCE) {
+			target.x += (aiWorldState.isOwnGoalLeft()
+					? START_TURNING_X_SHIFT : -START_TURNING_X_SHIFT);
+			target.y += START_TURNING_Y_SHIFT;
+		}
+		
+		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState,
+				target, false);
+		return getWaypointCommand(waypoint, true);
+	}
+
+
+	/**
+	 * Get a command to attack the opponents.
+	 * 
+	 * @param mode Robot's attack mode. See {@link AttackMode}.
+	 * @return The next command the robot should execute.
+	 * @throws IOException 
+	 */
+	private Command attack(AttackMode mode) throws IOException {
+		// Are we ready to score?
+		if (canWeAttack(aiWorldState)) {
+			return gotBall();
+		}
+		
+		// Get the point to drive towards.
+		Vector2D target = new Vector2D(aiWorldState.getBallCoords());
+		
+		Point2D.Double optimalPoint = null;
+		for (int i = 0; i < OPTIMAL_POINT_SEARCH_TRIES; i++) {
+			optimalPoint = getOptimalAttackPoint(aiWorldState, point_off, mode);
+			
+			if (optimalPoint == null) {
+				point_off *= OPTIMAL_POINT_ADJUST;
+			} else {
+				break;
+			}
+		}
+
+		boolean ballIsObstacle = false;
+		if (optimalPoint != null) {
+			target = new Vector2D(optimalPoint);
+			ballIsObstacle = true;
+		}
+
+		// Generate command to drive towards the target point.
+		boolean mustFaceTarget = (REQUIRE_FACE_BALL_TO_KICK
+				&& !Utilities.areDoublesEqual(point_off, DEFAULT_POINT_OFF));
+
+		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, ballIsObstacle);
+		return getWaypointCommand(waypoint, mustFaceTarget);
+	}
 
 
 	/**
@@ -452,7 +494,7 @@ public class AIVisualServoing extends BaseAI {
 			comm.drivingSpeed = -Robot.MAX_DRIVING_SPEED;
 			if (REVERSE_DRIVING_ENABLED && !mustFaceTarget) {
 				comm.turningSpeed = GeomUtils.normaliseAngle(waypoint.getTurningAngle() - 180);
-			}		
+			}
 		// Ball is in front.
 		} else {
 			comm.drivingSpeed = Robot.MAX_DRIVING_SPEED;
@@ -464,7 +506,7 @@ public class AIVisualServoing extends BaseAI {
 		if ((Math.abs(waypoint.getTurningAngle()) < 45)
 				&& (waypoint.getDistance() < targ_thresh)) {
 			point_off *= 0.5;
-			targ_thresh = point_off*0.5;
+			targ_thresh = point_off * 0.5;
 		}
 		if (point_off < OWN_BALL_KICK_DIST) {
 			point_off = OWN_BALL_KICK_DIST;
@@ -494,7 +536,7 @@ public class AIVisualServoing extends BaseAI {
 		comm.acceleration = 100;
 
 		normalizeSpeed(comm, stopTurnThreshold);
-
+		
 		return comm;
 	}
 
@@ -517,27 +559,17 @@ public class AIVisualServoing extends BaseAI {
 		// Collision in front.
 		if (frontCollDist < threshold) {
 			if (command.drivingSpeed >= 0) {
-				double speed_coeff = (frontCollDist / threshold) - 1;
-				if (speed_coeff > 0) {
-					speed_coeff = 0;
-				}
-				if (speed_coeff < -1) {
-					speed_coeff = -1;
-				}
-				command.drivingSpeed *= speed_coeff;
+				double speedFactor = (frontCollDist / threshold) - 1;
+				speedFactor = Utilities.restrictValueToInterval(speedFactor, -1, 0).doubleValue();
+				command.drivingSpeed *= speedFactor;
 			}
 
-			// Collision in the back.
+		// Collision in the back.
 		} else if (backCollDist < threshold) {
 			if (command.drivingSpeed <= 0) {
-				double speed_coeff = (backCollDist / threshold) - 1;
-				if (speed_coeff > 0) {
-					speed_coeff = 0;
-				}
-				if (speed_coeff < -1) {
-					speed_coeff = -1;
-				}
-				command.drivingSpeed *= speed_coeff;
+				double speedFactor = (backCollDist / threshold) - 1;
+				speedFactor = Utilities.restrictValueToInterval(speedFactor, -1, 0).doubleValue();
+				command.drivingSpeed *= speedFactor;
 			}
 		}
 	}

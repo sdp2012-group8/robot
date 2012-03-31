@@ -1,5 +1,6 @@
 package sdp.AI;
 
+import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -9,6 +10,7 @@ import sdp.common.Communicator;
 import sdp.common.MessageListener;
 import sdp.common.WorldStateObserver;
 import sdp.common.Communicator.opcode;
+import sdp.common.geometry.GeomUtils;
 import sdp.common.world.WorldState;
 import sdp.common.WorldStateProvider;
 import sdp.vision.processing.ImageProcessorConfig;
@@ -22,7 +24,7 @@ public class AIMaster extends WorldStateProvider {
 
 	/** Operation modes, common to all AI implementations. */
 	public enum AIState {
-		PLAY, DEFEND_GOAL, SIT, DEFEND_PENALTIES, SHOOT_PENALTIES, MANUAL_CONTROL
+		START, PLAY, DEFEND_GOAL, SIT, DEFEND_PENALTIES, SHOOT_PENALTIES, MANUAL_CONTROL
 	}
 	
 	/** Whether the AI's should switch to defence or not. */
@@ -30,6 +32,8 @@ public class AIMaster extends WorldStateProvider {
 	
 	/** Distance from the goal when the AI changes from Penalty mode to play mode */
 	private static final int PENALTIES_THRESH = 30; 
+	/** How much the ball has to move before AI thinks the start position has passed. */
+	private static final int START_POS_BALL_THRESHOLD = 5;
 
 	
 	/** The observer object that provides world state updates. */
@@ -55,14 +59,19 @@ public class AIMaster extends WorldStateProvider {
 	/** Whether our team is blue. */
 	private boolean isOwnTeamBlue;
 	
-	/** Whether the AI should print its state on the world image. */
-	private boolean drawOnWorldImage = false;
-	
 	/** Currently used image processor configuration. */
 	private ImageProcessorConfig config;
 	
-	private boolean printStateChanges = true;
+	/** Starting ball position. */
+	private Point2D.Double ballStartPos;
+	/** Whether the start state was entered in the last frame. */
+	private boolean startStateEntered = false;
 	
+	/** Whether the AI should print its state on the world image. */
+	private boolean drawOnWorldImage = false;
+	/** Whether state changes should be printed to stdout. */
+	private boolean printStateChanges = true;
+
 	
 	/**
 	 * Create a new AI controller.
@@ -186,7 +195,26 @@ public class AIMaster extends WorldStateProvider {
 	 * Check which state should transition to, based on the current world state.
 	 */
 	private void updateCurrentAIState() {
-		if (aiState == AIState.DEFEND_PENALTIES) {
+		if (aiState == AIState.START) {
+			// START -> PLAY
+			if (!isGameInStart()) {
+				setState(AIState.PLAY);
+			}
+			startStateEntered = false;
+			
+		} else if (aiState == AIState.PLAY) {
+			// PLAY -> DEFEND_GOAL
+			if (DEFENCE_ENABLED && AIVisualServoing.canEnemyAttack(aiWorldState)) {
+				setState(AIState.DEFEND_GOAL);
+			}
+						
+		} else if (aiState == AIState.DEFEND_GOAL) {
+			// DEFEND_GOAL -> PLAY
+			if (!AIVisualServoing.canEnemyAttack(aiWorldState)) {
+				setState(AIState.PLAY);
+			}
+
+		} else if (aiState == AIState.DEFEND_PENALTIES) {
 			// DEFEND_PENALTIES -> PLAY
 			double ballX = aiWorldState.getBallCoords().x;
 			
@@ -209,20 +237,7 @@ public class AIMaster extends WorldStateProvider {
 			if (ballCloseEnough) {
 				setState(AIState.PLAY);
 			}
-			
-		} else if (aiState == AIState.PLAY) {
-			// PLAY -> DEFEND_GOAL
-			if (DEFENCE_ENABLED && AIVisualServoing.canEnemyAttack(aiWorldState)) {
-				setState(AIState.DEFEND_GOAL);
-			}
-						
-		} else if (aiState == AIState.DEFEND_GOAL) {
-			// DEFEND_GOAL -> PLAY
-			if (!AIVisualServoing.canEnemyAttack(aiWorldState)) {
-				setState(AIState.PLAY);
-			}
-
-		}
+		} 
 	}
 	
 	
@@ -235,6 +250,8 @@ public class AIMaster extends WorldStateProvider {
 	 */
 	private Command getCommand() throws IOException {
 		switch (getState()) {
+		case START:
+			return ai.start();
 		case PLAY:
 			return ai.chaseBall();
 		case SIT:
@@ -324,10 +341,6 @@ public class AIMaster extends WorldStateProvider {
 		return aiState;
 	}
 	
-	public void setPrintStateChanges(boolean printThem) {
-		this.printStateChanges = printThem;
-	}
-	
 	/**
 	 * Set the new AI state.
 	 * 
@@ -335,8 +348,9 @@ public class AIMaster extends WorldStateProvider {
 	 */
 	public void setState(AIState newState) {
 		aiState = newState;
-		if (printStateChanges)
+		if (printStateChanges) {
 			System.out.println("Changed State to - " + aiState);
+		}
 		
 		// TODO: Review this bit of logic.
 		if (aiState == AIState.DEFEND_GOAL) {
@@ -348,10 +362,38 @@ public class AIMaster extends WorldStateProvider {
 				}
 			}, 6000);
 		}
-
+		
+		startStateEntered = (aiState == AIState.START);
 		ai.changedState();
 	}
 	
+	
+	/**
+	 * Check whether the game is in its beginning stages.
+	 * 
+	 * @param aiWorldState Current world state.
+	 * @return
+	 */
+	public boolean isGameInStart() {
+		if (startStateEntered || (ballStartPos == null)) {
+			ballStartPos = new Point2D.Double();
+			ballStartPos.x = aiWorldState.getBallCoords().x;
+			ballStartPos.y = aiWorldState.getBallCoords().y;
+		}
+		
+		double ballOffset = GeomUtils.pointDistance(ballStartPos, aiWorldState.getBallCoords());
+		return (ballOffset < START_POS_BALL_THRESHOLD);
+	}
+	
+
+	/**
+	 * Set whether AI state changes should be printed.
+	 * 
+	 * @param printChanges Whether AI state changes should be printed.
+	 */
+	public void setPrintStateChanges(boolean printChanges) {
+		this.printStateChanges = printChanges;
+	}
 	
 	/**
 	 * Toggle the AI drawing on the world image.
@@ -359,5 +401,4 @@ public class AIMaster extends WorldStateProvider {
 	public void toggleDrawingOnWorldImage() {
 		drawOnWorldImage = !drawOnWorldImage;
 	}
-
 }

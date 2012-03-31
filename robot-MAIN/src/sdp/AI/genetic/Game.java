@@ -73,8 +73,9 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	 */
 	@Override
 	public void onLeftScore() {
-		System.out.println("LEFT SCORE");
+		//System.out.println("LEFT SCORE");
 		scores[1]+=5000;
+		scores[0]-=3000;
 		resetPitch();
 	}
 
@@ -83,8 +84,9 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	 */
 	@Override
 	public void onRightScore() {
-		System.out.println("RIGHT SCORE");
+		//System.out.println("RIGHT SCORE");
 		scores[0]+=5000;
+		scores[1]-=3000;
 		resetPitch();
 	}
 
@@ -97,6 +99,12 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		scores[1]-=100;
 	}
 
+	@Override
+	public void onYellowStopCollide() {
+		scores[1]+=50;
+	}
+
+	
 	/**
 	 * If the blue robot collides with an obstacle
 	 */
@@ -104,6 +112,11 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	public void onBlueCollide() {
 		//System.out.println("Blue collided");
 		scores[0]-=100;
+	}
+	
+	@Override
+	public void onBlueStopCollide() {
+		scores[0]+=50;
 	}
 	
 	// API and simulation
@@ -133,7 +146,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		timeElapsed = 0;
 		
 		// create simulator
-		sim = new SimulatorPhysicsEngine(false);
+		sim = new SimulatorPhysicsEngine(false, true);
 		
 		final VBrick leftBrick = new VBrick(),
 					rightBrick = new VBrick();
