@@ -10,7 +10,7 @@ import org.junit.Test;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.world.Robot;
 
-public class UtilitiesTest {
+public class GeometryTest {
 
 	private Robot robot;
 	private Robot enemyRobot;
@@ -70,5 +70,85 @@ public class UtilitiesTest {
 
 		
 	}
+	
+	@Test
+	public void testNormaliseAngle(){
+		//TODO
+	}
+	
+	@Test
+	public void testAddPoints(){
+		//TODO
+	}
 
+	@Test
+	public void testSubtractPoints(){
+		//TODO
+	}
+	
+	@Test
+	public void testRotatePoint(){
+		//TODO
+	}
+	
+	@Test
+	public void testIsPointInAxisAlignedBox(){
+		//TODO
+	}
+	
+	@Test
+	public void testIsPointInQuadrilateral(){
+		//TODO
+	}
+	
+	@Test
+	public void testGetLineLineIntersection(){
+		//TODO
+	}
+	
+	@Test
+	public void testGetLocalRaySegmentIntersection(){
+		//TODO
+	}
+	
+	@Test
+	public void testGetClosestPointToLine(){
+		//TODO
+	}
+	
+	@Test
+	public void testDoesSegmentIntersectLine(){
+		//TODO
+	}
+	
+	@Test
+	public void testGetAngle(){
+		//TODO
+	}
+	
+	@Test
+	public void testGetGlobalPoint(){
+		//TODO
+	}
+	
+	@Test
+	public void testGetLocalPoint(){ 
+		//TODO
+	}
+	
+	@Test
+	public void testGetMinVectorToPoints(){
+		//TODO
+	}
+	
+	@Test
+	public void testChangePointDistanceToCircle(){
+		//TODO
+	}
+	
+	@Test
+	public void testCircleTangentPoints(){
+		//TODO
+	}
+	
 }
