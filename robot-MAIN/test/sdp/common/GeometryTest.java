@@ -8,8 +8,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 import sdp.common.geometry.GeomUtils;
+import sdp.common.geometry.Vector2D;
 import sdp.common.world.Robot;
 
+/**
+ * Contains tests for some functions in the sdp.common.geometry.GeomUtils class
+ * @author mihaela_laura_ionescu
+ *
+ */
 public class GeometryTest {
 
 	private Robot robot;
@@ -72,83 +78,77 @@ public class GeometryTest {
 	}
 	
 	@Test
+	/**
+	 * Checks normaliseAngle
+	 * @see sdp.common.geometry.GeomUtils#normaliseAngle(double angle)
+	 */
 	public void testNormaliseAngle(){
-		//TODO
+		assertEquals(GeomUtils.normaliseAngle(275),-85,0);
+		assertEquals(GeomUtils.normaliseAngle(-560),160,0);
+		assertEquals(GeomUtils.normaliseAngle(-360),0,0);
 	}
 	
 	@Test
-	public void testAddPoints(){
-		//TODO
+	/**
+	 * @see sdp.common.geometry.GeomUtils#isPointInAxisAlignedBox(Point2D.Double p, Point2D.Double a, Point2D.Double b) 
+	 */
+	public void testIsPointInAxisAlignedBox(){
+		assertTrue(GeomUtils.isPointInAxisAlignedBox(new Point2D.Double(3,4), new Point2D.Double(0,0), new Point2D.Double(4,6)));
+		assertTrue(GeomUtils.isPointInAxisAlignedBox(new Point2D.Double(3,4), new Point2D.Double(0,0), new Point2D.Double(3,4)));
+		assertFalse(GeomUtils.isPointInAxisAlignedBox(new Point2D.Double(0,2), new Point2D.Double(0,0), new Point2D.Double(0,1)));
+		assertFalse(GeomUtils.isPointInAxisAlignedBox(new Point2D.Double(-3,4), new Point2D.Double(-2,-3), new Point2D.Double(4,6)));
+	}
+	
+	@Test
+	/**
+	 * @see sdp.common.geometry.GeomUtils#isPointInQuadrilateral(Point2D.Double p, Point2D.Double q1, Point2D.Double q2, Point2D.Double q3, Point2D.Double q4)
+	 */
+	public void testIsPointInQuadrilateral(){
+		assertTrue(GeomUtils.isPointInQuadrilateral(new Point2D.Double(0,1), robot.getFrontRight(), robot.getBackRight(), robot.getBackLeft(), robot.getFrontLeft()));
+		assertTrue(GeomUtils.isPointInQuadrilateral(new Point2D.Double(9,8), robot.getFrontRight(), robot.getBackRight(), robot.getBackLeft(), robot.getFrontLeft()));
+		assertTrue(GeomUtils.isPointInQuadrilateral(new Point2D.Double(41.12771286455945, 76.14973554308418), enemyRobot.getFrontRight(), enemyRobot.getBackRight(), enemyRobot.getBackLeft(), enemyRobot.getFrontLeft()));
+		assertFalse(GeomUtils.isPointInQuadrilateral(new Point2D.Double(41.12771286455945, 76.14973554308418), robot.getFrontRight(), robot.getBackRight(), robot.getBackLeft(), robot.getFrontLeft()));
+	}
+	
+	@Test
+	/**
+	 * @see sdp.common.geometry.GeomUtils#getLineLineIntersection(Point2D.Double l1pt1, Point2D.Double l1pt2,	Point2D.Double l2pt1, Point2D.Double l2pt2)
+	 */
+	public void testGetLineLineIntersection(){
+		assertEquals(GeomUtils.getLineLineIntersection(new Point2D.Double(2,2), new Point2D.Double(-1,-1), new Point2D.Double(0,3), new Point2D.Double(7,3)), new Point2D.Double(3,3));
+		assertEquals(GeomUtils.getLineLineIntersection(new Point2D.Double(2,2), new Point2D.Double(-1,-1), new Point2D.Double(-1,-2), new Point2D.Double(2,1)), null);
+
+	}
+	
+	@Test
+	/**
+	 * @see sdp.common.geometry.GeomUtils#getLocalRaySegmentIntersection(Point2D.Double rayOrigin,
+	 *		Vector2D rayDir, Point2D.Double segPt1, Point2D.Double segPt2)
+	 */
+	public void testGetLocalRaySegmentIntersection(){
+		assertEquals(GeomUtils.getLocalRaySegmentIntersection(new Point2D.Double(1,2), new Vector2D(10,2), new Point2D.Double(9,3), new Point2D.Double(7,1)), null);
+		assertEquals(GeomUtils.getLocalRaySegmentIntersection(new Point2D.Double(1,2), new Vector2D(10,2), new Point2D.Double(9,3), new Point2D.Double(7,1)), null);
+	}
+	
+	@Test
+	/**
+	* @see sdp.common.geometry.GeomUtils#getClosestPointToLine(Point2D.Double p,
+	*		Point2D.Double a, Point2D.Double b)
+	*/
+	public void testGetClosestPointToLine(){
+		assertEquals(GeomUtils.getClosestPointToLine(new Point2D.Double(6,3), new Point2D.Double(7,1), new Point2D.Double(8,2)), new Point2D.Double(7.5,1.5));
+		assertEquals(GeomUtils.getClosestPointToLine(new Point2D.Double(6,2), new Point2D.Double(7,1), new Point2D.Double(8,2)), new Point2D.Double(7,1));
+
+	}
+	
+	@Test
+	/**
+	 *  @see sdp.common.geometry.GeomUtils#doesSegmentIntersectLine(Point2D.Double segPt1, Point2D.Double segPt2,
+	 *		Point2D.Double linePt1, Point2D.Double linePt2)
+	 */
+	public void testDoesSegmentIntersectLine(){
+		assertFalse(GeomUtils.doesSegmentIntersectLine(new Point2D.Double(1,2), new Vector2D(10,2), new Point2D.Double(9,3), new Point2D.Double(7,1)));
+		assertTrue(GeomUtils.doesSegmentIntersectLine(new Point2D.Double(2,2), new Point2D.Double(6,6), new Point2D.Double(-1,-2), new Point2D.Double(2,1)));
 	}
 
-	@Test
-	public void testSubtractPoints(){
-		//TODO
-	}
-	
-	@Test
-	public void testRotatePoint(){
-		//TODO
-	}
-	
-	@Test
-	public void testIsPointInAxisAlignedBox(){
-		//TODO
-	}
-	
-	@Test
-	public void testIsPointInQuadrilateral(){
-		//TODO
-	}
-	
-	@Test
-	public void testGetLineLineIntersection(){
-		//TODO
-	}
-	
-	@Test
-	public void testGetLocalRaySegmentIntersection(){
-		//TODO
-	}
-	
-	@Test
-	public void testGetClosestPointToLine(){
-		//TODO
-	}
-	
-	@Test
-	public void testDoesSegmentIntersectLine(){
-		//TODO
-	}
-	
-	@Test
-	public void testGetAngle(){
-		//TODO
-	}
-	
-	@Test
-	public void testGetGlobalPoint(){
-		//TODO
-	}
-	
-	@Test
-	public void testGetLocalPoint(){ 
-		//TODO
-	}
-	
-	@Test
-	public void testGetMinVectorToPoints(){
-		//TODO
-	}
-	
-	@Test
-	public void testChangePointDistanceToCircle(){
-		//TODO
-	}
-	
-	@Test
-	public void testCircleTangentPoints(){
-		//TODO
-	}
-	
 }
