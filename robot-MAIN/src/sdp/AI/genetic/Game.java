@@ -76,8 +76,11 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	private static final double REPLAY_LENGTH_IN_SECONDS = 3*60;
 	private static final int REPLAY_FRAME_COUNT = (int) (FPS*REPLAY_LENGTH_IN_SECONDS);
 	private int replay_frames = 0;
-	private Queue<WorldState> replay;
+	private Queue<FrameSubtitleEntry> replay;
 	private static int replays = 0;
+	
+	/** set this on the frame you want to have a subtitle */
+	private String subtitle = "";
 	
 	// calculate fitness section
 	
@@ -108,6 +111,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		
 		scores[0]+= (int) (MAX_BALL_SCORE - MAX_BALL_SCORE*blueBall/MAX_BALL_DISTANCE);
 		scores[1]+= (int) (MAX_BALL_SCORE - MAX_BALL_SCORE*yellowBall/MAX_BALL_DISTANCE);		
+		
+		subtitle = String.format("%.2f", timeElapsed)+" : "+this.toString();
 		
 	}
 	
@@ -215,11 +220,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		final VBrick leftBrick = new VBrick(),
 					rightBrick = new VBrick();
 		
-		leftAI = new AIMaster(leftBrick, sim, ids[0] != -1 ? new AINeuralNet(population[ids[0]]) : new AIVisualServoing());
-		leftAI.setPrintStateChanges(false);
-		rightAI = new AIMaster(rightBrick, sim, ids[1] != -1 ? new AINeuralNet(population[ids[1]]) : new AIVisualServoing());
-		rightAI.setPrintStateChanges(false);
-		
+
 		// reset pitch
 		sim.registerBlue(leftBrick,
 				PLACEMENT_LEFT,
@@ -234,6 +235,11 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		resetPitch();
 		
 		sim.callback = this;
+		
+		leftAI = new AIMaster(leftBrick, sim, ids[0] != -1 ? new AINeuralNet(population[ids[0]]) : new AIVisualServoing());
+		leftAI.setPrintStateChanges(false);
+		rightAI = new AIMaster(rightBrick, sim, ids[1] != -1 ? new AINeuralNet(population[ids[1]]) : new AIVisualServoing());
+		rightAI.setPrintStateChanges(false);
 		
 		leftAI.setOwnTeamBlue(true);
 		leftAI.setOwnGoalLeft(true);
@@ -252,8 +258,9 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		
 		replay_frames = 0;
 		
-		if (doWeStartRecording())
-			replay = new LinkedList<WorldState>();
+		if (doWeStartRecording()) {
+			replay = new LinkedList<FrameSubtitleEntry>();
+		}
 		
 		// runs simulation
 		while (simulateGame) {
@@ -264,20 +271,20 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 			leftAI.processState(frame, false);
 			rightAI.processState(frame, false);
 			
-			if (replay != null) {
-				replay.add(state);
-				replay_frames++;
-				if (replay_frames > REPLAY_FRAME_COUNT) {
-					replay_frames--;
-					replay.poll();
-				}
-			}
-			
 			timeElapsed += FRAME_TIME;
 			onNewFrame();
 			if (timeElapsed > GAMETIME) {
 				onTimeOut();
 				timeElapsed = 0;
+			}
+			
+			if (replay != null) {
+				replay.add(new FrameSubtitleEntry(frame, subtitle));
+				replay_frames++;
+				if (replay_frames > REPLAY_FRAME_COUNT) {
+					replay_frames--;
+					replay.poll();
+				}
 			}
 		}
 		
@@ -317,10 +324,17 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	 * Saves the replay of the current game. This function will work only if {@link #doWeStartRecording()} returned true during initialization of this game
 	 */
 	private synchronized void saveReplay() {
+		FrameSubtitleEntry[] entries = replay.toArray(new FrameSubtitleEntry[0]);
+		String[] subtitles = new String[entries.length];
+		WorldState[] states = new WorldState[entries.length];
+		for (int i = 0; i < entries.length; i++) {
+			states[i] = entries[i].state;
+			subtitles[i] = entries[i].subtitle;
+		}
 		if (replay != null) {
 			final String path = "data/movies/left"+(replays++)+"-"+this;
 			new File(path).mkdirs();
-			WorldState.saveMovie(replay.toArray(new WorldState[0]), path);
+			WorldState.saveMovie(states, path, subtitles);
 		} else
 			System.err.println("Called unexpected save replay on "+this+" gameid "+gameId);
 	}
@@ -350,4 +364,15 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		return String.format("(%d)%d:%d(%d)", ids[0], rightGoals, leftGoals, ids[1]);
 	}
 		
+	private static class FrameSubtitleEntry {
+
+		public WorldState state;
+		public String subtitle;
+		
+		public FrameSubtitleEntry(final WorldState state, final String subtitle) {
+			this.state = state;
+			this.subtitle = subtitle;
+		}
+		
+	}
 }

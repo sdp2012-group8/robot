@@ -27,6 +27,7 @@ import javax.swing.event.ChangeEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.SwingConstants;
+import java.awt.Font;
 
 /**
  * Plays back "recorded games" i.e. a folder containing world state frames. Those frames would be normally generated via {@link WorldState#saveMovie(WorldState[], String)
@@ -46,7 +47,7 @@ public class WorldStatePlayerGUI {
 	final private WorldStatePlayer player = new WorldStatePlayer(DEFAULT_MOVIE_FPS);
 	final private WorldStateObserver obs = new WorldStateObserver(player);
 	private boolean manualDrag = false;
-	private JLabel lblFrame;
+	private JLabel lblFrame, lblSubtitle;
 	private JButton btnNewButton;
 	private JLabel lblTotalFrames;
 
@@ -86,7 +87,7 @@ public class WorldStatePlayerGUI {
 		frmWorldstateMoviePlayer = new JFrame();
 		frmWorldstateMoviePlayer.setResizable(false);
 		frmWorldstateMoviePlayer.setTitle("WorldState movie player");
-		frmWorldstateMoviePlayer.setBounds(100, 100, 666, 463);
+		frmWorldstateMoviePlayer.setBounds(100, 100, 666, 503);
 		frmWorldstateMoviePlayer.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmWorldstateMoviePlayer.getContentPane().setLayout(null);
 		
@@ -120,6 +121,10 @@ public class WorldStatePlayerGUI {
 						
 						p.image(true, true);
 						g.drawImage(im, 0, 0, null);
+						synchronized (lblSubtitle) {
+							if (player != null)
+								lblSubtitle.setText(player.getSubtitle());
+						}
 					}
 				} else {
 					g.setColor(Color.gray);
@@ -139,11 +144,11 @@ public class WorldStatePlayerGUI {
 				load();
 			}
 		});
-		btnLoad.setBounds(534, 387, 118, 25);
+		btnLoad.setBounds(534, 424, 118, 25);
 		frmWorldstateMoviePlayer.getContentPane().add(btnLoad);
 		
 		lblFrame = new JLabel("0 frame");
-		lblFrame.setBounds(12, 322, 275, 15);
+		lblFrame.setBounds(12, 359, 275, 15);
 		frmWorldstateMoviePlayer.getContentPane().add(lblFrame);
 		
 		sliderProgress = new JSlider();
@@ -169,15 +174,15 @@ public class WorldStatePlayerGUI {
 				lblFrame.setText(String.format("%.2f frame", player.getFrame()));
 			}
 		});
-		sliderProgress.setBounds(12, 349, 640, 16);
+		sliderProgress.setBounds(12, 386, 640, 16);
 		frmWorldstateMoviePlayer.getContentPane().add(sliderProgress);
 		
 		JLabel lblPlaybackSpeed = new JLabel("Playback speed:");
-		lblPlaybackSpeed.setBounds(142, 377, 118, 15);
+		lblPlaybackSpeed.setBounds(142, 414, 118, 15);
 		frmWorldstateMoviePlayer.getContentPane().add(lblPlaybackSpeed);
 		
 		final JLabel lblFps = new JLabel(DEFAULT_MOVIE_FPS+" fps");
-		lblFps.setBounds(272, 377, 118, 15);
+		lblFps.setBounds(272, 414, 118, 15);
 		frmWorldstateMoviePlayer.getContentPane().add(lblFps);
 		
 		sliderFPS = new JSlider();
@@ -197,7 +202,7 @@ public class WorldStatePlayerGUI {
 		sliderFPS.setMaximum(250);
 		sliderFPS.setMinimum(-250);
 		sliderFPS.setValue(10*DEFAULT_MOVIE_FPS);
-		sliderFPS.setBounds(142, 404, 380, 16);
+		sliderFPS.setBounds(142, 441, 380, 16);
 		frmWorldstateMoviePlayer.getContentPane().add(sliderFPS);
 		
 		btnNewButton = new JButton("❚❚");
@@ -211,13 +216,19 @@ public class WorldStatePlayerGUI {
 				}
 			}
 		});
-		btnNewButton.setBounds(12, 387, 118, 25);
+		btnNewButton.setBounds(12, 424, 118, 25);
 		frmWorldstateMoviePlayer.getContentPane().add(btnNewButton);
 		
 		lblTotalFrames = new JLabel("Total: 0 frames");
 		lblTotalFrames.setHorizontalAlignment(SwingConstants.RIGHT);
-		lblTotalFrames.setBounds(435, 322, 217, 15);
+		lblTotalFrames.setBounds(435, 359, 217, 15);
 		frmWorldstateMoviePlayer.getContentPane().add(lblTotalFrames);
+		
+		lblSubtitle = new JLabel("Subtitle");
+		lblSubtitle.setFont(new Font("Dialog", Font.BOLD, 16));
+		lblSubtitle.setHorizontalAlignment(SwingConstants.CENTER);
+		lblSubtitle.setBounds(12, 322, 640, 25);
+		frmWorldstateMoviePlayer.getContentPane().add(lblSubtitle);
 		
 	}
 	

@@ -20,6 +20,7 @@ public class WorldStatePlayer extends WorldStateProvider {
 	private volatile double waitTime;
 	private double frameId;
 	private WorldState[] frames;
+	private String[] subtitles;
 	
 	public WorldStatePlayer(int default_movie_fps) {
 		DEFAULT_MOVIE_FPS = default_movie_fps;
@@ -62,6 +63,7 @@ public class WorldStatePlayer extends WorldStateProvider {
 		
 		 int i = 0;
 		 ArrayList<WorldState> frames = new ArrayList<WorldState>();
+		 ArrayList<String> subtitles = new ArrayList<String>();
 		 while (true) {
 			 final String fileName = dir+"/frame"+(i++)+".xml";
 			 if (!new File(fileName).exists()) {
@@ -69,12 +71,24 @@ public class WorldStatePlayer extends WorldStateProvider {
 					 throw new FileNotFoundException("Directory "+dir+" does not contain frames (namely "+fileName+")");
 				 break;
 			 }
-			 frames.add(WorldState.loadWorldState(fileName));
+			 final StringBuilder build = new StringBuilder();
+			 frames.add(WorldState.loadWorldState(fileName, build));
+			 subtitles.add(build.toString());
 			 
 		 }
 		 this.frames = frames.toArray(new WorldState[0]);
+		 this.subtitles = subtitles.toArray(new String[0]);
 		
 		setFPS(DEFAULT_MOVIE_FPS);
+		
+	}
+	
+	public String getSubtitle() {
+		if (frameId > frames.length - 1)
+			frameId = frames.length - 1;
+		if (frameId < 0)
+			frameId = 0;
+		return subtitles[(int) frameId];
 	}
 	
 	public void setFPS(double fps) {
@@ -136,7 +150,8 @@ public class WorldStatePlayer extends WorldStateProvider {
 			fr2 = frames[lowId+1];
 			
 		} else {
-			
+			if (frameId < 1)
+				frameId = 1;
 			lowId = (int) (frameId-1);
 			fr1 = frames[lowId];
 			if (lowId == 0)

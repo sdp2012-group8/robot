@@ -25,7 +25,7 @@ public class GeneticAlgorithm {
 	/** Number of neighbours each individual plays against. Must be odd*/
 	final static int NEIGHBOUR_NUMBER = 5;
 	/** Number of threads. Every thread can simulate one game at a time */
-	final static int MAX_NUM_SIMULT_GAMES = 2;
+	final static int MAX_NUM_SIMULT_GAMES = 1;
 	
 	final static String OUTPUT_DIR = "data/GA/";
 

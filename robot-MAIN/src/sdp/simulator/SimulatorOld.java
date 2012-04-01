@@ -15,6 +15,7 @@ import sdp.common.world.WorldState;
  * @author Martin Marinov
  * 
  */
+@Deprecated
 public class SimulatorOld extends Simulator {
 
 	private static final Vector2D PITCH_MIDDLE = new Vector2D(0.5,
