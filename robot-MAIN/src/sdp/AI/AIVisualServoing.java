@@ -27,7 +27,7 @@ public class AIVisualServoing extends BaseAI {
 	/** Whether the robot is allowed to drive in reverse. */
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
 	/** Whether to use the heuristic pathfinder. */
-	private static final boolean USE_HEURISTIC_PATHFINDER = true;
+	private static final boolean USE_HEURISTIC_PATHFINDER = false;
 	/** Whether the robot should attempt to use wall kicks. */
 	private static final boolean WALL_KICKS_ENABLED = true;
 	

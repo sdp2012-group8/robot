@@ -139,30 +139,39 @@ public class AIMaster extends WorldStateProvider {
 			@Override
 			public void run() {
 				while (!isInterrupted()) {
-					WorldState state = observer.getNextState();
-					state = WorldState.toCentimeters(state);
-
-					if (worldState == null) {
-						worldState = state;
-						aiWorldState = new AIWorldState(worldState, isOwnTeamBlue, isOwnGoalLeft);
-					} else {
-						if (drawOnWorldImage) {
-							aiWorldState.onDraw(state.getWorldImage(), config);
-						}
-						worldState = state;
-					}
-					
-					aiWorldState.update(worldState, isOwnTeamBlue, isOwnGoalLeft);
-					
-					setChanged();
-					notifyObservers(worldState);
-					
-					executeNextCommand();
+					processState(observer.getNextState(), true);
 				}
 				//TODO: cleanup
 			}
 		};
 		updateThread.start();
+	}
+	
+	/**
+	 * Respond to a state. Make sure {@link #setOwnGoalLeft(boolean)} and {@link #setOwnTeamBlue(boolean)} is set correctly prior calling this.
+	 * @param state in normalised coordinates
+	 */
+	public void processState(WorldState state, boolean notifyListeners) {
+		state = WorldState.toCentimeters(state);
+
+		if (worldState == null) {
+			worldState = state;
+			aiWorldState = new AIWorldState(worldState, isOwnTeamBlue, isOwnGoalLeft);
+		} else {
+			if (drawOnWorldImage) {
+				aiWorldState.onDraw(state.getWorldImage(), config);
+			}
+			worldState = state;
+		}
+		
+		aiWorldState.update(worldState, isOwnTeamBlue, isOwnGoalLeft);
+		
+		if (notifyListeners) {
+			setChanged();
+			notifyObservers(worldState);
+		}
+		
+		executeNextCommand();
 	}
 	
 	/**

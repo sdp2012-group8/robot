@@ -264,7 +264,19 @@ public class WorldStatePlayerGUI {
 			return value/5d;
 		}
 		if (Math.abs(value) < 10) {
-			return 1 + 9*(value - 5)/5;
+			if (value > 0) {
+				return 1 + 9*(value - 5)/5;
+			} else {
+				return -1 - 9*(-value - 5)/5;
+			}
+		}
+		
+		if (Math.abs(value) > 20) {
+			if (value > 0) {
+				return 20 + (value - 20)*20;
+			} else {
+				return -20 - (-value - 20)*20;
+			}
 		}
 		return value;
 	}

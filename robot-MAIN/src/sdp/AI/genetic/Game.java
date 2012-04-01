@@ -115,7 +115,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		// mark end of game
 		simulateGame = false;
 		if (ids[0] == -1 || ids[1] == -1) {
-			System.out.printf("(id %02d) %02d:%02d (%02d id)\n", ids[0], leftGoals, rightGoals, ids[1]);
+			System.out.printf("(id %02d) %02d:%02d (%02d id)\n", ids[0], rightGoals, leftGoals, ids[1]);
 			saveReplay();
 		}
 	}
@@ -235,8 +235,11 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		
 		sim.callback = this;
 		
-		leftAI.start(true, true);
-		rightAI.start(false, false);
+		leftAI.setOwnTeamBlue(true);
+		leftAI.setOwnGoalLeft(true);
+		
+		rightAI.setOwnTeamBlue(false);
+		rightAI.setOwnGoalLeft(false);
 		
 		leftAI.setState(AIState.PLAY);
 		rightAI.setState(AIState.PLAY);
@@ -257,7 +260,9 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 			sim.simulate(FRAME_TIME);
 			state = sim.getWorldState();
 			sim.delayQueue.add(state);
-			sim.broadcastState(sim.delayQueue.poll());
+			final WorldState frame = sim.delayQueue.poll();
+			leftAI.processState(frame, false);
+			rightAI.processState(frame, false);
 			
 			if (replay != null) {
 				replay.add(state);
@@ -342,7 +347,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	
 	@Override
 	public String toString() {
-		return String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]);
+		return String.format("(%d)%d:%d(%d)", ids[0], rightGoals, leftGoals, ids[1]);
 	}
 		
 }
