@@ -24,7 +24,7 @@ public class AIVisualServoing extends BaseAI {
 
 
 	/** Whether the robot is required to face the ball before kicking. */
-	private static final boolean REQUIRE_FACE_BALL_TO_KICK = false;
+	private static final boolean REQUIRE_FACE_BALL_TO_KICK = true;
 	/** Whether the robot is allowed to drive in reverse. */
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
 	/** Whether wall handling logic should be used. */
@@ -99,12 +99,12 @@ public class AIVisualServoing extends BaseAI {
 	private static final double BALL_DEFENSE_X_OFFSET = 10;
 	
 	/** X coordinate adjustment of robot destination in own wall ball logic. */
-	private static final double OWN_WALL_BALL_X_SHIFT = Robot.LENGTH_CM / 2;
+	private static final double OWN_WALL_BALL_X_SHIFT = Robot.LENGTH_CM;
 	/** Y coordinate adjustment of robot destination in own wall ball logic. */
 	private static final double OWN_WALL_BALL_Y_SHIFT = Robot.LENGTH_CM / 4;
 	
 	/** Attack angle of the side wall ball logic. */
-	private static final double SIDE_WALL_ATTACK_DIR = 30;
+	private static final double SIDE_WALL_ATTACK_DIR = 30.0;
 	/** Side wall ball attack point offset from the ball. */
 	private static final double SIDE_WALL_OFFSET = 2 * Robot.LENGTH_CM;
 
@@ -511,7 +511,7 @@ public class AIVisualServoing extends BaseAI {
 	private Waypoint getUnconditionalWaypoint(Point2D.Double dest) {
 		return new Waypoint(new Vector2D(aiWorldState.getOwnRobot().getCoords()),
 				aiWorldState.getOwnRobot().getAngle(), new Vector2D(dest),
-				0, true);
+				WorldState.PITCH_WIDTH_CM, true);
 	}
 
 
@@ -823,14 +823,20 @@ public class AIVisualServoing extends BaseAI {
 			attackPoint.x = ball.x;
 		}
 		
-		Waypoint waypoint = null;
-		if (!Robot.lineIntersectsRobot(ball, attackPoint, aiWorldState.getOwnRobot())) {
-			waypoint = getUnconditionalWaypoint(ball);
-		} else {		
-			waypoint = pathfinder.getNextWaypoint(aiWorldState, attackPoint, true);
+		Point2D.Double shiftedBall = new Point2D.Double(ball.x, ball.y);
+		if (aiWorldState.isOwnGoalLeft()) {
+			shiftedBall.x += 5;
+		} else {
+			shiftedBall.x -= 5;
 		}
 		
-		return getWaypointCommand(waypoint, false);
+		if (!Robot.lineIntersectsRobot(ball, attackPoint, aiWorldState.getOwnRobot())) {
+			Waypoint waypoint = getUnconditionalWaypoint(shiftedBall);
+			return getWaypointCommand(waypoint, true);
+		} else {		
+			Waypoint waypoint = pathfinder.getNextWaypoint(aiWorldState, attackPoint, true);
+			return getWaypointCommand(waypoint, false);
+		}
 	}
 	
 	/**
