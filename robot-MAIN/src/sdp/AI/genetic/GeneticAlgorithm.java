@@ -10,12 +10,10 @@ import sdp.AI.neural.AINeuralNet;
 
 public class GeneticAlgorithm {
 
-	/** Number of generations to simulate */
-	final static int GENERATIONS = 10;
 	/** Number of games each individual plays against every other */
 	final static int GAMES = 1;
 	/** Size of the population */
-	final static int POPSIZE = 20;
+	final static int POPSIZE = 10;
 	/** Probability that a crossover will occur */
 	final static float CROSSOVER_PROB = 0.6F;
 	/** Probability that a mutation will occur */
@@ -25,7 +23,7 @@ public class GeneticAlgorithm {
 	/** Number of neighbours each individual plays against. Must be odd*/
 	final static int NEIGHBOUR_NUMBER = 5;
 	/** Number of threads. Every thread can simulate one game at a time */
-	final static int MAX_NUM_SIMULT_GAMES = 1;
+	final static int MAX_NUM_SIMULT_GAMES = 2;
 	
 	final static String OUTPUT_DIR = "data/GA/";
 
@@ -70,7 +68,7 @@ public class GeneticAlgorithm {
 				for (gen = 1; run; gen++) {
 					
 					run();
-					long fittest = findFittest();
+					long fittest = popFitness[findFittest()];
 					System.out.println("Generation: " + gen + "  average fitness: " + avgFitness.get(avgFitness.size()-1) + "  fittest: " + fittest);
 					//out.println("\nGeneration " + gen);
 

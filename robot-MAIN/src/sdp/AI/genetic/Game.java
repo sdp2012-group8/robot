@@ -97,7 +97,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	 */
 	public boolean doWeStartRecording() {
 		// record only games that the real AI takes part in
-		return ids[0] == -1 || ids[1] == -1;
+		//return ids[0] == -1 || ids[1] == -1;
+		return false;
 	}
 	
 	/**
@@ -117,20 +118,20 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		
 		subtitle = String.format("%.2f", timeElapsed)+" : "+this.toString();
 		
-		final AIVisualServoing ws = (AIVisualServoing) (ids[0] == -1 ? leftAI.getAI(): rightAI.getAI());
-		point = new Vector2D[] {
-				new Vector2D(WorldState.fromCentimeters(ws.lastTarget))
-		};
+//		final AIVisualServoing ws = (AIVisualServoing) (ids[0] == -1 ? leftAI.getAI(): rightAI.getAI());
+//		point = new Vector2D[] {
+//				new Vector2D(WorldState.fromCentimeters(ws.lastTarget))
+//		};
 		
 	}
 	
 	public void onTimeOut() {
 		// mark end of game
 		simulateGame = false;
-		if (ids[0] == -1 || ids[1] == -1) {
-			saveReplay();
-			System.out.printf("(id %02d) %02d:%02d (%02d id)\n", ids[0], rightGoals, leftGoals, ids[1]);
-		}
+//		if (ids[0] == -1 || ids[1] == -1) {
+//			saveReplay();
+//			System.out.printf("(id %02d) %02d:%02d (%02d id)\n", ids[0], rightGoals, leftGoals, ids[1]);
+//		}
 	}
 
 	/**
@@ -272,6 +273,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 			replay = new LinkedList<FrameSubtitleEntry>();
 		}
 		
+		long timer = System.currentTimeMillis();
 		// runs simulation
 		while (simulateGame) {
 			sim.simulate(FRAME_TIME);
@@ -304,6 +306,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		}
 		
 		sim.stop();
+		System.out.println("Time for a game: " + (System.currentTimeMillis()-timer)/1000);
 		
 		currentState = gamestate.finished;
 		callback.onFinished(this, scores);
