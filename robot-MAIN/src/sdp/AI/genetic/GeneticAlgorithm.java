@@ -74,7 +74,7 @@ public class GeneticAlgorithm {
 					System.out.println("Generation: " + gen + "  average fitness: " + avgFitness.get(avgFitness.size()-1) + "  fittest: " + fittest);
 					//out.println("\nGeneration " + gen);
 
-					//printPop(); //TODO: change printpop to print fittest individual in population
+					new AINeuralNet(population[findFittest()]).getNetwork().save(OUTPUT_DIR+"bestGen" + gen + ".nnet");
 				}
 
 				/* Print the final generation */
