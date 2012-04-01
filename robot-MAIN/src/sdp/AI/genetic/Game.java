@@ -73,7 +73,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	
 	private int leftGoals = 0, rightGoals = 0;
 	
-	private static final int REPLAY_FRAME_COUNT = FPS*30;
+	private static final double REPLAY_LENGTH_IN_SECONDS = 3*60;
+	private static final int REPLAY_FRAME_COUNT = (int) (FPS*REPLAY_LENGTH_IN_SECONDS);
 	private int replay_frames = 0;
 	private Queue<WorldState> replay = new LinkedList<WorldState>();
 	private static int replays = 0;
@@ -100,8 +101,10 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	public void onTimeOut() {
 		// mark end of game
 		simulateGame = false;
-		if (ids[0] == -1 || ids[1] == -1)
+		if (ids[0] == -1 || ids[1] == -1) {
 			System.out.printf("(id %02d) %02d:%02d (%02d id)\n", ids[0], leftGoals, rightGoals, ids[1]);
+			saveReplay();
+		}
 	}
 
 	/**
@@ -115,8 +118,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		leftGoals++;
 		resetPitch();
 		
-		if (leftGoals > 1)
-			saveReplay("data/movies/left"+(replays++)+"-"+String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]));
+		//if (leftGoals > 1)
+		//	saveReplay();
 	}
 
 	/**
@@ -130,8 +133,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		rightGoals++;
 		resetPitch();
 		
-		if (leftGoals > 1)
-			saveReplay("data/movies/right"+(replays++)+"-"+String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]));
+		//if (leftGoals > 1)
+		//	saveReplay();
 	}
 
 	/**
@@ -285,7 +288,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		return currentState;
 	}
 	
-	private synchronized void saveReplay(String path) {
+	private synchronized void saveReplay() {
+		final String path = "data/movies/left"+(replays++)+"-"+String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]);
 		new File(path).mkdirs();
 		WorldState.saveMovie(replay.toArray(new WorldState[0]), path);
 	}
