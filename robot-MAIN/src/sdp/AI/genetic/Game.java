@@ -74,6 +74,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	private int leftGoals = 0, rightGoals = 0;
 	
 	private static final int REPLAY_FRAME_COUNT = FPS*30;
+	private int replay_frames = 0;
 	private Queue<WorldState> replay = new LinkedList<WorldState>();
 	private static int replays = 0;
 	
@@ -114,7 +115,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		leftGoals++;
 		resetPitch();
 		
-		saveReplay("data/movies/left"+(replays++)+"-"+String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]));
+		if (leftGoals > 1)
+			saveReplay("data/movies/left"+(replays++)+"-"+String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]));
 	}
 
 	/**
@@ -128,7 +130,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		rightGoals++;
 		resetPitch();
 		
-		saveReplay("data/movies/right"+(replays++)+"-"+String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]));
+		if (leftGoals > 1)
+			saveReplay("data/movies/right"+(replays++)+"-"+String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]));
 	}
 
 	/**
@@ -228,9 +231,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 			sim.delayQueue.add(state);
 		}
 		
-		for (int i = 0; i < REPLAY_FRAME_COUNT; i++) {
-			replay.add(state);
-		}
+		replay_frames = 0;
 		
 		// runs simulation
 		while (simulateGame) {
@@ -239,7 +240,11 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 			sim.delayQueue.add(state);
 			sim.broadcastState(sim.delayQueue.poll());
 			replay.add(state);
-			replay.poll();
+			replay_frames++;
+			if (replay_frames > REPLAY_FRAME_COUNT) {
+				replay_frames--;
+				replay.poll();
+			}
 			timeElapsed += FRAME_TIME;
 			onNewFrame();
 			if (timeElapsed > GAMETIME) {

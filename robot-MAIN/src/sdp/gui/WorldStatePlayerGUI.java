@@ -143,7 +143,7 @@ public class WorldStatePlayerGUI {
 		frmWorldstateMoviePlayer.getContentPane().add(btnLoad);
 		
 		lblFrame = new JLabel("0 frame");
-		lblFrame.setBounds(12, 322, 200, 15);
+		lblFrame.setBounds(12, 322, 275, 15);
 		frmWorldstateMoviePlayer.getContentPane().add(lblFrame);
 		
 		sliderProgress = new JSlider();
@@ -177,7 +177,7 @@ public class WorldStatePlayerGUI {
 		frmWorldstateMoviePlayer.getContentPane().add(lblPlaybackSpeed);
 		
 		final JLabel lblFps = new JLabel(DEFAULT_MOVIE_FPS+" fps");
-		lblFps.setBounds(272, 377, 70, 15);
+		lblFps.setBounds(272, 377, 118, 15);
 		frmWorldstateMoviePlayer.getContentPane().add(lblFps);
 		
 		sliderFPS = new JSlider();
