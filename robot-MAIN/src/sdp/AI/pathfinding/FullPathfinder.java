@@ -207,15 +207,15 @@ public class FullPathfinder implements Pathfinder {
 
 
 	/**
-	 * @see sdp.AI.pathfinding.Pathfinder#getWaypointForOurRobot(sdp.AI.AIWorldState, java.awt.geom.Point2D.Double, boolean)
+	 * @see sdp.AI.pathfinding.Pathfinder#getNextWaypoint(sdp.AI.AIWorldState, java.awt.geom.Point2D.Double, boolean)
 	 */
 	@Override
-	public Waypoint getWaypointForOurRobot(AIWorldState worldState,
+	public Waypoint getNextWaypoint(AIWorldState worldState,
 			java.awt.geom.Point2D.Double dest, boolean ballIsObstacle) {
 		ArrayList<Waypoint> path = getPathForOwnRobot(worldState, dest, ballIsObstacle);
 		
 		if (path == null) {
-			return fallback.getWaypointForOurRobot(worldState, dest, ballIsObstacle);
+			return fallback.getNextWaypoint(worldState, dest, ballIsObstacle);
 		} else {
 			return path.get(0);
 		}
