@@ -116,6 +116,10 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		scores[0]+= (int) (MAX_BALL_SCORE - MAX_BALL_SCORE*blueBall/MAX_BALL_DISTANCE);
 		scores[1]+= (int) (MAX_BALL_SCORE - MAX_BALL_SCORE*yellowBall/MAX_BALL_DISTANCE);		
 		
+		final double ballPos = (state.getBallCoords().x - 0.5)*20;
+		scores[0] += ballPos;
+		scores[1] -= ballPos;
+		
 		//subtitle = String.format("%.2f", timeElapsed)+" : "+this.toString();
 		
 //		final AIVisualServoing ws = (AIVisualServoing) (ids[0] == -1 ? leftAI.getAI(): rightAI.getAI());
@@ -273,7 +277,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 			replay = new LinkedList<FrameSubtitleEntry>();
 		}
 		
-		long timer = System.currentTimeMillis();
+		//long timer = System.currentTimeMillis();
 		// runs simulation
 		while (simulateGame) {
 			sim.simulate(FRAME_TIME);
@@ -306,7 +310,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		}
 		
 		sim.stop();
-		System.out.println("Time for a game: " + (System.currentTimeMillis()-timer)/1000);
+		//System.out.println("Time for a game: " + (System.currentTimeMillis()-timer)/1000);
 		
 		currentState = gamestate.finished;
 		callback.onFinished(this, scores);
