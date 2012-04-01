@@ -11,6 +11,7 @@ import sdp.common.MessageListener;
 import sdp.common.WorldStateObserver;
 import sdp.common.Communicator.opcode;
 import sdp.common.geometry.GeomUtils;
+import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 import sdp.common.WorldStateProvider;
 import sdp.vision.processing.ImageProcessorConfig;
@@ -296,7 +297,6 @@ public class AIMaster extends WorldStateProvider {
 		
 		if (command != null){
 			aiWorldState.setCommand(command);
-	
 			if (command.isAccelerationDefault()) {
 				communicator.sendMessage(opcode.operate, command.getShortDrivingSpeed(),
 						command.getShortTurningSpeed());

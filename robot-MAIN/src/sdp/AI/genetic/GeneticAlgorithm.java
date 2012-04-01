@@ -23,7 +23,7 @@ public class GeneticAlgorithm {
 	/** Number of genes in each individual */
 	final static int GENE_NUMBER = AINeuralNet.getWeightsCount();
 	/** Number of neighbours each individual plays against. Must be odd*/
-	final static int NEIGHBOUR_NUMBER = 11;
+	final static int NEIGHBOUR_NUMBER = 5;
 	/** Number of threads. Every thread can simulate one game at a time */
 	final static int MAX_NUM_SIMULT_GAMES = 1;
 	
@@ -74,7 +74,7 @@ public class GeneticAlgorithm {
 					System.out.println("Generation: " + gen + "  average fitness: " + avgFitness.get(avgFitness.size()-1) + "  fittest: " + fittest);
 					//out.println("\nGeneration " + gen);
 
-					//printPop(); //TODO: change printpop to print fittest individual in population
+					new AINeuralNet(population[findFittest()]).getNetwork().save(OUTPUT_DIR+"bestGen" + gen + ".nnet");
 				}
 
 				/* Print the final generation */
@@ -218,13 +218,13 @@ public class GeneticAlgorithm {
 
 		// ----- INITIALIZATION OF GAMES ----- \\
 
-		// initialize result holder
+		// initialise result holder
 		final HashMap<Integer, HashSet<Long>> results = new HashMap<Integer, HashSet<Long>>();
 
-		// initialize already played holder
+		// initialise already played holder
 		final HashMap<Integer, HashSet<Integer>> alreadyPlayed = new HashMap<Integer, HashSet<Integer>>();
 
-		// initialize thread (Game) holder
+		// initialise thread (Game) holder
 		final ArrayList<Game> games = new ArrayList<Game>();
 
 		// for counting games
@@ -233,34 +233,34 @@ public class GeneticAlgorithm {
 		// traverse through the population
 		for (int i = -1; i < POPSIZE; i++) {
 
-			// get the neighbors against I have already played
+			// get the neighbours against I have already played
 			HashSet<Integer> currPlayed = alreadyPlayed.get(i);
 
 			// if we don't have it in the DB, create it
 			if (currPlayed == null)
 				currPlayed = new HashSet<Integer>();
 
-			// find neighbor to play against
-			for (int j = -1; j < NEIGHBOUR_NUMBER; j++) {
+			// find neighbour to play against
+			for (int j = 0; j < NEIGHBOUR_NUMBER; j++) {
 
-				// calculate neighbor index
-				int index = j - (NEIGHBOUR_NUMBER-1)/2;
+				// calculate neighbour index
+				int index = i - (j - (NEIGHBOUR_NUMBER-1)/2);
 
-				// wrap around neighboring index
-				if (index < -1) index = POPSIZE+index;
-				if (index > POPSIZE) index = index - POPSIZE -1;
+				// wrap around neighbouring index
+				if (index < -1) index = POPSIZE + index + 1;
+				if (index >= POPSIZE) index = index - (POPSIZE + 1);
 				
 				if (i == -1 && index == -1)
 					continue;
 
-				// if we have played against this neighbor, skip
+				// if we have played against this neighbour, skip
 				if (currPlayed.contains(index))
 					continue;
 
-				// mark neighbor
+				// mark neighbour
 				currPlayed.add(index);
 
-				// initialize a game with the given neighbor
+				// initialise a game with the given neighbour
 				games.add(new Game(i, index, population, new Game.Callback() {
 
 					// when a game thread finishes
@@ -287,8 +287,19 @@ public class GeneticAlgorithm {
 
 			}
 
-			// update neighbors list
+			// update neighbours list
 			alreadyPlayed.put(i, currPlayed);
+			
+			for (int index : currPlayed){
+				HashSet<Integer> played = alreadyPlayed.get(index);
+				if (played == null)
+					played = new HashSet<Integer>();
+				
+				if (!played.contains(i)) {
+					played.add(i);
+					alreadyPlayed.put(index, played);
+				}
+			}
 
 		}
 
@@ -297,7 +308,7 @@ public class GeneticAlgorithm {
 
 		// ----- ASSIGNING GAMES TO WORKERS ----- \\
 
-		// calculate how many games per worker shoud there be
+		// calculate how many games per worker should there be
 		final int gamesPerWorker = totalGames / MAX_NUM_SIMULT_GAMES;
 
 		// pause workers and set callbacks
@@ -317,7 +328,7 @@ public class GeneticAlgorithm {
 							return;
 
 
-					// if all workers are 0, ublock main thread
+					// if all workers are 0, unblock main thread
 					synchronized (lock) {
 						lock.notifyAll();
 					}
@@ -325,7 +336,7 @@ public class GeneticAlgorithm {
 			};
 		}
 
-		// initialize worker id count
+		// initialise worker id count
 		int workerId = 0;
 
 		for (int i = 0; i < totalGames; i++) {
@@ -357,7 +368,7 @@ public class GeneticAlgorithm {
 
 		// ----- CALCULATIONS HAVE BEEN DONE BY HERE ----- \\
 
-		// initialize average array
+		// initialise average array
 		final long[] averageFitness = new long[POPSIZE];
 
 		// calculate average
