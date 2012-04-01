@@ -76,10 +76,23 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	private static final double REPLAY_LENGTH_IN_SECONDS = 3*60;
 	private static final int REPLAY_FRAME_COUNT = (int) (FPS*REPLAY_LENGTH_IN_SECONDS);
 	private int replay_frames = 0;
-	private Queue<WorldState> replay = new LinkedList<WorldState>();
+	private Queue<WorldState> replay;
 	private static int replays = 0;
 	
 	// calculate fitness section
+	
+	/**
+	 * This method will be called during an initialization of a game (before any world state or score is available for you to check).
+	 * If you plan to record current game, return true. If you return false and later try doing
+	 * {@link #saveReplay()}, you will get an error. The purpose of this function is to avoid allocating memory
+	 * for games which won't be saved in the end for sure.<br/>
+	 * Generally you could use this when you want to record a game with particular id or particular participants.
+	 * @return true if you plan to use {@link #saveReplay()}, false otherwise
+	 */
+	public boolean doWeStartRecording() {
+		// record only games that the real AI takes part in
+		return ids[0] == -1 || ids[1] == -1;
+	}
 	
 	/**
 	 * When new frame is available, analyse the {@link #state}
@@ -236,18 +249,25 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		
 		replay_frames = 0;
 		
+		if (doWeStartRecording())
+			replay = new LinkedList<WorldState>();
+		
 		// runs simulation
 		while (simulateGame) {
 			sim.simulate(FRAME_TIME);
 			state = sim.getWorldState();
 			sim.delayQueue.add(state);
 			sim.broadcastState(sim.delayQueue.poll());
-			replay.add(state);
-			replay_frames++;
-			if (replay_frames > REPLAY_FRAME_COUNT) {
-				replay_frames--;
-				replay.poll();
+			
+			if (replay != null) {
+				replay.add(state);
+				replay_frames++;
+				if (replay_frames > REPLAY_FRAME_COUNT) {
+					replay_frames--;
+					replay.poll();
+				}
 			}
+			
 			timeElapsed += FRAME_TIME;
 			onNewFrame();
 			if (timeElapsed > GAMETIME) {
@@ -288,10 +308,16 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		return currentState;
 	}
 	
+	/**
+	 * Saves the replay of the current game. This function will work only if {@link #doWeStartRecording()} returned true during initialization of this game
+	 */
 	private synchronized void saveReplay() {
-		final String path = "data/movies/left"+(replays++)+"-"+String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]);
-		new File(path).mkdirs();
-		WorldState.saveMovie(replay.toArray(new WorldState[0]), path);
+		if (replay != null) {
+			final String path = "data/movies/left"+(replays++)+"-"+this;
+			new File(path).mkdirs();
+			WorldState.saveMovie(replay.toArray(new WorldState[0]), path);
+		} else
+			System.err.println("Called unexpected save replay on "+this+" gameid "+gameId);
 	}
 	
 	
@@ -312,6 +338,11 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		 */
 		public void onFinished(final Game caller, final long[] fitness);
 
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]);
 	}
 		
 }
