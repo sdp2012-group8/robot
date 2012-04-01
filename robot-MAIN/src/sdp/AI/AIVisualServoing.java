@@ -27,8 +27,12 @@ public class AIVisualServoing extends BaseAI {
 	private static final boolean REQUIRE_FACE_BALL_TO_KICK = false;
 	/** Whether the robot is allowed to drive in reverse. */
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
+	/** Whether wall handling logic should be used. */
+	private static final boolean SPECIAL_WALL_LOGIC_ENABLED = true;
 	/** Whether to use the heuristic pathfinder. */
 	private static final boolean USE_HEURISTIC_PATHFINDER = false;
+	/** Whether to use milestone 4 defence logic. */
+	private static final boolean USE_MILESTONE_4_DEFENCE = false;
 	/** Whether the robot should attempt to use wall kicks. */
 	private static final boolean WALL_KICKS_ENABLED = true;
 	
@@ -54,6 +58,9 @@ public class AIVisualServoing extends BaseAI {
 	
 	/** Distance threshold for ball-robot direction ray tests. */
 	private static final double BALL_TO_DIRECTION_PROXIMITY_THRESHOLD = Robot.WIDTH_CM / 2;
+	
+	/** How far a robot can be away from a point before we think it is there. */
+	private static final double ROBOT_POSITION_TOLERANCE = 10;
 	
 	/** At what distance to the ball should the robot begin turning in game start. */
 	private static final double START_TURNING_DISTANCE = 40;
@@ -90,6 +97,16 @@ public class AIVisualServoing extends BaseAI {
 
 	/** The amount by which defense point is shifted on the X axis. */
 	private static final double BALL_DEFENSE_X_OFFSET = 10;
+	
+	/** X coordinate adjustment of robot destination in own wall ball logic. */
+	private static final double OWN_WALL_BALL_X_SHIFT = Robot.LENGTH_CM / 2;
+	/** Y coordinate adjustment of robot destination in own wall ball logic. */
+	private static final double OWN_WALL_BALL_Y_SHIFT = Robot.LENGTH_CM / 4;
+	
+	/** Attack angle of the side wall ball logic. */
+	private static final double SIDE_WALL_ATTACK_DIR = 30;
+	/** Side wall ball attack point offset from the ball. */
+	private static final double SIDE_WALL_OFFSET = 2 * Robot.LENGTH_CM;
 
 	
 	/** Current optimal point offset. */
@@ -157,13 +174,16 @@ public class AIVisualServoing extends BaseAI {
 	 */
 	@Override
 	protected Command defendGoal() throws IOException {
-		boolean useMilestone = false;
-		
-		if (!useMilestone) {
+		if (!USE_MILESTONE_4_DEFENCE) {
 			Point2D.Double target = getOptimalDefencePoint(aiWorldState);
-			Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, true);
-
-			return getWaypointCommand(waypoint, false);
+			
+			double robotToDestDist = GeomUtils.pointDistance(aiWorldState.getOwnRobot().getCoords(), target);
+			if (robotToDestDist < ROBOT_POSITION_TOLERANCE) {
+				return sit();
+			} else {
+				Waypoint waypoint = pathfinder.getNextWaypoint(aiWorldState, target, true);
+				return getWaypointCommand(waypoint, false);
+			}
 		}
 		
 		if (Math.abs(Robot.getTurningAngle(aiWorldState.getOwnRobot(), new Vector2D(aiWorldState.getBallCoords()))) < 15 &&
@@ -245,7 +265,7 @@ public class AIVisualServoing extends BaseAI {
 
 		if(can_we_go_to_intercept)	{			
 			if (dist > 5)
-				com = getWaypointCommand(pathfinder.getWaypointForOurRobot(aiWorldState, point, false), false, 1, 20);
+				com = getWaypointCommand(pathfinder.getNextWaypoint(aiWorldState, point, false), false, 1, 20);
 			
 			com.acceleration = 150;
 			reduceSpeed(com, dist, 20, 0);
@@ -255,7 +275,7 @@ public class AIVisualServoing extends BaseAI {
 
 		if(aiWorldState.getEnemyRobot().getAngle()<-90 && aiWorldState.getEnemyRobot().getAngle()>-180) {
 			if (dist2 > 10)
-				com = getWaypointCommand(pathfinder.getWaypointForOurRobot(aiWorldState, point2, false), false, 1, 20);
+				com = getWaypointCommand(pathfinder.getNextWaypoint(aiWorldState, point2, false), false, 1, 20);
 			
 			com.acceleration = 150;
 			reduceSpeed(com, dist2, 20, 0);
@@ -265,7 +285,7 @@ public class AIVisualServoing extends BaseAI {
 
 		if(aiWorldState.getEnemyRobot().getAngle()>90 && aiWorldState.getEnemyRobot().getAngle()<180 ){
 			if (dist3 > 10)
-				com = getWaypointCommand(pathfinder.getWaypointForOurRobot(aiWorldState, point3, false), false, 1, 20);
+				com = getWaypointCommand(pathfinder.getNextWaypoint(aiWorldState, point3, false), false, 1, 20);
 			
 			com.acceleration = 150;
 			reduceSpeed(com, dist3, 20, 0);
@@ -420,7 +440,7 @@ public class AIVisualServoing extends BaseAI {
 			target.y += START_TURNING_Y_SHIFT;
 		}
 		
-		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState,
+		Waypoint waypoint = pathfinder.getNextWaypoint(aiWorldState,
 				target, false);
 		return getWaypointCommand(waypoint, true);
 	}
@@ -439,8 +459,18 @@ public class AIVisualServoing extends BaseAI {
 			return gotBall();
 		}
 		
-		// Get which walls the ball is next to.
-		boolean ballAdjacency[] = getWallsBallIsAdjacentTo();
+		// Handle the cases where the ball is next to the wall.
+		if (SPECIAL_WALL_LOGIC_ENABLED) {
+			boolean ballAdjacency[] = getWallsBallIsAdjacentTo();
+			
+			if (ballAdjacency[0]) {
+				return getOwnWallBallCommand();
+			} else if (ballAdjacency[1]) {
+				return getSideWallBallCommand();
+			} else if (ballAdjacency[2]) {
+				return getEnemyWallBallCommand();
+			}
+		}
 		
 		// Get the point to drive towards.
 		Vector2D target = new Vector2D(aiWorldState.getBallCoords());
@@ -466,8 +496,22 @@ public class AIVisualServoing extends BaseAI {
 		boolean mustFaceTarget = (REQUIRE_FACE_BALL_TO_KICK
 				&& !Utilities.areDoublesEqual(optimalPointOffset, DEFAULT_OPTIMAL_POINT_OFFSET));
 
-		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, ballIsObstacle);
+		Waypoint waypoint = pathfinder.getNextWaypoint(aiWorldState, target, ballIsObstacle);
 		return getWaypointCommand(waypoint, mustFaceTarget);
+	}
+	
+	
+	/**
+	 * Get a waypoint for our robot that completely ignores any and all
+	 * obstacles to the destination.
+	 * 
+	 * @param dest Destination point.
+	 * @return An appropriate waypoint, as described above.
+	 */
+	private Waypoint getUnconditionalWaypoint(Point2D.Double dest) {
+		return new Waypoint(new Vector2D(aiWorldState.getOwnRobot().getCoords()),
+				aiWorldState.getOwnRobot().getAngle(), new Vector2D(dest),
+				0, true);
 	}
 
 
@@ -715,6 +759,88 @@ public class AIVisualServoing extends BaseAI {
 		}
 		
 		return new boolean[] { ballAdjToOwnWall, ballAdjToSideWall, ballAdjToEnemyWall };
+	}
+	
+
+	/**
+	 * Get a command for handling the ball when it is next to our wall.
+	 * 
+	 * @return The command to execute next.
+	 * @throws IOException 
+	 */
+	private Command getOwnWallBallCommand() throws IOException {
+		Point2D.Double dest = new Point2D.Double();
+		
+		if (aiWorldState.isOwnGoalLeft()) {
+			dest.x = aiWorldState.getOwnGoal().getCentre().x + OWN_WALL_BALL_X_SHIFT;
+		} else {
+			dest.x = aiWorldState.getOwnGoal().getCentre().x - OWN_WALL_BALL_X_SHIFT;
+		}
+		
+		if (aiWorldState.getBallCoords().y < (WorldState.PITCH_HEIGHT_CM / 2)) {
+			dest.y = aiWorldState.getOwnGoal().getTop().y + OWN_WALL_BALL_Y_SHIFT;
+		} else {
+			dest.y = aiWorldState.getOwnGoal().getBottom().y - OWN_WALL_BALL_Y_SHIFT;
+		}
+		
+		double robotToDestDist = GeomUtils.pointDistance(aiWorldState.getOwnRobot().getCoords(), dest);
+		if (robotToDestDist < ROBOT_POSITION_TOLERANCE) {
+			return sit();
+		} else {
+			Waypoint waypoint = pathfinder.getNextWaypoint(aiWorldState, dest, true);
+			return getWaypointCommand(waypoint, false);
+		}
+	}
+	
+	/**
+	 * Get a command for handling the ball when it is next to the side wall.
+	 * 
+	 * @return The next command to execute.
+	 */
+	private Command getSideWallBallCommand() {
+		double attackDir = 0;
+		if (aiWorldState.isOwnGoalLeft()) {
+			if (aiWorldState.getBallCoords().y < (WorldState.PITCH_HEIGHT_CM / 2)) {
+				attackDir = -180.0 + SIDE_WALL_ATTACK_DIR;
+			} else {
+				attackDir = 180.0 - SIDE_WALL_ATTACK_DIR;
+			}
+		} else {
+			if (aiWorldState.getBallCoords().y < (WorldState.PITCH_HEIGHT_CM / 2)) {
+				attackDir = -SIDE_WALL_ATTACK_DIR;
+			} else {
+				attackDir = SIDE_WALL_ATTACK_DIR;
+			}
+		}
+		
+		Point2D.Double ball = aiWorldState.getBallCoords();
+		
+		Vector2D attackOffset = Vector2D.getDirectionUnitVector(attackDir);
+		attackOffset = Vector2D.changeLength(attackOffset, SIDE_WALL_OFFSET);
+		Point2D.Double attackPoint = GeomUtils.addPoints(ball, attackOffset);
+		
+		if (!WorldState.isPointInPaddedPitch(attackPoint, Robot.LENGTH_CM / 2)) {
+			attackPoint.x = ball.x;
+		}
+		
+		Waypoint waypoint = null;
+		if (!Robot.lineIntersectsRobot(ball, attackPoint, aiWorldState.getOwnRobot())) {
+			waypoint = getUnconditionalWaypoint(ball);
+		} else {		
+			waypoint = pathfinder.getNextWaypoint(aiWorldState, attackPoint, true);
+		}
+		
+		return getWaypointCommand(waypoint, false);
+	}
+	
+	/**
+	 * Get a command for handling the ball when it is next to the enemy wall.
+	 * 
+	 * @return The command to execute next.
+	 * @throws IOException
+	 */
+	private Command getEnemyWallBallCommand() throws IOException {
+		return defendGoal();
 	}
 
 
