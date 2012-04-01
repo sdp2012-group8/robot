@@ -30,7 +30,6 @@ public class AIVisualServoing extends BaseAI {
 	/** Whether wall handling logic should be used. */
 	private static final boolean SPECIAL_WALL_LOGIC_ENABLED = true;
 	/** Whether to use the heuristic pathfinder. */
-
 	private static final boolean USE_HEURISTIC_PATHFINDER = false;
 	/** Whether to use milestone 4 defence logic. */
 	private static final boolean USE_MILESTONE_4_DEFENCE = false;
