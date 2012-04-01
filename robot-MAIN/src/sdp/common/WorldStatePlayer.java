@@ -4,6 +4,7 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import sdp.common.geometry.Vector2D;
 import sdp.common.world.Robot;
@@ -21,6 +22,7 @@ public class WorldStatePlayer extends WorldStateProvider {
 	private double frameId;
 	private WorldState[] frames;
 	private String[] subtitles;
+	private Vector2D[][] points;
 	
 	public WorldStatePlayer(int default_movie_fps) {
 		DEFAULT_MOVIE_FPS = default_movie_fps;
@@ -64,6 +66,7 @@ public class WorldStatePlayer extends WorldStateProvider {
 		 int i = 0;
 		 ArrayList<WorldState> frames = new ArrayList<WorldState>();
 		 ArrayList<String> subtitles = new ArrayList<String>();
+		 ArrayList<LinkedList<Vector2D>> points = new ArrayList<LinkedList<Vector2D>>();
 		 while (true) {
 			 final String fileName = dir+"/frame"+(i++)+".xml";
 			 if (!new File(fileName).exists()) {
@@ -72,12 +75,18 @@ public class WorldStatePlayer extends WorldStateProvider {
 				 break;
 			 }
 			 final StringBuilder build = new StringBuilder();
-			 frames.add(WorldState.loadWorldState(fileName, build));
+			 final LinkedList<Vector2D> point = new LinkedList<Vector2D>();
+			 frames.add(WorldState.loadWorldState(fileName, build, point));
 			 subtitles.add(build.toString());
+			 points.add(point);
 			 
 		 }
 		 this.frames = frames.toArray(new WorldState[0]);
 		 this.subtitles = subtitles.toArray(new String[0]);
+		 LinkedList<?>[] arr = points.toArray(new LinkedList<?>[0]);
+		 this.points = new Vector2D[arr.length][];
+		 for (int j = 0; j < arr.length; j++)
+			 this.points[j] = arr[j].toArray(new Vector2D[0]);
 		
 		setFPS(DEFAULT_MOVIE_FPS);
 		
@@ -89,6 +98,14 @@ public class WorldStatePlayer extends WorldStateProvider {
 		if (frameId < 0)
 			frameId = 0;
 		return subtitles[(int) frameId];
+	}
+	
+	public Vector2D[] getPoints() {
+		if (frameId > frames.length - 1)
+			frameId = frames.length - 1;
+		if (frameId < 0)
+			frameId = 0;
+		return points[(int) frameId];
 	}
 	
 	public void setFPS(double fps) {

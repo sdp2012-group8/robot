@@ -4,10 +4,12 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Queue;
 import java.util.logging.Logger;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import sdp.common.geometry.Circle;
 import sdp.common.geometry.GeomUtils;
@@ -196,18 +198,29 @@ public class WorldState {
 		return cmRobot;
 	}
 
-	/**
-	 * Convert coordinates in a world state from normal to real world systems
-	 * (i.e. [0; 1] -> centimeters).
-	 * 
-	 * @param worldState World state to convert.
-	 * @return Converted world state.
-	 */
 	public static WorldState toCentimeters(WorldState worldState) {
 		return new WorldState(
 				WorldState.toCentimeters(worldState.getBallCoords()),
 				WorldState.toCentimeters(worldState.getBlueRobot()),
 				WorldState.toCentimeters(worldState.getYellowRobot()),
+				worldState.getWorldImage());
+	}
+	
+	public static Point2D.Double fromCentimeters(Point2D.Double point) {
+		return new Point2D.Double(point.getX() / PITCH_WIDTH_CM, point.getY() / PITCH_WIDTH_CM);
+	}
+
+	private static Robot fromCentimeters(Robot robot) {
+		Robot cmRobot = new Robot(WorldState.fromCentimeters(robot.getCoords()), robot.getAngle());
+		cmRobot.setCoords(true);
+		return cmRobot;
+	}
+
+	public static WorldState fromCentimeters(WorldState worldState) {
+		return new WorldState(
+				WorldState.fromCentimeters(worldState.getBallCoords()),
+				WorldState.fromCentimeters(worldState.getBlueRobot()),
+				WorldState.fromCentimeters(worldState.getYellowRobot()),
 				worldState.getWorldImage());
 	}
 
@@ -519,7 +532,7 @@ public class WorldState {
 	 * @param subtitle pass a new {@link StringBuilder}. Use {@link StringBuilder#toString()} to get the subtitle
 	 * @return An appropriate WorldState instance.
 	 */
-	public static WorldState loadWorldState(String filename, StringBuilder subtitle) {
+	public static WorldState loadWorldState(String filename, StringBuilder subtitle, Queue<Vector2D> point) {
 		File file = new File(filename);
 		if (!file.exists()) {
 			LOGGER.info("The given world state file does not exist.");
@@ -549,10 +562,22 @@ public class WorldState {
 		Point2D.Double yellowPos = new Point2D.Double(yellowX, yellowY);
 		Robot yellowRobot = new Robot(yellowPos, yellowAngle);
 		
-		Element subElem = (Element) rootElement.getElementsByTagName("subtitle").item(0);
-		String sub = XmlUtils.getChildText(subElem, "text");
-		if (subtitle != null)
-			subtitle.append(sub);
+		NodeList subS = rootElement.getElementsByTagName("subtitle");
+		final int length = subS.getLength();
+		
+		for (int i = 0; i < length; i++) {
+			Element subElem = (Element) subS.item(i);
+			String sub = XmlUtils.getChildText(subElem, "text");
+			double subX = XmlUtils.getChildDouble(subElem, "x");
+			double subY = XmlUtils.getChildDouble(subElem, "y");
+			if (subtitle != null)
+				subtitle.append(sub);
+			if (point != null) {
+				point.add(new Vector2D(subX, subY));
+			}
+		}
+		
+
 		
 		WorldState worldState = new WorldState(ball, blueRobot, yellowRobot, null);
 		
@@ -567,7 +592,7 @@ public class WorldState {
 	 * @param filename Output filename.
 	 * @param subtitle write a subtitle along with the frame
 	 */
-	public static void writeWorldState(WorldState worldState, String filename, String subtitle) {
+	public static void writeWorldState(WorldState worldState, String filename, String subtitle, Vector2D[] point) {
 		Document doc = XmlUtils.createBlankXmlDocument();
 		
 		Element rootElement = doc.createElement("worldstate");
@@ -590,9 +615,13 @@ public class WorldState {
 		XmlUtils.addChildDouble(doc, yellowElem, "angle", worldState.getYellowRobot().getAngle());
 		rootElement.appendChild(yellowElem);
 		
-		Element subElem = (Element) doc.createElement("subtitle");
-		XmlUtils.addChildText(doc, subElem, "text", subtitle);
-		rootElement.appendChild(subElem);
+		for (int i = 0; i < point.length; i++) {
+			Element subElem = (Element) doc.createElement("subtitle");
+			XmlUtils.addChildText(doc, subElem, "text", subtitle);
+			XmlUtils.addChildDouble(doc, subElem, "x", point[i].x);
+			XmlUtils.addChildDouble(doc, subElem, "y", point[i].y);
+			rootElement.appendChild(subElem);
+		}
 
 		XmlUtils.writeXmlDocument(doc, filename);
 	}
@@ -656,9 +685,9 @@ public class WorldState {
 		return min;
 	}
 	
-	public static void saveMovie(WorldState[] states, String dir, String[] subtitles) {
+	public static void saveMovie(WorldState[] states, String dir, String[] subtitles, Vector2D[][] points) {
 		for (int i = 0; i < states.length; i++)
-			writeWorldState(states[i], dir+"/frame"+i+".xml", subtitles[i]);
+			writeWorldState(states[i], dir+"/frame"+i+".xml", subtitles[i], points[i]);
 	}
 	
 	/**

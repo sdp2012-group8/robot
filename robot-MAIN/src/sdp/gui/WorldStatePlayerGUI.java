@@ -10,6 +10,7 @@ import sdp.AI.genetic.Game;
 import sdp.common.Painter;
 import sdp.common.WorldStateObserver;
 import sdp.common.WorldStatePlayer;
+import sdp.common.geometry.Vector2D;
 import sdp.common.world.WorldState;
 
 import java.awt.Dimension;
@@ -120,6 +121,16 @@ public class WorldStatePlayerGUI {
 								(int) (IMAGE_WIDTH*60/WorldState.PITCH_WIDTH_CM));
 						
 						p.image(true, true);
+						if (player != null) {
+							
+							Vector2D[] point = player.getPoints();
+							for (int i = 0; i < point.length; i++) {
+								p.g.setColor(Color.white);
+								p.fillOval((int) (IMAGE_WIDTH*point[i].x)-5, (int) (IMAGE_WIDTH*point[i].y)-5, 10, 10, true);
+								p.g.setColor(Color.black);
+								p.fillOval((int) (IMAGE_WIDTH*point[i].x)-2, (int) (IMAGE_WIDTH*point[i].y)-2, 4, 4, true);
+							}
+						}
 						g.drawImage(im, 0, 0, null);
 						synchronized (lblSubtitle) {
 							if (player != null)

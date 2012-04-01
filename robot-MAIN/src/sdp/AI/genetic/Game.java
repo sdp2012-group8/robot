@@ -10,8 +10,8 @@ import sdp.AI.AIMaster.AIState;
 import sdp.AI.neural.AINeuralNet;
 import sdp.common.WorldStateRandomizer;
 import sdp.common.geometry.GeomUtils;
+import sdp.common.geometry.Vector2D;
 import sdp.common.world.WorldState;
-import sdp.simulator.Simulator;
 import sdp.simulator.SimulatorPhysicsEngine;
 import sdp.simulator.VBrick;
 
@@ -43,6 +43,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	public static final int FPS = 15;
 	/** frame length */
 	private static final double FRAME_TIME = 1d / FPS;
+	private static final int DELAY_SIMULATION = 300;
+	public static final int DELAY_SIZE = (int) (DELAY_SIMULATION/(1000*FRAME_TIME));
 	
 	private double[][] population;
 	
@@ -81,6 +83,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	
 	/** set this on the frame you want to have a subtitle */
 	private String subtitle = "";
+	private Vector2D[] point = new Vector2D[] { new Vector2D(-1, -1) };
 	
 	// calculate fitness section
 	
@@ -114,14 +117,19 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		
 		subtitle = String.format("%.2f", timeElapsed)+" : "+this.toString();
 		
+		final AIVisualServoing ws = (AIVisualServoing) (ids[0] == -1 ? leftAI.getAI(): rightAI.getAI());
+		point = new Vector2D[] {
+				new Vector2D(WorldState.fromCentimeters(ws.lastTarget))
+		};
+		
 	}
 	
 	public void onTimeOut() {
 		// mark end of game
 		simulateGame = false;
 		if (ids[0] == -1 || ids[1] == -1) {
-			System.out.printf("(id %02d) %02d:%02d (%02d id)\n", ids[0], rightGoals, leftGoals, ids[1]);
 			saveReplay();
+			System.out.printf("(id %02d) %02d:%02d (%02d id)\n", ids[0], rightGoals, leftGoals, ids[1]);
 		}
 	}
 
@@ -232,7 +240,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 				180);
 		sim.putBallAt();
 		
-		resetPitch();
+		
 		
 		sim.callback = this;
 		
@@ -247,10 +255,12 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		rightAI.setOwnTeamBlue(false);
 		rightAI.setOwnGoalLeft(false);
 		
+		resetPitch();
+		
 		leftAI.setState(AIState.PLAY);
 		rightAI.setState(AIState.PLAY);
 		
-		for (int i = 0; i < Simulator.DELAY_SIZE; i++) {
+		for (int i = 0; i < DELAY_SIZE; i++) {
 			sim.simulate(FRAME_TIME);
 			state = sim.getWorldState();
 			sim.delayQueue.add(state);
@@ -279,7 +289,12 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 			}
 			
 			if (replay != null) {
-				replay.add(new FrameSubtitleEntry(frame, subtitle));
+				final WorldState lS = leftAI.getAIWorldState();
+				final WorldState rS = rightAI.getAIWorldState();
+				final WorldState aiSees = 
+						WorldState.fromCentimeters(new WorldState(lS.getBallCoords(), lS.getBlueRobot(), rS.getYellowRobot(), lS.getWorldImage()));
+				
+				replay.add(new FrameSubtitleEntry(aiSees, subtitle, point));
 				replay_frames++;
 				if (replay_frames > REPLAY_FRAME_COUNT) {
 					replay_frames--;
@@ -288,9 +303,6 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 			}
 		}
 		
-
-		leftAI.stop();
-		rightAI.stop();
 		sim.stop();
 		
 		currentState = gamestate.finished;
@@ -299,6 +311,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	}
 	
 	private void resetPitch() {
+		leftAI.setState(AIState.SIT);
+		rightAI.setState(AIState.SIT);
 		
 		sim.putBallAt(0.5 + WorldStateRandomizer.getRandom()*BALL_RAND/ WorldState.PITCH_WIDTH_CM,
 					WorldState.PITCH_HEIGHT_CM / (2 * WorldState.PITCH_WIDTH_CM) + WorldStateRandomizer.getRandom()*BALL_RAND/ WorldState.PITCH_WIDTH_CM);
@@ -310,6 +324,9 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		sim.putAt((PLACEMENT_RIGHT + PLACEMENT_X_RAND*WorldStateRandomizer.getRandom())/WorldState.PITCH_WIDTH_CM,
 				WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM) + PLACEMENT_Y_RAND*WorldStateRandomizer.getRandom()/WorldState.PITCH_WIDTH_CM,
 				1, 180+WorldStateRandomizer.getRandom()*ANGLE_RAND);
+		
+		leftAI.setState(AIState.PLAY);
+		rightAI.setState(AIState.PLAY);
 		
 	}
 
@@ -326,15 +343,17 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	private synchronized void saveReplay() {
 		FrameSubtitleEntry[] entries = replay.toArray(new FrameSubtitleEntry[0]);
 		String[] subtitles = new String[entries.length];
+		Vector2D[][] points = new Vector2D[entries.length][];
 		WorldState[] states = new WorldState[entries.length];
 		for (int i = 0; i < entries.length; i++) {
 			states[i] = entries[i].state;
 			subtitles[i] = entries[i].subtitle;
+			points[i] = entries[i].point;
 		}
 		if (replay != null) {
 			final String path = "data/movies/left"+(replays++)+"-"+this;
 			new File(path).mkdirs();
-			WorldState.saveMovie(states, path, subtitles);
+			WorldState.saveMovie(states, path, subtitles, points);
 		} else
 			System.err.println("Called unexpected save replay on "+this+" gameid "+gameId);
 	}
@@ -368,10 +387,12 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 
 		public WorldState state;
 		public String subtitle;
+		public Vector2D[] point;
 		
-		public FrameSubtitleEntry(final WorldState state, final String subtitle) {
+		public FrameSubtitleEntry(final WorldState state, final String subtitle, final Vector2D[] point) {
 			this.state = state;
 			this.subtitle = subtitle;
+			this.point = point;
 		}
 		
 	}

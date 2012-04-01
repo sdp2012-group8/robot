@@ -86,6 +86,7 @@ public class AIVisualServoing extends BaseAI {
 	private double targ_thresh = DEFAULT_TARG_THRESH;
 
 	private static final double DEFEND_BALL_THRESHOLD = 10;
+	public Vector2D lastTarget;
 	
 	
 	/** AI's heuristic pathfinder. */
@@ -458,6 +459,8 @@ public class AIVisualServoing extends BaseAI {
 		boolean mustFaceTarget = (REQUIRE_FACE_BALL_TO_KICK
 				&& !Utilities.areDoublesEqual(point_off, DEFAULT_POINT_OFF));
 
+		lastTarget = target;
+		
 		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, ballIsObstacle);
 		return getWaypointCommand(waypoint, mustFaceTarget);
 	}
@@ -798,7 +801,7 @@ public class AIVisualServoing extends BaseAI {
 	 * @param worldState Current world state.
 	 * @return Optimal defence point.
 	 */
-	private Point2D.Double getOptimalDefencePoint(AIWorldState worldState) {
+	public static Point2D.Double getOptimalDefencePoint(AIWorldState worldState) {
 		Vector2D ballVec = new Vector2D(worldState.getBallCoords());
 		
 		Vector2D ballGoalVec = Vector2D.subtract(new Vector2D(worldState.getOwnGoal().getCentre()), ballVec);

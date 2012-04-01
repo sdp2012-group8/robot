@@ -185,6 +185,10 @@ public class AIMaster extends WorldStateProvider {
 	}
 
 	
+	public AIWorldState getAIWorldState() {
+		return aiWorldState;
+	}
+	
 	/**
 	 * Execute the next command on the current world state.
 	 */
@@ -409,5 +413,9 @@ public class AIMaster extends WorldStateProvider {
 	 */
 	public void toggleDrawingOnWorldImage() {
 		drawOnWorldImage = !drawOnWorldImage;
+	}
+	
+	public BaseAI getAI() {
+		return ai;
 	}
 }
