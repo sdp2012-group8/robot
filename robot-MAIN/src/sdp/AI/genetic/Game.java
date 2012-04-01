@@ -280,7 +280,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		return currentState;
 	}
 	
-	private void saveReplay(String path) {
+	private synchronized void saveReplay(String path) {
 		new File(path).mkdirs();
 		WorldState.saveMovie(replay.toArray(new WorldState[0]), path);
 	}

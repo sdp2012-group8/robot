@@ -1,7 +1,6 @@
 package sdp.common.xml;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -84,14 +83,16 @@ public class XmlUtils {
 		try {
 			Transformer transformer = TransformerFactory.newInstance().newTransformer();
 			DOMSource source = new DOMSource(doc);
-			StreamResult result = new StreamResult(new FileOutputStream(new File(filename)));
+			final FileOutputStream out = new FileOutputStream(new File(filename));
+			StreamResult result = new StreamResult(out);
 			transformer.transform(source, result);
+			out.close();
+		} catch (IOException e) {
+			LOGGER.warning("Error closing stream or could open a file from writing an XML document.");
+			e.printStackTrace();
 		} catch (TransformerConfigurationException e) {
 			LOGGER.warning("TransformerConfigurationException thrown when writing XML document to a file.");
 			e.printStackTrace();
-		} catch (FileNotFoundException e1) {
-			LOGGER.warning("Could open a file from writing an XML document.");
-			e1.printStackTrace();
 		} catch (TransformerException e) {
 			LOGGER.warning("Transformer exception thrown when writing XML document to a file.");
 			e.printStackTrace();
