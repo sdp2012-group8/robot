@@ -40,10 +40,10 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	private WorldState state = null;
 	
 	/** simulation speed */
-	public static final int FPS = 15;
+	public static final int FPS = 10;
 	/** frame length */
 	private static final double FRAME_TIME = 1d / FPS;
-	private static final int DELAY_SIMULATION = 300;
+	private static final int DELAY_SIMULATION = 250;
 	public static final int DELAY_SIZE = (int) (DELAY_SIMULATION/(1000*FRAME_TIME));
 	
 	private double[][] population;
@@ -61,7 +61,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	private static final int MAX_BALL_SCORE = 20;
 	private static final int MAX_BALL_DISTANCE = 70;
 	
-	private static final int GAMETIME = 3*60; // in sec
+	private static final int GAMETIME = 60; // in sec
 	
 	private long[] scores = new long[2];
 	
@@ -75,11 +75,11 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	
 	private int leftGoals = 0, rightGoals = 0;
 	
-	private static final double REPLAY_LENGTH_IN_SECONDS = 3*60;
+	private static final double REPLAY_LENGTH_IN_SECONDS = 60;
 	private static final int REPLAY_FRAME_COUNT = (int) (FPS*REPLAY_LENGTH_IN_SECONDS);
 	private int replay_frames = 0;
 	private Queue<FrameSubtitleEntry> replay;
-	private static int replays = 0;
+	private volatile static int replays = 0;
 	
 	/** set this on the frame you want to have a subtitle */
 	private String subtitle = "";
@@ -97,7 +97,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	 */
 	public boolean doWeStartRecording() {
 		// record only games that the real AI takes part in
-		//return ids[0] == -1 || ids[1] == -1;
+	//return ids[0] == -1 || ids[1] == -1;
 		return false;
 	}
 	
@@ -116,7 +116,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		scores[0]+= (int) (MAX_BALL_SCORE - MAX_BALL_SCORE*blueBall/MAX_BALL_DISTANCE);
 		scores[1]+= (int) (MAX_BALL_SCORE - MAX_BALL_SCORE*yellowBall/MAX_BALL_DISTANCE);		
 		
-		subtitle = String.format("%.2f", timeElapsed)+" : "+this.toString();
+		//subtitle = String.format("%.2f", timeElapsed)+" : "+this.toString();
 		
 //		final AIVisualServoing ws = (AIVisualServoing) (ids[0] == -1 ? leftAI.getAI(): rightAI.getAI());
 //		point = new Vector2D[] {
@@ -245,9 +245,9 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		
 		sim.callback = this;
 		
-		leftAI = new AIMaster(leftBrick, sim, ids[0] != -1 ? new AINeuralNet(population[ids[0]]) : new AIVisualServoing());
+		leftAI = new AIMaster(leftBrick, ids[0] != -1 ? new AINeuralNet(population[ids[0]]) : new AIVisualServoing());
 		leftAI.setPrintStateChanges(false);
-		rightAI = new AIMaster(rightBrick, sim, ids[1] != -1 ? new AINeuralNet(population[ids[1]]) : new AIVisualServoing());
+		rightAI = new AIMaster(rightBrick, ids[1] != -1 ? new AINeuralNet(population[ids[1]]) : new AIVisualServoing());
 		rightAI.setPrintStateChanges(false);
 		
 		leftAI.setOwnTeamBlue(true);
@@ -282,21 +282,21 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 			final WorldState frame = sim.delayQueue.poll();
 			leftAI.processState(frame, false);
 			rightAI.processState(frame, false);
-			
+
 			timeElapsed += FRAME_TIME;
 			onNewFrame();
 			if (timeElapsed > GAMETIME) {
 				onTimeOut();
 				timeElapsed = 0;
 			}
-			
+
 			if (replay != null) {
-				final WorldState lS = leftAI.getAIWorldState();
-				final WorldState rS = rightAI.getAIWorldState();
-				final WorldState aiSees = 
-						WorldState.fromCentimeters(new WorldState(lS.getBallCoords(), lS.getBlueRobot(), rS.getYellowRobot(), lS.getWorldImage()));
-				
-				replay.add(new FrameSubtitleEntry(aiSees, subtitle, point));
+//				final WorldState lS = leftAI.getAIWorldState();
+//				final WorldState rS = rightAI.getAIWorldState();
+//				final WorldState aiSees = 
+//						WorldState.fromCentimeters(new WorldState(lS.getBallCoords(), lS.getBlueRobot(), rS.getYellowRobot(), lS.getWorldImage()));
+
+				replay.add(new FrameSubtitleEntry(state, subtitle, point));
 				replay_frames++;
 				if (replay_frames > REPLAY_FRAME_COUNT) {
 					replay_frames--;
@@ -343,7 +343,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	/**
 	 * Saves the replay of the current game. This function will work only if {@link #doWeStartRecording()} returned true during initialization of this game
 	 */
-	private synchronized void saveReplay() {
+	private void saveReplay() {
 		FrameSubtitleEntry[] entries = replay.toArray(new FrameSubtitleEntry[0]);
 		String[] subtitles = new String[entries.length];
 		Vector2D[][] points = new Vector2D[entries.length][];

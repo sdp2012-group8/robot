@@ -74,6 +74,11 @@ public class AIMaster extends WorldStateProvider {
 	private boolean printStateChanges = true;
 
 	
+	public AIMaster(Communicator comm, final BaseAI ai) {
+		this.ai = ai;
+		this.communicator = comm;
+	}
+	
 	/**
 	 * Create a new AI controller.
 	 * 
