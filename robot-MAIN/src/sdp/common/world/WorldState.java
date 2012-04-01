@@ -516,9 +516,10 @@ public class WorldState {
 	 * Read a world state from an XML file and return it.
 	 * 
 	 * @param filename Name of the file that contains the world state.
+	 * @param subtitle pass a new {@link StringBuilder}. Use {@link StringBuilder#toString()} to get the subtitle
 	 * @return An appropriate WorldState instance.
 	 */
-	public static WorldState loadWorldState(String filename) {
+	public static WorldState loadWorldState(String filename, StringBuilder subtitle) {
 		File file = new File(filename);
 		if (!file.exists()) {
 			LOGGER.info("The given world state file does not exist.");
@@ -548,6 +549,11 @@ public class WorldState {
 		Point2D.Double yellowPos = new Point2D.Double(yellowX, yellowY);
 		Robot yellowRobot = new Robot(yellowPos, yellowAngle);
 		
+		Element subElem = (Element) rootElement.getElementsByTagName("subtitle").item(0);
+		String sub = XmlUtils.getChildText(subElem, "text");
+		if (subtitle != null)
+			subtitle.append(sub);
+		
 		WorldState worldState = new WorldState(ball, blueRobot, yellowRobot, null);
 		
 		return worldState;
@@ -559,8 +565,9 @@ public class WorldState {
 	 * 
 	 * @param config Configuration to output.
 	 * @param filename Output filename.
+	 * @param subtitle write a subtitle along with the frame
 	 */
-	public static void writeWorldState(WorldState worldState, String filename) {
+	public static void writeWorldState(WorldState worldState, String filename, String subtitle) {
 		Document doc = XmlUtils.createBlankXmlDocument();
 		
 		Element rootElement = doc.createElement("worldstate");
@@ -582,6 +589,10 @@ public class WorldState {
 		XmlUtils.addChildDouble(doc, yellowElem, "y", worldState.getYellowRobot().getCoords().y);
 		XmlUtils.addChildDouble(doc, yellowElem, "angle", worldState.getYellowRobot().getAngle());
 		rootElement.appendChild(yellowElem);
+		
+		Element subElem = (Element) doc.createElement("subtitle");
+		XmlUtils.addChildText(doc, subElem, "text", subtitle);
+		rootElement.appendChild(subElem);
 
 		XmlUtils.writeXmlDocument(doc, filename);
 	}
@@ -645,9 +656,9 @@ public class WorldState {
 		return min;
 	}
 	
-	public static void saveMovie(WorldState[] states, String dir) {
+	public static void saveMovie(WorldState[] states, String dir, String[] subtitles) {
 		for (int i = 0; i < states.length; i++)
-			writeWorldState(states[i], dir+"/frame"+i+".xml");
+			writeWorldState(states[i], dir+"/frame"+i+".xml", subtitles[i]);
 	}
 	
 	/**
