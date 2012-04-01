@@ -40,7 +40,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	private WorldState state = null;
 	
 	/** simulation speed */
-	private static final int FPS = 15;
+	public static final int FPS = 15;
 	/** frame length */
 	private static final double FRAME_TIME = 1d / FPS;
 	
@@ -114,7 +114,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		leftGoals++;
 		resetPitch();
 		
-		//saveReplay("data/movies/left"+(replays++)+"-"+String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]));
+		saveReplay("data/movies/left"+(replays++)+"-"+String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]));
 	}
 
 	/**
@@ -128,7 +128,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		rightGoals++;
 		resetPitch();
 		
-		//saveReplay("data/movies/right"+(replays++)+"-"+String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]));
+		saveReplay("data/movies/right"+(replays++)+"-"+String.format("(%d)%d:%d(%d)", ids[0], leftGoals, rightGoals, ids[1]));
 	}
 
 	/**

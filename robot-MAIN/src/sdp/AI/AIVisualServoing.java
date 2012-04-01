@@ -431,8 +431,8 @@ public class AIVisualServoing extends BaseAI {
 		}
 		
 		// Get which walls the ball is next to.
-		boolean ballAdjacency[] = getWallsBallIsAdjacentTo();
-		System.out.println(Utilities.arrayToString(ballAdjacency));
+		//boolean ballAdjacency[] = getWallsBallIsAdjacentTo();
+		//System.out.println(Utilities.arrayToString(ballAdjacency));
 		
 		// Get the point to drive towards.
 		Vector2D target = new Vector2D(aiWorldState.getBallCoords());
