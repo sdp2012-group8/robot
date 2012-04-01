@@ -27,8 +27,8 @@ public class Painter {
 	private int off_x = 0, off_y = 0;
 	private  Robot[] robots;
 	public static Vector2D[] debug;
-	public static double point_off = AIVisualServoing.DEFAULT_POINT_OFF;
-	public static double targ_thresh = AIVisualServoing.DEFAULT_TARG_THRESH;
+	public static double point_off = AIVisualServoing.DEFAULT_OPTIMAL_POINT_OFFSET;
+	public static double targ_thresh = AIVisualServoing.DEFAULT_TARGET_THRESHOLD;
 
 	public Painter(BufferedImage im, WorldState ws) {
 		g = im.createGraphics();

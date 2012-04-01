@@ -32,7 +32,7 @@ public class HeuristicPathfinder implements Pathfinder {
 	 * @see sdp.AI.pathfinding.Pathfinder#getNextWaypoint(sdp.AI.AIWorldState, sdp.common.geometry.Vector2D, boolean)
 	 */
 	@Override
-	public Waypoint getWaypointForOurRobot(AIWorldState aiWorldState,
+	public Waypoint getNextWaypoint(AIWorldState aiWorldState,
 			Point2D.Double target, boolean ballIsObstacle) {
 		Vector2D targetVec = new Vector2D(target);		
 		Vector2D targetVecLocal = Robot.getLocalVector(aiWorldState.getOwnRobot(), targetVec);

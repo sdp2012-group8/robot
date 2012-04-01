@@ -219,7 +219,7 @@ public class MainImageProcessor extends BaseImageProcessor {
 		if (ballShapes.size() == 0) {
 			return new Point2D.Double(-1.0, -1.0);
 		} else {
-			CvSeq curBallShape = ballShapes.get(0);
+			CvSeq curBallShape = ProcUtils.getLargestShape(ballShapes);
 			
             CvRect ballBoundingRect = cvBoundingRect(curBallShape, 0);
             int bX = ballBoundingRect.x();

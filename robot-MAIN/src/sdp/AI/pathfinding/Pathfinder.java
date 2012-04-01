@@ -18,7 +18,6 @@ public interface Pathfinder {
 	 * @param ballIsObstacle Whether the ball should be considered an obstacle.
 	 * @return The next waypoint on the path.
 	 */
-	public abstract Waypoint getWaypointForOurRobot(AIWorldState worldState,
+	public abstract Waypoint getNextWaypoint(AIWorldState worldState,
 			Point2D.Double dest, boolean ballIsObstacle);
-
 }
