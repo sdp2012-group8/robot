@@ -22,6 +22,7 @@ public class AIVisualServoing extends BaseAI {
 	/** Attack modes for optimal point calculations. */
 	private enum AttackMode { DirectOnly, WallsOnly, Full }
 
+
 	/** Whether the robot is required to face the ball before kicking. */
 	private static final boolean REQUIRE_FACE_BALL_TO_KICK = false;
 	/** Whether the robot is allowed to drive in reverse. */
@@ -71,22 +72,30 @@ public class AIVisualServoing extends BaseAI {
 	/** Size of the pitch's vertical edge region. */
 	private static final double PITCH_V_EDGE_REGION_SIZE = Robot.LENGTH_CM * 0.7;
 	
+	/** High corner collision threshold. */
+	private static final int HIGH_CORNER_COLL_THRESH = 5;
+	/** Low corner collision threshold. */
+	private static final int LOW_CORNER_COLL_THRESH = 2;
 
-	// corner thresholds
-	private static final int THRESH_CORN_HIGH = 5;
-	private static final int THRESH_CORN_LOW = 2;
+	/** High front/back collision threshold. */
+	private static final int HIGH_FRONT_BACK_COLL_THRESH = 25;
+	/** Low front/back collision threshold. */
+	private static final int LOW_FRONT_BACK_COLL_THRESH = 15;
 
-	// back away threshold
-	private static final int THRESH_BACK_HIGH = 25;
-	private static final int THRESH_BACK_LOW = 15;
+	// TODO: Decouple the following constants from Painter.
+	/** Starting optimal point to ball offset. */
+	public static final double DEFAULT_OPTIMAL_POINT_OFFSET = 2 * Robot.LENGTH_CM;
+	/** Starting target distance threshold. */
+	public static final double DEFAULT_TARGET_THRESHOLD = 30;
 
-	public static final double DEFAULT_POINT_OFF = 2*Robot.LENGTH_CM;
-	private double point_off = DEFAULT_POINT_OFF;
-	public static final double DEFAULT_TARG_THRESH = 30;
-	private double targ_thresh = DEFAULT_TARG_THRESH;
+	/** The amount by which defense point is shifted on the X axis. */
+	private static final double BALL_DEFENSE_X_OFFSET = 10;
 
-	private static final double DEFEND_BALL_THRESHOLD = 10;
 	
+	/** Current optimal point offset. */
+	private double optimalPointOffset = DEFAULT_OPTIMAL_POINT_OFFSET;
+	/** Current target distance threshold */
+	private double targetThreshold = DEFAULT_TARGET_THRESHOLD;
 	
 	/** AI's heuristic pathfinder. */
 	private Pathfinder pathfinder;
@@ -119,10 +128,10 @@ public class AIVisualServoing extends BaseAI {
 	@Override
 	protected synchronized Command gotBall() throws IOException {
 		if (canWeAttack(aiWorldState)) {
-			point_off = DEFAULT_POINT_OFF;
-			targ_thresh = DEFAULT_TARG_THRESH;
-			Painter.point_off = point_off;
-			Painter.targ_thresh = targ_thresh;
+			optimalPointOffset = DEFAULT_OPTIMAL_POINT_OFFSET;
+			targetThreshold = DEFAULT_TARGET_THRESHOLD;
+			Painter.point_off = optimalPointOffset;
+			Painter.targ_thresh = targetThreshold;
 			//System.out.println("GOT BALL");
 			double angle = aiWorldState.getOwnRobot().getAngle();
 			if (aiWorldState.isOwnGoalLeft()) {
@@ -169,7 +178,7 @@ public class AIVisualServoing extends BaseAI {
 		
 		if (aiWorldState.isOwnGoalLeft()){
 			
-			double behind_ball =aiWorldState.getBallCoords().x - DEFEND_BALL_THRESHOLD;
+			double behind_ball =aiWorldState.getBallCoords().x - BALL_DEFENSE_X_OFFSET;
 			double rob_ang = GeomUtils.normaliseAngle(aiWorldState.getOwnRobot().getAngle());
 			double x = Math.max(aiWorldState.getOwnRobot().getCoords().x, 30);
 			if (behind_ball < x)
@@ -183,7 +192,7 @@ public class AIVisualServoing extends BaseAI {
 			int1 = new Point2D.Double(x, Robot.LENGTH_CM);
 			int2 = new Point2D.Double(x, WorldState.PITCH_HEIGHT_CM - Robot.LENGTH_CM);
 		} else {
-			double behind_ball =aiWorldState.getBallCoords().x + DEFEND_BALL_THRESHOLD;
+			double behind_ball =aiWorldState.getBallCoords().x + BALL_DEFENSE_X_OFFSET;
 			double rob_ang = GeomUtils.normaliseAngle(aiWorldState.getOwnRobot().getAngle());
 			double x = Math.min(aiWorldState.getOwnRobot().getCoords().x, WorldState.PITCH_WIDTH_CM - 30);
 
@@ -273,10 +282,10 @@ public class AIVisualServoing extends BaseAI {
 	 * @see sdp.AI.BaseAI#changedState()
 	 */
 	protected void changedState() {
-		point_off = DEFAULT_POINT_OFF;
-		targ_thresh = DEFAULT_TARG_THRESH;
-		Painter.point_off = point_off;
-		Painter.targ_thresh = targ_thresh;
+		optimalPointOffset = DEFAULT_OPTIMAL_POINT_OFFSET;
+		targetThreshold = DEFAULT_TARGET_THRESHOLD;
+		Painter.point_off = optimalPointOffset;
+		Painter.targ_thresh = targetThreshold;
 	}
 
 	/**
@@ -431,18 +440,17 @@ public class AIVisualServoing extends BaseAI {
 		}
 		
 		// Get which walls the ball is next to.
-		//boolean ballAdjacency[] = getWallsBallIsAdjacentTo();
-		//System.out.println(Utilities.arrayToString(ballAdjacency));
+		boolean ballAdjacency[] = getWallsBallIsAdjacentTo();
 		
 		// Get the point to drive towards.
 		Vector2D target = new Vector2D(aiWorldState.getBallCoords());
 		
 		Point2D.Double optimalPoint = null;
 		for (int i = 0; i < OPTIMAL_POINT_SEARCH_TRIES; i++) {
-			optimalPoint = getOptimalAttackPoint(aiWorldState, point_off, mode);
+			optimalPoint = getOptimalAttackPoint(aiWorldState, optimalPointOffset, mode);
 			
 			if (optimalPoint == null) {
-				point_off *= OPTIMAL_POINT_ADJUST;
+				optimalPointOffset *= OPTIMAL_POINT_ADJUST;
 			} else {
 				break;
 			}
@@ -456,7 +464,7 @@ public class AIVisualServoing extends BaseAI {
 
 		// Generate command to drive towards the target point.
 		boolean mustFaceTarget = (REQUIRE_FACE_BALL_TO_KICK
-				&& !Utilities.areDoublesEqual(point_off, DEFAULT_POINT_OFF));
+				&& !Utilities.areDoublesEqual(optimalPointOffset, DEFAULT_OPTIMAL_POINT_OFFSET));
 
 		Waypoint waypoint = pathfinder.getWaypointForOurRobot(aiWorldState, target, ballIsObstacle);
 		return getWaypointCommand(waypoint, mustFaceTarget);
@@ -508,36 +516,36 @@ public class AIVisualServoing extends BaseAI {
 			comm.drivingSpeed = Robot.MAX_DRIVING_SPEED;
 		}
 
-		reactToFrontBackCollisions(comm, true, waypoint.isEndpoint() ? THRESH_BACK_LOW : THRESH_BACK_HIGH);
-		reactToCornerCollisions(comm, waypoint.isEndpoint() ? THRESH_CORN_LOW : THRESH_CORN_HIGH);
+		reactToFrontBackCollisions(comm, true, waypoint.isEndpoint() ? LOW_FRONT_BACK_COLL_THRESH : HIGH_FRONT_BACK_COLL_THRESH);
+		reactToCornerCollisions(comm, waypoint.isEndpoint() ? LOW_CORNER_COLL_THRESH : HIGH_CORNER_COLL_THRESH);
 
 		if ((Math.abs(waypoint.getTurningAngle()) < 45)
-				&& (waypoint.getDistance() < targ_thresh)) {
-			point_off *= 0.5;
-			targ_thresh = point_off * 0.5;
+				&& (waypoint.getDistance() < targetThreshold)) {
+			optimalPointOffset *= 0.5;
+			targetThreshold = optimalPointOffset * 0.5;
 		}
-		if (point_off < OWN_BALL_KICK_DIST) {
-			point_off = OWN_BALL_KICK_DIST;
+		if (optimalPointOffset < OWN_BALL_KICK_DIST) {
+			optimalPointOffset = OWN_BALL_KICK_DIST;
 		}
 
 		Vector2D ball = new Vector2D(aiWorldState.getBallCoords());
 		if (aiWorldState.isOwnGoalLeft()) {
 			if (ball.getX() < aiWorldState.getOwnRobot().getCoords().getX()) {
-				point_off = DEFAULT_POINT_OFF;
-				targ_thresh = DEFAULT_TARG_THRESH;
+				optimalPointOffset = DEFAULT_OPTIMAL_POINT_OFFSET;
+				targetThreshold = DEFAULT_TARGET_THRESHOLD;
 			}
 		} else {
 			if (ball.getX() > aiWorldState.getOwnRobot().getCoords().getX()) {
-				point_off = DEFAULT_POINT_OFF;
-				targ_thresh = DEFAULT_TARG_THRESH;
+				optimalPointOffset = DEFAULT_OPTIMAL_POINT_OFFSET;
+				targetThreshold = DEFAULT_TARGET_THRESHOLD;
 			}
 		}
 
 		reduceSpeed(comm, waypoint.getCostToDest(), DECELERATION_DISTANCE,
 				Robot.MAX_DRIVING_SPEED / 2);
 
-		Painter.point_off = point_off;
-		Painter.targ_thresh = targ_thresh;
+		Painter.point_off = optimalPointOffset;
+		Painter.targ_thresh = targetThreshold;
 
 		comm.turningSpeed *= TURNING_SPEED_MULTIPLIER;
 		comm.drivingSpeed *= drivingSpeedMult;
