@@ -32,7 +32,7 @@ public class GeneticAlgorithm {
 	int gen = 0;
 	long fitTotal = 0;
 	long[] popFitness;
-	long[] avgFitness;
+	ArrayList<Long> avgFitness;
 	double[][] population;
 	double[][] intPopulation;
 	double[][] finalPopulation;
@@ -70,32 +70,18 @@ public class GeneticAlgorithm {
 				for (gen = 1; run; gen++) {
 					
 					run();
-					System.out.println("Generation: " + gen + "  average fitness: " + avgFitness[gen]);
+					long fittest = findFittest();
+					System.out.println("Generation: " + gen + "  average fitness: " + avgFitness.get(avgFitness.size()-1) + "  fittest: " + fittest);
 					//out.println("\nGeneration " + gen);
 
 					//printPop(); //TODO: change printpop to print fittest individual in population
 				}
 
-				long finalPopAvgFitness = avgFitness[gen-1];
-
 				/* Print the final generation */
-				System.out.println("Printing final population");
-				try {
-					fstream = new FileWriter(OUTPUT_DIR+"finalPopulation.gao");
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				out = new PrintWriter(fstream);
+				System.out.println("Saving final population");
 
-				out.println("Final Population\n");
-				
-				
-				
 				new AINeuralNet(population[findFittest()]).getNetwork().save(OUTPUT_DIR+"finalPop.nnet");
 				
-				out.println("Average - " + finalPopAvgFitness + "\n");
-
-				out.close();
 
 				/* Print the average fitness of each generation */
 				System.out.println("Printing average fitness of each generation");
@@ -108,8 +94,8 @@ public class GeneticAlgorithm {
 
 				out.println("Generations Fitness\n");
 
-				for (int i = 0; i < GENERATIONS+1; i++) {
-					out.print(avgFitness[i] + ",");
+				for ( Long iter : avgFitness) {
+					out.print(iter.toString() + ",");
 				}
 				out.close();
 
@@ -118,20 +104,6 @@ public class GeneticAlgorithm {
 				// stop workers
 				for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++)
 					workers[i].interrupt();
-	}
-
-	/** 
-	 * Prints the current population and fitness to the file "out.txt"
-	 **/
-	private void printPop() {
-		for (int i = 0; i < POPSIZE; i++) {
-			out.print(popFitness[i] + " - ");
-			for (int j = 0; j < GENE_NUMBER; j++) {
-				out.print(population[i][j] + " ");
-			}
-			out.println("");
-		}
-		out.println("Average - " + avgFitness[gen]);
 	}
 
 
@@ -143,7 +115,7 @@ public class GeneticAlgorithm {
 		population = new double[POPSIZE][GENE_NUMBER];
 		intPopulation = new double[POPSIZE][GENE_NUMBER];
 		popFitness = new long[POPSIZE];
-		avgFitness = new long[GENERATIONS+1];
+		avgFitness = new ArrayList<Long>();
 		gen = 0;
 		fitTotal = 0;
 
@@ -151,7 +123,7 @@ public class GeneticAlgorithm {
 			population[i] = AINeuralNet.getRandomWeights();
 		}
 		popFitness = calcFitness();
-		avgFitness[gen] = getAverage(popFitness);
+		avgFitness.add(getAverage(popFitness));
 	}
 
 	/** 
@@ -159,8 +131,7 @@ public class GeneticAlgorithm {
 	 **/
 	private void run() {
 		// Calculate the next generation
-		SUSampling();
-		//roulette();		
+		SUSampling();	
 		crossover();
 		mutate();
 		population = new double[POPSIZE][GENE_NUMBER];
@@ -169,7 +140,7 @@ public class GeneticAlgorithm {
 		}
 
 		popFitness = calcFitness();
-		avgFitness[gen] = getAverage(popFitness);
+		avgFitness.add(getAverage(popFitness));
 	}
 
 	/** 
