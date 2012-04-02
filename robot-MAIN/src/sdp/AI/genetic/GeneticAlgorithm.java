@@ -30,7 +30,19 @@ public class GeneticAlgorithm {
 	/** Number of threads. Every thread can simulate one game at a time */
 	final static int LOCAL_GAME_THREADS = 4;
 	/** For distributed game simulation */
-	final static String[] DISTRIBUTED_GAMES_THREADS_HOST_NAMES = new String[]{"elis"};//[]{"ssh.remote.one", "ssh.rmote.two"};
+	final static String[] DISTRIBUTED_GAMES_THREADS_HOST_NAMES = new String[]{
+		"student.compute",
+		"elis"
+//		"hordichuk",
+//		"honda",
+//		"zonda",
+//		"lexus",
+//		"lappy",
+//		"mitsubishi",
+//		"mercedes",
+//		"nissan",
+//		"audi"
+		};//[]{"ssh.remote.one", "ssh.rmote.two"};
 	
 	static long max_fitness;
 	
@@ -88,7 +100,7 @@ public class GeneticAlgorithm {
 				for (int i = LOCAL_GAME_THREADS; i < LOCAL_GAME_THREADS+DISTRIBUTED_GAMES_THREADS_HOST_NAMES.length; i++) {
 					System.out.println("Waiting for "+DISTRIBUTED_GAMES_THREADS_HOST_NAMES[i-LOCAL_GAME_THREADS]+" to connect..."); 
 					final GameRunnerServer worker = new GameRunnerServer(DISTRIBUTED_GAMES_THREADS_HOST_NAMES[i-LOCAL_GAME_THREADS], ssh_username, ssh_password);
-					while (!worker.assigned) {
+					while (!worker.isAssigned()) {
 						try {
 							Thread.sleep(100);
 						} catch (InterruptedException e) {
@@ -399,16 +411,23 @@ public class GeneticAlgorithm {
 		synchronized (lock) {
 			boolean wait = true;
 			try {
-				while (wait) {
+				waitloop: while (wait) {
 					lock.wait(3000);
 
+					boolean dowecontinue = false;
+					
 					// check if workers are ready
 					for (int i = 0; i < workers.length; i++)
 						if (workers[i].getGamesInQueueCount() != 0) {
-							continue;
+							System.out.println(i+" still has "+workers[i].getGamesInQueueCount());
+							dowecontinue = true;
+							//continue waitloop;
 						}
 
-					break;
+					System.out.println();
+					
+					if (!dowecontinue)
+						break;
 
 				}
 			} catch (Exception e) {

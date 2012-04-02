@@ -22,7 +22,7 @@ import sdp.AI.genetic.distributed.Server.TCPCommands;
 public class GameRunnerServer extends GameRunner {
 	
 	public final String clientName;
-	
+	private String uname, password;
 	public volatile boolean assigned = false;
 	
 	public void establishConnectionWithClient(InetAddress ip, int port, final String clientName, String uname, String password) {
@@ -33,42 +33,13 @@ public class GameRunnerServer extends GameRunner {
 			e.printStackTrace();
 		}
 		
-//		java.util.Properties config = new java.util.Properties(); 
-//		config.put("StrictHostKeyChecking", "no");
-//		
-//
-//		
-//		JSch ssh = new JSch();
-//		try {
-//			Session session = ssh.getSession(uname, clientName);
-//			session.setConfig(config);
-//			session.setPassword(password);
-//			
-//			session.connect();
-//			Channel channel=session.openChannel("shell");
-//			
-//			final PrintStream ps = new PrintStream(channel.getOutputStream());
-//			final BufferedReader r = new BufferedReader(new InputStreamReader(channel.getInputStream()));
-//			
-//			new Thread() {
-//				public void run() {
-//					while (!interrupted()) {
-//						try {
-//							System.out.println(clientName+" says \""+r.readLine()+"\"");
-//						} catch (IOException e) {
-//							e.printStackTrace();
-//						}
-//					}
-//				};
-//			}.start();
-//			
-//			ps.println("s0932707");
-//			
-//			
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
 		
+	}
+	
+	public boolean isAssigned() {
+		if (!assigned)
+			establishConnectionWithClient(Server.getIP(), Server.getPort(), clientName, uname, password);
+		return assigned;
 	}
 	
 	
@@ -78,6 +49,8 @@ public class GameRunnerServer extends GameRunner {
 
 	public GameRunnerServer(String clientName, String uname, String password) {
 		this.clientName = clientName;
+		this.uname = uname;
+		this.password = password;
 		try {
 			
 			Server.registerServer(this);
@@ -103,8 +76,6 @@ public class GameRunnerServer extends GameRunner {
 			// read game id
 			int gameid = in.readInt();
 			
-			System.out.println("Receiving game with id "+gameid+" from "+clientName);
-			
 			// find the referenced gamie
 			Game game = null;
 			for (Game g : games_to_run) {
@@ -127,7 +98,7 @@ public class GameRunnerServer extends GameRunner {
 			games_to_run.remove(game);
 			announceFinished(game, fitnesses);
 			
-			System.out.println("Game "+game+" (id "+game.gameId+") received from "+clientName);
+			System.out.println("Game "+game+" (id "+game.gameId+") received from "+clientName+"; "+getGamesInQueueCount() +" are expected");
 			
 			break;
 		}
