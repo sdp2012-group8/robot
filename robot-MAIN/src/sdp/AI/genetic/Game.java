@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import org.neuroph.core.input.WeightsFunction;
+
 import sdp.AI.AIMaster;
 import sdp.AI.AIVisualServoing;
 import sdp.AI.AIMaster.AIState;
@@ -29,8 +31,6 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	/** use to get the current game id */
 	public final int gameId;
 	
-	/** callback to be notified when the game ends */
-	private Callback callback;
 	/** current state of the game */
 	private volatile gamestate currentState = gamestate.ready;
 	
@@ -46,7 +46,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	private static final int DELAY_SIMULATION = 250;
 	public static final int DELAY_SIZE = (int) (DELAY_SIMULATION/(1000*FRAME_TIME));
 	
-	private double[][] population;
+	public final double[] weights_i, weights_j;
 	
 	/** the x coordinate of the robot that would be placed on left */
 	private static final double PLACEMENT_LEFT = 20; // in cm
@@ -107,7 +107,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	public boolean doWeStartRecording() {
 		// record only games that the real AI takes part in
 	//return ids[0] == -1 || ids[1] == -1;
-		return true;
+		return false;
 	}
 	
 	/**
@@ -135,7 +135,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		if (rightAIV.didIGetBall())
 			scores[1] += GOT_BALL;
 		
-		subtitle = String.format("%.2f", timeElapsed)+" : "+this.toString();
+		//subtitle = String.format("%.2f", timeElapsed)+" : "+this.toString();
 		
 //		final AIVisualServoing ws = (AIVisualServoing) (ids[0] == -1 ? leftAI.getAI(): rightAI.getAI());
 //		point = new Vector2D[] {
@@ -148,10 +148,10 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		// mark end of game
 		simulateGame = false;
 //		if (ids[0] == -1 || ids[1] == -1) {
-		if (rightGoals > 2 || leftGoals > 2) {
-			saveReplay();
-			System.out.printf("(id %02d) %02d:%02d (%02d id)\n", ids[0], rightGoals, leftGoals, ids[1]);
-		}
+//		if (rightGoals > 2 || leftGoals > 2) {
+//			saveReplay();
+//			System.out.printf("(id %02d) %02d:%02d (%02d id)\n", ids[0], rightGoals, leftGoals, ids[1]);
+//		}
 	}
 
 	/**
@@ -223,22 +223,23 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	 * Initialize a new game
 	 * @param i the left robot id
 	 * @param j thr right robot id
-	 * @param population arrays to pick from
-	 * @param callback to be used to notify caller back when game is finished and pass scores
+	 * @param weights_i the weights of the left robot
+	 * @param weights_j the weights of the right robot
 	 * @param gameId the id of the current game
 	 */
-	public Game(int i, int j, final double[][] population, Callback callback, int gameId) {
-		this.population = population;
+	public Game(int i, int j, final double[] weights_i, final double[] weights_j, int gameId) {
+		this.weights_i = weights_i;
+		this.weights_j = weights_j;
 		ids = new int[]{i, j};
-		this.callback = callback;
 		this.gameId = gameId;
 		simulateGame = true;
 	}
 	
 	/**
 	 * Does the simulation (in current thread)
+	 * @return fitness of the two participants
 	 */
-	public void simulate() {
+	public long[] simulate() {
 		currentState = gamestate.running;
 		
 		timeElapsed = 0;
@@ -265,10 +266,11 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		
 		sim.callback = this;
 		
-		leftAIV = ids[0] != -1 ? new AINeuralNet(population[ids[0]]) : new AIVisualServoing();
+
+		leftAIV = ids[0] != -1 ? new AINeuralNet(weights_i) : new AIVisualServoing();
 		leftAI = new AIMaster(leftBrick, leftAIV);
 		leftAI.setPrintStateChanges(false);
-		rightAIV = ids[1] != -1 ? new AINeuralNet(population[ids[1]]) : new AIVisualServoing();
+		rightAIV = ids[1] != -1 ? new AINeuralNet(weights_j) : new AIVisualServoing();
 		rightAI = new AIMaster(rightBrick, rightAIV);
 		rightAI.setPrintStateChanges(false);
 		
@@ -331,7 +333,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		//System.out.println("Time for a game: " + (System.currentTimeMillis()-timer)/1000);
 		
 		currentState = gamestate.finished;
-		callback.onFinished(this, scores);
+		return scores;
 
 	}
 	
@@ -385,23 +387,6 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	
 	
 	// callback section
-	
-	/**
-	 * A callback that receives fitness scores after the game has been finised
-	 * 
-	 * @author Martin Marinov
-	 *
-	 */
-	public static interface Callback {
-		
-		/**
-		 * When game finishes, this gets called
-		 * @param the game that the result is coming from
-		 * @param fitness of network 0 and 1
-		 */
-		public void onFinished(final Game caller, final long[] fitness);
-
-	}
 	
 	@Override
 	public String toString() {

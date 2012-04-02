@@ -49,7 +49,7 @@ public class WorldStateRandomizer {
 		if (randomNumbers == null)
 			regenerateNumbers();
 		
-		if (index >= randomNumbers.length)
+		if (index >= RANDOM_ARRAY_SIZE)
 			index = 0;
 		return randomNumbers[index++];
 	}
