@@ -37,8 +37,6 @@ public class GameRunnerServer extends GameRunner {
 	}
 	
 	public boolean isAssigned() {
-		if (!assigned)
-			establishConnectionWithClient(Server.getIP(), Server.getPort(), clientName, uname, password);
 		return assigned;
 	}
 	
@@ -51,9 +49,12 @@ public class GameRunnerServer extends GameRunner {
 		this.clientName = clientName;
 		this.uname = uname;
 		this.password = password;
+		Server.registerServer(this);
+
+	}
+	
+	public void connect() {
 		try {
-			
-			Server.registerServer(this);
 			
 			establishConnectionWithClient(Server.getIP(), Server.getPort(), clientName, uname, password);
 

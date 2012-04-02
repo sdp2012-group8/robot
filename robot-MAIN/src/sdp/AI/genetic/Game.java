@@ -3,6 +3,7 @@ package sdp.AI.genetic;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Random;
 
 import org.neuroph.core.input.WeightsFunction;
 
@@ -61,13 +62,13 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	private static final int MAX_BALL_DISTANCE = 70;
 	
 	//scores
-	private static final int MAX_BALL_SCORE = 20;
-	private static final int MAX_BALL_DISTANCE_SCORE = 10;
+	private static final int MAX_BALL_SCORE = 5;
+	private static final int MAX_BALL_DISTANCE_SCORE = 2;
 	private static final int GOAL_SCORE = 50000;
 	private static final int COLLISION = -1000;
 	private static final int STOP_COLLISION = 400;
 	private static final int STAY_IN_COLLISION = -15;
-	private static final int GOT_BALL = 1000;
+	private static final int GOT_BALL = 5000;
 	
 	private static final int GAMETIME = 60; // in sec
 	
@@ -338,23 +339,59 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	}
 	
 	private void resetPitch() {
+		
+		RandomizeField();
+		
+//		leftAI.setState(AIState.SIT);
+//		rightAI.setState(AIState.SIT);
+//		
+//		sim.putBallAt(0.5 + WorldStateRandomizer.getRandom()*BALL_RAND/ WorldState.PITCH_WIDTH_CM,
+//					WorldState.PITCH_HEIGHT_CM / (2 * WorldState.PITCH_WIDTH_CM) + WorldStateRandomizer.getRandom()*BALL_RAND/ WorldState.PITCH_WIDTH_CM);
+//		
+//		sim.putAt((PLACEMENT_LEFT + PLACEMENT_X_RAND*WorldStateRandomizer.getRandom())/WorldState.PITCH_WIDTH_CM,
+//				WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM) + PLACEMENT_Y_RAND*WorldStateRandomizer.getRandom()/WorldState.PITCH_WIDTH_CM,
+//				0, WorldStateRandomizer.getRandom()*ANGLE_RAND);
+//		
+//		sim.putAt((PLACEMENT_RIGHT + PLACEMENT_X_RAND*WorldStateRandomizer.getRandom())/WorldState.PITCH_WIDTH_CM,
+//				WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM) + PLACEMENT_Y_RAND*WorldStateRandomizer.getRandom()/WorldState.PITCH_WIDTH_CM,
+//				1, 180+WorldStateRandomizer.getRandom()*ANGLE_RAND);
+//		
+//		leftAI.setState(AIState.PLAY);
+//		rightAI.setState(AIState.PLAY);
+		
+	}
+	
+	private void RandomizeField() {
+		
 		leftAI.setState(AIState.SIT);
 		rightAI.setState(AIState.SIT);
 		
-		sim.putBallAt(0.5 + WorldStateRandomizer.getRandom()*BALL_RAND/ WorldState.PITCH_WIDTH_CM,
-					WorldState.PITCH_HEIGHT_CM / (2 * WorldState.PITCH_WIDTH_CM) + WorldStateRandomizer.getRandom()*BALL_RAND/ WorldState.PITCH_WIDTH_CM);
-		
-		sim.putAt((PLACEMENT_LEFT + PLACEMENT_X_RAND*WorldStateRandomizer.getRandom())/WorldState.PITCH_WIDTH_CM,
-				WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM) + PLACEMENT_Y_RAND*WorldStateRandomizer.getRandom()/WorldState.PITCH_WIDTH_CM,
-				0, WorldStateRandomizer.getRandom()*ANGLE_RAND);
-		
-		sim.putAt((PLACEMENT_RIGHT + PLACEMENT_X_RAND*WorldStateRandomizer.getRandom())/WorldState.PITCH_WIDTH_CM,
-				WorldState.PITCH_HEIGHT_CM/(2*WorldState.PITCH_WIDTH_CM) + PLACEMENT_Y_RAND*WorldStateRandomizer.getRandom()/WorldState.PITCH_WIDTH_CM,
-				1, 180+WorldStateRandomizer.getRandom()*ANGLE_RAND);
+		Random r = new Random();
+		Vector2D ballpos, robot2;
+		Vector2D robot1 = new Vector2D(
+				(25 + r.nextDouble()*(WorldState.PITCH_WIDTH_CM-50))/WorldState.PITCH_WIDTH_CM,
+				(25 + r.nextDouble()*(WorldState.PITCH_HEIGHT_CM-50))/WorldState.PITCH_WIDTH_CM);
+		while (true) {
+			robot2 = new Vector2D(
+					(25 + r.nextDouble()*(WorldState.PITCH_WIDTH_CM-50))/WorldState.PITCH_WIDTH_CM,
+					(25 + r.nextDouble()*(WorldState.PITCH_HEIGHT_CM-50))/WorldState.PITCH_WIDTH_CM);
+			if (Vector2D.subtract(robot1, robot2).getLength() > 35/WorldState.PITCH_WIDTH_CM)
+				break;
+		}
+		while (true) {
+			ballpos = new Vector2D(
+					(7.5 + r.nextDouble()*(WorldState.PITCH_WIDTH_CM-30))/WorldState.PITCH_WIDTH_CM,
+					(7.5 + r.nextDouble()*(WorldState.PITCH_HEIGHT_CM-30))/WorldState.PITCH_WIDTH_CM);
+			if (Vector2D.subtract(robot1, ballpos).getLength() > 35/WorldState.PITCH_WIDTH_CM &&
+					Vector2D.subtract(robot1, ballpos).getLength() > 35/WorldState.PITCH_WIDTH_CM)
+				break;
+		}
+		sim.putAt(robot1.getX(), robot1.getY(), 0, 180-r.nextInt(360));
+		sim.putAt(robot2.getX(), robot2.getY(), 1, 180-r.nextInt(360));
+		sim.putBallAt(ballpos.getX(), ballpos.getY());
 		
 		leftAI.setState(AIState.PLAY);
 		rightAI.setState(AIState.PLAY);
-		
 	}
 
 	/**

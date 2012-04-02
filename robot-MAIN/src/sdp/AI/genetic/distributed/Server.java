@@ -64,6 +64,9 @@ public class Server {
 								}
 							}
 							
+							if (serv == null)
+								System.err.println("WE HAVE A BIG ERROR HERE");
+							
 							final GameRunnerServer gameServer = serv;
 							
 							System.out.println("New client assigned to "+gameServer.clientName);

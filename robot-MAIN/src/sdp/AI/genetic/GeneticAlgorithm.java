@@ -28,11 +28,11 @@ public class GeneticAlgorithm {
 	/** Number of neighbours each individual plays against. Must be odd*/
 	final static int NEIGHBOUR_NUMBER = 11;
 	/** Number of threads. Every thread can simulate one game at a time */
-	final static int LOCAL_GAME_THREADS = 4;
+	final static int LOCAL_GAME_THREADS = 15;
 	/** For distributed game simulation */
 	final static String[] DISTRIBUTED_GAMES_THREADS_HOST_NAMES = new String[]{
-		"student.compute",
-		"elis"
+//		"student.compute",
+//		"elis"
 //		"hordichuk",
 //		"honda",
 //		"zonda",
@@ -100,6 +100,7 @@ public class GeneticAlgorithm {
 				for (int i = LOCAL_GAME_THREADS; i < LOCAL_GAME_THREADS+DISTRIBUTED_GAMES_THREADS_HOST_NAMES.length; i++) {
 					System.out.println("Waiting for "+DISTRIBUTED_GAMES_THREADS_HOST_NAMES[i-LOCAL_GAME_THREADS]+" to connect..."); 
 					final GameRunnerServer worker = new GameRunnerServer(DISTRIBUTED_GAMES_THREADS_HOST_NAMES[i-LOCAL_GAME_THREADS], ssh_username, ssh_password);
+					worker.connect();
 					while (!worker.isAssigned()) {
 						try {
 							Thread.sleep(100);
@@ -109,6 +110,7 @@ public class GeneticAlgorithm {
 					}
 					workers[i] = worker;
 				}
+
 
 				System.out.println("Starting setup");
 				setup();
