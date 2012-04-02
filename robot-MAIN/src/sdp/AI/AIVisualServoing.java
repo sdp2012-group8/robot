@@ -24,7 +24,7 @@ public class AIVisualServoing extends BaseAI {
 
 
 	/** Whether the robot is required to face the ball before kicking. */
-	private static final boolean REQUIRE_FACE_BALL_TO_KICK = false;
+	private static final boolean REQUIRE_FACE_BALL_TO_KICK = true;
 	/** Whether the robot is allowed to drive in reverse. */
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
 	/** Whether wall handling logic should be used. */
@@ -33,53 +33,52 @@ public class AIVisualServoing extends BaseAI {
 	private static final boolean USE_HEURISTIC_PATHFINDER = false;
 	/** Whether to use milestone 4 defence logic. */
 	private static final boolean USE_MILESTONE_4_DEFENCE = false;
-
 	/** Whether the robot should attempt to use wall kicks. */
 	private static final boolean WALL_KICKS_ENABLED = true;
-	
+
 	/** Distance at which the robot will begin slowing down. */
-	private static final double DECELERATION_DISTANCE = 60;
+	private static final double DECELERATION_DISTANCE = 30;
 
 	/** The multiplier of the final driving speed. */
 	private static final double DRIVING_SPEED_MULTIPLIER = 1;
 	/** What fraction of forward speed the robot will lose when turning. */
-	private static final double FORWARD_LOSS_MULTIPLIER = 0.8;
+	private static final double FORWARD_LOSS_MULTIPLIER = 0.7;
 	/** Turning angle threshold for stop turns. */
-	private static final double STOP_TURN_THRESHOLD = 120;
+	private static final double STOP_TURN_THRESHOLD = 90;
 	/** The multiplier of the final turning speed. */
 	private static final double TURNING_SPEED_MULTIPLIER = 1.8;
-	
+
 	/** The number of targets, when considering a direct attack. */
 	private static final int DIRECT_ATTACK_TARGET_COUNT = 9;
-	
+
 	/** How close our robot should be to the ball before it attempts to kick it. */
 	private static final double OWN_BALL_KICK_DIST = 6;
 	/** How close enemy robot should be to the ball before we think it will kick it. */
 	private static final double ENEMY_BALL_KICK_DIST = Robot.LENGTH_CM;
-	
+
 	/** Distance threshold for ball-robot direction ray tests. */
 	private static final double BALL_TO_DIRECTION_PROXIMITY_THRESHOLD = Robot.WIDTH_CM / 2;
-	
+
 	/** How far a robot can be away from a point before we think it is there. */
 	private static final double ROBOT_POSITION_TOLERANCE = 10;
-	
+
 	/** At what distance to the ball should the robot begin turning in game start. */
 	private static final double START_TURNING_DISTANCE = 40;
 	/** X value offset of the target when the ball is reached in game start. */
 	private static final double START_TURNING_X_SHIFT = 30;
 	/** Y value offset of the target when the ball is reached in game start. */
 	private static final double START_TURNING_Y_SHIFT = 30;
-	
+
 	/** The ratio by which optimal distance gets adjusted in each attempt. */
 	private static final double OPTIMAL_POINT_ADJUST = 0.8;
 	/** How many times to try to find the optimal point. */
 	private static final int OPTIMAL_POINT_SEARCH_TRIES = 20;
-	
+
 	/** Size of the pitch's horizontal edge region. */
 	private static final double PITCH_H_EDGE_REGION_SIZE = Robot.LENGTH_CM * 0.7;
 	/** Size of the pitch's vertical edge region. */
 	private static final double PITCH_V_EDGE_REGION_SIZE = Robot.LENGTH_CM * 0.7;
-	
+
 	/** High corner collision threshold. */
 	private static final int HIGH_CORNER_COLL_THRESH = 5;
 	/** Low corner collision threshold. */
@@ -98,12 +97,12 @@ public class AIVisualServoing extends BaseAI {
 
 	/** The amount by which defense point is shifted on the X axis. */
 	private static final double BALL_DEFENSE_X_OFFSET = 10;
-	
+
 	/** X coordinate adjustment of robot destination in own wall ball logic. */
 	private static final double OWN_WALL_BALL_X_SHIFT = Robot.LENGTH_CM;
 	/** Y coordinate adjustment of robot destination in own wall ball logic. */
 	private static final double OWN_WALL_BALL_Y_SHIFT = Robot.LENGTH_CM / 4;
-	
+
 	/** Attack angle of the side wall ball logic. */
 	private static final double SIDE_WALL_ATTACK_DIR = 30.0;
 	/** Side wall ball attack point offset from the ball. */
@@ -154,8 +153,6 @@ public class AIVisualServoing extends BaseAI {
 			wasGotBall = true;
 			optimalPointOffset = DEFAULT_OPTIMAL_POINT_OFFSET;
 			targetThreshold = DEFAULT_TARGET_THRESHOLD;
-			Painter.point_off = optimalPointOffset;
-			Painter.targ_thresh = targetThreshold;
 			//System.out.println("GOT BALL");
 			double angle = aiWorldState.getOwnRobot().getAngle();
 			if (aiWorldState.isOwnGoalLeft()) {
@@ -193,7 +190,7 @@ public class AIVisualServoing extends BaseAI {
 			if (robotToDestDist < ROBOT_POSITION_TOLERANCE) {
 				return sit();
 			} else {
-				Waypoint waypoint = pathfinder.getNextWaypoint(aiWorldState, target, true);
+				ArrayList<Waypoint> waypoint = pathfinder.getPath(aiWorldState, target, true);
 				return getWaypointCommand(waypoint, false);
 			}
 		}
@@ -277,7 +274,7 @@ public class AIVisualServoing extends BaseAI {
 
 		if(can_we_go_to_intercept)	{			
 			if (dist > 5)
-				com = getWaypointCommand(pathfinder.getNextWaypoint(aiWorldState, point, false), false, 1, 20);
+				com = getWaypointCommand(pathfinder.getPath(aiWorldState, point, false), false, 1, 20);
 			
 			com.acceleration = 150;
 			reduceSpeed(com, dist, 20, 0);
@@ -287,7 +284,7 @@ public class AIVisualServoing extends BaseAI {
 
 		if(aiWorldState.getEnemyRobot().getAngle()<-90 && aiWorldState.getEnemyRobot().getAngle()>-180) {
 			if (dist2 > 10)
-				com = getWaypointCommand(pathfinder.getNextWaypoint(aiWorldState, point2, false), false, 1, 20);
+				com = getWaypointCommand(pathfinder.getPath(aiWorldState, point2, false), false, 1, 20);
 			
 			com.acceleration = 150;
 			reduceSpeed(com, dist2, 20, 0);
@@ -297,7 +294,7 @@ public class AIVisualServoing extends BaseAI {
 
 		if(aiWorldState.getEnemyRobot().getAngle()>90 && aiWorldState.getEnemyRobot().getAngle()<180 ){
 			if (dist3 > 10)
-				com = getWaypointCommand(pathfinder.getNextWaypoint(aiWorldState, point3, false), false, 1, 20);
+				com = getWaypointCommand(pathfinder.getPath(aiWorldState, point3, false), false, 1, 20);
 			
 			com.acceleration = 150;
 			reduceSpeed(com, dist3, 20, 0);
@@ -316,8 +313,6 @@ public class AIVisualServoing extends BaseAI {
 	protected void changedState() {
 		optimalPointOffset = DEFAULT_OPTIMAL_POINT_OFFSET;
 		targetThreshold = DEFAULT_TARGET_THRESHOLD;
-		Painter.point_off = optimalPointOffset;
-		Painter.targ_thresh = targetThreshold;
 	}
 
 	/**
@@ -452,9 +447,9 @@ public class AIVisualServoing extends BaseAI {
 			target.y += START_TURNING_Y_SHIFT;
 		}
 		
-		Waypoint waypoint = pathfinder.getNextWaypoint(aiWorldState,
+		ArrayList<Waypoint> path = pathfinder.getPath(aiWorldState,
 				target, false);
-		return getWaypointCommand(waypoint, true);
+		return getWaypointCommand(path, true);
 	}
 
 
@@ -510,8 +505,8 @@ public class AIVisualServoing extends BaseAI {
 
 		lastTarget = target;
 		
-		Waypoint waypoint = pathfinder.getNextWaypoint(aiWorldState, target, ballIsObstacle);
-		return getWaypointCommand(waypoint, mustFaceTarget);
+		ArrayList<Waypoint> path = pathfinder.getPath(aiWorldState, target, ballIsObstacle);
+		return getWaypointCommand(path, mustFaceTarget);
 	}
 	
 	
@@ -540,14 +535,31 @@ public class AIVisualServoing extends BaseAI {
 	 * 		waypoint.
 	 */
 	private Command getWaypointCommand(Waypoint waypoint, boolean mustFaceTarget) {
-		return getWaypointCommand(waypoint, mustFaceTarget, DRIVING_SPEED_MULTIPLIER,
+		ArrayList<Waypoint> path = new ArrayList<Waypoint>();
+		path.add(waypoint);
+		
+		return getWaypointCommand(path, mustFaceTarget);
+	}
+	
+	/**
+	 * Generate a command that will get the robot closer to the specified
+	 * sequence of waypoints.
+	 * 
+	 * @param path Target path.
+	 * @param mustFaceTarget Whether the robot is required to face the point
+	 * 		at all times.
+	 * @return A command that will get the robot closer towards the given
+	 * 		waypoint.
+	 */
+	private Command getWaypointCommand(ArrayList<Waypoint> path, boolean mustFaceTarget) {
+		return getWaypointCommand(path, mustFaceTarget, DRIVING_SPEED_MULTIPLIER,
 				STOP_TURN_THRESHOLD);
 	}
 
 	/**
 	 * Generate a command that will get the robot closer to the specified
-	 * waypoint. This version allows to specify custom driving speed multiplier
-	 * and maximum turning speed.
+	 * sequence of waypoints. This version allows to specify custom driving
+	 * speed multiplier and maximum turning speed.
 	 * 
 	 * @param waypoint Point to move towards.
 	 * @param mustFaceTarget Whether the robot is required to face the point
@@ -557,9 +569,10 @@ public class AIVisualServoing extends BaseAI {
 	 * @return A command that will get the robot closer towards the given
 	 * 		waypoint.
 	 */
-	private Command getWaypointCommand(Waypoint waypoint, boolean mustFaceTarget,
-			double drivingSpeedMult, double stopTurnThreshold) {
+	private Command getWaypointCommand(ArrayList<Waypoint> path,
+			boolean mustFaceTarget,	double drivingSpeedMult, double stopTurnThreshold) {
 		Command comm = new Command(0.0, 0.0, false);
+		Waypoint waypoint = path.get(0);
 
 		comm.turningSpeed = waypoint.getTurningAngle();
 
@@ -601,9 +614,6 @@ public class AIVisualServoing extends BaseAI {
 
 		reduceSpeed(comm, waypoint.getCostToDest(), DECELERATION_DISTANCE,
 				Robot.MAX_DRIVING_SPEED / 2);
-
-		Painter.point_off = optimalPointOffset;
-		Painter.targ_thresh = targetThreshold;
 
 		comm.turningSpeed *= TURNING_SPEED_MULTIPLIER;
 		comm.drivingSpeed *= drivingSpeedMult;
@@ -801,8 +811,8 @@ public class AIVisualServoing extends BaseAI {
 		if (robotToDestDist < ROBOT_POSITION_TOLERANCE) {
 			return sit();
 		} else {
-			Waypoint waypoint = pathfinder.getNextWaypoint(aiWorldState, dest, true);
-			return getWaypointCommand(waypoint, false);
+			ArrayList<Waypoint> path = pathfinder.getPath(aiWorldState, dest, true);
+			return getWaypointCommand(path, false);
 		}
 	}
 	
@@ -848,8 +858,8 @@ public class AIVisualServoing extends BaseAI {
 			Waypoint waypoint = getUnconditionalWaypoint(shiftedBall);
 			return getWaypointCommand(waypoint, true);
 		} else {		
-			Waypoint waypoint = pathfinder.getNextWaypoint(aiWorldState, attackPoint, true);
-			return getWaypointCommand(waypoint, false);
+			ArrayList<Waypoint> path = pathfinder.getPath(aiWorldState, attackPoint, true);
+			return getWaypointCommand(path, false);
 		}
 	}
 	

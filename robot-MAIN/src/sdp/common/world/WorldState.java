@@ -31,25 +31,27 @@ public class WorldState {
 	public static final int BLUE_IS_OBSTACLE_FLAG = 0x2;
 	/** A flag that denotes that yellow robot should be considered an obstacle. */
 	public static final int YELLOW_IS_OBSTACLE_FLAG = 0x4;
+	/** A flag that denotes that walls should be considered an obstacle. */
+	public static final int WALL_IS_OBSTACLE_FLAG = 0x8;
 	
 	/** Radius of the ball obstacle circle. */
-	private static final double BALL_OBSTACLE_RADIUS = 10;
+	private static final double BALL_OBSTACLE_RADIUS = 5;
 	/** Radius of the robot obstacle circle. */
 	private static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.9;
 	/** The amount by which obstacles are increased in extraction. */
 	private static final double OBSTACLE_SIZE_INCREASE = Robot.LENGTH_CM * 0.5;
-	
+
 	/** Direct path collision check tolerance. */
 	private static final double DIRECT_PATH_CHECK_TOLERANCE = 0.001;
-	
+
 	/** Height of the pitch in centimetres. */
 	public static final double PITCH_HEIGHT_CM = 113.7;
 	/** Width of the pitch in centimetres. */
 	public static final double PITCH_WIDTH_CM = 244;
-	
+
 	/** Height of the goals in centimetres. */
 	public static final double GOAL_CENTRE_Y = PITCH_HEIGHT_CM / 2;
-	
+
 	/** Width increments of the robot ray in clear path calculations. */
 	private static final double ROBOT_RAY_INCREMENT = 0.05;
 	/** Maximum ray width of the robot in clear path calculations. */
@@ -256,10 +258,11 @@ public class WorldState {
 	 * @param ballIsObstacle Whether the ball is an obstacle.
 	 * @param blueIsObstacle Whether the blue robot is an obstacle.
 	 * @param yellowIsObstacle Whether the yellow robot is an obstacle.
+	 * @param wallIsObstacle Whether the walls are an obstacle.
 	 * @return Obstacle bitfield that matches the given parameter values.
 	 */
 	public static int makeObstacleFlags(boolean ballIsObstacle, boolean blueIsObstacle,
-			boolean yellowIsObstacle) {
+			boolean yellowIsObstacle, boolean wallIsObstacle) {
 		int flags = 0;
 		if (ballIsObstacle) {
 			flags |= WorldState.BALL_IS_OBSTACLE_FLAG;
@@ -269,6 +272,9 @@ public class WorldState {
 		}
 		if (yellowIsObstacle) {
 			flags |= WorldState.YELLOW_IS_OBSTACLE_FLAG;
+		}
+		if (wallIsObstacle) {
+			flags |= WorldState.WALL_IS_OBSTACLE_FLAG;
 		}
 		
 		return flags;
@@ -283,7 +289,7 @@ public class WorldState {
 	 */
 	public static int makeObstacleFlagsForOpponent(boolean ballIsObstacle,
 			boolean isOwnTeamBlue) {
-		return makeObstacleFlags(ballIsObstacle, !isOwnTeamBlue, isOwnTeamBlue);
+		return makeObstacleFlags(ballIsObstacle, !isOwnTeamBlue, isOwnTeamBlue, true);
 	}
 	
 	
@@ -345,22 +351,24 @@ public class WorldState {
 		ArrayList<VectorPair> segments = new ArrayList<VectorPair>();
 		
 		// Wall collisions.
-		segments.add(new VectorPair(
-				new Vector2D(0.0, 0.0),
-				new Vector2D(PITCH_WIDTH_CM, 0.0))
-		);
-		segments.add(new VectorPair(
-				new Vector2D(PITCH_WIDTH_CM, 0.0),
-				new Vector2D(PITCH_WIDTH_CM, PITCH_HEIGHT_CM))
-		);
-		segments.add(new VectorPair(
-				new Vector2D(PITCH_WIDTH_CM, PITCH_HEIGHT_CM),
-				new Vector2D(0.0, PITCH_HEIGHT_CM))
-		);
-		segments.add(new VectorPair(
-				new Vector2D(0.0, PITCH_HEIGHT_CM),
-				new Vector2D(0.0, 0.0))
-		);
+		if ((obstacles & WALL_IS_OBSTACLE_FLAG) != 0) {
+			segments.add(new VectorPair(
+					new Vector2D(0.0, 0.0),
+					new Vector2D(PITCH_WIDTH_CM, 0.0))
+			);
+			segments.add(new VectorPair(
+					new Vector2D(PITCH_WIDTH_CM, 0.0),
+					new Vector2D(PITCH_WIDTH_CM, PITCH_HEIGHT_CM))
+			);
+			segments.add(new VectorPair(
+					new Vector2D(PITCH_WIDTH_CM, PITCH_HEIGHT_CM),
+					new Vector2D(0.0, PITCH_HEIGHT_CM))
+			);
+			segments.add(new VectorPair(
+					new Vector2D(0.0, PITCH_HEIGHT_CM),
+					new Vector2D(0.0, 0.0))
+			);
+		}
 		
 		// Ball collisions.
 		if ((obstacles & BALL_IS_OBSTACLE_FLAG) != 0) {

@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import sdp.AI.AIWorldState;
+import sdp.common.Painter;
 import sdp.common.geometry.Circle;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
+import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 
 
@@ -18,12 +20,18 @@ import sdp.common.world.WorldState;
  */
 public class FullPathfinder implements Pathfinder {
 	
+	/** Whether to ignore walls in pathfinding. */
+	private static boolean IGNORE_WALLS = false;
+	/** Whether to use memoization optimisation. */
+	private static boolean USE_MEMOIZATION = false;
+	
 	/** Radius of checked circles. */
-	private static double CHECKED_CIRCLE_RADIUS = 5.0;
+	private static double CHECKED_CIRCLE_RADIUS = 0.0;
 	/** The amount, by which the collision points are pushed from obstacles. */
-	private static double COLLISION_ADJUSTMENT = 10.0;
+	private static double COLLISION_ADJUSTMENT = 5.0;
 	/** Largest number of waypoints a path can consist of. */
-	private static int MAX_WAYPOINT_COUNT = 6;
+	private static int MAX_WAYPOINT_COUNT = 4;
+	
 	
 	/** A list of points that have been explored in a search. */
 	private LinkedList<Circle> checkedPoints = new LinkedList<Circle>();
@@ -77,12 +85,22 @@ public class FullPathfinder implements Pathfinder {
 	 * @return Cached solution if one exists and null if it does not.
 	 */
 	private ArrayList<Waypoint> checkForSolvedInstance(Vector2D checkPt, Vector2D point, double dir) {
+		if (!USE_MEMOIZATION) {
+			return null;
+		}
+		
 		for (PartialPath p : partialAnswers) {
 			if (p.getPathEnd().containsPoint(checkPt)) {
 				ArrayList<Waypoint> bestPath = p.getWaypoints();
 				if (bestPath != null) {
+					double newDist = bestPath.get(0).getCostToDest();
+					newDist += GeomUtils.pointDistance(point, bestPath.get(0).getTarget());
+					if (bestPath.size() > 1) {
+						newDist -= bestPath.get(1).getCostToDest();
+					}
+					
 					Waypoint newSegment = new Waypoint(point, dir,
-							bestPath.get(0).getTarget(), bestPath.get(0).getCostToDest(), true);
+							bestPath.get(0).getTarget(), newDist, true);
 					bestPath.set(0, newSegment);
 				}
 				return bestPath;
@@ -139,6 +157,11 @@ public class FullPathfinder implements Pathfinder {
 		checkedPoints.push(new Circle(startVecAdj, CHECKED_CIRCLE_RADIUS));
 
 		double minPathCost = Double.MAX_VALUE;
+		
+		int directCheckFlags = obstacleFlag;
+		if (IGNORE_WALLS) {
+			directCheckFlags &= ~(WorldState.WALL_IS_OBSTACLE_FLAG);
+		}
 				
 		for (Circle curObstacle : obstacles) {
 			Point2D.Double obsPoints[] = GeomUtils.circleTangentPoints(curObstacle, startVecAdj);
@@ -152,13 +175,16 @@ public class FullPathfinder implements Pathfinder {
 						curObstacle.getRadius() + COLLISION_ADJUSTMENT);
 				Vector2D ptDir = Vector2D.subtract(new Vector2D(pt), startVecAdj);
 				
+				if (!WorldState.isPointInPaddedPitch(pt, Robot.LENGTH_CM / 2)) {
+					continue;
+				}
 				for (Circle c : checkedPoints) {
 					if (c.containsPoint(pt)) {
 						continue obstaclePointLoop;
 					}
 				}
 				if (!WorldState.isDirectPathClear(worldState, startVecAdj,
-						new Vector2D(pt), obstacleFlag)) {
+						new Vector2D(pt), directCheckFlags)) {
 					continue;
 				}
 				
@@ -178,9 +204,16 @@ public class FullPathfinder implements Pathfinder {
 			}
 		}
 		
-		checkedPoints.pop();		
-		partialAnswers.add(new PartialPath(new Circle(startVecAdj,
-				CHECKED_CIRCLE_RADIUS), bestPath));
+		if (!checkedPoints.isEmpty()) {
+			// Should never be empty here, but we did get an error once. Could
+			// have been a hotplugging issue.
+			checkedPoints.pop();
+		}
+		
+		if (USE_MEMOIZATION) {
+			partialAnswers.add(new PartialPath(new Circle(startVecAdj,
+					CHECKED_CIRCLE_RADIUS), bestPath));
+		}
 		
 		return bestPath;
 	}
@@ -210,14 +243,15 @@ public class FullPathfinder implements Pathfinder {
 	 * @see sdp.AI.pathfinding.Pathfinder#getNextWaypoint(sdp.AI.AIWorldState, java.awt.geom.Point2D.Double, boolean)
 	 */
 	@Override
-	public Waypoint getNextWaypoint(AIWorldState worldState,
+	public ArrayList<Waypoint> getPath(AIWorldState worldState,
 			java.awt.geom.Point2D.Double dest, boolean ballIsObstacle) {
 		ArrayList<Waypoint> path = getPathForOwnRobot(worldState, dest, ballIsObstacle);
+		Painter.fullPath = path;
 		
 		if (path == null) {
-			return fallback.getNextWaypoint(worldState, dest, ballIsObstacle);
+			return fallback.getPath(worldState, dest, ballIsObstacle);
 		} else {
-			return path.get(0);
+			return path;
 		}
 	}
 

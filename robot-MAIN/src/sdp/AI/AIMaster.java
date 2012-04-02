@@ -11,7 +11,6 @@ import sdp.common.MessageListener;
 import sdp.common.WorldStateObserver;
 import sdp.common.Communicator.opcode;
 import sdp.common.geometry.GeomUtils;
-import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 import sdp.common.WorldStateProvider;
 import sdp.vision.processing.ImageProcessorConfig;
