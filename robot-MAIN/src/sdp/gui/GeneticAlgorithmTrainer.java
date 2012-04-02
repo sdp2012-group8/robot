@@ -24,7 +24,7 @@ public class GeneticAlgorithmTrainer {
 	};
 	private static GeneticAlgorithm algorithm;
 	private static String password = "";
-	private static String uname = "";
+	private static String uname = "s0932707";
 	
 	public static void execCommand(commands command, String[] args) {
 		switch (command) {

@@ -25,7 +25,7 @@ import lejos.nxt.UltrasonicSensor;
  */
 public class Brick {
 
-	private static final int COLL_THRESHOLD = 10; // cm
+	private static final int COLL_THRESHOLD = 8; // cm
 	private static final long BATTERY_TIMEOUT = 10000;
 	private static final long SENS_CHECK_INTERVAL = 100;
 	private static boolean is_on = true;

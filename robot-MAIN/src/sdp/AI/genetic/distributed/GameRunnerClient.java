@@ -27,7 +27,7 @@ public class GameRunnerClient extends GameRunner {
 	
 	public static void main(String[] args) {
 		
-		args = new String[] {"localhost"};
+		args = new String[] {"hamill"};
 		
 		try {
 			new GameRunnerClient(args[0], Server.port);
@@ -153,10 +153,15 @@ public class GameRunnerClient extends GameRunner {
 			for (int i = 0; i < fitness.length; i++)
 				out.writeLong(fitness[i]);
 			
+			// write scores
+			out.writeInt(caller.leftGoals);
+			out.writeInt(caller.rightGoals);
+			
 			out.flush();
 			
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println("Server crashed");
+			System.exit(1);
 		}
 	}
 	

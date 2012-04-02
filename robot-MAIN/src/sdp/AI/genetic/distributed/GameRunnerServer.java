@@ -1,16 +1,9 @@
 package sdp.AI.genetic.distributed;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.net.InetAddress;
-
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
 
 import sdp.AI.genetic.Game;
 import sdp.AI.genetic.GameRunner;
@@ -33,35 +26,54 @@ public class GameRunnerServer extends GameRunner {
 	public volatile boolean assigned = false;
 	
 	public void establishConnectionWithClient(InetAddress ip, int port, final String clientName, String uname, String password) {
-		JSch ssh = new JSch();
+		
 		try {
-			Session session = ssh.getSession(uname, clientName);
-			session.setPassword(password);
-			session.connect();
-			Channel channel=session.openChannel("shell");
-			
-			final PrintStream ps = new PrintStream(channel.getOutputStream());
-			final BufferedReader r = new BufferedReader(new InputStreamReader(channel.getInputStream()));
-			
-			new Thread() {
-				public void run() {
-					while (!interrupted()) {
-						try {
-							System.out.println(clientName+": "+r.readLine());
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					}
-				};
-			}.start();
-			
-			ps.println("echo 123");
-			
-			
-		} catch (Exception e) {
+			spawnRemotely("cd Desktop/robot/robot-MAIN/;java -cp ../robot-NXT/bin:lib/jsch-0.1.46.jar:lib/neuroph-2.6.jar:lib/encog-engine-2.5.0.jar:lib/jbox2d-library-2.1.2.2-jar-with-dependencies.jar:bin sdp.AI.genetic.distributed.GameRunnerClient", clientName);
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
+//		java.util.Properties config = new java.util.Properties(); 
+//		config.put("StrictHostKeyChecking", "no");
+//		
+//
+//		
+//		JSch ssh = new JSch();
+//		try {
+//			Session session = ssh.getSession(uname, clientName);
+//			session.setConfig(config);
+//			session.setPassword(password);
+//			
+//			session.connect();
+//			Channel channel=session.openChannel("shell");
+//			
+//			final PrintStream ps = new PrintStream(channel.getOutputStream());
+//			final BufferedReader r = new BufferedReader(new InputStreamReader(channel.getInputStream()));
+//			
+//			new Thread() {
+//				public void run() {
+//					while (!interrupted()) {
+//						try {
+//							System.out.println(clientName+" says \""+r.readLine()+"\"");
+//						} catch (IOException e) {
+//							e.printStackTrace();
+//						}
+//					}
+//				};
+//			}.start();
+//			
+//			ps.println("s0932707");
+//			
+//			
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+		
+	}
+	
+	
+	private static void spawnRemotely(String command, String host) throws IOException {
+		new ProcessBuilder("ssh", host, "bash -c \""+command+"\"").start();
 	}
 
 	public GameRunnerServer(String clientName, String uname, String password) {
@@ -108,9 +120,12 @@ public class GameRunnerServer extends GameRunner {
 			for (int i = 0; i < 2; i++)
 				fitnesses[i] = in.readLong();
 			
+			game.leftGoals = in.readInt();
+			game.rightGoals = in.readInt();
+			
 			// simulate game done
-			announceFinished(game, fitnesses);
 			games_to_run.remove(game);
+			announceFinished(game, fitnesses);
 			
 			System.out.println("Game "+game+" (id "+game.gameId+") received from "+clientName);
 			

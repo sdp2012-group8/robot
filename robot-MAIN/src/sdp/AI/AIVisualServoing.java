@@ -38,12 +38,12 @@ public class AIVisualServoing extends BaseAI {
 	private static final boolean WALL_KICKS_ENABLED = true;
 	
 	/** Distance at which the robot will begin slowing down. */
-	private static final double DECELERATION_DISTANCE = 30;
+	private static final double DECELERATION_DISTANCE = 60;
 
 	/** The multiplier of the final driving speed. */
 	private static final double DRIVING_SPEED_MULTIPLIER = 1;
 	/** What fraction of forward speed the robot will lose when turning. */
-	private static final double FORWARD_LOSS_MULTIPLIER = 0.7;
+	private static final double FORWARD_LOSS_MULTIPLIER = 0.8;
 	/** Turning angle threshold for stop turns. */
 	private static final double STOP_TURN_THRESHOLD = 120;
 	/** The multiplier of the final turning speed. */
