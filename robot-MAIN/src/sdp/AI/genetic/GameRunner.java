@@ -11,13 +11,11 @@ import java.util.Queue;
  */
 public class GameRunner extends Thread {
 	
-	/** get the number of games that have not finished. Don't modify this! */
-	public volatile int count = 0;
 	/** set calback to receive updates. Only one callback can be set per worker */
 	public Callback callback = null;
 	
 	/** game container */
-	private volatile Queue<Game> games_to_run = new LinkedList<Game>();
+	protected volatile Queue<Game> games_to_run = new LinkedList<Game>();
 	private boolean pause = false;
 	
 	/**
@@ -25,7 +23,6 @@ public class GameRunner extends Thread {
 	 * @param game
 	 */
 	public void add(final Game game) {
-		count++;
 		games_to_run.add(game);
 	}
 
@@ -40,14 +37,8 @@ public class GameRunner extends Thread {
 				final Game gameToExecute = games_to_run.poll();
 
 				if (gameToExecute != null) {
-					
-					// if not empty, simulate
-					gameToExecute.simulate();
-					count--;
-					
-					// notify callback
-					if (callback != null)
-						callback.allGamesReady();
+						
+					announceFinished(gameToExecute, gameToExecute.simulate());
 					
 				} else {
 					// if empty, sleep a bit
@@ -82,6 +73,21 @@ public class GameRunner extends Thread {
 		return pause;
 	}
 	
+	protected void announceFinished(final Game caller, final long[] fitness) {
+		if (callback != null) {
+			callback.onFinished(caller, caller.simulate());
+			if (games_to_run.size() == 0)
+				callback.allGamesReady();
+		}
+	}
+	
+	public void close() {
+		
+	}
+	
+	public int getGamesInQueueCount() {
+		return games_to_run.size();
+	}
 	
 	// callback section
 	
@@ -98,6 +104,14 @@ public class GameRunner extends Thread {
 		 * Will get triggered when all queued games have been simulated
 		 */
 		public void allGamesReady();
+		
+		/**
+		 * When game finishes, this gets called
+		 * @param the game that the result is coming from
+		 * @param fitness of network 0 and 1
+		 */
+		public void onFinished(final Game caller, final long[] fitness);
+
 
 	}
 }

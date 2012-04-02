@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Random;
 import java.io.*;
 
+import sdp.AI.genetic.distributed.GameRunnerServer;
 import sdp.AI.neural.AINeuralNet;
 
 
@@ -23,7 +24,9 @@ public class GeneticAlgorithm {
 	/** Number of neighbours each individual plays against. Must be odd*/
 	final static int NEIGHBOUR_NUMBER = 5;
 	/** Number of threads. Every thread can simulate one game at a time */
-	final static int MAX_NUM_SIMULT_GAMES = 4;
+	final static int LOCAL_GAME_THREADS = 4;
+	/** For distributed game simulation */
+	final static String[] DISTRIBUTED_GAMES_THREADS_HOST_NAMES = new String[0];//[]{"ssh.remote.one", "ssh.rmote.two"};
 	
 	final static String OUTPUT_DIR = "data/GA/";
 
@@ -37,7 +40,7 @@ public class GeneticAlgorithm {
 	Random rand = new Random();
 	private int totalGames = 0;
 	// locker for concurrency control
-	private GameRunner[] workers = new GameRunner[MAX_NUM_SIMULT_GAMES];
+	private GameRunner[] workers = new GameRunner[LOCAL_GAME_THREADS + DISTRIBUTED_GAMES_THREADS_HOST_NAMES.length];
 	private Object lock = new Object();
 
 
@@ -46,17 +49,47 @@ public class GeneticAlgorithm {
 	PrintWriter out;
 	
 	private volatile boolean run = true;
+	
+	private final String ssh_username, ssh_password;
+	
+	public GeneticAlgorithm(String username, String password) {
+		ssh_username = username;
+		ssh_password = password;
+	}
 
 	public void stop() {
 		run = false;
+		for (int i = 0; i < workers.length; i++) {
+			if (workers[i] != null) {
+				workers[i].close();
+				workers[i].interrupt();
+			}
+		}
 	}
 	
 	public void start() {
 		run = true;
 		
 		// start workers
-				for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++) {
+				for (int i = 0; i < LOCAL_GAME_THREADS; i++) {
 					workers[i] = new GameRunner();
+					workers[i].start();
+				}
+				
+				if (DISTRIBUTED_GAMES_THREADS_HOST_NAMES.length > 0)
+					System.out.println("Waiting for clients to connect");
+				
+				for (int i = LOCAL_GAME_THREADS; i < LOCAL_GAME_THREADS+DISTRIBUTED_GAMES_THREADS_HOST_NAMES.length; i++) {
+					System.out.println("Waiting for "+DISTRIBUTED_GAMES_THREADS_HOST_NAMES[i-LOCAL_GAME_THREADS]+" to connect..."); 
+					final GameRunnerServer worker = new GameRunnerServer(DISTRIBUTED_GAMES_THREADS_HOST_NAMES[i-LOCAL_GAME_THREADS], ssh_username, ssh_password);
+					while (!worker.assigned) {
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+					workers[i] = worker;
 					workers[i].start();
 				}
 
@@ -100,7 +133,7 @@ public class GeneticAlgorithm {
 				System.out.println("Finished");
 
 				// stop workers
-				for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++)
+				for (int i = 0; i < workers.length; i++)
 					workers[i].interrupt();
 	}
 
@@ -259,29 +292,7 @@ public class GeneticAlgorithm {
 				currPlayed.add(index);
 
 				// initialise a game with the given neighbour
-				games.add(new Game(i, index, population, new Game.Callback() {
-
-					// when a game thread finishes
-					@Override
-					public synchronized void onFinished(final Game caller, final long[] fitness) {
-
-						// for both players
-						for (int i = 0; i < 2; i++) {
-							// get previous fitness values
-							HashSet<Long> prevFitness = results.get(caller.ids[i]);
-
-							// if none exist, create the set
-							if (prevFitness == null)
-								prevFitness = new HashSet<Long>();
-
-							// add the current fitness to the set
-							prevFitness.add(fitness[i]);
-
-							// put the results so far back to the id
-							results.put(caller.ids[i], prevFitness);
-						}
-					}
-				}, game_id++));
+				games.add(new Game(i, index, i == -1 ? null : population[i], j == -1 ? null : population[index], game_id++));
 
 			}
 
@@ -307,10 +318,10 @@ public class GeneticAlgorithm {
 		// ----- ASSIGNING GAMES TO WORKERS ----- \\
 
 		// calculate how many games per worker should there be
-		final int gamesPerWorker = totalGames / MAX_NUM_SIMULT_GAMES;
+		final int gamesPerWorker = totalGames / workers.length;
 
 		// pause workers and set callbacks
-		for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++) {
+		for (int i = 0; i < workers.length; i++) {
 
 			workers[i].setPause(true);
 
@@ -321,14 +332,35 @@ public class GeneticAlgorithm {
 				public void allGamesReady() {
 
 					// check whether all workers have finished
-					for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++)
-						if (workers[i].count != 0)
+					for (int i = 0; i < workers.length; i++)
+						if (workers[i].getGamesInQueueCount() != 0) {
 							return;
+						}
 
 
 					// if all workers are 0, unblock main thread
 					synchronized (lock) {
 						lock.notifyAll();
+					}
+				}
+				
+				@Override
+				public synchronized void onFinished(final Game caller, final long[] fitness) {
+
+					// for both players
+					for (int i = 0; i < 2; i++) {
+						// get previous fitness values
+						HashSet<Long> prevFitness = results.get(caller.ids[i]);
+
+						// if none exist, create the set
+						if (prevFitness == null)
+							prevFitness = new HashSet<Long>();
+
+						// add the current fitness to the set
+						prevFitness.add(fitness[i]);
+
+						// put the results so far back to the id
+						results.put(caller.ids[i], prevFitness);
 					}
 				}
 			};
@@ -343,8 +375,8 @@ public class GeneticAlgorithm {
 			if (i % gamesPerWorker == 0 && i != 0)
 				workerId++;
 			// limit worker id
-			if (workerId == MAX_NUM_SIMULT_GAMES)
-				workerId = MAX_NUM_SIMULT_GAMES -1;
+			if (workerId == workers.length)
+				workerId = workers.length -1;
 
 			// assign a game to a worker
 			workers[workerId].add(games.get(i));
@@ -352,7 +384,7 @@ public class GeneticAlgorithm {
 		}
 
 		// unpause workers
-		for (int i = 0; i < MAX_NUM_SIMULT_GAMES; i++)
+		for (int i = 0; i < workers.length; i++)
 			workers[i].setPause(false);
 
 		// ----- ENTER BLOCKING SECTION ----- \\
