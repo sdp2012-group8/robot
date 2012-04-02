@@ -33,7 +33,7 @@ public class WorldState {
 	public static final int YELLOW_IS_OBSTACLE_FLAG = 0x4;
 	
 	/** Radius of the ball obstacle circle. */
-	private static final double BALL_OBSTACLE_RADIUS = 5;
+	private static final double BALL_OBSTACLE_RADIUS = 10;
 	/** Radius of the robot obstacle circle. */
 	private static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.9;
 	/** The amount by which obstacles are increased in extraction. */

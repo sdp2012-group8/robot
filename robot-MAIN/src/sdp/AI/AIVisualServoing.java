@@ -24,7 +24,7 @@ public class AIVisualServoing extends BaseAI {
 
 
 	/** Whether the robot is required to face the ball before kicking. */
-	private static final boolean REQUIRE_FACE_BALL_TO_KICK = true;
+	private static final boolean REQUIRE_FACE_BALL_TO_KICK = false;
 	/** Whether the robot is allowed to drive in reverse. */
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
 	/** Whether wall handling logic should be used. */

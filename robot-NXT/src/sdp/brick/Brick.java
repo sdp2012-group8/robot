@@ -53,9 +53,10 @@ public class Brick {
 				sens.continuous();
 				while (is_on) {
 					if (mComm != null) {
-						try {
-						;					
+						try {			
 						int dist = sens.getDistance();	
+						LCD.clear(6);
+						LCD.drawString("dist: " + dist, 0, 6);
 						collision = dist < COLL_THRESHOLD && can_kick;
 						boolean left_pressed = left.isPressed(), right_pressed = right.isPressed();
 						//LCD.clear(0)
