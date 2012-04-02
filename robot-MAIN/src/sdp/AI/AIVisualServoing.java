@@ -44,7 +44,7 @@ public class AIVisualServoing extends BaseAI {
 	/** What fraction of forward speed the robot will lose when turning. */
 	private static final double FORWARD_LOSS_MULTIPLIER = 0.7;
 	/** Turning angle threshold for stop turns. */
-	private static final double STOP_TURN_THRESHOLD = 120;
+	private static final double STOP_TURN_THRESHOLD = 90;
 	/** The multiplier of the final turning speed. */
 	private static final double TURNING_SPEED_MULTIPLIER = 1.8;
 

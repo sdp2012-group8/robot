@@ -35,23 +35,23 @@ public class WorldState {
 	public static final int WALL_IS_OBSTACLE_FLAG = 0x8;
 	
 	/** Radius of the ball obstacle circle. */
-	private static final double BALL_OBSTACLE_RADIUS = 10;
+	private static final double BALL_OBSTACLE_RADIUS = 5;
 	/** Radius of the robot obstacle circle. */
-	private static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 1.0;
+	private static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.9;
 	/** The amount by which obstacles are increased in extraction. */
-	private static final double OBSTACLE_SIZE_INCREASE = Robot.LENGTH_CM * 0.6;
-	
+	private static final double OBSTACLE_SIZE_INCREASE = Robot.LENGTH_CM * 0.5;
+
 	/** Direct path collision check tolerance. */
 	private static final double DIRECT_PATH_CHECK_TOLERANCE = 0.001;
-	
+
 	/** Height of the pitch in centimetres. */
 	public static final double PITCH_HEIGHT_CM = 113.7;
 	/** Width of the pitch in centimetres. */
 	public static final double PITCH_WIDTH_CM = 244;
-	
+
 	/** Height of the goals in centimetres. */
 	public static final double GOAL_CENTRE_Y = PITCH_HEIGHT_CM / 2;
-	
+
 	/** Width increments of the robot ray in clear path calculations. */
 	private static final double ROBOT_RAY_INCREMENT = 0.05;
 	/** Maximum ray width of the robot in clear path calculations. */

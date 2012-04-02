@@ -23,7 +23,7 @@ public class FullPathfinder implements Pathfinder {
 	/** Whether to ignore walls in pathfinding. */
 	private static boolean IGNORE_WALLS = false;
 	/** Whether to use memoization optimisation. */
-	private static boolean USE_MEMOIZATION = true;
+	private static boolean USE_MEMOIZATION = false;
 	
 	/** Radius of checked circles. */
 	private static double CHECKED_CIRCLE_RADIUS = 0.0;
