@@ -30,7 +30,7 @@ public class GeneticAlgorithm {
 	/** Number of threads. Every thread can simulate one game at a time */
 	final static int LOCAL_GAME_THREADS = 4;
 	/** For distributed game simulation */
-	final static String[] DISTRIBUTED_GAMES_THREADS_HOST_NAMES = new String[0];//[]{"ssh.remote.one", "ssh.rmote.two"};
+	final static String[] DISTRIBUTED_GAMES_THREADS_HOST_NAMES = new String[]{"sas"};//[]{"ssh.remote.one", "ssh.rmote.two"};
 	
 	static long max_fitness;
 	
@@ -69,7 +69,6 @@ public class GeneticAlgorithm {
 		for (int i = 0; i < workers.length; i++) {
 			if (workers[i] != null) {
 				workers[i].close();
-				workers[i].interrupt();
 			}
 		}
 	}
@@ -97,7 +96,6 @@ public class GeneticAlgorithm {
 						}
 					}
 					workers[i] = worker;
-					workers[i].start();
 				}
 
 				System.out.println("Starting setup");
@@ -141,7 +139,7 @@ public class GeneticAlgorithm {
 
 				// stop workers
 				for (int i = 0; i < workers.length; i++)
-					workers[i].interrupt();
+					workers[i].close();
 	}
 
 

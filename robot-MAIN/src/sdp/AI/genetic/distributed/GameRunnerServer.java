@@ -1,9 +1,16 @@
 package sdp.AI.genetic.distributed;
 
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.InetAddress;
+
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
 
 import sdp.AI.genetic.Game;
 import sdp.AI.genetic.GameRunner;
@@ -25,8 +32,36 @@ public class GameRunnerServer extends GameRunner {
 	
 	public volatile boolean assigned = false;
 	
-	public void establishConnectionWithClient(InetAddress ip, int port, String clientName, String uname, String password) {
-		System.out.println("Server listening on "+ip.getHostAddress()+" ("+ip.getHostName()+") : "+port+" for "+clientName+" ssh login: "+uname);
+	public void establishConnectionWithClient(InetAddress ip, int port, final String clientName, String uname, String password) {
+		JSch ssh = new JSch();
+		try {
+			Session session = ssh.getSession(uname, clientName);
+			session.setPassword(password);
+			session.connect();
+			Channel channel=session.openChannel("shell");
+			
+			final PrintStream ps = new PrintStream(channel.getOutputStream());
+			final BufferedReader r = new BufferedReader(new InputStreamReader(channel.getInputStream()));
+			
+			new Thread() {
+				public void run() {
+					while (!interrupted()) {
+						try {
+							System.out.println(clientName+": "+r.readLine());
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				};
+			}.start();
+			
+			ps.println("echo 123");
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 	}
 
 	public GameRunnerServer(String clientName, String uname, String password) {
@@ -40,11 +75,6 @@ public class GameRunnerServer extends GameRunner {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-	
-	
-	public void start() {
-	// do nothing	
 	}
 	
 	/**
@@ -82,7 +112,7 @@ public class GameRunnerServer extends GameRunner {
 			announceFinished(game, fitnesses);
 			games_to_run.remove(game);
 			
-			System.out.println("Game "+gameid+" received from "+clientName);
+			System.out.println("Game "+game+" (id "+game.gameId+") received from "+clientName);
 			
 			break;
 		}
@@ -99,7 +129,7 @@ public class GameRunnerServer extends GameRunner {
 		// wait for out to be ready
 		while (out == null) {
 			try {
-				sleep(50);
+				Thread.sleep(50);
 			} catch (InterruptedException e) {}
 		}
 		

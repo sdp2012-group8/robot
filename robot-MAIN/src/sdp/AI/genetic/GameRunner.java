@@ -1,6 +1,7 @@
 package sdp.AI.genetic;
 
 import java.util.LinkedList;
+import java.util.NoSuchElementException;
 import java.util.Queue;
 
 /**
@@ -9,7 +10,7 @@ import java.util.Queue;
  * @author Martin Marinov
  *
  */
-public class GameRunner extends Thread {
+public class GameRunner {
 	
 	/** set calback to receive updates. Only one callback can be set per worker */
 	public Callback callback = null;
@@ -17,6 +18,8 @@ public class GameRunner extends Thread {
 	/** game container */
 	protected volatile Queue<Game> games_to_run = new LinkedList<Game>();
 	private boolean pause = false;
+	
+	private Thread worker;
 	
 	/**
 	 * Add game to be run
@@ -26,35 +29,41 @@ public class GameRunner extends Thread {
 		games_to_run.add(game);
 	}
 
-	/**
-	 * Use {@link #start()} to access this method.
-	 */
-	@Override
-	public void run() {
-		while(!interrupted()) {
-			if (!pause) {
-				
-				final Game gameToExecute = games_to_run.poll();
 
-				if (gameToExecute != null) {
+	public void start() {
+		worker = new Thread() {
+			@Override
+			public void run() {
+				while(!interrupted()) {
+					if (!pause) {
+						Game gameToExecute = null;
 						
-					announceFinished(gameToExecute, gameToExecute.simulate());
-					
-				} else {
-					// if empty, sleep a bit
-					try {
-						sleep(10);
-					} catch (InterruptedException e) {}
-				}
-				
-			} else {
-				// if paused, sleep a bit
-				try {
-					sleep(10);
-				} catch (InterruptedException e) {}
-			}
+						try {
+							gameToExecute = games_to_run.poll();
+						} catch (NoSuchElementException e) {}
+						
+						if (gameToExecute != null) {
+								
+							announceFinished(gameToExecute, gameToExecute.simulate());
+							
+						} else {
+							// if empty, sleep a bit
+							try {
+								sleep(10);
+							} catch (InterruptedException e) {}
+						}
+						
+					} else {
+						// if paused, sleep a bit
+						try {
+							sleep(10);
+						} catch (InterruptedException e) {}
+					}
 
-		}
+				}
+			}
+		};
+		worker.start();
 	}
 	
 	/**
@@ -75,14 +84,14 @@ public class GameRunner extends Thread {
 	
 	protected void announceFinished(final Game caller, final long[] fitness) {
 		if (callback != null) {
-			callback.onFinished(caller, caller.simulate());
+			callback.onFinished(caller, fitness);
 			if (games_to_run.size() == 0)
 				callback.allGamesReady();
 		}
 	}
 	
 	public void close() {
-		
+		worker.interrupt();
 	}
 	
 	public int getGamesInQueueCount() {

@@ -66,7 +66,7 @@ public class GeneticAlgorithmTrainer {
 		// open terminal if no arguments are supplied
 		if (args.length == 0) {
 			try {
-				spawnGnomeTerminal("nice java -cp ../robot-NXT/bin:lib/neuroph-2.6.jar:lib/encog-engine-2.5.0.jar:lib/jbox2d-library-2.1.2.2-jar-with-dependencies.jar:bin sdp.gui.GeneticAlgorithmTrainer dontOpenGnomeTerminal");
+				spawnGnomeTerminal("nice java -cp ../robot-NXT/bin:lib/jsch-0.1.46.jar:lib/neuroph-2.6.jar:lib/encog-engine-2.5.0.jar:lib/jbox2d-library-2.1.2.2-jar-with-dependencies.jar:bin sdp.gui.GeneticAlgorithmTrainer dontOpenGnomeTerminal");
 				System.out.println("Gnome terminal open");
 				System.exit(0);
 			} catch (Exception e) {

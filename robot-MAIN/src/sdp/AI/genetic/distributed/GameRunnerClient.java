@@ -27,7 +27,7 @@ public class GameRunnerClient extends GameRunner {
 	
 	public static void main(String[] args) {
 		
-		//args = new String[] {"localhost"};
+		args = new String[] {"localhost"};
 		
 		try {
 			new GameRunnerClient(args[0], Server.port);
@@ -49,6 +49,7 @@ public class GameRunnerClient extends GameRunner {
 	
 	public GameRunnerClient(String hostname, int port) throws IOException {
 		tcpClient = new Socket(hostname, port);
+		tcpClient.setTcpNoDelay(true);
 		in = new DataInputStream(tcpClient.getInputStream());
 		out = new DataOutputStream(tcpClient.getOutputStream());
 		
@@ -120,6 +121,7 @@ public class GameRunnerClient extends GameRunner {
 				for (int j = 0; j < size; j++)
 					population[i][j] = in.readDouble();
 			}
+			
 			add(new Game(ids[0], ids[1], population[0], population[1], gameId));
 			
 			System.out.println("Received "+gameId+" from server");
@@ -137,7 +139,7 @@ public class GameRunnerClient extends GameRunner {
 	@Override
 	protected void announceFinished(Game caller, long[] fitness) {
 		
-		System.out.println("Sending game "+caller.gameId+" to server");
+		System.out.println("Sending game "+caller+" (id "+caller.gameId+") to server");
 		
 		try {
 			
@@ -150,6 +152,8 @@ public class GameRunnerClient extends GameRunner {
 			// write data
 			for (int i = 0; i < fitness.length; i++)
 				out.writeLong(fitness[i]);
+			
+			out.flush();
 			
 		} catch (IOException e) {
 			e.printStackTrace();

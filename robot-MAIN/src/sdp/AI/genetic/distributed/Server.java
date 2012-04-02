@@ -44,13 +44,13 @@ public class Server {
 		try {
 			server = new ServerSocket(port);
 
-
 			new Thread() {
 				public void run() {
 
 					while (!interrupted()) {
 						try {
 							final Socket tcpServer = server.accept();
+							tcpServer.setTcpNoDelay(true);
 							final DataInputStream in = new DataInputStream(tcpServer.getInputStream());
 
 							GameRunnerServer serv = null;
