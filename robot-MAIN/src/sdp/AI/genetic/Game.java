@@ -82,7 +82,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	
 	private boolean inCollBlue = false, inCollYellow = false;
 	
-	private int leftGoals = 0, rightGoals = 0;
+	public int leftGoals = 0, rightGoals = 0;
 	
 	private static final double REPLAY_LENGTH_IN_SECONDS = 60;
 	private static final int REPLAY_FRAME_COUNT = (int) (FPS*REPLAY_LENGTH_IN_SECONDS);

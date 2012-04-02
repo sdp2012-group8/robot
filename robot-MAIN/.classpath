@@ -16,5 +16,6 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/robot-MAIN/lib/jbox2d-library-2.1.2.2-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="lib/jsch-0.1.46.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
