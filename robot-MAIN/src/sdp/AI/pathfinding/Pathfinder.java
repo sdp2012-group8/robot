@@ -1,6 +1,7 @@
 package sdp.AI.pathfinding;
 
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 
 import sdp.AI.AIWorldState;
 
@@ -18,6 +19,6 @@ public interface Pathfinder {
 	 * @param ballIsObstacle Whether the ball should be considered an obstacle.
 	 * @return The next waypoint on the path.
 	 */
-	public abstract Waypoint getNextWaypoint(AIWorldState worldState,
+	public abstract ArrayList<Waypoint> getPath(AIWorldState worldState,
 			Point2D.Double dest, boolean ballIsObstacle);
 }

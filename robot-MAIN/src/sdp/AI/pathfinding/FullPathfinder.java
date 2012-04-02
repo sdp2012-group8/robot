@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import sdp.AI.AIWorldState;
+import sdp.common.Painter;
 import sdp.common.geometry.Circle;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
@@ -19,11 +20,11 @@ import sdp.common.world.WorldState;
 public class FullPathfinder implements Pathfinder {
 	
 	/** Radius of checked circles. */
-	private static double CHECKED_CIRCLE_RADIUS = 5.0;
+	private static double CHECKED_CIRCLE_RADIUS = 0.0;
 	/** The amount, by which the collision points are pushed from obstacles. */
-	private static double COLLISION_ADJUSTMENT = 10.0;
+	private static double COLLISION_ADJUSTMENT = 5.0;
 	/** Largest number of waypoints a path can consist of. */
-	private static int MAX_WAYPOINT_COUNT = 6;
+	private static int MAX_WAYPOINT_COUNT = 4;
 	
 	/** A list of points that have been explored in a search. */
 	private LinkedList<Circle> checkedPoints = new LinkedList<Circle>();
@@ -178,7 +179,11 @@ public class FullPathfinder implements Pathfinder {
 			}
 		}
 		
-		checkedPoints.pop();		
+		if (!checkedPoints.isEmpty()) {
+			// Should never be empty here, but we did get an error once. Could
+			// have been a hotplugging issue.
+			checkedPoints.pop();
+		}
 		partialAnswers.add(new PartialPath(new Circle(startVecAdj,
 				CHECKED_CIRCLE_RADIUS), bestPath));
 		
@@ -210,14 +215,15 @@ public class FullPathfinder implements Pathfinder {
 	 * @see sdp.AI.pathfinding.Pathfinder#getNextWaypoint(sdp.AI.AIWorldState, java.awt.geom.Point2D.Double, boolean)
 	 */
 	@Override
-	public Waypoint getNextWaypoint(AIWorldState worldState,
+	public ArrayList<Waypoint> getPath(AIWorldState worldState,
 			java.awt.geom.Point2D.Double dest, boolean ballIsObstacle) {
 		ArrayList<Waypoint> path = getPathForOwnRobot(worldState, dest, ballIsObstacle);
+		Painter.fullPath = path;
 		
 		if (path == null) {
-			return fallback.getNextWaypoint(worldState, dest, ballIsObstacle);
+			return fallback.getPath(worldState, dest, ballIsObstacle);
 		} else {
-			return path.get(0);
+			return path;
 		}
 	}
 

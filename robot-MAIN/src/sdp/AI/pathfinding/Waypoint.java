@@ -1,5 +1,6 @@
 package sdp.AI.pathfinding;
 
+import sdp.common.Painter;
 import sdp.common.geometry.Vector2D;
 
 

@@ -35,9 +35,9 @@ public class WorldState {
 	/** Radius of the ball obstacle circle. */
 	private static final double BALL_OBSTACLE_RADIUS = 10;
 	/** Radius of the robot obstacle circle. */
-	private static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.9;
+	private static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.75;
 	/** The amount by which obstacles are increased in extraction. */
-	private static final double OBSTACLE_SIZE_INCREASE = Robot.LENGTH_CM * 0.5;
+	private static final double OBSTACLE_SIZE_INCREASE = Robot.LENGTH_CM * 0.6;
 	
 	/** Direct path collision check tolerance. */
 	private static final double DIRECT_PATH_CHECK_TOLERANCE = 0.001;

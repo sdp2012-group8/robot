@@ -1,6 +1,7 @@
 package sdp.AI.pathfinding;
 
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 
 import sdp.AI.AIWorldState;
 import sdp.common.geometry.GeomUtils;
@@ -32,16 +33,19 @@ public class HeuristicPathfinder implements Pathfinder {
 	 * @see sdp.AI.pathfinding.Pathfinder#getNextWaypoint(sdp.AI.AIWorldState, sdp.common.geometry.Vector2D, boolean)
 	 */
 	@Override
-	public Waypoint getNextWaypoint(AIWorldState aiWorldState,
+	public ArrayList<Waypoint> getPath(AIWorldState aiWorldState,
 			Point2D.Double target, boolean ballIsObstacle) {
+		ArrayList<Waypoint> retValue = new ArrayList<Waypoint>();
+		
 		Vector2D targetVec = new Vector2D(target);		
 		Vector2D targetVecLocal = Robot.getLocalVector(aiWorldState.getOwnRobot(), targetVec);
 		int obstacleFlags = WorldState.makeObstacleFlagsForOpponent(ballIsObstacle, aiWorldState.isOwnTeamBlue());
 	
 		Vector2D ownCoords = new Vector2D(aiWorldState.getOwnRobot().getCoords());
 		if (WorldState.isDirectPathClear(aiWorldState, ownCoords, targetVec, obstacleFlags)) {
-			return new Waypoint(ownCoords, aiWorldState.getOwnRobot().getAngle(),
-					targetVec, targetVecLocal.getLength(), true);
+			retValue.add(new Waypoint(ownCoords, aiWorldState.getOwnRobot().getAngle(),
+					targetVec, targetVecLocal.getLength(), true));
+			return retValue;
 		}
 	
 		Vector2D destPoint = null;
@@ -76,8 +80,9 @@ public class HeuristicPathfinder implements Pathfinder {
 			destPoint = targetVec;
 		}
 	
-		return new Waypoint(new Vector2D(aiWorldState.getOwnRobot().getCoords()),
+		retValue.add(new Waypoint(new Vector2D(aiWorldState.getOwnRobot().getCoords()),
 				aiWorldState.getOwnRobot().getAngle(), new Vector2D(destPoint),
-				Vector2D.subtract(destPoint, ownCoords).getLength(), false);
+				Vector2D.subtract(destPoint, ownCoords).getLength(), false));
+		return retValue;
 	}
 }
