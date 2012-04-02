@@ -58,8 +58,16 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	public static final double ANGLE_RAND = 20;
 	public static final double BALL_RAND = 2;
 	
-	private static final int MAX_BALL_SCORE = 20;
 	private static final int MAX_BALL_DISTANCE = 70;
+	
+	//scores
+	private static final int MAX_BALL_SCORE = 20;
+	private static final int MAX_BALL_DISTANCE_SCORE = 10;
+	private static final int GOAL_SCORE = 50000;
+	private static final int COLLISION = -1000;
+	private static final int STOP_COLLISION = 400;
+	private static final int STAY_IN_COLLISION = -15;
+	private static final int GOT_BALL = 1000;
 	
 	private static final int GAMETIME = 60; // in sec
 	
@@ -68,6 +76,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	private double timeElapsed = 0;
 	
 	private AIMaster leftAI, rightAI;
+	private AIVisualServoing leftAIV, rightAIV;
 	
 	private SimulatorPhysicsEngine sim;
 	
@@ -88,7 +97,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	// calculate fitness section
 	
 	/**
-	 * This method will be called during an initialization of a game (before any world state or score is available for you to check).
+	 * This method will be called during an initialisation of a game (before any world state or score is available for you to check).
 	 * If you plan to record current game, return true. If you return false and later try doing
 	 * {@link #saveReplay()}, you will get an error. The purpose of this function is to avoid allocating memory
 	 * for games which won't be saved in the end for sure.<br/>
@@ -98,7 +107,7 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	public boolean doWeStartRecording() {
 		// record only games that the real AI takes part in
 	//return ids[0] == -1 || ids[1] == -1;
-		return false;
+		return true;
 	}
 	
 	/**
@@ -106,9 +115,9 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	 */
 	public void onNewFrame() {
 		if (inCollBlue)
-			scores[0]-=10;
+			scores[0]+= STAY_IN_COLLISION;
 		if (inCollYellow)
-			scores[1]-=10;
+			scores[1]+= STAY_IN_COLLISION;
 		
 		final double yellowBall = GeomUtils.pointDistance(state.getYellowRobot().getFrontCenter(), state.getBallCoords());
 		final double blueBall = GeomUtils.pointDistance(state.getBlueRobot().getFrontCenter(), state.getBallCoords());
@@ -116,11 +125,17 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		scores[0]+= (int) (MAX_BALL_SCORE - MAX_BALL_SCORE*blueBall/MAX_BALL_DISTANCE);
 		scores[1]+= (int) (MAX_BALL_SCORE - MAX_BALL_SCORE*yellowBall/MAX_BALL_DISTANCE);		
 		
-		final double ballPos = (state.getBallCoords().x - 0.5)*20;
+		final double ballPos = (state.getBallCoords().x - 0.5)*MAX_BALL_DISTANCE_SCORE;
 		scores[0] += ballPos;
 		scores[1] -= ballPos;
 		
-		//subtitle = String.format("%.2f", timeElapsed)+" : "+this.toString();
+		if (leftAIV.didIGetBall())
+			scores[0] += GOT_BALL;
+		
+		if (rightAIV.didIGetBall())
+			scores[1] += GOT_BALL;
+		
+		subtitle = String.format("%.2f", timeElapsed)+" : "+this.toString();
 		
 //		final AIVisualServoing ws = (AIVisualServoing) (ids[0] == -1 ? leftAI.getAI(): rightAI.getAI());
 //		point = new Vector2D[] {
@@ -133,9 +148,10 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		// mark end of game
 		simulateGame = false;
 //		if (ids[0] == -1 || ids[1] == -1) {
-//			saveReplay();
-//			System.out.printf("(id %02d) %02d:%02d (%02d id)\n", ids[0], rightGoals, leftGoals, ids[1]);
-//		}
+		if (rightGoals > 2 || leftGoals > 2) {
+			saveReplay();
+			System.out.printf("(id %02d) %02d:%02d (%02d id)\n", ids[0], rightGoals, leftGoals, ids[1]);
+		}
 	}
 
 	/**
@@ -144,8 +160,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	@Override
 	public void onLeftScore() {
 		//System.out.println("LEFT SCORE");
-		scores[1]+=50000;
-		scores[0]-=30000;
+		scores[1]+= GOAL_SCORE;
+		scores[0]-= GOAL_SCORE;
 		leftGoals++;
 		resetPitch();
 		
@@ -159,8 +175,8 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	@Override
 	public void onRightScore() {
 		//System.out.println("RIGHT SCORE");
-		scores[0]+=50000;
-		scores[1]-=30000;
+		scores[0]+= GOAL_SCORE;
+		scores[1]-= GOAL_SCORE;
 		rightGoals++;
 		resetPitch();
 		
@@ -174,13 +190,13 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	@Override
 	public void onYellowCollide() {
 		//System.out.println("Yellow collided");
-		scores[1]-=500;
+		scores[1]+= COLLISION;
 		inCollYellow = true;
 	}
 
 	@Override
 	public void onYellowStopCollide() {
-		scores[1]+=500;
+		scores[1]+= STOP_COLLISION;
 		inCollYellow = false;
 	}
 
@@ -191,13 +207,13 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 	@Override
 	public void onBlueCollide() {
 		//System.out.println("Blue collided");
-		scores[0]-=500;
+		scores[0]+= COLLISION;
 		inCollBlue = true;
 	}
 	
 	@Override
 	public void onBlueStopCollide() {
-		scores[0]+=500;
+		scores[0]+= STOP_COLLISION;
 		inCollBlue = false;
 	}
 	
@@ -249,9 +265,11 @@ public class Game implements SimulatorPhysicsEngine.Callback {
 		
 		sim.callback = this;
 		
-		leftAI = new AIMaster(leftBrick, ids[0] != -1 ? new AINeuralNet(population[ids[0]]) : new AIVisualServoing());
+		leftAIV = ids[0] != -1 ? new AINeuralNet(population[ids[0]]) : new AIVisualServoing();
+		leftAI = new AIMaster(leftBrick, leftAIV);
 		leftAI.setPrintStateChanges(false);
-		rightAI = new AIMaster(rightBrick, ids[1] != -1 ? new AINeuralNet(population[ids[1]]) : new AIVisualServoing());
+		rightAIV = ids[1] != -1 ? new AINeuralNet(population[ids[1]]) : new AIVisualServoing();
+		rightAI = new AIMaster(rightBrick, rightAIV);
 		rightAI.setPrintStateChanges(false);
 		
 		leftAI.setOwnTeamBlue(true);

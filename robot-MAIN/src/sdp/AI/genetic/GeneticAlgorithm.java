@@ -5,6 +5,9 @@ import java.util.HashSet;
 import java.util.Random;
 import java.io.*;
 
+import org.neuroph.core.NeuralNetwork;
+import org.neuroph.util.NeuralNetworkCODEC;
+
 import sdp.AI.neural.AINeuralNet;
 
 
@@ -13,7 +16,7 @@ public class GeneticAlgorithm {
 	/** Number of games each individual plays against every other */
 	final static int GAMES = 1;
 	/** Size of the population */
-	final static int POPSIZE = 10;
+	final static int POPSIZE = 20;
 	/** Probability that a crossover will occur */
 	final static float CROSSOVER_PROB = 0.6F;
 	/** Probability that a mutation will occur */
@@ -21,11 +24,12 @@ public class GeneticAlgorithm {
 	/** Number of genes in each individual */
 	final static int GENE_NUMBER = AINeuralNet.getWeightsCount();
 	/** Number of neighbours each individual plays against. Must be odd*/
-	final static int NEIGHBOUR_NUMBER = 5;
+	final static int NEIGHBOUR_NUMBER = 11;
 	/** Number of threads. Every thread can simulate one game at a time */
-	final static int MAX_NUM_SIMULT_GAMES = 4;
+	final static int MAX_NUM_SIMULT_GAMES = 10;
 	
 	final static String OUTPUT_DIR = "data/GA/";
+	private static final String NNET_FILE = "data/GA/finalPop.nnet";
 
 	int gen = 0;
 	long fitTotal = 0;
@@ -72,7 +76,7 @@ public class GeneticAlgorithm {
 					System.out.println("Generation: " + gen + "  average fitness: " + avgFitness.get(avgFitness.size()-1) + "  fittest: " + fittest);
 					//out.println("\nGeneration " + gen);
 
-					new AINeuralNet(population[findFittest()]).getNetwork().save(OUTPUT_DIR+"bestGen" + gen + ".nnet");
+					new AINeuralNet(population[findFittest()]).getNetwork().save(OUTPUT_DIR+"finalPop.nnet");
 				}
 
 				/* Print the final generation */
@@ -118,7 +122,8 @@ public class GeneticAlgorithm {
 		fitTotal = 0;
 
 		for (int i = 0; i < POPSIZE; i++) {
-			population[i] = AINeuralNet.getRandomWeights();
+			//population[i] = AINeuralNet.getRandomWeights();
+			NeuralNetworkCODEC.network2array(NeuralNetwork.load(NNET_FILE), population[i]);
 		}
 		popFitness = calcFitness();
 		avgFitness.add(getAverage(popFitness));

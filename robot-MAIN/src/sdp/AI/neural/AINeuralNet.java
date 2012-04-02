@@ -29,7 +29,7 @@ public class AINeuralNet extends AIVisualServoing {
 	/** NNetwork layers count. {1, 2, 3} would mean
 	 *  network with 1 input, 3 outputs and one hidden
 	 *  layer with 2 neurons */
-	private static final int[] LAYERS = new int[] {45, NNetTools.move_modes.values().length};
+	private static final int[] LAYERS = new int[] {67, NNetTools.move_modes.values().length};
 	
 	/** The brain that is controlling the AI */
 	private NeuralNetwork nets;

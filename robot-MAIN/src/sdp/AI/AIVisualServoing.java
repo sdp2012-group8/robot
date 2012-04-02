@@ -122,6 +122,8 @@ public class AIVisualServoing extends BaseAI {
 	private Pathfinder pathfinder;
 	
 	
+	private boolean wasGotBall = false;
+	
 	/**
 	 * Create a new visual servoing AI instance.
 	 */
@@ -149,6 +151,7 @@ public class AIVisualServoing extends BaseAI {
 	@Override
 	protected synchronized Command gotBall() throws IOException {
 		if (canWeAttack(aiWorldState)) {
+			wasGotBall = true;
 			optimalPointOffset = DEFAULT_OPTIMAL_POINT_OFFSET;
 			targetThreshold = DEFAULT_TARGET_THRESHOLD;
 			Painter.point_off = optimalPointOffset;
@@ -172,6 +175,11 @@ public class AIVisualServoing extends BaseAI {
 		}
 	}
 
+	public boolean didIGetBall() {
+		final boolean orig = wasGotBall;
+		wasGotBall = false;
+		return orig;
+	}
 	
 	/**
 	 * @see sdp.AI.BaseAI#defendGoal()
