@@ -20,7 +20,7 @@ public class GeneticAlgorithm {
 	/** Probability that a crossover will occur */
 	final static float CROSSOVER_PROB = 0.6F;
 	/** Probability that a mutation will occur */
-	final static float MUTATE_PROB = 0.001F;
+	final static float MUTATE_PROB = 0.0001F;
 	/** Number of genes in each individual */
 	final static int GENE_NUMBER = AINeuralNet.getWeightsCount();
 	/** Number of neighbours each individual plays against. Must be odd*/
