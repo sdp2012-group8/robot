@@ -24,62 +24,61 @@ public class AIVisualServoing extends BaseAI {
 
 
 	/** Whether the robot is required to face the ball before kicking. */
-	private static final boolean REQUIRE_FACE_BALL_TO_KICK = false;
+	private static final boolean REQUIRE_FACE_BALL_TO_KICK = true;
 	/** Whether the robot is allowed to drive in reverse. */
 	private static final boolean REVERSE_DRIVING_ENABLED = true;
 	/** Whether wall handling logic should be used. */
-	private static final boolean SPECIAL_WALL_LOGIC_ENABLED = false;
+	private static final boolean SPECIAL_WALL_LOGIC_ENABLED = true;
 	/** Whether to use the heuristic pathfinder. */
 	private static final boolean USE_HEURISTIC_PATHFINDER = false;
 	/** Whether to use milestone 4 defence logic. */
 	private static final boolean USE_MILESTONE_4_DEFENCE = false;
-
 	/** Whether the robot should attempt to use wall kicks. */
 	private static final boolean WALL_KICKS_ENABLED = true;
-	
+
 	/** Distance at which the robot will begin slowing down. */
 	private static final double DECELERATION_DISTANCE = 30;
 
 	/** The multiplier of the final driving speed. */
 	private static final double DRIVING_SPEED_MULTIPLIER = 1;
 	/** What fraction of forward speed the robot will lose when turning. */
-	private static final double FORWARD_LOSS_MULTIPLIER = 0.75;
+	private static final double FORWARD_LOSS_MULTIPLIER = 0.7;
 	/** Turning angle threshold for stop turns. */
 	private static final double STOP_TURN_THRESHOLD = 120;
 	/** The multiplier of the final turning speed. */
 	private static final double TURNING_SPEED_MULTIPLIER = 1.8;
-	
+
 	/** The number of targets, when considering a direct attack. */
 	private static final int DIRECT_ATTACK_TARGET_COUNT = 9;
-	
+
 	/** How close our robot should be to the ball before it attempts to kick it. */
 	private static final double OWN_BALL_KICK_DIST = 6;
 	/** How close enemy robot should be to the ball before we think it will kick it. */
 	private static final double ENEMY_BALL_KICK_DIST = Robot.LENGTH_CM;
-	
+
 	/** Distance threshold for ball-robot direction ray tests. */
 	private static final double BALL_TO_DIRECTION_PROXIMITY_THRESHOLD = Robot.WIDTH_CM / 2;
-	
+
 	/** How far a robot can be away from a point before we think it is there. */
 	private static final double ROBOT_POSITION_TOLERANCE = 10;
-	
+
 	/** At what distance to the ball should the robot begin turning in game start. */
 	private static final double START_TURNING_DISTANCE = 40;
 	/** X value offset of the target when the ball is reached in game start. */
 	private static final double START_TURNING_X_SHIFT = 30;
 	/** Y value offset of the target when the ball is reached in game start. */
 	private static final double START_TURNING_Y_SHIFT = 30;
-	
+
 	/** The ratio by which optimal distance gets adjusted in each attempt. */
 	private static final double OPTIMAL_POINT_ADJUST = 0.8;
 	/** How many times to try to find the optimal point. */
 	private static final int OPTIMAL_POINT_SEARCH_TRIES = 20;
-	
+
 	/** Size of the pitch's horizontal edge region. */
 	private static final double PITCH_H_EDGE_REGION_SIZE = Robot.LENGTH_CM * 0.7;
 	/** Size of the pitch's vertical edge region. */
 	private static final double PITCH_V_EDGE_REGION_SIZE = Robot.LENGTH_CM * 0.7;
-	
+
 	/** High corner collision threshold. */
 	private static final int HIGH_CORNER_COLL_THRESH = 5;
 	/** Low corner collision threshold. */
@@ -92,18 +91,18 @@ public class AIVisualServoing extends BaseAI {
 
 	// TODO: Decouple the following constants from Painter.
 	/** Starting optimal point to ball offset. */
-	public static final double DEFAULT_OPTIMAL_POINT_OFFSET = Robot.LENGTH_CM;
+	public static final double DEFAULT_OPTIMAL_POINT_OFFSET = 2 * Robot.LENGTH_CM;
 	/** Starting target distance threshold. */
-	public static final double DEFAULT_TARGET_THRESHOLD = 20;
+	public static final double DEFAULT_TARGET_THRESHOLD = 30;
 
 	/** The amount by which defense point is shifted on the X axis. */
 	private static final double BALL_DEFENSE_X_OFFSET = 10;
-	
+
 	/** X coordinate adjustment of robot destination in own wall ball logic. */
-	private static final double OWN_WALL_BALL_X_SHIFT = Robot.LENGTH_CM * 0.7;
+	private static final double OWN_WALL_BALL_X_SHIFT = Robot.LENGTH_CM;
 	/** Y coordinate adjustment of robot destination in own wall ball logic. */
 	private static final double OWN_WALL_BALL_Y_SHIFT = Robot.LENGTH_CM / 4;
-	
+
 	/** Attack angle of the side wall ball logic. */
 	private static final double SIDE_WALL_ATTACK_DIR = 30.0;
 	/** Side wall ball attack point offset from the ball. */
