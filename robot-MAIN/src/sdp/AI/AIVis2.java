@@ -32,7 +32,7 @@ public class AIVis2 extends AIVisualServoing {
 	/** At what distance fromt the robot will be the point on the path that we want to follow */
 	private final static double BEZIER_FRACTION = 0.5;
 	
-	private final static double GUARD_BALL_DIST = 22;
+	private final static double GUARD_BALL_DIST = 30;
 	
 	private final static double MAX_HESITATION_FPS = 1.5;
 	
@@ -86,7 +86,7 @@ public class AIVis2 extends AIVisualServoing {
 		
 		final WayPt avoid = go(direct);
 	
-		final Vector2D secondary = getNextBezierPoint(avoid);
+		final Vector2D secondary = getNextBezierPoint(avoid, WorldState.makeObstacleFlagsForOpponent(true, aiWorldState.isOwnTeamBlue()));
 		final double dist = Vector2D.subtract(robot, secondary).getLength();
 		
 		final ArrayList<Waypoint> retValue = new ArrayList<Waypoint>();
@@ -124,16 +124,16 @@ public class AIVis2 extends AIVisualServoing {
 		
 		if (dist < GUARD_BALL_DIST) {
 
-			if ((comm.drivingSpeed > 0 && ballturn < 80) ||
-					(comm.drivingSpeed < 0 && ballturn > 120)) {
+			if ((comm.drivingSpeed > 0 && ballturn < 70) ||
+					(comm.drivingSpeed < 0 && ballturn > 110)) {
 
 				if (aiWorldState.isOwnGoalLeft()) {
-					if (ball.getX() < robot.getX() && balldir > 120) {
+					if (ball.getX() < robot.getX()) {
 						System.out.println("Preventing kick ball in own goal left "+ballturn);
 						comm.drivingSpeed = 0;//-comm.drivingSpeed;
 					}
 				} else {
-					if (ball.getX() > robot.getX() && balldir < 80) {
+					if (ball.getX() > robot.getX()) {
 						System.out.println("Preventing kick ball in own goal right"+ballturn);
 						comm.drivingSpeed = 0;//-comm.drivingSpeed;
 					}
@@ -144,7 +144,7 @@ public class AIVis2 extends AIVisualServoing {
 
 	}
 	
-	private Vector2D getNextBezierPoint(final WayPt waypoint) {
+	private Vector2D getNextBezierPoint(final WayPt waypoint, final int obstacles) {
 		
 		final double pathsize = Vector2D.subtract(waypoint.loc, new Vector2D(aiWorldState.getOwnRobot().getCoords())).getLength();
 		final double coeff = pathsize/2;
@@ -155,6 +155,7 @@ public class AIVis2 extends AIVisualServoing {
 		
 		final Vector2D pt1 = new Vector2D(aiWorldState.getOwnRobot().getCoords());
 		final double robAng = aiWorldState.getOwnRobot().getAngle();
+		final Vector2D robot = new Vector2D(aiWorldState.getOwnRobot().getCoords());
 		final Vector2D robDir = Vector2D.rotateVector(new Vector2D(coeff, 0), goingBackwards ? GeomUtils.normaliseAngle(robAng - 180) : robAng);
 		final Vector2D cp1 = Vector2D.add(pt1, robDir);
 		final Vector2D pt2 = waypoint.loc;
@@ -182,7 +183,10 @@ public class AIVis2 extends AIVisualServoing {
 		    
 		    pathsofar += Vector2D.subtract(prevVector, vector).getLength();
 		    
-		    if (pathsofar > min_dist && result == null)
+		    if (pathsofar > min_dist && result == null &&
+		    		(
+		    		WorldState.isDirectPathClear(aiWorldState, robot, vector, obstacles)
+		    		|| Vector2D.subtract(vector, robot).getLength() < 10))
 		    	result = vector;
 		    
 		    prevVector = vector;
@@ -319,6 +323,11 @@ public class AIVis2 extends AIVisualServoing {
 	
 	@Override
 	protected Command chaseBall() throws IOException {
+		return play();
+	}
+	
+	@Override
+	protected Command defendGoal() throws IOException {
 		return play();
 	}
 	

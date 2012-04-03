@@ -38,7 +38,7 @@ public class AIWorldState extends WorldState {
 	/** Minimum FPS in prediction logic. */
 	private static final int PREDICTION_MIN_FPS = 5;
 	/** The time, by which the world state is advanced into the future, in ms. */
-	private static final long PREDICTION_TIME = 300;
+	private static final long PREDICTION_TIME = 400;
 	
 	/** Low pass filter new angle data weight. */
 	private static final double LPF_ANGLE_WEIGHT = 0.5;
