@@ -26,11 +26,14 @@ public class FullPathfinder implements Pathfinder {
 	private static boolean USE_MEMOIZATION = false;
 	
 	/** Radius of checked circles. */
-	private static double CHECKED_CIRCLE_RADIUS = 0.0;
+	private static double CHECKED_CIRCLE_RADIUS = 5.0;
 	/** The amount, by which the collision points are pushed from obstacles. */
-	private static double COLLISION_ADJUSTMENT = 5.0;
+	private static double COLLISION_ADJUSTMENT = 10.0;
 	/** Largest number of waypoints a path can consist of. */
 	private static int MAX_WAYPOINT_COUNT = 4;
+	
+	/** The amount by which obstacles are increased in extraction. */
+	private static final double OBSTACLE_SIZE_INCREASE = Robot.LENGTH_CM * 0.5;
 	
 	
 	/** A list of points that have been explored in a search. */
@@ -129,6 +132,10 @@ public class FullPathfinder implements Pathfinder {
 		Vector2D destDir = Vector2D.subtract(destVec, startVec);
 				
 		ArrayList<Circle> obstacles = WorldState.getObstacleCircles(worldState, obstacleFlag);
+		for (Circle c : obstacles) {
+			c.setRadius(c.getRadius() + OBSTACLE_SIZE_INCREASE);
+		}
+		
 		Vector2D startVecAdj = movePointOutOfObstacle(obstacles, startVec);
 		
 		// Check for failure conditions.
