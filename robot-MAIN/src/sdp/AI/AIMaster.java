@@ -318,6 +318,10 @@ public class AIMaster extends WorldStateProvider {
 //		System.out.println("ws: " + aiWorldState.isOwnGoalLeft());
 	}
 	
+	public void changeAI(BaseAI newAi) {
+		ai = newAi;
+	}
+	
 	
 	/**
 	 * Set current image processor configuration.

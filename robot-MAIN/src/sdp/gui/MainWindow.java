@@ -1775,6 +1775,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			public void actionPerformed(ActionEvent arg0) {
 				if (aiInstance != null) {
 					aiInstance.setState(AIMaster.AIState.values()[robotBehaviourCombobox.getSelectedIndex()]);
+					aiInstance.changeAI(AIs[comboBox.getSelectedIndex()]);
 				}
 			}
 		});
