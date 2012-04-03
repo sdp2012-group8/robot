@@ -26,7 +26,7 @@ public class WorldState {
 	private static final Logger LOGGER = Logger.getLogger("sdp.common.world.WorldState");
 	
 	/** Whether to use the alternative ball collision model. */
-	private static final boolean ALT_BALL_COLLISION_MODEL = true;
+	private static final boolean ALT_BALL_COLLISION_MODEL = false;
 	
 	/** A flag that denotes that ball should be considered an obstacle. */
 	public static final int BALL_IS_OBSTACLE_FLAG = 0x1;
@@ -38,7 +38,7 @@ public class WorldState {
 	public static final int WALL_IS_OBSTACLE_FLAG = 0x8;
 	
 	/** Radius of the ball obstacle circle. */
-	private static final double BALL_OBSTACLE_RADIUS = 10;
+	private static final double BALL_OBSTACLE_RADIUS = 7;
 	/** Radius of the robot obstacle circle. */
 	private static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.7;
 

@@ -32,7 +32,7 @@ public class AIVis2 extends AIVisualServoing {
 	/** At what distance fromt the robot will be the point on the path that we want to follow */
 	private final static double BEZIER_FRACTION = 0.5;
 	
-	private final static double GUARD_BALL_DIST = 30;
+	private final static double GUARD_BALL_DIST = 22;
 	
 	private final static double MAX_HESITATION_FPS = 1.5;
 	
