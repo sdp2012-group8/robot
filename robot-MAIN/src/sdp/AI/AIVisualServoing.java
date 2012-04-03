@@ -24,7 +24,11 @@ public class AIVisualServoing extends BaseAI {
 	
 	/** Attack modes for optimal point calculations. */
 	protected enum AttackMode { DirectOnly, WallsOnly, Full }
+	/** Enumeration for all the different AI pathfinder modes. */
+	private enum PathfinderMode { Full, Heuristic }
 
+	/** The AI's pathfinder mode. */
+	private static final PathfinderMode PATHFINDER_MODE = PathfinderMode.Full;
 
 	/** Whether the robot is required to face the ball before kicking. */
 	private static final boolean REQUIRE_FACE_BALL_TO_KICK = true;
@@ -134,10 +138,16 @@ public class AIVisualServoing extends BaseAI {
 	 * Create a new visual servoing AI instance.
 	 */
 	public AIVisualServoing() {
-		if (USE_HEURISTIC_PATHFINDER) {
-			pathfinder = new HeuristicPathfinder();
-		} else {
+		switch (PATHFINDER_MODE) {
+		case Full:
 			pathfinder = new FullPathfinder();
+			break;
+		case Heuristic:
+			pathfinder = new HeuristicPathfinder();
+			break;
+		default:
+			pathfinder = new HeuristicPathfinder();
+			break;
 		}
 	}
 
