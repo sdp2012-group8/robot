@@ -585,8 +585,8 @@ public class AIVisualServoing extends BaseAI {
 		}
 
 		// Finalise the command.
-		reduceSpeed(comm, waypoint.getCostToDest(), DECELERATION_DISTANCE,
-				Robot.MAX_DRIVING_SPEED / 2);
+//		reduceSpeed(comm, waypoint.getCostToDest(), DECELERATION_DISTANCE,
+//				Robot.MAX_DRIVING_SPEED / 2);
 
 		comm.turningSpeed *= TURNING_SPEED_MULTIPLIER;
 		comm.drivingSpeed *= drivingSpeedMult;

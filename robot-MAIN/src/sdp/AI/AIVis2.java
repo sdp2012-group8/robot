@@ -17,6 +17,7 @@ import sdp.AI.AIVisualServoing.AttackMode;
 import sdp.AI.pathfinding.HeuristicPathfinder;
 import sdp.AI.pathfinding.Waypoint;
 import sdp.common.DeprecatedCode;
+import sdp.common.FPSCounter;
 import sdp.common.Painter;
 import sdp.common.geometry.GeomUtils;
 import sdp.common.geometry.Vector2D;
@@ -29,9 +30,16 @@ public class AIVis2 extends AIVisualServoing {
 	private final static boolean USE_OLD_STYLE_DIRECTION = true;
 	
 	/** At what distance fromt the robot will be the point on the path that we want to follow */
-	private final static double BEZIER_FRACTION = 0.3;
+	private final static double BEZIER_FRACTION = 0.5;
 	
 	private final static double GUARD_BALL_DIST = 30;
+	
+	private final static double MAX_HESITATION_FPS = 1.5;
+	
+	private final FPSCounter fps = new FPSCounter();
+	
+	private Boolean lastLeft = null;
+	
 	
 	private HeuristicPathfinder path = new HeuristicPathfinder();
 	
@@ -92,6 +100,12 @@ public class AIVis2 extends AIVisualServoing {
 		final Command comm = getWaypointCommand(retValue, false, DRIVING_SPEED_MULTIPLIER,
 					STOP_TURN_THRESHOLD);
 		
+//		double distSec = Vector2D.subtract(secondary, robot).getLength();
+//		double t = distSec / Robot.MAX_DRIVING_SPEED;
+//		double ang = getTurningAmount(robot, secondary, aiWorldState.getOwnRobot().getAngle());
+//		
+//		Command comm = new Command(Robot.MAX_DRIVING_SPEED, ang/t, false);
+		
 		guardBall(comm);
 
 		return comm;
@@ -105,21 +119,27 @@ public class AIVis2 extends AIVisualServoing {
 		final Vector2D ball = new Vector2D(aiWorldState.getBallCoords());
 		final Vector2D robot = new Vector2D(aiWorldState.getOwnRobot().getCoords());
 		final double dist = Vector2D.subtract(ball, robot).getLength();
-		final double ballturn = Vector2D.subtract(ball, robot).getDirection();
-
+		final double ballturn = Math.abs(getTurningAmount(robot, ball, aiWorldState.getOwnRobot().getAngle()));
+		final double balldir = Math.abs(Vector2D.subtract(ball, robot).getDirection());
+		
 		if (dist < GUARD_BALL_DIST) {
 
+			if ((comm.drivingSpeed > 0 && ballturn < 80) ||
+					(comm.drivingSpeed < 0 && ballturn > 120)) {
+
 				if (aiWorldState.isOwnGoalLeft()) {
-					if (ball.getX() < robot.getX() && Math.abs(ballturn) > 130) {
+					if (ball.getX() < robot.getX() && balldir > 120) {
 						System.out.println("Preventing kick ball in own goal left "+ballturn);
-						comm.drivingSpeed = -comm.drivingSpeed;
+						comm.drivingSpeed = 0;//-comm.drivingSpeed;
 					}
 				} else {
-					if (ball.getX() > robot.getX() && Math.abs(ballturn) < 50) {
+					if (ball.getX() > robot.getX() && balldir < 80) {
 						System.out.println("Preventing kick ball in own goal right"+ballturn);
-						comm.drivingSpeed = -comm.drivingSpeed;
+						comm.drivingSpeed = 0;//-comm.drivingSpeed;
 					}
 				}
+
+			}
 		}
 
 	}
@@ -237,8 +257,18 @@ public class AIVis2 extends AIVisualServoing {
 		
 		//Painter.linesSecondary = timeleft < timeright ? rightLines : leftLines;
 		
+		boolean isleft = timeleft < timeright;
 		
-		return timeleft < timeright ? left : right;
+		if (lastLeft == null || lastLeft != isleft) {
+			fps.tick();
+			lastLeft = isleft;
+		}
+		
+		if (fps.getFPS() > MAX_HESITATION_FPS) {
+			isleft = lastLeft;
+		}
+		
+		return isleft ? left : right;
 	}
 	
 	private static final double getTurningAmount(final Vector2D origin, final Vector2D target, final double initDir) {

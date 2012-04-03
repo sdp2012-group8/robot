@@ -26,7 +26,7 @@ public class WorldState {
 	private static final Logger LOGGER = Logger.getLogger("sdp.common.world.WorldState");
 	
 	/** Whether to use the alternative ball collision model. */
-	private static final boolean ALT_BALL_COLLISION_MODEL = false;
+	private static final boolean ALT_BALL_COLLISION_MODEL = true;
 	
 	/** A flag that denotes that ball should be considered an obstacle. */
 	public static final int BALL_IS_OBSTACLE_FLAG = 0x1;
