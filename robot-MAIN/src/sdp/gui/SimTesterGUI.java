@@ -28,6 +28,7 @@ import org.neuroph.core.NeuralNetwork;
 
 import sdp.AI.AIMaster;
 import sdp.AI.AIMaster.AIState;
+import sdp.AI.AIVis2;
 import sdp.AI.AIVisualServoing;
 import sdp.AI.BaseAI;
 import sdp.AI.genetic.Game;
@@ -51,7 +52,7 @@ import sdp.simulator.VBrick;
  */
 public class SimTesterGUI {
 	
-	private enum AIType {VIS_SERV, NNETS}
+	private enum AIType {VIS_SERV, NNETS, VIS2}
 	
 	private static final String NNET_FILE = "data/GA/finalPop.nnet";
 
@@ -566,6 +567,8 @@ public class SimTesterGUI {
 			return new AIVisualServoing();
 		case NNETS:
 			return new AINeuralNet(NeuralNetwork.load(NNET_FILE));
+		case VIS2:
+			return new AIVis2();
 		} 
 		return null;
 	}
@@ -576,6 +579,8 @@ public class SimTesterGUI {
 			return new AIVisualServoing();
 		case NNETS:
 			return new AINeuralNet(NeuralNetwork.load(NNET_FILE));
+		case VIS2:
+			return new AIVis2();
 		} 
 		return null;
 	}

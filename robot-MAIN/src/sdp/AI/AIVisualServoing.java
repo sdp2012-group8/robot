@@ -23,7 +23,7 @@ import sdp.common.world.WorldState;
 public class AIVisualServoing extends BaseAI {
 	
 	/** Attack modes for optimal point calculations. */
-	private enum AttackMode { DirectOnly, WallsOnly, Full }
+	protected enum AttackMode { DirectOnly, WallsOnly, Full }
 
 
 	/** Whether the robot is required to face the ball before kicking. */
@@ -43,11 +43,11 @@ public class AIVisualServoing extends BaseAI {
 	private static final double DECELERATION_DISTANCE = 30;
 
 	/** The multiplier of the final driving speed. */
-	private static final double DRIVING_SPEED_MULTIPLIER = 1;
+	protected static final double DRIVING_SPEED_MULTIPLIER = 1;
 	/** What fraction of forward speed the robot will lose when turning. */
 	private static final double FORWARD_LOSS_MULTIPLIER = 0.7;
 	/** Turning angle threshold for stop turns. */
-	private static final double STOP_TURN_THRESHOLD = 90;
+	protected static final double STOP_TURN_THRESHOLD = 90;
 	/** The multiplier of the final turning speed. */
 	private static final double TURNING_SPEED_MULTIPLIER = 1.8;
 
@@ -73,9 +73,9 @@ public class AIVisualServoing extends BaseAI {
 	private static final double START_TURNING_Y_SHIFT = 30;
 
 	/** The ratio by which optimal distance gets adjusted in each attempt. */
-	private static final double OPTIMAL_POINT_ADJUST = 0.8;
+	protected static final double OPTIMAL_POINT_ADJUST = 0.8;
 	/** How many times to try to find the optimal point. */
-	private static final int OPTIMAL_POINT_SEARCH_TRIES = 20;
+	protected static final int OPTIMAL_POINT_SEARCH_TRIES = 20;
 
 	/** Size of the pitch's horizontal edge region. */
 	private static final double PITCH_H_EDGE_REGION_SIZE = Robot.LENGTH_CM * 0.7;
@@ -118,7 +118,7 @@ public class AIVisualServoing extends BaseAI {
 	public Vector2D lastTarget;
 	
 	/** Current optimal point offset. */
-	private double optimalPointOffset = DEFAULT_OPTIMAL_POINT_OFFSET;
+	protected double optimalPointOffset = DEFAULT_OPTIMAL_POINT_OFFSET;
 	/** Current target distance threshold */
 	private double targetThreshold = DEFAULT_TARGET_THRESHOLD;
 	
@@ -525,7 +525,7 @@ public class AIVisualServoing extends BaseAI {
 	 * @return A command that will get the robot closer towards the given
 	 * 		waypoint.
 	 */
-	private Command getWaypointCommand(ArrayList<Waypoint> path,
+	protected Command getWaypointCommand(ArrayList<Waypoint> path,
 			boolean mustFaceTarget,	double drivingSpeedMult, double stopTurnThreshold) {
 		Command comm = new Command(0.0, 0.0, false);
 		Waypoint waypoint = path.get(0);
@@ -844,7 +844,7 @@ public class AIVisualServoing extends BaseAI {
 	 * @param mode Robot's attack mode.
 	 * @return Optimal attack point.
 	 */
-	private Point2D.Double getOptimalAttackPoint(AIWorldState worldState,
+	protected Point2D.Double getOptimalAttackPoint(AIWorldState worldState,
 			double distToBall, AttackMode mode) {
 		ArrayList<Point2D.Double> attackTargets = new ArrayList<Point2D.Double>();
 		

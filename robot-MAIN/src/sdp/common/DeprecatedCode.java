@@ -286,9 +286,7 @@ public class DeprecatedCode {
 	 * @return
 	 */
 	@Deprecated
-	public static boolean visibility(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
-		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
-		Vector2D startPt = new Vector2D(robot.getCoords());
+	public static boolean visibility(Vector2D startPt, WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle) {
 		Vector2D dir =  Vector2D.subtract(endPt, startPt);
 		Vector2D ray = raytraceVector(ws, startPt, dir, am_i_blue, include_ball_as_obstacle);
 		return ray.getLength() >= dir.getLength();
@@ -328,11 +326,9 @@ public class DeprecatedCode {
 	 * @return
 	 */
 	@Deprecated
-	public static boolean reachability(WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle, double coeff) {
-		if (!visibility(ws, endPt, am_i_blue, include_ball_as_obstacle))
+	public static boolean reachability(Vector2D startPt, WorldState ws, Vector2D endPt, boolean am_i_blue, boolean include_ball_as_obstacle, double coeff) {
+		if (!visibility(new Vector2D(am_i_blue ? ws.getBlueRobot().getCoords() : ws.getYellowRobot().getCoords()), ws, endPt, am_i_blue, include_ball_as_obstacle))
 			return false;
-		Robot robot = am_i_blue ? ws.getBlueRobot() : ws.getYellowRobot(); 
-		Vector2D startPt = new Vector2D(robot.getCoords());
 		Vector2D dir =  Vector2D.subtract(endPt, startPt);
 		double dir_l = dir.getLength();
 		double angle = (-Vector2D.getDirection(dir)+90)*Math.PI/180d;
