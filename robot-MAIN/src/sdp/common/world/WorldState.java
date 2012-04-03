@@ -25,6 +25,9 @@ public class WorldState {
 	/** The class' logger. */
 	private static final Logger LOGGER = Logger.getLogger("sdp.common.world.WorldState");
 	
+	/** Whether to use the alternative ball collision model. */
+	private static final boolean ALT_BALL_COLLISION_MODEL = false;
+	
 	/** A flag that denotes that ball should be considered an obstacle. */
 	public static final int BALL_IS_OBSTACLE_FLAG = 0x1;
 	/** A flag that denotes that blue robot should be considered an obstacle. */
@@ -37,9 +40,7 @@ public class WorldState {
 	/** Radius of the ball obstacle circle. */
 	private static final double BALL_OBSTACLE_RADIUS = 10;
 	/** Radius of the robot obstacle circle. */
-	private static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.9;
-	/** The amount by which obstacles are increased in extraction. */
-	private static final double OBSTACLE_SIZE_INCREASE = Robot.LENGTH_CM * 0.5;
+	private static final double ROBOT_OBSTACLE_RADIUS = Robot.LENGTH_CM * 0.7;
 
 	/** Direct path collision check tolerance. */
 	private static final double DIRECT_PATH_CHECK_TOLERANCE = 0.001;
@@ -305,15 +306,15 @@ public class WorldState {
 		
 		if ((obstacles & BALL_IS_OBSTACLE_FLAG) != 0) {
 			circles.add(new Circle(worldState.getBallCoords(),
-					BALL_OBSTACLE_RADIUS + OBSTACLE_SIZE_INCREASE));
+					BALL_OBSTACLE_RADIUS));
 		}
 		if ((obstacles & BLUE_IS_OBSTACLE_FLAG) != 0) {
 			circles.add(new Circle(worldState.getBlueRobot().getCoords(),
-					ROBOT_OBSTACLE_RADIUS + OBSTACLE_SIZE_INCREASE));
+					ROBOT_OBSTACLE_RADIUS));
 		}
 		if ((obstacles & YELLOW_IS_OBSTACLE_FLAG) != 0) {
 			circles.add(new Circle(worldState.getYellowRobot().getCoords(),
-					ROBOT_OBSTACLE_RADIUS + OBSTACLE_SIZE_INCREASE));
+					ROBOT_OBSTACLE_RADIUS));
 		}
 		
 		return circles;
@@ -372,9 +373,16 @@ public class WorldState {
 		
 		// Ball collisions.
 		if ((obstacles & BALL_IS_OBSTACLE_FLAG) != 0) {
-			Vector2D perpDir = Vector2D.getPerpendicular(direction);
-			Vector2D offsetVec1 = Vector2D.changeLength(perpDir, BALL_OBSTACLE_RADIUS);
-			Vector2D offsetVec2 = Vector2D.changeLength(perpDir, -BALL_OBSTACLE_RADIUS);
+			Vector2D offsetVec1, offsetVec2;
+			
+			if (ALT_BALL_COLLISION_MODEL) {
+				offsetVec1 = new Vector2D(0, BALL_OBSTACLE_RADIUS);
+				offsetVec2 = new Vector2D(0, -BALL_OBSTACLE_RADIUS);
+			} else {
+				Vector2D perpDir = Vector2D.getPerpendicular(direction);
+				offsetVec1 = Vector2D.changeLength(perpDir, BALL_OBSTACLE_RADIUS);
+				offsetVec2 = Vector2D.changeLength(perpDir, -BALL_OBSTACLE_RADIUS);
+			}
 			
 			segments.add(new VectorPair(
 					Vector2D.add(new Vector2D(state.getBallCoords()), offsetVec1),

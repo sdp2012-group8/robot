@@ -7,6 +7,7 @@ import java.util.Iterator;
 
 import sdp.AI.pathfinding.FullPathfinder;
 import sdp.AI.pathfinding.HeuristicPathfinder;
+import sdp.AI.pathfinding.ObstacleTangentPathfinder;
 import sdp.AI.pathfinding.Pathfinder;
 import sdp.AI.pathfinding.Waypoint;
 import sdp.common.Painter;
@@ -17,11 +18,18 @@ import sdp.common.world.Robot;
 import sdp.common.world.WorldState;
 
 
+/**
+ * Visual servoing AI implementation.
+ */
 public class AIVisualServoing extends BaseAI {
 	
 	/** Attack modes for optimal point calculations. */
 	protected enum AttackMode { DirectOnly, WallsOnly, Full }
+	/** Enumeration for all the different AI pathfinder modes. */
+	private enum PathfinderMode { Full, Heuristic, ObstacleTangent }
 
+	/** The AI's pathfinder mode. */
+	private static final PathfinderMode PATHFINDER_MODE = PathfinderMode.ObstacleTangent;
 
 	/** Whether the robot is required to face the ball before kicking. */
 	private static final boolean REQUIRE_FACE_BALL_TO_KICK = true;
@@ -44,7 +52,7 @@ public class AIVisualServoing extends BaseAI {
 	/** What fraction of forward speed the robot will lose when turning. */
 	private static final double FORWARD_LOSS_MULTIPLIER = 0.7;
 	/** Turning angle threshold for stop turns. */
-	protected static final double STOP_TURN_THRESHOLD = 90;
+	protected static final double STOP_TURN_THRESHOLD = 120;
 	/** The multiplier of the final turning speed. */
 	private static final double TURNING_SPEED_MULTIPLIER = 1.8;
 
@@ -107,6 +115,8 @@ public class AIVisualServoing extends BaseAI {
 	private static final double SIDE_WALL_ATTACK_DIR = 30.0;
 	/** Side wall ball attack point offset from the ball. */
 	private static final double SIDE_WALL_OFFSET = 2 * Robot.LENGTH_CM;
+	/** The amount by which the x coordinate of the ball is shifted when selecting attack point. */
+	private static final double SIDE_WALL_X_ATTACK_SHIFT = 10;
 
 	
 	/** Last AI target. */
@@ -120,17 +130,28 @@ public class AIVisualServoing extends BaseAI {
 	/** AI's heuristic pathfinder. */
 	private Pathfinder pathfinder;
 	
-	
+	// TODO: Clean up in the inevitable AIMaster logic migration.
+	/** Whether we are in gotBall() state since the last check. */
 	private boolean wasGotBall = false;
+	
 	
 	/**
 	 * Create a new visual servoing AI instance.
 	 */
 	public AIVisualServoing() {
-		if (USE_HEURISTIC_PATHFINDER) {
-			pathfinder = new HeuristicPathfinder();
-		} else {
+		switch (PATHFINDER_MODE) {
+		case Full:
 			pathfinder = new FullPathfinder();
+			break;
+		case Heuristic:
+			pathfinder = new HeuristicPathfinder();
+			break;
+		case ObstacleTangent:
+			pathfinder = new ObstacleTangentPathfinder();
+			break;
+		default:
+			pathfinder = new HeuristicPathfinder();
+			break;
 		}
 	}
 
@@ -172,11 +193,6 @@ public class AIVisualServoing extends BaseAI {
 		}
 	}
 
-	public boolean didIGetBall() {
-		final boolean orig = wasGotBall;
-		wasGotBall = false;
-		return orig;
-	}
 	
 	/**
 	 * @see sdp.AI.BaseAI#defendGoal()
@@ -265,10 +281,6 @@ public class AIVisualServoing extends BaseAI {
 		double dist2 = Vector2D.subtract(new Vector2D(aiWorldState.getOwnRobot().getCoords()), new Vector2D(point2)).getLength();
 		double dist3 = Vector2D.subtract(new Vector2D(aiWorldState.getOwnRobot().getCoords()), new Vector2D(point3)).getLength();
 
-		
-
-
-
 		if(aiWorldState.getEnemyRobot().getAngle()>-90 && aiWorldState.getEnemyRobot().getAngle()<90)
 			return attack(AttackMode.Full);
 
@@ -314,6 +326,7 @@ public class AIVisualServoing extends BaseAI {
 		optimalPointOffset = DEFAULT_OPTIMAL_POINT_OFFSET;
 		targetThreshold = DEFAULT_TARGET_THRESHOLD;
 	}
+	
 
 	/**
 	 * @see sdp.AI.BaseAI#penaltiesDefend()
@@ -387,49 +400,6 @@ public class AIVisualServoing extends BaseAI {
 	@Override
 	protected Command penaltiesAttack() throws IOException {
 		return attack(AttackMode.WallsOnly);
-
-		/*
-		Command command = new Command(0,0,false);
-
-		Point2D.Double pointInGoal= 
-				GeomUtils.getLineIntersection(ai_world_state.getRobot().getCoords(), 
-						ai_world_state.getRobot().getFrontCenter(), ai_world_state.getEnemyGoal().getTop(), 
-						ai_world_state.getEnemyGoal().getBottom());
-		boolean clear_path = Utilities.lineIntersectsRobot(pointInGoal, ai_world_state.getBallCoords(), 
-				ai_world_state.getEnemyRobot());
-		//        System.out.println(clear_path);
-		if (clear_path){
-			return new Command(0,0,true);
-			//mComm.sendMessage(opcode.kick);
-			//System.out.println("kicking");
-			//ai_world_state.setMode(mode.chase_ball);
-
-		}
-
-		Point2D enemyRobot;
-		if(ai_world_state.isGoalVisible())        {
-			enemyRobot= ai_world_state.getEnemyRobot().getCoords();
-			//if enemy robot in the lower part of the goal then shoot in the upper part
-			if( enemyRobot.getY() < ai_world_state.getEnemyGoal().getCentre().y){
-				return new Command(0,0,true);
-				//mComm.sendMessage(opcode.operate,(byte) 0, (byte) 
-				//ai_world_state.getEnemyGoal().getTop().y);
-				// mComm.sendMessage(opcode.kick);
-				//if enemy robot in the upper part of the goal then shoot in the lower part
-			}else if( enemyRobot.getY() <ai_world_state.getEnemyGoal().getCentre().y){
-				return new Command(0,0,true);
-				//mComm.sendMessage(opcode.operate, (byte) 0, (byte)
-				//ai_world_state.getEnemyGoal().getBottom().y);
-				// mComm.sendMessage(opcode.kick);
-			}	
-			//else just kick in upper part of the goal by ...this is the default
-			else{
-				return new Command(0,0,true);
-				//mComm.sendMessage(opcode.operate, (byte) 0, (byte) 
-				//ai_world_state.getEnemyGoal().getTop().y);
-				//mComm.sendMessage(opcode.kick);
-			}
-		}  */
 	}
 	
 	
@@ -561,7 +531,7 @@ public class AIVisualServoing extends BaseAI {
 	 * sequence of waypoints. This version allows to specify custom driving
 	 * speed multiplier and maximum turning speed.
 	 * 
-	 * @param waypoint Point to move towards.
+	 * @param path Target path.
 	 * @param mustFaceTarget Whether the robot is required to face the point
 	 * 		at all times.
 	 * @param drivingSpeedMult Driving speed multiplier.
@@ -587,9 +557,11 @@ public class AIVisualServoing extends BaseAI {
 			comm.drivingSpeed = Robot.MAX_DRIVING_SPEED;
 		}
 
+		// React to collisions.
 		reactToFrontBackCollisions(comm, true, waypoint.isEndpoint() ? LOW_FRONT_BACK_COLL_THRESH : HIGH_FRONT_BACK_COLL_THRESH);
 		reactToCornerCollisions(comm, waypoint.isEndpoint() ? LOW_CORNER_COLL_THRESH : HIGH_CORNER_COLL_THRESH);
 
+		// Optimal point offset and target threshold adjustments.
 		if ((Math.abs(waypoint.getTurningAngle()) < 45)
 				&& (waypoint.getDistance() < targetThreshold)) {
 			optimalPointOffset *= 0.5;
@@ -612,6 +584,7 @@ public class AIVisualServoing extends BaseAI {
 			}
 		}
 
+		// Finalise the command.
 		reduceSpeed(comm, waypoint.getCostToDest(), DECELERATION_DISTANCE,
 				Robot.MAX_DRIVING_SPEED / 2);
 
@@ -849,9 +822,9 @@ public class AIVisualServoing extends BaseAI {
 		
 		Point2D.Double shiftedBall = new Point2D.Double(ball.x, ball.y);
 		if (aiWorldState.isOwnGoalLeft()) {
-			shiftedBall.x += 5;
+			shiftedBall.x += SIDE_WALL_X_ATTACK_SHIFT;
 		} else {
-			shiftedBall.x -= 5;
+			shiftedBall.x -= SIDE_WALL_X_ATTACK_SHIFT;
 		}
 		
 		if (!Robot.lineIntersectsRobot(ball, attackPoint, aiWorldState.getOwnRobot())) {
@@ -1073,5 +1046,19 @@ public class AIVisualServoing extends BaseAI {
 		}
 		
 		return true;
+	}
+	
+	
+	/**
+	 * Check whether we entered the gotBall() state since the last check.
+	 * 
+	 * TODO: Move to BaseAI??
+	 *  
+	 * @return Whether we were in gotBall() since the last check.
+	 */
+	public boolean didIGetBall() {
+		final boolean orig = wasGotBall;
+		wasGotBall = false;
+		return orig;
 	}
 }
