@@ -1,5 +1,8 @@
 package sdp.AI;
 
+import java.awt.geom.CubicCurve2D;
+import java.awt.geom.FlatteningPathIterator;
+import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -25,6 +28,11 @@ public class AIVis2 extends AIVisualServoing {
 	
 	private final static boolean USE_OLD_STYLE_DIRECTION = true;
 	
+	/** At what distance fromt the robot will be the point on the path that we want to follow */
+	private final static double BEZIER_FRACTION = 0.3;
+	
+	private final static double GUARD_BALL_DIST = 30;
+	
 	private HeuristicPathfinder path = new HeuristicPathfinder();
 	
 	private Command play() {
@@ -36,6 +44,8 @@ public class AIVis2 extends AIVisualServoing {
 				return null;
 			}
 		}
+		
+		final Vector2D robot = new Vector2D(aiWorldState.getOwnRobot().getCoords());
 		
 		double x_sub = aiWorldState.isOwnGoalLeft() ? -2 : 2;
 		final Vector2D ball = new Vector2D(aiWorldState.getBallCoords());
@@ -67,53 +77,105 @@ public class AIVis2 extends AIVisualServoing {
 		direct.dir = finalAngle;
 		
 		final WayPt avoid = go(direct);
-		Painter.target = new Vector2D[]{avoid.loc};
-		Painter.lines = new Vector2D[]{new Vector2D(aiWorldState.getOwnRobot().getCoords()), avoid.loc, avoid.loc, direct.loc, direct.loc, Vector2D.add(direct.loc, Vector2D.rotateVector(new Vector2D(30, 0), direct.dir)), avoid.loc, Vector2D.add(avoid.loc, Vector2D.rotateVector(new Vector2D(30, 0), avoid.dir))};
-		
-		return wayPtToCommand(avoid);
-	}
 	
-	// path executing
-	private Command wayPtToCommand(final WayPt target) {
+		final Vector2D secondary = getNextBezierPoint(avoid);
+		final double dist = Vector2D.subtract(robot, secondary).getLength();
 		
-		final Vector2D robot = new Vector2D(aiWorldState.getOwnRobot().getCoords());
-		final double robotAn = aiWorldState.getOwnRobot().getAngle();
-		double dist = Vector2D.subtract(robot, target.loc).getLength();
+		final ArrayList<Waypoint> retValue = new ArrayList<Waypoint>();
+		retValue.add(new Waypoint(robot, aiWorldState.getOwnRobot().getAngle(), secondary, dist, true));
 		
-		
-		if (USE_OLD_STYLE_DIRECTION) {
-		
-		ArrayList<Waypoint> retValue = new ArrayList<Waypoint>();
-		retValue.add(new Waypoint(robot, robotAn, target.loc, dist, true));
+		Painter.target = new Vector2D[]{avoid.loc};
+		Painter.lines = new Vector2D[]{robot, avoid.loc, avoid.loc, direct.loc, direct.loc, Vector2D.add(direct.loc, Vector2D.rotateVector(new Vector2D(30, 0), direct.dir)), avoid.loc, Vector2D.add(avoid.loc, Vector2D.rotateVector(new Vector2D(30, 0), avoid.dir))};
+		Painter.targetSecondary = new Vector2D[]{secondary};
 		
 		
-		
-		return getWaypointCommand(retValue, false, DRIVING_SPEED_MULTIPLIER,
+		final Command comm = getWaypointCommand(retValue, false, DRIVING_SPEED_MULTIPLIER,
 					STOP_TURN_THRESHOLD);
 		
-		}
-		
-		final double driveTime = dist / Robot.MAX_DRIVING_SPEED;
-		double turnAn = robotAn - target.dir;
-		final double turnTime = turnAn / Robot.MAX_TURNING_SPEED;
-		
+		guardBall(comm);
+
+		return comm;
+	}
 	
-		// go back
-		if (Math.abs(turnAn) > 90) {
-			dist = -dist;
-			turnAn = GeomUtils.normaliseAngle(turnAn - 180);
+	/**
+	 * Prevents us kicking the ball into our own goal
+	 */
+	private void guardBall(final Command comm) {
+
+		final Vector2D ball = new Vector2D(aiWorldState.getBallCoords());
+		final Vector2D robot = new Vector2D(aiWorldState.getOwnRobot().getCoords());
+		final double dist = Vector2D.subtract(ball, robot).getLength();
+		final double ballturn = Vector2D.subtract(ball, robot).getDirection();
+
+		if (dist < GUARD_BALL_DIST) {
+
+				if (aiWorldState.isOwnGoalLeft()) {
+					if (ball.getX() < robot.getX() && Math.abs(ballturn) > 130) {
+						System.out.println("Preventing kick ball in own goal left "+ballturn);
+						comm.drivingSpeed = -comm.drivingSpeed;
+					}
+				} else {
+					if (ball.getX() > robot.getX() && Math.abs(ballturn) < 50) {
+						System.out.println("Preventing kick ball in own goal right"+ballturn);
+						comm.drivingSpeed = -comm.drivingSpeed;
+					}
+				}
 		}
 
-		double turningSpeed = turnAn / driveTime;
-		double drivingSpeed = dist / turnTime;
+	}
+	
+	private Vector2D getNextBezierPoint(final WayPt waypoint) {
 		
-		if (driveTime > turnTime) {
-			drivingSpeed = (dist > 0 ? 1 : -1) * Robot.MAX_DRIVING_SPEED;
-		} else {
-			turningSpeed = (turnAn > 0 ? 1 : -1) * Robot.MAX_TURNING_SPEED;
+		final double pathsize = Vector2D.subtract(waypoint.loc, new Vector2D(aiWorldState.getOwnRobot().getCoords())).getLength();
+		final double coeff = pathsize/2;
+		final double min_dist = pathsize*BEZIER_FRACTION;
+		
+		final double turningAmount = getTurningAmount(new Vector2D(aiWorldState.getOwnRobot().getCoords()), waypoint.loc, aiWorldState.getOwnRobot().getAngle());
+		final boolean goingBackwards = Math.abs(turningAmount) > 90;	
+		
+		final Vector2D pt1 = new Vector2D(aiWorldState.getOwnRobot().getCoords());
+		final double robAng = aiWorldState.getOwnRobot().getAngle();
+		final Vector2D robDir = Vector2D.rotateVector(new Vector2D(coeff, 0), goingBackwards ? GeomUtils.normaliseAngle(robAng - 180) : robAng);
+		final Vector2D cp1 = Vector2D.add(pt1, robDir);
+		final Vector2D pt2 = waypoint.loc;
+		final Vector2D cp2 = Vector2D.subtract(pt2, Vector2D.rotateVector(new Vector2D(coeff, 0), waypoint.dir));
+		
+		final CubicCurve2D.Double bezier = new CubicCurve2D.Double(pt1.x, pt1.y, cp1.x, cp1.y, cp2.x, cp2.y, pt2.x, pt2.y);
+		
+		final FlatteningPathIterator pi = new FlatteningPathIterator(bezier.getPathIterator(null), 0.1);
+		
+		Vector2D result = null;
+		
+		final ArrayList<Vector2D> vecs = new ArrayList<Vector2D>();
+		double pathsofar = 0;
+		Vector2D prevVector = null;
+		while (!pi.isDone()) {  
+			
+			final double[] coordinates = new double[6];
+			pi.currentSegment(coordinates);
+
+		    final Vector2D vector = new Vector2D(coordinates[0], coordinates[1]);
+		    
+		    
+		    if (prevVector == null)
+		    	prevVector = vector;
+		    
+		    pathsofar += Vector2D.subtract(prevVector, vector).getLength();
+		    
+		    if (pathsofar > min_dist && result == null)
+		    	result = vector;
+		    
+		    prevVector = vector;
+		    vecs.add(vector);
+		    
+			pi.next();
 		}
 		
-		return new Command(drivingSpeed, turningSpeed, false);
+		Painter.linesSecondary = vecs.toArray(new Vector2D[0]);
+		
+		return result == null ? prevVector : result;
+		
+		
 	}
 	
 	// pathfinding
@@ -170,10 +232,10 @@ public class AIVis2 extends AIVisualServoing {
 			pathright = Vector2D.subtract(robot, right.loc).getLength() + finalpath,
 			timeright = Math.max(turnright/Robot.MAX_TURNING_SPEED, pathright/Robot.MAX_DRIVING_SPEED);
 		
-		final Vector2D[] leftLines = new Vector2D[]{new Vector2D(aiWorldState.getOwnRobot().getCoords()), left.loc, left.loc, target.loc, target.loc, Vector2D.add(target.loc, Vector2D.rotateVector(new Vector2D(30, 0), target.dir))};
-		final Vector2D[] rightLines =  new Vector2D[]{new Vector2D(aiWorldState.getOwnRobot().getCoords()), right.loc, right.loc, target.loc, target.loc, Vector2D.add(target.loc, Vector2D.rotateVector(new Vector2D(30, 0), target.dir))};
+		//final Vector2D[] leftLines = new Vector2D[]{new Vector2D(aiWorldState.getOwnRobot().getCoords()), left.loc, left.loc, target.loc, target.loc, Vector2D.add(target.loc, Vector2D.rotateVector(new Vector2D(30, 0), target.dir))};
+		//final Vector2D[] rightLines =  new Vector2D[]{new Vector2D(aiWorldState.getOwnRobot().getCoords()), right.loc, right.loc, target.loc, target.loc, Vector2D.add(target.loc, Vector2D.rotateVector(new Vector2D(30, 0), target.dir))};
 		
-		Painter.linesSecondary = timeleft < timeright ? rightLines : leftLines;
+		//Painter.linesSecondary = timeleft < timeright ? rightLines : leftLines;
 		
 		
 		return timeleft < timeright ? left : right;
@@ -227,11 +289,6 @@ public class AIVis2 extends AIVisualServoing {
 	
 	@Override
 	protected Command chaseBall() throws IOException {
-		return play();
-	}
-	
-	@Override
-	protected Command defendGoal() throws IOException {
 		return play();
 	}
 	

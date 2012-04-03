@@ -37,7 +37,7 @@ public class AIVisualServoing extends BaseAI {
 	private static final boolean WALL_KICKS_ENABLED = true;
 
 	/** Distance at which the robot will begin slowing down. */
-	private static final double DECELERATION_DISTANCE = 30;
+	private static final double DECELERATION_DISTANCE = 3;
 
 	/** The multiplier of the final driving speed. */
 	protected static final double DRIVING_SPEED_MULTIPLIER = 1;
@@ -91,7 +91,7 @@ public class AIVisualServoing extends BaseAI {
 
 	// TODO: Decouple the following constants from Painter.
 	/** Starting optimal point to ball offset. */
-	public static final double DEFAULT_OPTIMAL_POINT_OFFSET = 2 * Robot.LENGTH_CM;
+	public static final double DEFAULT_OPTIMAL_POINT_OFFSET = Robot.LENGTH_CM;
 	/** Starting target distance threshold. */
 	public static final double DEFAULT_TARGET_THRESHOLD = 30;
 
@@ -517,7 +517,7 @@ public class AIVisualServoing extends BaseAI {
 	 * @param dest Destination point.
 	 * @return An appropriate waypoint, as described above.
 	 */
-	private Waypoint getUnconditionalWaypoint(Point2D.Double dest) {
+	protected Waypoint getUnconditionalWaypoint(Point2D.Double dest) {
 		return new Waypoint(new Vector2D(aiWorldState.getOwnRobot().getCoords()),
 				aiWorldState.getOwnRobot().getAngle(), new Vector2D(dest),
 				WorldState.PITCH_WIDTH_CM, true);

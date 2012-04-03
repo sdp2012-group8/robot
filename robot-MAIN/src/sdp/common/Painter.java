@@ -29,10 +29,16 @@ public class Painter {
 	public static Vector2D[] target;
 	public static ArrayList<Waypoint> fullPath;
 	public static Vector2D[] lines;
+	public static Vector2D[] targetSecondary;
 	public static Vector2D[] linesSecondary;
+	public static String message;
 
 	public Painter(BufferedImage im, WorldState ws) {
+		
+		
+		
 		g = im.createGraphics();
+		
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 				RenderingHints.VALUE_ANTIALIAS_ON);
 		width = im.getWidth();
@@ -138,6 +144,9 @@ public class Painter {
 		g.setColor(new Color(255, 255, 255, 180));
 		g.setStroke(new BasicStroke(2.0f));
 		
+		if (message != null)
+			g.drawString(message, 10, 10);
+		
 		if (target != null) {
 			for (int i = 0; i < target.length; i++)
 				fillOval((int)(target[i].x* width / WorldState.PITCH_WIDTH_CM-3), (int) (target[i].y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6, true);
@@ -153,7 +162,12 @@ public class Painter {
 		drawLines(lines);
 		g.setColor(new Color(255, 100, 100, 180));
 		drawLines(linesSecondary);
-
+		
+		if (targetSecondary != null) {
+			for (int i = 0; i < targetSecondary.length; i++)
+				fillOval((int)(targetSecondary[i].x* width / WorldState.PITCH_WIDTH_CM-3), (int) (targetSecondary[i].y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6, true);
+		}
+		
 	}
 
 	private void drawLines(final Vector2D[] lines) {
