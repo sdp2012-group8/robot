@@ -19,6 +19,8 @@ import javax.swing.JTabbedPane;
 
 import sdp.AI.AIMaster;
 import sdp.AI.AIVisualServoing;
+import sdp.AI.BaseAI;
+import sdp.AI.neural.AINeuralNet;
 import sdp.common.Communicator;
 import sdp.common.Communicator.opcode;
 import sdp.common.world.WorldState;
@@ -57,6 +59,9 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.JTextArea;
 import javax.swing.JScrollPane;
+
+import org.neuroph.core.NeuralNetwork;
+
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -77,6 +82,8 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	/** Class name. */
 	public static String className = null;
 	
+	/** available AIs */
+	private static final BaseAI[] AIs = new BaseAI[] {new AIVisualServoing(), new AINeuralNet(NeuralNetwork.load("data/GA/finalPop.nnet"))};
 	
 	/** Path to the default vision configuration file. */
 	private static final String DEFAULT_CONFIG_PATH = "data/configs/Default.xml";
@@ -117,7 +124,6 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	
 	/** Mouse pointer position on the canvas image. */
 	private Point imageMousePos = null;
-	
 	
 	/**
 	 * Create the main GUI with the specified components.
@@ -227,7 +233,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 			}
 		}
 		
-		aiInstance = new AIMaster(communicator, vision, new AIVisualServoing());
+		aiInstance = new AIMaster(communicator, vision, AIs[comboBox.getSelectedIndex()]);
 		aiInstance.start(robotColorBlueButton.isSelected(), robotGateLeftButton.isSelected());
 		
 		WorldStateObserver aiObserver = new WorldStateObserver(aiInstance);
@@ -1490,9 +1496,9 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		robotSettingPanel.add(robotConnectionPanel, gbc_robotConnectionPanel);
 		GridBagLayout gbl_robotConnectionPanel = new GridBagLayout();
 		gbl_robotConnectionPanel.columnWidths = new int[]{0, 0};
-		gbl_robotConnectionPanel.rowHeights = new int[]{0, 0, 0};
+		gbl_robotConnectionPanel.rowHeights = new int[]{0, 0, 0, 0};
 		gbl_robotConnectionPanel.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		gbl_robotConnectionPanel.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
+		gbl_robotConnectionPanel.rowWeights = new double[]{0.0, 0.0, 0.0, Double.MIN_VALUE};
 		robotConnectionPanel.setLayout(gbl_robotConnectionPanel);
 		
 		robotDebugModeCheckbox = new JCheckBox("Debug mode");
@@ -1503,10 +1509,22 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 		gbc_robotDebugModeCheckbox.gridy = 0;
 		robotConnectionPanel.add(robotDebugModeCheckbox, gbc_robotDebugModeCheckbox);
 		
+		comboBox = new JComboBox();
+		GridBagConstraints gbc_comboBox = new GridBagConstraints();
+		gbc_comboBox.insets = new Insets(0, 0, 5, 0);
+		gbc_comboBox.fill = GridBagConstraints.HORIZONTAL;
+		gbc_comboBox.gridx = 0;
+		gbc_comboBox.gridy = 1;
+		
+		for (int i = 0; i < AIs.length; i++)
+			comboBox.addItem(AIs[i].getClass().getSimpleName());
+		
+		robotConnectionPanel.add(comboBox, gbc_comboBox);
+		
 		robotConnectButton = new JButton("Connect");
 		GridBagConstraints gbc_robotConnectButton = new GridBagConstraints();
 		gbc_robotConnectButton.gridx = 0;
-		gbc_robotConnectButton.gridy = 1;
+		gbc_robotConnectButton.gridy = 2;
 		robotConnectionPanel.add(robotConnectButton, gbc_robotConnectButton);
 		robotConnectButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -1987,4 +2005,5 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	
 	private JPanel imageCanvasPanel;
 	private JButton robotStartButton;
+	private JComboBox comboBox;
 }
