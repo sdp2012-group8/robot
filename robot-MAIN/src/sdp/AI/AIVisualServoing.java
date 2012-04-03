@@ -7,6 +7,7 @@ import java.util.Iterator;
 
 import sdp.AI.pathfinding.FullPathfinder;
 import sdp.AI.pathfinding.HeuristicPathfinder;
+import sdp.AI.pathfinding.ObstacleTangentPathfinder;
 import sdp.AI.pathfinding.Pathfinder;
 import sdp.AI.pathfinding.Waypoint;
 import sdp.common.Painter;
@@ -25,10 +26,10 @@ public class AIVisualServoing extends BaseAI {
 	/** Attack modes for optimal point calculations. */
 	protected enum AttackMode { DirectOnly, WallsOnly, Full }
 	/** Enumeration for all the different AI pathfinder modes. */
-	private enum PathfinderMode { Full, Heuristic }
+	private enum PathfinderMode { Full, Heuristic, ObstacleTangent }
 
 	/** The AI's pathfinder mode. */
-	private static final PathfinderMode PATHFINDER_MODE = PathfinderMode.Full;
+	private static final PathfinderMode PATHFINDER_MODE = PathfinderMode.ObstacleTangent;
 
 	/** Whether the robot is required to face the ball before kicking. */
 	private static final boolean REQUIRE_FACE_BALL_TO_KICK = true;
@@ -144,6 +145,9 @@ public class AIVisualServoing extends BaseAI {
 			break;
 		case Heuristic:
 			pathfinder = new HeuristicPathfinder();
+			break;
+		case ObstacleTangent:
+			pathfinder = new ObstacleTangentPathfinder();
 			break;
 		default:
 			pathfinder = new HeuristicPathfinder();

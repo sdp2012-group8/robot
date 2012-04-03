@@ -517,4 +517,54 @@ public class GeomUtils {
 
 		return new Point2D.Double[] { tangent1, tangent2 };
 	}
+	
+	
+	/**
+	 * Check whether some line intersects the given circle.
+	 * 
+	 * @param pt1 First point on the line.
+	 * @param pt2 Second point on the line.
+	 * @param circle Circle to test.
+	 * @return Whether the line intersects the circle.
+	 */
+	public static boolean lineIntersectsCircle(Point2D.Double pt1, Point2D.Double pt2,
+			Circle circle) {
+		Point2D.Double linePt = getClosestPointToLine(circle.getCentre(), pt1, pt2);
+		return (pointDistance(circle.getCentre(), linePt) <= circle.getRadius());
+	}
+	
+	/**
+	 * Check whether some line segment intersects the given circle.
+	 * 
+	 * @param pt1 First endpoint of the line segment.
+	 * @param pt2 Second endpoint of the line segment.
+	 * @param circle Circle to test.
+	 * @return Whether the line segment intersects the circle.
+	 */
+	public static boolean segmentIntersectsCircle(Point2D.Double pt1, Point2D.Double pt2,
+			Circle circle) {
+		Point2D.Double linePt = getClosestPointToLine(circle.getCentre(), pt1, pt2);
+		return (circle.containsPoint(pt1) || circle.containsPoint(pt2)
+				|| circle.containsPoint(linePt));
+	}
+	
+	
+	/**
+	 * Check whether some point is to the left of the given vector.
+	 * 
+	 * Helpful graphic:
+	 * 
+	 *          A           B     LEFT
+	 * - - - -  o----------->  - - - - -
+	 *                            RIGHT
+	 * 
+	 * @param p Point to test.
+	 * @param a Beginning of the vector. 
+	 * @param b End of the vector.
+	 * @return 
+	 */
+	public static boolean isPointLeftOfVector(Point2D.Double p, Point2D.Double a,
+			Point2D.Double b) {
+		return (crossProduct(subtractPoints(b, a), subtractPoints(p, a)) < 0);
+	}
 }

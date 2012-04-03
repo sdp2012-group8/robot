@@ -2,6 +2,8 @@ package sdp.common.geometry;
 
 import java.awt.geom.Point2D;
 
+import sdp.common.Utilities;
+
 
 /**
  * A circle.
@@ -72,6 +74,30 @@ public class Circle {
 	 */
 	public boolean containsPoint(Point2D.Double point) {
 		return (Point2D.distance(point.x, point.y, centre.x, centre.y) <= radius);
+	}
+
+
+	/**
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Circle) {
+			Circle other = (Circle) obj;
+			return (Utilities.areDoublesEqual(centre.x, other.centre.x)
+					&& Utilities.areDoublesEqual(centre.y, other.centre.y)
+					&& Utilities.areDoublesEqual(radius, other.radius));
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return String.format("(CIRCLE: (%.4f, %.4f), %.4f)", centre.x, centre.y, radius);
 	}
 
 }
