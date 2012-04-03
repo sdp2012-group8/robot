@@ -18,7 +18,7 @@ import sdp.common.world.WorldState;
 public class HeuristicPathfinder implements Pathfinder {
 	
 	/** Number of direction sections, used in search. */
-	private static final int COLLISION_SECTION_COUNT = 222;
+	private static final int COLLISION_SECTION_COUNT = 62;
 	/** Size of an individual direction section, in angles. */
 	private static final double SECTION_ANGLE = 360.0 / COLLISION_SECTION_COUNT;
 	

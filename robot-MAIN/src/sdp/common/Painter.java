@@ -28,6 +28,8 @@ public class Painter {
 	public static Vector2D[] debug;
 	public static Vector2D[] target;
 	public static ArrayList<Waypoint> fullPath;
+	public static Vector2D[] lines;
+	public static Vector2D[] linesSecondary;
 
 	public Painter(BufferedImage im, WorldState ws) {
 		g = im.createGraphics();
@@ -117,20 +119,6 @@ public class Painter {
 
 		}
 		
-		// draw target
-		if (target != null) {
-			g.setColor(new Color(255, 255, 255, 255));
-			for (int i = 0; i < target.length; i++)
-				fillOval((int)(target[i].x* width / WorldState.PITCH_WIDTH_CM-3), (int) (target[i].y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6, true);
-		}
-		
-		if (fullPath != null)
-		for (Waypoint wp : fullPath) {
-			
-			drawLine((int)(wp.getOriginPos().x* width / WorldState.PITCH_WIDTH_CM), (int)(wp.getOriginPos().y* width / WorldState.PITCH_WIDTH_CM),
-					(int)(wp.getTarget().x* width / WorldState.PITCH_WIDTH_CM), (int)(wp.getTarget().y* width / WorldState.PITCH_WIDTH_CM));
-		}
-		
 		// draw ball
 		g.setColor(Color.red);
 		if (MOUSE_OVER_BALL)
@@ -144,8 +132,47 @@ public class Painter {
 				(int) (2 * BALL_RADIUS * width / WorldState.PITCH_WIDTH_CM), true);
 		drawLine((int)(state_cm.getBallCoords().getX()* width / WorldState.PITCH_WIDTH_CM), 0, (int) (state_cm.getBallCoords().getX()* width / WorldState.PITCH_WIDTH_CM), (int) (height/ratio));
 		drawLine(0, (int)(state_cm.getBallCoords().getY()* width / WorldState.PITCH_WIDTH_CM), width, (int)(state_cm.getBallCoords().getY()* width / WorldState.PITCH_WIDTH_CM));
+
+		// draw target
+		
+		g.setColor(new Color(255, 255, 255, 180));
+		g.setStroke(new BasicStroke(2.0f));
+		
+		if (target != null) {
+			for (int i = 0; i < target.length; i++)
+				fillOval((int)(target[i].x* width / WorldState.PITCH_WIDTH_CM-3), (int) (target[i].y* width / WorldState.PITCH_WIDTH_CM-3), 6, 6, true);
+		}
+		
+		if (fullPath != null)
+		for (Waypoint wp : fullPath) {
+			
+			drawLine((int)(wp.getOriginPos().x* width / WorldState.PITCH_WIDTH_CM), (int)(wp.getOriginPos().y* width / WorldState.PITCH_WIDTH_CM),
+					(int)(wp.getTarget().x* width / WorldState.PITCH_WIDTH_CM), (int)(wp.getTarget().y* width / WorldState.PITCH_WIDTH_CM));
+		}
+		
+		drawLines(lines);
+		g.setColor(new Color(255, 100, 100, 180));
+		drawLines(linesSecondary);
+
 	}
 
+	private void drawLines(final Vector2D[] lines) {
+		if (lines != null)
+		for (int i = 0; i < lines.length; i+=2) {
+			int next = i + 1;
+			if (next >= lines.length)
+				break;
+			final Vector2D origin = lines[i];
+			final Vector2D second = lines[next];
+			
+			if (origin == null || second == null)
+				continue;
+			
+			drawLine((int)(origin.x* width / WorldState.PITCH_WIDTH_CM), (int)(origin.y* width / WorldState.PITCH_WIDTH_CM),
+					(int)(second.x* width / WorldState.PITCH_WIDTH_CM), (int)(second.y* width / WorldState.PITCH_WIDTH_CM));
+		}
+	}
+	
 	// helpers
 
 

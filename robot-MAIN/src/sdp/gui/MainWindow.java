@@ -18,6 +18,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.JTabbedPane;
 
 import sdp.AI.AIMaster;
+import sdp.AI.AIVis2;
 import sdp.AI.AIVisualServoing;
 import sdp.AI.BaseAI;
 import sdp.AI.neural.AINeuralNet;
@@ -83,7 +84,7 @@ public class MainWindow extends javax.swing.JFrame implements Runnable {
 	public static String className = null;
 	
 	/** available AIs */
-	private static final BaseAI[] AIs = new BaseAI[] {new AIVisualServoing(), new AINeuralNet(NeuralNetwork.load("data/GA/finalPop.nnet"))};
+	private static final BaseAI[] AIs = new BaseAI[] {new AIVisualServoing(), new AINeuralNet(NeuralNetwork.load("data/GA/finalPop.nnet")), new AIVis2()};
 	
 	/** Path to the default vision configuration file. */
 	private static final String DEFAULT_CONFIG_PATH = "data/configs/Default.xml";
