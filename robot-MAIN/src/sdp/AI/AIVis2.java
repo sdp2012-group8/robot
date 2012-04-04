@@ -86,7 +86,9 @@ public class AIVis2 extends AIVisualServoing {
 		
 		final WayPt avoid = go(direct);
 	
-		final Vector2D secondary = getNextBezierPoint(avoid, WorldState.makeObstacleFlagsForOpponent(true, aiWorldState.isOwnTeamBlue()));
+		Vector2D secondary = getNextBezierPoint(avoid, WorldState.makeObstacleFlagsForOpponent(true, aiWorldState.isOwnTeamBlue()));
+		if (secondary == null)
+			secondary = avoid.loc;
 		final double dist = Vector2D.subtract(robot, secondary).getLength();
 		
 		final ArrayList<Waypoint> retValue = new ArrayList<Waypoint>();
@@ -100,15 +102,72 @@ public class AIVis2 extends AIVisualServoing {
 		final Command comm = getWaypointCommand(retValue, false, DRIVING_SPEED_MULTIPLIER,
 					STOP_TURN_THRESHOLD);
 		
-//		double distSec = Vector2D.subtract(secondary, robot).getLength();
-//		double t = distSec / Robot.MAX_DRIVING_SPEED;
-//		double ang = getTurningAmount(robot, secondary, aiWorldState.getOwnRobot().getAngle());
-//		
-//		Command comm = new Command(Robot.MAX_DRIVING_SPEED, ang/t, false);
-		
 		guardBall(comm);
+		
+		handleWalls(comm, secondary);
 
 		return comm;
+	}
+	
+	
+	private void handleWalls(final Command comm, final Vector2D target) {
+		
+		final boolean isRobotNearWall = getIsAdjacentTo(aiWorldState.getOwnRobot().getCoords());
+		
+		if (isRobotNearWall) {
+			
+			final double turn = Math.abs(getTurningAmount(new Vector2D(aiWorldState.getOwnRobot().getCoords()), target, aiWorldState.getOwnRobot().getAngle()));
+			
+			if ((comm.drivingSpeed > 0 && turn > 20) ||
+					(comm.drivingSpeed < 0 && turn < 160)) {
+				
+				comm.drivingSpeed = 0;
+				
+				System.out.println("Handling wall collision");
+				
+			}
+			
+		}
+		
+	}
+	
+	private boolean getIsAdjacentTo(Point2D.Double point) {
+		
+		// Is the ball next to a side wall?
+		if ((point.y < PITCH_H_EDGE_REGION_SIZE)
+				|| (point.y > (WorldState.PITCH_HEIGHT_CM - PITCH_H_EDGE_REGION_SIZE))) {
+			return true;
+		}
+		
+		// Is the ball next to our side wall?
+		if ((point.y < aiWorldState.getOwnGoal().getTop().y)
+				|| (point.y > aiWorldState.getOwnGoal().getBottom().y)) {
+			if (aiWorldState.isOwnGoalLeft()) {
+				if (point.x < PITCH_V_EDGE_REGION_SIZE) {
+					return true;
+				}
+			} else {
+				if (point.x > (WorldState.PITCH_WIDTH_CM - PITCH_V_EDGE_REGION_SIZE)) {
+					return true;
+				}
+			}
+		}
+		
+		// Is the ball next to enemy side wall?
+		if ((point.y < aiWorldState.getEnemyGoal().getTop().y)
+				|| (point.y > aiWorldState.getEnemyGoal().getBottom().y)) {
+			if (aiWorldState.isOwnGoalLeft()) {
+				if (point.x > (WorldState.PITCH_WIDTH_CM - PITCH_V_EDGE_REGION_SIZE)) {
+					return true;
+				}
+			} else {
+				if (point.x < PITCH_V_EDGE_REGION_SIZE) {
+					return true;
+				}
+			}
+		}
+		
+		return false;
 	}
 	
 	/**
@@ -120,22 +179,21 @@ public class AIVis2 extends AIVisualServoing {
 		final Vector2D robot = new Vector2D(aiWorldState.getOwnRobot().getCoords());
 		final double dist = Vector2D.subtract(ball, robot).getLength();
 		final double ballturn = Math.abs(getTurningAmount(robot, ball, aiWorldState.getOwnRobot().getAngle()));
-		final double balldir = Math.abs(Vector2D.subtract(ball, robot).getDirection());
 		
 		if (dist < GUARD_BALL_DIST) {
 
-			if ((comm.drivingSpeed > 0 && ballturn < 70) ||
-					(comm.drivingSpeed < 0 && ballturn > 110)) {
+			if ((comm.drivingSpeed > 0 && ballturn < 50) ||
+					(comm.drivingSpeed < 0 && ballturn > 130)) {
 
 				if (aiWorldState.isOwnGoalLeft()) {
 					if (ball.getX() < robot.getX()) {
 						System.out.println("Preventing kick ball in own goal left "+ballturn);
-						comm.drivingSpeed = 0;//-comm.drivingSpeed;
+						comm.drivingSpeed = -comm.drivingSpeed*0.1;
 					}
 				} else {
 					if (ball.getX() > robot.getX()) {
 						System.out.println("Preventing kick ball in own goal right"+ballturn);
-						comm.drivingSpeed = 0;//-comm.drivingSpeed;
+						comm.drivingSpeed = -comm.drivingSpeed*0.1;
 					}
 				}
 
@@ -167,7 +225,7 @@ public class AIVis2 extends AIVisualServoing {
 		
 		Vector2D result = null;
 		
-		final ArrayList<Vector2D> vecs = new ArrayList<Vector2D>();
+		//final ArrayList<Vector2D> vecs = new ArrayList<Vector2D>();
 		double pathsofar = 0;
 		Vector2D prevVector = null;
 		while (!pi.isDone()) {  
@@ -183,19 +241,23 @@ public class AIVis2 extends AIVisualServoing {
 		    
 		    pathsofar += Vector2D.subtract(prevVector, vector).getLength();
 		    
-		    if (pathsofar > min_dist && result == null &&
-		    		(
-		    		WorldState.isDirectPathClear(aiWorldState, robot, vector, obstacles)
-		    		|| Vector2D.subtract(vector, robot).getLength() < 10))
-		    	result = vector;
+		    if (pathsofar > min_dist && result == null) {
+		    	if (WorldState.isDirectPathClear(aiWorldState, robot, vector, obstacles))
+		    		return result;
+		    	else {
+		    		System.out.println("Scrapping bezier curve");
+		    		return null;
+		    	}
+		    	//result = vector;
+		    }
 		    
 		    prevVector = vector;
-		    vecs.add(vector);
+		  //  vecs.add(vector);
 		    
 			pi.next();
 		}
 		
-		Painter.linesSecondary = vecs.toArray(new Vector2D[0]);
+		//Painter.linesSecondary = vecs.toArray(new Vector2D[0]);
 		
 		return result == null ? prevVector : result;
 		
@@ -218,8 +280,8 @@ public class AIVis2 extends AIVisualServoing {
 			return target;
 		}
 		
-		final WayPt left = returnFirstDir(target, 3, 10, obstacleFlags, robot);
-		final WayPt right = returnFirstDir(target, -3, 10, obstacleFlags, robot);
+		final WayPt left = returnFirstDir(target, 5, 10, obstacleFlags, robot);
+		final WayPt right = returnFirstDir(target, -5, 10, obstacleFlags, robot);
 		
 		if (left == null || right == null) {
 			

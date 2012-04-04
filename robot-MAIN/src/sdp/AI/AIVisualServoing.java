@@ -83,9 +83,9 @@ public class AIVisualServoing extends BaseAI {
 	protected static final int OPTIMAL_POINT_SEARCH_TRIES = 20;
 
 	/** Size of the pitch's horizontal edge region. */
-	private static final double PITCH_H_EDGE_REGION_SIZE = Robot.LENGTH_CM * 0.7;
+	protected static final double PITCH_H_EDGE_REGION_SIZE = Robot.LENGTH_CM * 0.7;
 	/** Size of the pitch's vertical edge region. */
-	private static final double PITCH_V_EDGE_REGION_SIZE = Robot.LENGTH_CM * 0.7;
+	protected static final double PITCH_V_EDGE_REGION_SIZE = Robot.LENGTH_CM * 0.7;
 
 	/** High corner collision threshold. */
 	private static final int HIGH_CORNER_COLL_THRESH = 5;

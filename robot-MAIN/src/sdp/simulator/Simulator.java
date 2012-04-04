@@ -18,7 +18,7 @@ public abstract class Simulator extends WorldStateProvider {
 	// time keeping
 	protected static final float MAX_FPS = 25; // simulation speed
 	protected static final double ITERATION_TIME = 1000 / MAX_FPS; // in ms
-	protected static final int DELAY_SIMULATION = 500; // in ms
+	protected static final int DELAY_SIMULATION = 300; // in ms
 	public Queue<WorldState> delayQueue = new LinkedList<WorldState>();
 	public static final int DELAY_SIZE = (int) (DELAY_SIMULATION/ITERATION_TIME);
 
