@@ -393,7 +393,7 @@ public class DeprecatedCode {
 	}
 
 	/** Size of the ball obstacle. */
-	public static final double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM;
+	public static final double SIZE_OF_BALL_OBSTACLE = Robot.LENGTH_CM*1.5;
 
 	/**
 	 * Returns the point the robot should go to behind the ball.

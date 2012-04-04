@@ -34,7 +34,7 @@ public class AIVis2 extends AIVisualServoing {
 	
 	private final static double GUARD_BALL_DIST = 30;
 	
-	private final static double MAX_HESITATION_FPS = 1.5;
+	private final static double MAX_HESITATION_FPS = 0.4;
 	
 	private final FPSCounter fps = new FPSCounter();
 	
@@ -357,8 +357,10 @@ public class AIVis2 extends AIVisualServoing {
 			final double sec = DeprecatedCode.raytraceVector(aiWorldState, robot, angDirV, aiWorldState.isOwnTeamBlue(), true).getLength();
 			while ((angDirV = Vector2D.changeLength(angDirV, angDirV.getLength()+pathCoeff)).getLength() < sec) {
 				final Vector2D target = Vector2D.add(robot, angDirV);
-				if (WorldState.isDirectPathClear(aiWorldState, target, targ.loc, obstacles) &&
-						WorldState.isDirectPathClear(aiWorldState, robot, target, obstacles)) {
+				if (DeprecatedCode.reachability(target, aiWorldState, targ.loc, aiWorldState.isOwnTeamBlue(), true, 1.2) &&
+					DeprecatedCode.reachability(robot, aiWorldState, target, aiWorldState.isOwnTeamBlue(), true, 1.2)) {
+				//if (WorldState.isDirectPathClear(aiWorldState, target, targ.loc, obstacles) &&
+						//WorldState.isDirectPathClear(aiWorldState, robot, target, obstacles)) {
 					WayPt wp = new WayPt();
 					wp.loc = target;
 					wp.dir = Vector2D.subtract(targ.loc, target).getDirection();
