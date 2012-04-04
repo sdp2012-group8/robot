@@ -32,7 +32,7 @@ public class AIVis2 extends AIVisualServoing {
 	/** At what distance fromt the robot will be the point on the path that we want to follow */
 	private final static double BEZIER_FRACTION = 0.5;
 	
-	private final static double GUARD_BALL_DIST = 30;
+	private final static double GUARD_BALL_DIST = 32;
 	
 	private final static double MAX_HESITATION_FPS = 0.4;
 	
@@ -182,8 +182,8 @@ public class AIVis2 extends AIVisualServoing {
 		
 		if (dist < GUARD_BALL_DIST) {
 
-			if ((comm.drivingSpeed > 0 && ballturn < 50) ||
-					(comm.drivingSpeed < 0 && ballturn > 130)) {
+			if ((comm.drivingSpeed > 0 && ballturn < 80) ||
+					(comm.drivingSpeed < 0 && ballturn > 120)) {
 
 				if (aiWorldState.isOwnGoalLeft()) {
 					if (ball.getX() < robot.getX()) {
